@@ -1,4 +1,8 @@
-﻿<CascadingAuthenticationState>
+﻿@using Karata.Web.Services
+
+@inject CookieService CookieService
+
+<CascadingAuthenticationState>
     <Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
@@ -10,3 +14,19 @@
         </NotFound>
     </Router>
 </CascadingAuthenticationState>
+
+@code{
+
+    [Parameter]
+    public string Cookie { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        // Pass the Cookie parameter to the CookiesProvider service
+        // which is to be injected into the Chat component, and then 
+        // passed to the Hub via the hub connection builder
+        CookieService.Cookie = Cookie;
+
+        return base.OnInitializedAsync();
+    }
+}

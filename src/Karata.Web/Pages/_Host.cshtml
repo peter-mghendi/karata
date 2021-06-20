@@ -2,6 +2,14 @@
 @namespace Karata.Web.Pages
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
+    // Capture the security cookie when the the initial call
+    // to the Blazor is being executed. Initial call is when
+    // the user type the url of your Blazor App in the address
+    // bar and press enter, or when the user is being redirected
+    // from the Login form to your Blazor SPA
+    // See more here: https://stackoverflow.com/a/59538319/6152891
+    var cookie = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
+
     Layout = null;
 }
 
@@ -10,14 +18,14 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Karata.Web</title>
+    <title>Karata</title>
     <base href="~/" />
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
     <link href="css/site.css" rel="stylesheet" />
     <link href="Karata.Web.styles.css" rel="stylesheet" />
 </head>
 <body>
-    <component type="typeof(App)" render-mode="ServerPrerendered" />
+    <component type="typeof(App)" render-mode="ServerPrerendered" param-Cookie="cookie"/>
 
     <div id="blazor-error-ui">
         <environment include="Staging,Production">

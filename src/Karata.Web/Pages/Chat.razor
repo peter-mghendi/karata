@@ -1,0 +1,74 @@
+@using System.Net
+@using Microsoft.AspNetCore.SignalR.Client
+@using Karata.Web.Models
+@using Karata.Web.Services
+
+@page "/chat"
+@attribute [Authorize]
+
+@implements IAsyncDisposable
+
+@inject NavigationManager NavigationManager
+
+
+<div class="form-group">
+    <label for="textInput">Message:</label>
+    <textarea class="form-control" id="textInput" @bind="textInput"></textarea>
+</div>
+<button class="btn btn-outline-primary" @onclick="Send" disabled="@(!IsConnected)">Send</button>
+
+<hr>
+
+<ul id="messagesList">
+    @foreach (var message in messages)
+    {
+        <li>@message</li>
+    }
+</ul>
+
+@code {
+    [Inject]
+    public CookieService CookieService { get; set; }
+
+    private HubConnection hubConnection;
+    private List<string> messages = new ();
+    private string textInput;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var container = new CookieContainer();
+        var cookie = new Cookie()
+        {
+            Name = ".AspNetCore.Identity.Application",
+            Domain = "localhost",
+            Value = CookieService.Cookie
+        };
+
+        container.Add(cookie);
+        hubConnection = new HubConnectionBuilder()
+        .WithUrl(NavigationManager.ToAbsoluteUri("/game"), options => options.Cookies = container)
+        .Build();
+
+        hubConnection.On<ChatMessage>("ReceiveChatMessage", message =>
+        {
+            @* messages.Add(message); *@
+            messages.Add($"[{message.Sent}] {message.Sender} : {message.Text}");
+            StateHasChanged();
+        });
+
+        hubConnection.On<SystemMessage>("ReceiveSystemMessage", message =>
+        {
+            @* messages.Add(message); *@
+            messages.Add($"{message.Text}");
+            StateHasChanged();
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    async Task Send() => await hubConnection.SendAsync("SendChatMessage", textInput);
+
+    public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
+}
