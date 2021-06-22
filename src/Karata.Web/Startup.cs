@@ -12,6 +12,7 @@ using Karata.Web.Data;
 using Karata.Web.Hubs;
 using Karata.Web.Services;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Web
 {
@@ -32,6 +33,8 @@ namespace Karata.Web
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddRazorPages();
             services.AddServerSideBlazor();
+            services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
+            services.AddSingleton<IRoomService, RoomService>();
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
             services.AddScoped<CookieService>();
             services.AddDatabaseDeveloperPageExceptionFilter();

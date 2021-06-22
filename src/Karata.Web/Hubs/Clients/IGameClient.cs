@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Karata.Web.Models;
 
@@ -8,5 +9,11 @@ namespace Karata.Web.Hubs.Clients
         Task ReceiveChatMessage(ChatMessage message);
 
         Task ReceiveSystemMessage(SystemMessage message);
+
+        Task AddToRoom(Room room);
+
+        Task RemoveFromRoom();
+
+        Task UpdateRoomMembers(List<User> members);
     }
 }

@@ -10,29 +10,75 @@
 
 @inject NavigationManager NavigationManager
 
+@if (!IsConnected)
+{
+    <p class="lead">You are not connected to a server</p>
+    <p class="text-muted">If this message persists, reload this page to establish a connection.</p>
+}
+else if (currentRoom is null)
+{
+    <p class="lead">Connect to a room to play/chat.</p>
+    <div class="form-group">
+        <label for="join-room">Join a Room</label>
+        <div id="join-room" class="input-group">
+            <input class="form-control" @bind="inviteLink" placeholder="Invite Link" />
+            <input class="form-control" @bind="invitePassword" placeholder="Password (If applicable)" />
+            <div class="input-group-append">
+                <button class="btn btn-outline-primary" @onclick="JoinRoom">Join Room</button>
+            </div>
+        </div>
+    </div>
 
-<div class="form-group">
-    <label for="textInput">Message:</label>
-    <textarea class="form-control" id="textInput" @bind="textInput"></textarea>
-</div>
-<button class="btn btn-outline-primary" @onclick="Send" disabled="@(!IsConnected)">Send</button>
+    <div class="form-group">
+        <label for="create-room">Create a Room</label>
+        <div id="create-room" class="input-group">
+            <input class="form-control" @bind="createPassword" placeholder="Password (Optional)" />
+            <div class="input-group-append">
+                <button class="btn btn-outline-secondary" @onclick="CreateRoom">Create Room</button>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p>Connected to room: @currentRoom.Link</p>
+    <p>Created at: @currentRoom.CreatedAt</p>
+    <p>Creator: @currentRoom.Creator.Username</p>
+    
+    @* <button class="btn btn-link" @onclick="async () => await Clipboard.SetTextAsync(currentRoom.Link)">Copy</button> *@
+    
+    <button class="btn btn-outline-danger" @onclick="LeaveRoom">Leave Room</button>
+    <p>Number of members: @currentRoom.Members.Count</p>
+    <div class="form-group">
+        <label for="textInput">Message:</label>
+        <textarea class="form-control" id="textInput" @bind="textInput"></textarea>
+    </div>
+    <button class="btn btn-outline-primary" @onclick="Send">Send</button>
 
-<hr>
+    <hr>
 
-<ul id="messagesList">
-    @foreach (var message in messages)
-    {
-        <li>@message</li>
-    }
-</ul>
+    <ul id="messagesList">
+        @foreach (var message in messages)
+        {
+            <li>@message</li>
+        }
+    </ul>
+}
+
 
 @code {
     [Inject]
     public CookieService CookieService { get; set; }
 
     private HubConnection hubConnection;
-    private List<string> messages = new ();
+    private Room currentRoom = null;
+
+    private string inviteLink;
+    private string invitePassword;
+    private string createPassword;
     private string textInput;
+
+    private List<string> messages = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -46,8 +92,8 @@
 
         container.Add(cookie);
         hubConnection = new HubConnectionBuilder()
-        .WithUrl(NavigationManager.ToAbsoluteUri("/game"), options => options.Cookies = container)
-        .Build();
+            .WithUrl(NavigationManager.ToAbsoluteUri("/game"), options => options.Cookies = container)
+            .Build();
 
         hubConnection.On<ChatMessage>("ReceiveChatMessage", message =>
         {
@@ -63,10 +109,25 @@
             StateHasChanged();
         });
 
+        hubConnection.On<Room>("AddToRoom", room => currentRoom = room);
+
+        hubConnection.On("RemoveFromRoom", () => {
+            currentRoom = null;
+            StateHasChanged();
+        });
+
+        hubConnection.On<List<User>>("UpdateRoomMembers", members => currentRoom.Members = members);
+
         await hubConnection.StartAsync();
     }
 
-    async Task Send() => await hubConnection.SendAsync("SendChatMessage", textInput);
+    async Task Send() => await hubConnection.SendAsync("SendChatMessage", currentRoom.Link, textInput);
+
+    async Task CreateRoom() => await hubConnection.SendAsync("CreateRoom");
+
+    async Task JoinRoom() => await hubConnection.SendAsync("JoinRoom", inviteLink);
+
+    async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", currentRoom.Link);
 
     public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
 
