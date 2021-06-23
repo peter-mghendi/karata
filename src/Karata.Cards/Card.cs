@@ -1,7 +1,6 @@
 using System;
-using System.Drawing;
-using static System.Drawing.Color;
 using static Karata.Cards.Card;
+using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
 
@@ -44,7 +43,7 @@ namespace Karata.Cards
             };
         }
 
-        public Color Color
+        public CardColor Color
         {
             get => (Suit is (Spades or Clubs or BlackJoker)) ? Black : Red;
         }

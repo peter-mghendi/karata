@@ -13,21 +13,25 @@ namespace Karata.Cards
     {
         public Stack<Card> Cards { get; set; } = new();
 
-        public static Deck GetStandardDeck()
+        public static Deck StandardDeck
         {
-            var cards = new Stack<Card>();
-            foreach (var suit in Enum.GetValues<CardSuit>())
+            get
             {
-                if (suit is BlackJoker or RedJoker) continue;
-                foreach (var face in Enum.GetValues<CardFace>())
+                var cards = new Stack<Card>();
+                foreach (var suit in Enum.GetValues<CardSuit>())
                 {
-                    cards.Push(new(suit, face));
+                    if (suit is BlackJoker or RedJoker) continue;
+                    foreach (var face in Enum.GetValues<CardFace>())
+                    {
+                        if (face is None) continue;
+                        cards.Push(new(suit, face));
+                    }
                 }
-            }
 
-            cards.Push(new(BlackJoker, None));
-            cards.Push(new(RedJoker, None));
-            return new() { Cards = new(cards) };
+                cards.Push(new(BlackJoker, None));
+                cards.Push(new(RedJoker, None));
+                return new() { Cards = new(cards) };
+            }
         }
 
         // Use a custom shuffling function

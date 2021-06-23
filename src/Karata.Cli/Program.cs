@@ -2,9 +2,9 @@
 using Karata.Cards;
 using Karata.Cards.Shufflers;
 
-var deck = Deck.GetStandardDeck();
-deck.Shuffle(ShuffleAlgorithm.FisherYates); // This doesn't work
-// deck.Shuffle(ShuffleAlgorithm.OrderByRandom); // This works
+var deck = Deck.StandardDeck;
+// deck.Shuffle(ShuffleAlgorithm.FisherYates);
+// deck.Shuffle(ShuffleAlgorithm.OrderByRandom);
 DisplayDeck(deck: deck);
 
 void DisplayDeck(Deck deck)
