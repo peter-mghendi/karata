@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2078181C-ADB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Karata.Web", "src\Karata.Web\Karata.Web.csproj", "{E035E152-0856-4E40-802B-153BABBF1423}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Karata.Cards", "src\Karata.Cards\Karata.Cards.csproj", "{8F51FC87-40D9-47A1-A40C-7AB2060A365F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,8 +34,21 @@ Global
 		{E035E152-0856-4E40-802B-153BABBF1423}.Release|x64.Build.0 = Release|Any CPU
 		{E035E152-0856-4E40-802B-153BABBF1423}.Release|x86.ActiveCfg = Release|Any CPU
 		{E035E152-0856-4E40-802B-153BABBF1423}.Release|x86.Build.0 = Release|Any CPU
+		{8F51FC87-40D9-47A1-A40C-7AB2060A365F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F51FC87-40D9-47A1-A40C-7AB2060A365F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F51FC87-40D9-47A1-A40C-7AB2060A365F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8F51FC87-40D9-47A1-A40C-7AB2060A365F}.Debug|x64.Build.0 = Debug|Any CPU
+		{8F51FC87-40D9-47A1-A40C-7AB2060A365F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8F51FC87-40D9-47A1-A40C-7AB2060A365F}.Debug|x86.Build.0 = Debug|Any CPU
+		{8F51FC87-40D9-47A1-A40C-7AB2060A365F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F51FC87-40D9-47A1-A40C-7AB2060A365F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F51FC87-40D9-47A1-A40C-7AB2060A365F}.Release|x64.ActiveCfg = Release|Any CPU
+		{8F51FC87-40D9-47A1-A40C-7AB2060A365F}.Release|x64.Build.0 = Release|Any CPU
+		{8F51FC87-40D9-47A1-A40C-7AB2060A365F}.Release|x86.ActiveCfg = Release|Any CPU
+		{8F51FC87-40D9-47A1-A40C-7AB2060A365F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E035E152-0856-4E40-802B-153BABBF1423} = {2078181C-ADB1-475C-A594-A0A2EF678586}
+		{8F51FC87-40D9-47A1-A40C-7AB2060A365F} = {2078181C-ADB1-475C-A594-A0A2EF678586}
 	EndGlobalSection
 EndGlobal
