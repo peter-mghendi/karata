@@ -3,7 +3,7 @@
 @using Karata.Web.Models
 @using Karata.Web.Services
 
-@page "/chat"
+@page "/play"
 @attribute [Authorize]
 
 @implements IAsyncDisposable
@@ -41,28 +41,44 @@ else if (currentRoom is null)
 }
 else
 {
-    <p>Connected to room: @currentRoom.Link</p>
-    <p>Created at: @currentRoom.CreatedAt</p>
-    <p>Creator: @currentRoom.Creator.Username</p>
-    
-    @* <button class="btn btn-link" @onclick="async () => await Clipboard.SetTextAsync(currentRoom.Link)">Copy</button> *@
-    
-    <button class="btn btn-outline-danger" @onclick="LeaveRoom">Leave Room</button>
-    <p>Number of members: @currentRoom.Members.Count</p>
-    <div class="form-group">
-        <label for="textInput">Message:</label>
-        <textarea class="form-control" id="textInput" @bind="textInput"></textarea>
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+                <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Username</p>
+                <button class="btn btn-outline-primary" @onclick="PerformTurn">Perform Turn</button>
+                <ul id="turnsList">
+                    @foreach (var turn in turns)
+                    {
+                        <li>@turn</li>
+                    }
+                </ul>
+            </div>
+            <div class="col-4">
+                <p>Connected to room: @currentRoom.Link</p>
+                <p>Created at: @currentRoom.CreatedAt</p>
+                <p>Creator: @currentRoom.Creator.Username</p>
+                
+                @* <button class="btn btn-link" @onclick="async () => await Clipboard.SetTextAsync(currentRoom.Link)">Copy</button> *@
+                
+                <button class="btn btn-outline-danger" @onclick="LeaveRoom">Leave Room</button>
+                <p>Number of players: @currentRoom.Game.Players.Count</p>
+                <div class="form-group">
+                    <label for="textInput">Message:</label>
+                    <textarea class="form-control" id="textInput" @bind="textInput"></textarea>
+                </div>
+                <button class="btn btn-outline-primary" @onclick="Send">Send</button>
+
+                <hr>
+
+                <ul id="messagesList">
+                    @foreach (var message in messages)
+                    {
+                        <li>@message</li>
+                    }
+                </ul>
+            </div>
+        </div>
     </div>
-    <button class="btn btn-outline-primary" @onclick="Send">Send</button>
-
-    <hr>
-
-    <ul id="messagesList">
-        @foreach (var message in messages)
-        {
-            <li>@message</li>
-        }
-    </ul>
 }
 
 
@@ -79,6 +95,7 @@ else
     private string textInput;
 
     private List<string> messages = new();
+    private List<string> turns = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -97,14 +114,12 @@ else
 
         hubConnection.On<ChatMessage>("ReceiveChatMessage", message =>
         {
-            @* messages.Add(message); *@
             messages.Add($"[{message.Sent}] {message.Sender} : {message.Text}");
             StateHasChanged();
         });
 
         hubConnection.On<SystemMessage>("ReceiveSystemMessage", message =>
         {
-            @* messages.Add(message); *@
             messages.Add($"{message.Text}");
             StateHasChanged();
         });
@@ -116,7 +131,15 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<List<User>>("UpdateRoomMembers", members => currentRoom.Members = members);
+        hubConnection.On<Game>("UpdateGameInfo", game => {
+            currentRoom.Game = game;
+            StateHasChanged();
+        });
+
+        hubConnection.On<User>("TurnPerformed", player => {
+            turns.Add($"{player.Username} played their turn.");
+            StateHasChanged();
+        });
 
         await hubConnection.StartAsync();
     }
@@ -128,6 +151,8 @@ else
     async Task JoinRoom() => await hubConnection.SendAsync("JoinRoom", inviteLink);
 
     async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", currentRoom.Link);
+
+    async Task PerformTurn() => await hubConnection.SendAsync("PerformTurn", currentRoom.Link);
 
     public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
 

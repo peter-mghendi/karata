@@ -7,6 +7,6 @@ namespace Karata.Web.Services
 
     public class RoomService : IRoomService
     {
-        public Dictionary<string, Room> rooms { get; } = new();
+        public Dictionary<string, Room> Rooms { get; } = new();
     }
 }

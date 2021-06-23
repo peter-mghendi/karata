@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Karata.Web.Models;
@@ -14,6 +15,8 @@ namespace Karata.Web.Hubs.Clients
 
         Task RemoveFromRoom();
 
-        Task UpdateRoomMembers(List<User> members);
+        Task UpdateGameInfo(Game game);
+
+        Task TurnPerformed(User player);
     }
 }

@@ -6,6 +6,6 @@ namespace Karata.Web.Services
 {
     public interface IRoomService
     {
-        Dictionary<string, Room> rooms { get; }
+        Dictionary<string, Room> Rooms { get; }
     }
 }
