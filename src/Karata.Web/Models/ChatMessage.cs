@@ -5,6 +5,6 @@ namespace Karata.Web.Models
     {
         public string Text { get; set; }
         public string Sender { get; set; }
-        public DateTime Sent { get; set; }
+        public DateTime Sent { get; set; } = DateTime.Now;
     }
 }

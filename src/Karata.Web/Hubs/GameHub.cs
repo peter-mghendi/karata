@@ -15,19 +15,15 @@ namespace Karata.Web.Hubs
         private readonly ILogger<GameHub> _logger;
         private readonly IRoomService _roomService;
 
-        public GameHub(IRoomService roomService, ILogger<GameHub> logger) => 
+        public GameHub(IRoomService roomService, ILogger<GameHub> logger) =>
             (_roomService, _logger) = (roomService, logger);
 
-        public async Task SendChatMessage(string roomLink, string text)
-        {
-            var message = new ChatMessage
+        public async Task SendChatMessage(string roomLink, string text) =>
+            await Clients.Group(roomLink).ReceiveChatMessage(new()
             {
                 Text = text,
-                Sender = Context.User.Identity.Name,
-                Sent = DateTime.Now
-            };
-            await Clients.Group(groupName: roomLink).ReceiveChatMessage(message: message);
-        }
+                Sender = Context.User.Identity.Name
+            });
 
         public async Task CreateRoom()
         {
@@ -38,38 +34,61 @@ namespace Karata.Web.Hubs
                 Creator = user,
             };
             _roomService.Rooms.Add(room.Link, room);
-            await AddToRoomAsync(room: room, user: user);
+            await AddToRoomAsync(room, user);
         }
 
-        public async Task JoinRoom(string roomLink) =>
-            await AddToRoomAsync(room: _roomService.Rooms[roomLink], user: new(Context.UserIdentifier));
+        public async Task JoinRoom(string roomLink)
+        {
+            var room = _roomService.Rooms[roomLink];
+            if (room.Game.Started)
+            {
+                await Clients.Caller.ReceiveSystemMessage(new("This game has already started."));
+                return;
+            }
+            await AddToRoomAsync(room, new(Context.UserIdentifier));
+        }
 
         public async Task LeaveRoom(string roomLink)
         {
-            _roomService.Rooms[roomLink].Game.Players.Remove(new User(Context.UserIdentifier));
-
+            var user = new User(Context.UserIdentifier);
+            _roomService.Rooms[roomLink].Game.Players.Remove(user);
             var room = _roomService.Rooms[roomLink];
-            var message = new SystemMessage()
+
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.Link);
+            await Clients.Caller.RemoveFromRoom();
+            await Clients.Group(room.Link).UpdateGameInfo(room.Game);
+            await Clients.Group(room.Link).ReceiveSystemMessage(new($"{user.Username} left the room."));
+        }
+
+        public async Task StartGame(string roomLink)
+        {
+            if (_roomService.Rooms[roomLink].Creator.Username != Context.UserIdentifier)
             {
-                Text = $"{Context.User.Identity.Name} left the room.",
-                Sent = DateTime.Now
+                await Clients.Caller.ReceiveSystemMessage(new("You are not allowed to perform that action."));
+                return;
             };
 
-            await Groups.RemoveFromGroupAsync(connectionId: Context.ConnectionId, groupName: room.Link);
-            await Clients.Caller.RemoveFromRoom();
-            await Clients.Group(groupName: room.Link).UpdateGameInfo(game: room.Game);
-            await Clients.Group(groupName: room.Link).ReceiveSystemMessage(message: message);
+            _roomService.Rooms[roomLink].Game.Started = true;
+            var room = _roomService.Rooms[roomLink];
+
+            await Clients.Group(room.Link).UpdateGameInfo(room.Game);
+            await Clients.Group(room.Link).ReceiveSystemMessage(new("The game has started. No new players may join."));
         }
 
         public async Task PerformTurn(string roomLink)
         {
             var game = _roomService.Rooms[roomLink].Game;
+            if (!game.Started)
+            {
+                await Clients.Caller.ReceiveSystemMessage(new("The game has not started yet."));
+                return;
+            }
+
             var requiredUser = game.Players[game.CurrentTurn];
             var currentUser = new User(Context.UserIdentifier);
-
-            if(requiredUser != currentUser)
+            if (requiredUser != currentUser)
             {
-                await Clients.Caller.ReceiveSystemMessage(new() { Text = "It is not your turn!"});
+                await Clients.Caller.ReceiveSystemMessage(new("It is not your turn!"));
                 return;
             }
 
@@ -77,25 +96,19 @@ namespace Karata.Web.Hubs
             game.CurrentTurn = isLastPlayer ? 0 : game.CurrentTurn + 1;
             _roomService.Rooms[roomLink].Game = game;
 
-            await Clients.Group(roomLink).TurnPerformed(player: currentUser);
-            await Clients.Group(roomLink).UpdateGameInfo(game: game);
+            await Clients.Group(roomLink).TurnPerformed(currentUser);
+            await Clients.Group(roomLink).UpdateGameInfo(game);
         }
 
         private async Task AddToRoomAsync(Room room, User user)
         {
-            var message = new SystemMessage()
-            {
-                Text = $"{Context.User.Identity.Name} joined the room.",
-                Sent = DateTime.Now
-            };
-
             _roomService.Rooms[room.Link].Game.Players.Add(user);
             room = _roomService.Rooms[room.Link];
 
-            await Groups.AddToGroupAsync(connectionId: Context.ConnectionId, groupName: room.Link);
-            await Clients.Caller.AddToRoom(room: room);
-            await Clients.OthersInGroup(groupName: room.Link).UpdateGameInfo(game: room.Game);
-            await Clients.Group(groupName: room.Link).ReceiveSystemMessage(message: message);
+            await Groups.AddToGroupAsync(Context.ConnectionId, room.Link);
+            await Clients.Caller.AddToRoom(room);
+            await Clients.OthersInGroup(room.Link).UpdateGameInfo(room.Game);
+            await Clients.OthersInGroup(room.Link).ReceiveSystemMessage(new($"{user.Username} joined the room."));
         }
     }
 }

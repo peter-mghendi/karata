@@ -8,6 +8,7 @@
 
 @implements IAsyncDisposable
 
+@inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 
 @if (!IsConnected)
@@ -72,6 +73,16 @@ else
         <div class="row">
             <div class="col-8">
                 <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Username</p>
+                <p>Deck Size: @currentRoom.Game.Deck.Cards.Count</p>
+                <p>Pile Size: @currentRoom.Game.Pile.Cards.Count</p>
+                <p>Top Card: @currentRoom.Game.Deck.Cards.Peek().Name</p>
+                <p>My cards:</p>
+                <ul>
+                    <li>List</li>
+                    <li>Of</li>
+                    <li>Cards</li>
+                </ul>
+                
                 <button class="btn btn-outline-primary" @onclick="PerformTurn">
                     Perform Turn
                 </button>
@@ -106,8 +117,16 @@ else
                         <p>Created at: <br> @currentRoom.CreatedAt</p>
                         <p>Creator: <br> @currentRoom.Creator.Username</p>
                         <p>Players: <br> @currentRoom.Game.Players.Count</p>
+                        <p>Started: <br> @currentRoom.Game.Started</p>
 
-                        <button class="btn btn-outline-danger w-100" @onclick="LeaveRoom">Leave Room</button>
+                        <div id="join-room" class="row g-2">
+                            <div class="col-12 col-md-6">
+                                <button class="btn btn-outline-success w-100" @onclick="StartGame">Start Game</button>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <button class="btn btn-outline-danger w-100" @onclick="LeaveRoom">Leave Room</button>
+                            </div>
+                        </div>
                     }
                 </div>
 
@@ -123,7 +142,11 @@ else
                 <ul id="messagesList" class="list-group list-group-flush">
                     @foreach (var message in messages)
                     {
-                        <li class="list-group-item">@message</li>
+                        <li class="list-group-item">
+                            <div class="fw-bold">@message.Sender</div>
+                            <div class="small text-muted">@message.Sent</div>
+                            @message.Text
+                        </li>
                     }
                 </ul>
             </div>
@@ -131,19 +154,24 @@ else
     </div>
 }
 
-
 @code {
     [Inject]
     public CookieService CookieService { get; set; }
     private HubConnection hubConnection;
-    private Room currentRoom = null;
+
+    // Join UI state
     private string inviteLink;
     private string invitePassword;
     private string createPassword;
+
+    // Game UI state
     private string textInput;
-    private List<string> messages = new();
-    private List<string> turns = new();
     private bool viewDetails = false;
+
+    // Game tate
+    private Room currentRoom = null;
+    private List<ChatMessage> messages = new(); // TODO Integrate into game model
+    private List<string> turns = new(); // TODO Integrate into game model
 
     protected override async Task OnInitializedAsync()
     {
@@ -162,21 +190,23 @@ else
 
         hubConnection.On<ChatMessage>("ReceiveChatMessage", message =>
         {
-            messages.Add($"[{message.Sent}] {message.Sender} : {message.Text}");
+            messages.Add(message);
             StateHasChanged();
         });
 
-        hubConnection.On<SystemMessage>("ReceiveSystemMessage", message =>
+        hubConnection.On<SystemMessage>("ReceiveSystemMessage", async message => await AlertAsync(message.Text));
+
+        hubConnection.On<Room>("AddToRoom", room =>
         {
-            messages.Add($"{message.Text}");
+            currentRoom = room;
             StateHasChanged();
         });
-
-        hubConnection.On<Room>("AddToRoom", room => currentRoom = room);
 
         hubConnection.On("RemoveFromRoom", () =>
         {
             currentRoom = null;
+            messages.Clear();
+            turns.Clear();
             StateHasChanged();
         });
 
@@ -195,17 +225,33 @@ else
         await hubConnection.StartAsync();
     }
 
-    async Task Send() => await hubConnection.SendAsync("SendChatMessage", currentRoom.Link, textInput);
+    async Task Send()
+    {
+        await hubConnection.SendAsync("SendChatMessage", currentRoom.Link, textInput);
+        textInput = string.Empty;
+    }
 
     async Task CreateRoom() => await hubConnection.SendAsync("CreateRoom");
 
-    async Task JoinRoom() => await hubConnection.SendAsync("JoinRoom", inviteLink);
+    async Task JoinRoom()
+    {
+        if (string.IsNullOrWhiteSpace(inviteLink))
+        {
+            await AlertAsync("Please supply an invite link and, where applicable, a password.");
+            return;
+        }
+        await hubConnection.SendAsync("JoinRoom", inviteLink);
+    }
 
     async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", currentRoom.Link);
+
+    async Task StartGame() => await hubConnection.SendAsync("StartGame", currentRoom.Link);
 
     async Task PerformTurn() => await hubConnection.SendAsync("PerformTurn", currentRoom.Link);
 
     public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
 
     public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
+
+    private async Task AlertAsync(string text) => await JSRuntime.InvokeVoidAsync("alert", text);
 }
