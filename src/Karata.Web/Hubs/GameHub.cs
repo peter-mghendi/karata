@@ -12,18 +12,20 @@ namespace Karata.Web.Hubs
     [Authorize]
     public class GameHub : Hub<IGameClient>
     {
-        private readonly ILogger<GameHub> _logger;
         private readonly IRoomService _roomService;
 
-        public GameHub(IRoomService roomService, ILogger<GameHub> logger) =>
-            (_roomService, _logger) = (roomService, logger);
+        public GameHub(IRoomService roomService) => _roomService = roomService;
 
-        public async Task SendChatMessage(string roomLink, string text) =>
-            await Clients.Group(roomLink).ReceiveChatMessage(new()
+        public async Task SendChatMessage(string roomLink, string text)
+        {
+            var message = new ChatMessage
             {
                 Text = text,
                 Sender = Context.User.Identity.Name
-            });
+            };
+            _roomService.Rooms[roomLink].Messages.Add(message);
+            await Clients.Group(roomLink).ReceiveChatMessage(message);
+        }
 
         public async Task CreateRoom()
         {
@@ -68,7 +70,17 @@ namespace Karata.Web.Hubs
                 return;
             };
 
+            _roomService.Rooms[roomLink].Game.Deck.Shuffle();
+
+            var topCard = _roomService.Rooms[roomLink].Game.Deck.Deal();
+            _roomService.Rooms[roomLink].Game.Pile.Cards.Push(topCard);
+            foreach (var player in _roomService.Rooms[roomLink].Game.Players)
+            {
+                var dealt = _roomService.Rooms[roomLink].Game.Deck.DealMany(4);
+                player.Hand.Cards.AddRange(dealt);
+            }
             _roomService.Rooms[roomLink].Game.Started = true;
+
             var room = _roomService.Rooms[roomLink];
 
             await Clients.Group(room.Link).UpdateGameInfo(room.Game);
@@ -86,7 +98,7 @@ namespace Karata.Web.Hubs
 
             var requiredUser = game.Players[game.CurrentTurn];
             var currentUser = new User(Context.UserIdentifier);
-            if (requiredUser != currentUser)
+            if (requiredUser.Username != currentUser.Username)
             {
                 await Clients.Caller.ReceiveSystemMessage(new("It is not your turn!"));
                 return;

@@ -49,5 +49,18 @@ namespace Karata.Cards
                 OrderByRandom => new OrderByRandomShuffler(),
                 FisherYates or _ => new FisherYatesShuffler()
             });
+
+        public Card Deal() => Cards.Pop();
+
+        // TODO: Check for cards == 0
+        public List<Card> DealMany(int num)
+        {
+            var list = new List<Card>();
+            for(int i = 0; i < num; i++)
+            {
+                list.Add(Cards.Pop());
+            }
+            return list;
+        }
     }
 }

@@ -1,13 +1,16 @@
 @using System.Net
-@using Microsoft.AspNetCore.SignalR.Client
+@using Karata.Cards
 @using Karata.Web.Models
 @using Karata.Web.Services
+@using Microsoft.AspNetCore.SignalR.Client
+@using static Karata.Cards.Card.CardSuit;
 
 @page "/play"
 @attribute [Authorize]
 
 @implements IAsyncDisposable
 
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 
@@ -72,20 +75,57 @@ else
     <div class="container">
         <div class="row">
             <div class="col-8">
-                <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Username</p>
-                <p>Deck Size: @currentRoom.Game.Deck.Cards.Count</p>
-                <p>Pile Size: @currentRoom.Game.Pile.Cards.Count</p>
-                <p>Top Card: @currentRoom.Game.Deck.Cards.Peek().Name</p>
-                <p>My cards:</p>
-                <ul>
-                    <li>List</li>
-                    <li>Of</li>
-                    <li>Cards</li>
-                </ul>
-                
-                <button class="btn btn-outline-primary" @onclick="PerformTurn">
-                    Perform Turn
-                </button>
+                @if (@currentRoom.Game.Started)
+                {
+                    <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Username</p>
+                    <p>Deck Size: @currentRoom.Game.Deck.Cards.Count</p>
+                    <p>Pile Size: @currentRoom.Game.Pile.Cards.Count</p>
+                    <p>Top Card: @currentRoom.Game.Pile.Cards.Peek().Name</p>
+                    <div class="row">
+                        <div class="col-6">
+                            <p>My cards:</p>
+                            <ul class="list-group list-group-flush">
+                                @foreach (var card in currentHand)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>
+                                            <i class="@($"bi {GetCardIcon(card)} me-2")"></i>
+                                            @card.Name
+                                        </span>
+                                        <button class="btn btn-outline-success" @onclick="() => AddCardToTurn(card)">
+                                            <i class="bi bi-plus text-success"></i>
+                                        </button>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="col-6">
+                            <p>This turn:</p>
+                            <ul class="list-group list-group-flush">
+                                @foreach (var card in currentTurn)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>
+                                            <i class="@($"bi {GetCardIcon(card)} me-2")"></i>
+                                            @card.Name
+                                        </span>
+                                        <button class="btn btn-outline-danger" @onclick="() => RemoveCardFromTurn(card)">
+                                            <i class="bi bi-trash text-danger"></i>
+                                        </button>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="d-flex">
+                        <button class="btn btn-outline-primary mx-auto" @onclick="PerformTurn">
+                            Perform Turn
+                        </button>
+                    </div>
+                }
+
+
                 <ul id="turnsList">
                     @foreach (var turn in turns)
                     {
@@ -140,10 +180,16 @@ else
                 <hr>
 
                 <ul id="messagesList" class="list-group list-group-flush">
-                    @foreach (var message in messages)
+                    @foreach (var message in currentRoom.Messages)
                     {
                         <li class="list-group-item">
-                            <div class="fw-bold">@message.Sender</div>
+                            <div class="fw-bold">
+                                @if (message.Sender == Me.Username)
+                                {
+                                    <i class="bi bi-person-fill me-2"></i>
+                                }
+                                @message.Sender
+                            </div>
                             <div class="small text-muted">@message.Sent</div>
                             @message.Text
                         </li>
@@ -158,43 +204,63 @@ else
     [Inject]
     public CookieService CookieService { get; set; }
     private HubConnection hubConnection;
+    private string username = "user@mail.com";
 
-    // Join UI state
+    // Join screen state
     private string inviteLink;
     private string invitePassword;
     private string createPassword;
 
-    // Game UI state
+    // UI state
     private string textInput;
-    private bool viewDetails = false;
+    private bool viewDetails = true;
 
-    // Game tate
+    // Game state
     private Room currentRoom = null;
-    private List<ChatMessage> messages = new(); // TODO Integrate into game model
     private List<string> turns = new(); // TODO Integrate into game model
+    private List<Card> currentHand
+    {
+        get
+        {
+            var handCopy = new List<Card>(Me.Hand.Cards);
+            handCopy.RemoveAll(card => currentTurn.Contains(card));
+            return handCopy;
+        }
+    }
+    private List<Card> currentTurn = new();
+    private User Me => currentRoom.Game.Players.Single(u => u.Username == username);
 
     protected override async Task OnInitializedAsync()
     {
-        var container = new CookieContainer();
-        var cookie = new Cookie()
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        username = authState.User.Identity.Name;
+
+        var container = new CookieContainer(); ;
+        container.Add(new Cookie
         {
             Name = ".AspNetCore.Identity.Application",
             Domain = "localhost",
             Value = CookieService.Cookie
-        };
+        });
 
-        container.Add(cookie);
         hubConnection = new HubConnectionBuilder()
-        .WithUrl(NavigationManager.ToAbsoluteUri("/game"), options => options.Cookies = container)
+        .WithUrl(NavigationManager.ToAbsoluteUri("/game"), options =>
+        {
+            options.Cookies = container;
+        })
         .Build();
 
         hubConnection.On<ChatMessage>("ReceiveChatMessage", message =>
         {
-            messages.Add(message);
+            currentRoom.Messages.Add(message);
             StateHasChanged();
         });
 
-        hubConnection.On<SystemMessage>("ReceiveSystemMessage", async message => await AlertAsync(message.Text));
+        hubConnection.On<SystemMessage>("ReceiveSystemMessage", async message =>
+        {
+            await AlertAsync(message.Text);
+        });
+
 
         hubConnection.On<Room>("AddToRoom", room =>
         {
@@ -205,8 +271,7 @@ else
         hubConnection.On("RemoveFromRoom", () =>
         {
             currentRoom = null;
-            messages.Clear();
-            turns.Clear();
+            turns.Clear(); // TODO
             StateHasChanged();
         });
 
@@ -227,6 +292,7 @@ else
 
     async Task Send()
     {
+
         await hubConnection.SendAsync("SendChatMessage", currentRoom.Link, textInput);
         textInput = string.Empty;
     }
@@ -254,4 +320,27 @@ else
     public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
 
     private async Task AlertAsync(string text) => await JSRuntime.InvokeVoidAsync("alert", text);
+
+    private string GetCardIcon(Card card) => card.Suit switch
+    {
+        Spades => "bi-suit-spade-fill",
+        Hearts => "bi-suit-heart-fill text-danger",
+        Clubs => "bi-suit-club-fill",
+        Diamonds => "bi-suit-diamond-fill text-danger",
+        BlackJoker => "bi-circle-fill",
+        RedJoker => "bi-circle-fill text-danger",
+        _ => string.Empty
+    };
+
+    private void AddCardToTurn(Card card)
+    {
+        currentTurn.Add(card);
+        StateHasChanged();
+    }
+
+    private void RemoveCardFromTurn(Card card)
+    {
+        currentTurn.Remove(card);
+        StateHasChanged();
+    }
 }

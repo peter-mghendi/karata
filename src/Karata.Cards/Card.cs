@@ -15,8 +15,8 @@ namespace Karata.Cards
                 var suit = Suit.ToString();
                 return Suit switch
                 {
-                    BlackJoker or RedJoker => $"{suit.Substring(0, suit.Length - 5)} Joker",
-                    _ => $"{Face.ToString()} of {suit}"
+                    BlackJoker or RedJoker => $"{suit[0..^5]} Joker",
+                    _ => $"{Face} of {suit}"
                 };
             }
         }
