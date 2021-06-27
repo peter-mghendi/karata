@@ -1,14 +1,17 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Karata.Cards;
 using Karata.Web.Hubs.Clients;
 using Karata.Web.Models;
+using Karata.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Karata.Web.Services;
-using Microsoft.Extensions.Logging;
 
 namespace Karata.Web.Hubs
 {
+    // TODO Run async calls concurrently
     [Authorize]
     public class GameHub : Hub<IGameClient>
     {
@@ -29,6 +32,7 @@ namespace Karata.Web.Hubs
 
         public async Task CreateRoom()
         {
+            // Create room
             var user = new User(Context.UserIdentifier);
             var room = new Room
             {
@@ -36,66 +40,154 @@ namespace Karata.Web.Hubs
                 Creator = user,
             };
             _roomService.Rooms.Add(room.Link, room);
-            await AddToRoomAsync(room, user);
+
+            // Add player to room
+            room.Game.Players.Add(user);
+            await Clients.OthersInGroup(room.Link).AddPlayerToRoom(user);
+            await Groups.AddToGroupAsync(Context.ConnectionId, room.Link);
+            await Clients.Caller.AddToRoom(room);
+
+            SaveRoomState(room);
         }
 
         public async Task JoinRoom(string roomLink)
         {
             var room = _roomService.Rooms[roomLink];
+
+            // Check game status
             if (room.Game.Started)
             {
                 await Clients.Caller.ReceiveSystemMessage(new("This game has already started."));
                 return;
             }
-            await AddToRoomAsync(room, new(Context.UserIdentifier));
+
+            // Add player to room
+            var user = new User(Context.UserIdentifier);
+            room.Game.Players.Add(user);
+            await Clients.OthersInGroup(roomLink).AddPlayerToRoom(user);
+            await Groups.AddToGroupAsync(Context.ConnectionId, room.Link);
+            await Clients.Caller.AddToRoom(room);
+
+            SaveRoomState(room);
         }
 
         public async Task LeaveRoom(string roomLink)
         {
-            var user = new User(Context.UserIdentifier);
-            _roomService.Rooms[roomLink].Game.Players.Remove(user);
             var room = _roomService.Rooms[roomLink];
 
+            // Check game status
+            if (room.Game.Started)
+            {
+                await Clients.Caller.ReceiveSystemMessage(new("Please don't do this. The game isn't built to handle it."));
+                return;
+            }
+
+            var user = new User(Context.UserIdentifier);
+
+            // Remove player from room
+            room.Game.Players.Remove(user);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.Link);
             await Clients.Caller.RemoveFromRoom();
-            await Clients.Group(room.Link).UpdateGameInfo(room.Game);
-            await Clients.Group(room.Link).ReceiveSystemMessage(new($"{user.Username} left the room."));
+            await Clients.OthersInGroup(room.Link).RemovePlayerFromRoom(user);
+
+            SaveRoomState(room);
         }
 
         public async Task StartGame(string roomLink)
         {
-            if (_roomService.Rooms[roomLink].Creator.Username != Context.UserIdentifier)
+            var room = _roomService.Rooms[roomLink];
+            var game = room.Game;
+
+            // Check caller role
+            if (room.Creator.Username != Context.UserIdentifier)
             {
                 await Clients.Caller.ReceiveSystemMessage(new("You are not allowed to perform that action."));
                 return;
             };
 
-            _roomService.Rooms[roomLink].Game.Deck.Shuffle();
-
-            var topCard = _roomService.Rooms[roomLink].Game.Deck.Deal();
-            _roomService.Rooms[roomLink].Game.Pile.Cards.Push(topCard);
-            foreach (var player in _roomService.Rooms[roomLink].Game.Players)
+            // Check player number
+            if (game.Players.Count < 2 || game.Players.Count > 4)
             {
-                var dealt = _roomService.Rooms[roomLink].Game.Deck.DealMany(4);
+                await Clients.Caller.ReceiveSystemMessage(new("A game needs 2-4 players."));
+                return;
+            };
+
+            // Shuffle deck
+            game.Deck.Shuffle();
+
+            // Deal starting card
+            int dealtCount = 1;
+            var topCard = game.Deck.Deal();
+            game.Pile.Cards.Push(topCard);
+            await Clients.Group(roomLink).AddCardToPile(topCard);
+
+            // Deal player cards
+            foreach (var player in game.Players)
+            {
+                dealtCount += 4;
+                var dealt = game.Deck.DealMany(4);
                 player.Hand.Cards.AddRange(dealt);
+                await Clients.User(player.Username).AddCardRangeToHand(dealt);
             }
-            _roomService.Rooms[roomLink].Game.Started = true;
+            
+            await Clients.Group(roomLink).RemoveCardsFromDeck(dealtCount);
 
-            var room = _roomService.Rooms[roomLink];
+            // Start game
+            game.Started = true;
+            await Clients.Group(roomLink).UpdateGameStatus(true);
 
-            await Clients.Group(room.Link).UpdateGameInfo(room.Game);
-            await Clients.Group(room.Link).ReceiveSystemMessage(new("The game has started. No new players may join."));
+            room.Game = game;
+            SaveRoomState(room);
         }
 
-        public async Task PerformTurn(string roomLink)
+        public async Task<bool> PerformTurn(string roomLink, List<Card> turn)
         {
-            var game = _roomService.Rooms[roomLink].Game;
+            var room = _roomService.Rooms[roomLink];
+            var game = room.Game;
+
+            // Check game status
             if (!game.Started)
             {
                 await Clients.Caller.ReceiveSystemMessage(new("The game has not started yet."));
-                return;
+                return false;
             }
 
+            // Check turn
+            var requiredUser = game.Players[game.CurrentTurn];
+            var currentUser = new User(Context.UserIdentifier);
+            if (requiredUser.Username != currentUser.Username)
+            {
+                await Clients.Caller.ReceiveSystemMessage(new("It is not your turn!"));
+                return false;
+            }
+
+            // Add cards to deck
+            foreach (var card in turn)
+            {
+                game.Pile.Cards.Push(card);
+                await Clients.Group(roomLink).AddCardToPile(card);
+            }
+
+            // Remove cards from player hand
+            game.Players.Single(p => p.Username == currentUser.Username).Hand.Cards
+                .RemoveAll(card => turn.Contains(card));
+
+            // Update current tuen
+            var isLastPlayer = game.CurrentTurn == game.Players.Count - 1;
+            game.CurrentTurn = isLastPlayer ? 0 : game.CurrentTurn + 1;
+            await Clients.Group(roomLink).UpdateTurn(game.CurrentTurn);
+
+            room.Game = game;
+            SaveRoomState(room);
+            return true;
+        }
+
+        public async Task PickCard(string roomLink)
+        {
+            var room =  _roomService.Rooms[roomLink];
+            var game = room.Game;
+
+            // Check turn
             var requiredUser = game.Players[game.CurrentTurn];
             var currentUser = new User(Context.UserIdentifier);
             if (requiredUser.Username != currentUser.Username)
@@ -104,23 +196,25 @@ namespace Karata.Web.Hubs
                 return;
             }
 
+            // Remove card from pile
+            var card = game.Deck.Deal();
+            await Clients.Group(roomLink).RemoveCardsFromDeck(1);
+
+    	    // Add card to player hand
+            game.Players.Single(p => p.Username == Context.UserIdentifier).Hand.Cards
+                .Add(card);
+            await Clients.Caller.AddCardToHand(card);
+
+            // Update player turn
             var isLastPlayer = game.CurrentTurn == game.Players.Count - 1;
             game.CurrentTurn = isLastPlayer ? 0 : game.CurrentTurn + 1;
-            _roomService.Rooms[roomLink].Game = game;
+            await Clients.Group(roomLink).UpdateTurn(game.CurrentTurn);
 
-            await Clients.Group(roomLink).TurnPerformed(currentUser);
-            await Clients.Group(roomLink).UpdateGameInfo(game);
+            room.Game = game;
+            SaveRoomState(room);
         }
 
-        private async Task AddToRoomAsync(Room room, User user)
-        {
-            _roomService.Rooms[room.Link].Game.Players.Add(user);
-            room = _roomService.Rooms[room.Link];
-
-            await Groups.AddToGroupAsync(Context.ConnectionId, room.Link);
-            await Clients.Caller.AddToRoom(room);
-            await Clients.OthersInGroup(room.Link).UpdateGameInfo(room.Game);
-            await Clients.OthersInGroup(room.Link).ReceiveSystemMessage(new($"{user.Username} joined the room."));
-        }
+        // Save server-side state
+        private void SaveRoomState(Room room) => _roomService.Rooms[room.Link] = room;
     }
 }

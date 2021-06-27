@@ -8,7 +8,6 @@ using static Karata.Cards.Shufflers.ShuffleAlgorithm;
 
 namespace Karata.Cards
 {
-    // TODO: ShuffleAsync method?
     public class Deck
     {
         public Stack<Card> Cards { get; set; } = new();

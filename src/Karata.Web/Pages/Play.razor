@@ -122,16 +122,12 @@ else
                         <button class="btn btn-outline-primary mx-auto" @onclick="PerformTurn">
                             Perform Turn
                         </button>
+
+                        <button class="btn btn-outline-secondary mx-auto" @onclick="PickCard">
+                            Pick Card
+                        </button>
                     </div>
                 }
-
-
-                <ul id="turnsList">
-                    @foreach (var turn in turns)
-                    {
-                        <li>@turn</li>
-                    }
-                </ul>
             </div>
             <div class="col-4">
                 <div class="mb-2">
@@ -204,7 +200,7 @@ else
     [Inject]
     public CookieService CookieService { get; set; }
     private HubConnection hubConnection;
-    private string username = "user@mail.com";
+    private string username;
 
     // Join screen state
     private string inviteLink;
@@ -217,7 +213,7 @@ else
 
     // Game state
     private Room currentRoom = null;
-    private List<string> turns = new(); // TODO Integrate into game model
+    private List<Card> currentTurn = new();
     private List<Card> currentHand
     {
         get
@@ -227,7 +223,6 @@ else
             return handCopy;
         }
     }
-    private List<Card> currentTurn = new();
     private User Me => currentRoom.Game.Players.Single(u => u.Username == username);
 
     protected override async Task OnInitializedAsync()
@@ -250,17 +245,39 @@ else
         })
         .Build();
 
-        hubConnection.On<ChatMessage>("ReceiveChatMessage", message =>
+        hubConnection.On<Card>("AddCardToHand", card =>
         {
-            currentRoom.Messages.Add(message);
+            currentRoom.Game.Players.Single(u => u.Username == username).Hand.Cards.Add(card);
             StateHasChanged();
         });
 
-        hubConnection.On<SystemMessage>("ReceiveSystemMessage", async message =>
+        hubConnection.On<Card>("AddCardToPile", card =>
         {
-            await AlertAsync(message.Text);
+            currentRoom.Game.Pile.Cards.Push(card);
+            StateHasChanged();
         });
 
+        hubConnection.On<List<Card>>("AddCardRangeToHand", cards =>
+        {
+            currentRoom.Game.Players.Single(u => u.Username == username).Hand.Cards.AddRange(cards);
+            StateHasChanged();
+        });
+
+        hubConnection.On<List<Card>>("AddCardRangeToPile", cards =>
+        {
+            foreach (var card in cards)
+            {
+                currentRoom.Game.Pile.Cards.Push(card);
+            }
+            StateHasChanged();
+        });
+
+        hubConnection.On<User>("AddPlayerToRoom", async player =>
+        {
+            currentRoom.Game.Players.Add(player);
+            await AlertAsync($"{player.Username} has joined the room");
+            StateHasChanged();
+        });
 
         hubConnection.On<Room>("AddToRoom", room =>
         {
@@ -268,30 +285,76 @@ else
             StateHasChanged();
         });
 
+        hubConnection.On<ChatMessage>("ReceiveChatMessage", message =>
+        {
+            currentRoom.Messages.Add(message);
+            StateHasChanged();
+        });
+
+        // TODO: Non-blocking implementation
+        hubConnection.On<SystemMessage>("ReceiveSystemMessage", async message =>
+        {
+            await AlertAsync(message.Text);
+        });
+
+        hubConnection.On<int>("RemoveCardsFromDeck", num =>
+        {
+            currentRoom.Game.Deck.DealMany(num);
+            StateHasChanged();
+        });
+
         hubConnection.On("RemoveFromRoom", () =>
         {
             currentRoom = null;
-            turns.Clear(); // TODO
             StateHasChanged();
         });
 
-        hubConnection.On<Game>("UpdateGameInfo", game =>
+        hubConnection.On<User>("RemovePlayerFromRoom", async player =>
         {
-            currentRoom.Game = game;
+            currentRoom.Game.Players.RemoveAll(p => p.Username == player.Username);
+            await AlertAsync($"{player.Username} has left the room");
             StateHasChanged();
         });
 
-        hubConnection.On<User>("TurnPerformed", player =>
+        hubConnection.On<int>("UpdateTurn", turn =>
         {
-            turns.Add($"{player.Username} played their turn.");
+            currentRoom.Game.CurrentTurn = turn;
             StateHasChanged();
         });
+
+        hubConnection.On<bool>("UpdateGameStatus", async started =>
+        {
+            currentRoom.Game.Started = started;
+            if (started)
+            {
+                await AlertAsync("The game has started. No new players may join.");
+            }
+            StateHasChanged();
+        });
+
+        // TODO Server-side implementation
+        /** 
+        hubConnection.On<List<Card>>("AddCardsToDeck", cards =>
+        {
+            foreach (var card in cards)
+            {
+                currentRoom.Game.Deck.Cards.Push(card);
+            }
+
+            StateHasChanged();
+        }); 
+        */
 
         await hubConnection.StartAsync();
     }
 
     async Task Send()
     {
+        if (string.IsNullOrWhiteSpace(textInput))
+        {
+            await AlertAsync("Type in a message to send.");
+            return;
+        }
 
         await hubConnection.SendAsync("SendChatMessage", currentRoom.Link, textInput);
         textInput = string.Empty;
@@ -313,7 +376,22 @@ else
 
     async Task StartGame() => await hubConnection.SendAsync("StartGame", currentRoom.Link);
 
-    async Task PerformTurn() => await hubConnection.SendAsync("PerformTurn", currentRoom.Link);
+    async Task PerformTurn()
+    {
+        if (await hubConnection.InvokeAsync<bool>("PerformTurn", currentRoom.Link, currentTurn))
+        {
+            Me.Hand.Cards.RemoveAll(card => currentTurn.Contains(card));
+        }
+
+        
+            currentTurn.Clear();
+            StateHasChanged();
+    }
+
+    async Task PickCard()
+    {
+        await hubConnection.SendAsync("PickCard", currentRoom.Link);
+    }
 
     public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
 
