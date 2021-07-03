@@ -7,7 +7,8 @@ namespace Karata.Cards
     {
         public Stack<Card> Cards { get; set; } = new();
 
-        public Stack<Card> RemoveAllButTop()
+        // Empty pile but keep top card
+        public Stack<Card> Reclaim()
         {
             var topCard = Cards.Pop();
             var oldStack = new Stack<Card>(Cards.Reverse());

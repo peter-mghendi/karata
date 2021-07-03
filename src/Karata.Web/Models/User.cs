@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using Karata.Cards;
 
 namespace Karata.Web.Models
 {
     public record User(string Username) {
-        public Hand Hand { get; set; } = new();
+        public List<Card> Hand { get; } = new();
     }
 }

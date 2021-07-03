@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Karata.Cards;
+using Karata.Web.Engines;
 using Karata.Web.Hubs.Clients;
 using Karata.Web.Models;
 using Karata.Web.Services;
@@ -15,9 +16,11 @@ namespace Karata.Web.Hubs
     [Authorize]
     public class GameHub : Hub<IGameClient>
     {
+        private readonly IEngine _engine;
         private readonly IRoomService _roomService;
 
-        public GameHub(IRoomService roomService) => _roomService = roomService;
+        public GameHub(IEngine engine, IRoomService roomService) =>
+            (_engine, _roomService) = (engine, roomService);
 
         public async Task SendChatMessage(string roomLink, string text)
         {
@@ -126,10 +129,10 @@ namespace Karata.Web.Hubs
             {
                 dealtCount += 4;
                 var dealt = game.Deck.DealMany(4);
-                player.Hand.Cards.AddRange(dealt);
+                player.Hand.AddRange(dealt);
                 await Clients.User(player.Username).AddCardRangeToHand(dealt);
             }
-            
+
             await Clients.Group(roomLink).RemoveCardsFromDeck(dealtCount);
 
             // Start game
@@ -161,6 +164,13 @@ namespace Karata.Web.Hubs
                 return false;
             }
 
+            // Process turn
+            if (!_engine.ValidateTurn(topCard: game.Pile.Cards.Peek(), turnCards: turn))
+            {
+                await Clients.Caller.ReceiveSystemMessage(new("That card sequence is invalid"));
+                return false;
+            }
+
             // Add cards to deck
             foreach (var card in turn)
             {
@@ -169,10 +179,10 @@ namespace Karata.Web.Hubs
             }
 
             // Remove cards from player hand
-            game.Players.Single(p => p.Username == currentUser.Username).Hand.Cards
+            game.Players.Single(p => p.Username == currentUser.Username).Hand
                 .RemoveAll(card => turn.Contains(card));
 
-            // Update current tuen
+            // Update current turn
             var isLastPlayer = game.CurrentTurn == game.Players.Count - 1;
             game.CurrentTurn = isLastPlayer ? 0 : game.CurrentTurn + 1;
             await Clients.Group(roomLink).UpdateTurn(game.CurrentTurn);
@@ -184,7 +194,7 @@ namespace Karata.Web.Hubs
 
         public async Task PickCard(string roomLink)
         {
-            var room =  _roomService.Rooms[roomLink];
+            var room = _roomService.Rooms[roomLink];
             var game = room.Game;
 
             // Check turn
@@ -197,12 +207,32 @@ namespace Karata.Web.Hubs
             }
 
             // Remove card from pile
-            var card = game.Deck.Deal();
+            if (!game.Deck.TryDeal(out Card card))
+            {
+                if (game.Pile.Cards.Count > 1)
+                {
+                    // Remove cards from pile
+                    var pileCards = game.Pile.Reclaim();
+                    await Clients.Group(roomLink).ReclaimPile();
+
+                    // Add cards to deck
+                    foreach (var pileCard in pileCards)
+                        game.Deck.Cards.Push(pileCard);
+                    await Clients.Group(roomLink).AddCardsToDeck(pileCards.Count);
+
+                    // Shuffle & deal
+                    game.Deck.Shuffle();
+                    card = game.Deck.Deal();
+                }
+                else
+                {
+                    // TODO: Game over.
+                }
+            };
             await Clients.Group(roomLink).RemoveCardsFromDeck(1);
 
-    	    // Add card to player hand
-            game.Players.Single(p => p.Username == Context.UserIdentifier).Hand.Cards
-                .Add(card);
+            // Add card to player hand
+            game.Players.Single(p => p.Username == Context.UserIdentifier).Hand.Add(card);
             await Clients.Caller.AddCardToHand(card);
 
             // Update player turn

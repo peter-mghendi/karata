@@ -15,8 +15,14 @@ namespace Karata.Cards.Tests
             Assert.NotEmpty(pile.Cards);
             Assert.Equal(54, pile.Cards.Count);
             Assert.Equal(pile.Cards.Distinct().Count(), pile.Cards.Count);
+        }
 
-            pile.RemoveAllButTop();
+        [Fact]
+        public void ReclaimTest()
+        {
+            var pile = new Pile() { Cards = Deck.StandardDeck.Cards };
+            pile.Reclaim();
+
             Assert.Single<Card>(pile.Cards);
         }
     }

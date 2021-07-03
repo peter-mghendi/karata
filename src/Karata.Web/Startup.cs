@@ -13,6 +13,7 @@ using Karata.Web.Hubs;
 using Karata.Web.Services;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
+using Karata.Web.Engines;
 
 namespace Karata.Web
 {
@@ -35,6 +36,7 @@ namespace Karata.Web
             services.AddServerSideBlazor();
             services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
             services.AddSingleton<IRoomService, RoomService>();
+            services.AddSingleton<IEngine, KarataEngine>();
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
             services.AddScoped<CookieService>();
             services.AddDatabaseDeveloperPageExceptionFilter();

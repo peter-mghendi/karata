@@ -49,17 +49,39 @@ namespace Karata.Cards
                 FisherYates or _ => new FisherYatesShuffler()
             });
 
+        // Deal single card without checking deck size first.
         public Card Deal() => Cards.Pop();
 
-        // TODO: Check for cards == 0
+        // Deal multiple cards without checking deck size first.
         public List<Card> DealMany(int num)
         {
-            var list = new List<Card>();
-            for(int i = 0; i < num; i++)
-            {
-                list.Add(Cards.Pop());
-            }
-            return list;
+            var dealt = new List<Card>();
+            for (int i = 0; i < num; i++)
+                dealt.Add(Deal());
+
+            return dealt;
+        }
+
+        // Check deck size before attempting to deal single card.
+        public bool TryDeal(out Card dealt)
+        {
+            dealt = default;
+            if (Cards.Count <= 0)
+                return false;
+
+            dealt = Deal();
+            return true;
+        }
+
+        // Check deck size before attempting to deal multiple cards.
+        public bool TryDealMany(int num, out List<Card> dealt)
+        {
+            dealt = default;
+            if (Cards.Count < num)
+                return false;
+
+            dealt = DealMany(num);
+            return true;
         }
     }
 }

@@ -3,7 +3,8 @@
 @using Karata.Web.Models
 @using Karata.Web.Services
 @using Microsoft.AspNetCore.SignalR.Client
-@using static Karata.Cards.Card.CardSuit;
+@using static Karata.Cards.Card.CardFace
+@using static Karata.Cards.Card.CardSuit
 
 @page "/play"
 @attribute [Authorize]
@@ -218,7 +219,7 @@ else
     {
         get
         {
-            var handCopy = new List<Card>(Me.Hand.Cards);
+            var handCopy = new List<Card>(Me.Hand);
             handCopy.RemoveAll(card => currentTurn.Contains(card));
             return handCopy;
         }
@@ -227,10 +228,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        // Get username from AuthenticationStateProvider
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         username = authState.User.Identity.Name;
 
-        var container = new CookieContainer(); ;
+        // Set up SignalR with Cookie auth
+        var container = new CookieContainer(); 
         container.Add(new Cookie
         {
             Name = ".AspNetCore.Identity.Application",
@@ -245,9 +248,16 @@ else
         })
         .Build();
 
+        hubConnection.On<int>("AddCardsToDeck", num =>
+        {
+            for (int i = 0; i < num; i++)
+                currentRoom.Game.Deck.Cards.Push(new(Spades, Ace));
+            StateHasChanged();
+        }); 
+
         hubConnection.On<Card>("AddCardToHand", card =>
         {
-            currentRoom.Game.Players.Single(u => u.Username == username).Hand.Cards.Add(card);
+            currentRoom.Game.Players.Single(u => u.Username == username).Hand.Add(card);
             StateHasChanged();
         });
 
@@ -259,16 +269,14 @@ else
 
         hubConnection.On<List<Card>>("AddCardRangeToHand", cards =>
         {
-            currentRoom.Game.Players.Single(u => u.Username == username).Hand.Cards.AddRange(cards);
+            currentRoom.Game.Players.Single(u => u.Username == username).Hand.AddRange(cards);
             StateHasChanged();
         });
 
         hubConnection.On<List<Card>>("AddCardRangeToPile", cards =>
         {
             foreach (var card in cards)
-            {
                 currentRoom.Game.Pile.Cards.Push(card);
-            }
             StateHasChanged();
         });
 
@@ -297,9 +305,15 @@ else
             await AlertAsync(message.Text);
         });
 
+        hubConnection.On("ReclaimPile", () =>
+        {
+            _ = currentRoom.Game.Pile.Reclaim();
+            StateHasChanged();
+        });
+
         hubConnection.On<int>("RemoveCardsFromDeck", num =>
         {
-            currentRoom.Game.Deck.DealMany(num);
+            _ = currentRoom.Game.Deck.DealMany(num);
             StateHasChanged();
         });
 
@@ -311,7 +325,7 @@ else
 
         hubConnection.On<User>("RemovePlayerFromRoom", async player =>
         {
-            currentRoom.Game.Players.RemoveAll(p => p.Username == player.Username);
+            _ = currentRoom.Game.Players.RemoveAll(p => p.Username == player.Username);
             await AlertAsync($"{player.Username} has left the room");
             StateHasChanged();
         });
@@ -326,24 +340,9 @@ else
         {
             currentRoom.Game.Started = started;
             if (started)
-            {
                 await AlertAsync("The game has started. No new players may join.");
-            }
             StateHasChanged();
         });
-
-        // TODO Server-side implementation
-        /** 
-        hubConnection.On<List<Card>>("AddCardsToDeck", cards =>
-        {
-            foreach (var card in cards)
-            {
-                currentRoom.Game.Deck.Cards.Push(card);
-            }
-
-            StateHasChanged();
-        }); 
-        */
 
         await hubConnection.StartAsync();
     }
@@ -379,25 +378,19 @@ else
     async Task PerformTurn()
     {
         if (await hubConnection.InvokeAsync<bool>("PerformTurn", currentRoom.Link, currentTurn))
-        {
-            Me.Hand.Cards.RemoveAll(card => currentTurn.Contains(card));
-        }
+            Me.Hand.RemoveAll(card => currentTurn.Contains(card));
 
-        
-            currentTurn.Clear();
-            StateHasChanged();
+        currentTurn.Clear();
+        StateHasChanged();
     }
 
-    async Task PickCard()
-    {
-        await hubConnection.SendAsync("PickCard", currentRoom.Link);
-    }
+    async Task PickCard() => await hubConnection.SendAsync("PickCard", currentRoom.Link);
 
     public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
 
-    public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
-
     private async Task AlertAsync(string text) => await JSRuntime.InvokeVoidAsync("alert", text);
+
+    public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
 
     private string GetCardIcon(Card card) => card.Suit switch
     {
