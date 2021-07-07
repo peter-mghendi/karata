@@ -14,6 +14,7 @@ using Karata.Web.Services;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
 using Karata.Web.Engines;
+using Karata.Web.Models;
 
 namespace Karata.Web
 {
@@ -30,14 +31,14 @@ namespace Karata.Web
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlite(
                     Configuration.GetConnectionString("DefaultConnection")));
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
             services.AddSingleton<IRoomService, RoomService>();
             services.AddSingleton<IEngine, KarataEngine>();
-            services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
+            services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<ApplicationUser>>();
             services.AddScoped<CookieService>();
             services.AddDatabaseDeveloperPageExceptionFilter();
             services.AddResponseCompression(opts => opts.MimeTypes = ResponseCompressionDefaults.MimeTypes

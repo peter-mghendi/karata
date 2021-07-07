@@ -78,7 +78,7 @@ else
             <div class="col-8">
                 @if (@currentRoom.Game.Started)
                 {
-                    <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Username</p>
+                    <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Email</p>
                     <p>Deck Size: @currentRoom.Game.Deck.Cards.Count</p>
                     <p>Pile Size: @currentRoom.Game.Pile.Cards.Count</p>
                     <p>Top Card: @currentRoom.Game.Pile.Cards.Peek().Name</p>
@@ -152,7 +152,7 @@ else
                     {
                         <p>Room ID: <br> @currentRoom.Link</p>
                         <p>Created at: <br> @currentRoom.CreatedAt</p>
-                        <p>Creator: <br> @currentRoom.Creator.Username</p>
+                        <p>Creator: <br> @currentRoom.Creator.Email</p>
                         <p>Players: <br> @currentRoom.Game.Players.Count</p>
                         <p>Started: <br> @currentRoom.Game.Started</p>
 
@@ -181,7 +181,7 @@ else
                     {
                         <li class="list-group-item">
                             <div class="fw-bold">
-                                @if (message.Sender == Me.Username)
+                                @if (message.Sender == Me.Email)
                                 {
                                     <i class="bi bi-person-fill me-2"></i>
                                 }
@@ -224,7 +224,7 @@ else
             return handCopy;
         }
     }
-    private User Me => currentRoom.Game.Players.Single(u => u.Username == username);
+    private ApplicationUser Me => currentRoom.Game.Players.Single(u => u.Email == username);
 
     protected override async Task OnInitializedAsync()
     {
@@ -257,7 +257,7 @@ else
 
         hubConnection.On<Card>("AddCardToHand", card =>
         {
-            currentRoom.Game.Players.Single(u => u.Username == username).Hand.Add(card);
+            currentRoom.Game.Players.Single(u => u.Email == username).Hand.Add(card);
             StateHasChanged();
         });
 
@@ -269,7 +269,7 @@ else
 
         hubConnection.On<List<Card>>("AddCardRangeToHand", cards =>
         {
-            currentRoom.Game.Players.Single(u => u.Username == username).Hand.AddRange(cards);
+            currentRoom.Game.Players.Single(u => u.Email == username).Hand.AddRange(cards);
             StateHasChanged();
         });
 
@@ -280,10 +280,10 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<User>("AddPlayerToRoom", async player =>
+        hubConnection.On<ApplicationUser>("AddPlayerToRoom", async player =>
         {
             currentRoom.Game.Players.Add(player);
-            await AlertAsync($"{player.Username} has joined the room");
+            await AlertAsync($"{player.Email} has joined the room");
             StateHasChanged();
         });
 
@@ -323,10 +323,10 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<User>("RemovePlayerFromRoom", async player =>
+        hubConnection.On<ApplicationUser>("RemovePlayerFromRoom", async player =>
         {
-            _ = currentRoom.Game.Players.RemoveAll(p => p.Username == player.Username);
-            await AlertAsync($"{player.Username} has left the room");
+            _ = currentRoom.Game.Players.Remove(player);
+            await AlertAsync($"{player.Email} has left the room");
             StateHasChanged();
         });
 

@@ -7,5 +7,6 @@ namespace Karata.Web.Services
     public interface IRoomService
     {
         Dictionary<string, Room> Rooms { get; }
+        void Update(Room room);
     }
 }

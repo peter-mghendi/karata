@@ -8,5 +8,7 @@ namespace Karata.Web.Services
     public class RoomService : IRoomService
     {
         public Dictionary<string, Room> Rooms { get; } = new();
+
+        public void Update(Room room) => Rooms[room.Link] = room;
     }
 }
