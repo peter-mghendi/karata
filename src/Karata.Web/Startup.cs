@@ -36,10 +36,11 @@ namespace Karata.Web
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
-            services.AddSingleton<IRoomService, RoomService>();
             services.AddSingleton<IEngine, KarataEngine>();
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<ApplicationUser>>();
             services.AddScoped<CookieService>();
+            services.AddScoped<IRoomService, RoomService>();
+            services.AddScoped<IGameService, GameService>();
             services.AddDatabaseDeveloperPageExceptionFilter();
             services.AddResponseCompression(opts => opts.MimeTypes = ResponseCompressionDefaults.MimeTypes
                 .Concat(new[] { "application/octet-stream" }));

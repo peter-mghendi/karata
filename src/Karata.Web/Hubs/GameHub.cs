@@ -1,3 +1,4 @@
+using System.Net.Mime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,24 +20,27 @@ namespace Karata.Web.Hubs
     public class GameHub : Hub<IGameClient>
     {
         private readonly IEngine _engine;
+        private readonly IGameService _gameService;
         private readonly IRoomService _roomService;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public GameHub(
             IEngine engine,
+            IGameService gameService,
             IRoomService roomService,
             UserManager<ApplicationUser> userManager) =>
-            (_engine, _roomService, _userManager)  = (engine, roomService, userManager);
+            (_engine, _gameService, _roomService, _userManager) = (engine, gameService, roomService, userManager);
 
-        public async Task SendChatMessage(string roomLink, string text)
+        public async Task SendChatMessage(string inviteLink, string text)
         {
-            var message = new ChatMessage
-            {
-                Text = text,
-                Sender = Context.User.Identity.Name
-            };
-            _roomService.Rooms[roomLink].Messages.Add(message);
-            await Clients.Group(roomLink).ReceiveChatMessage(message);
+            var user = await _userManager.FindByEmailAsync(Context.UserIdentifier);
+            var room = await _roomService.FindByInviteLinkAsync(inviteLink);
+            var message = new ChatMessage { Text = text, Sender = user };
+
+            room.ChatMessages.Add(message);
+
+            await _roomService.UpdateAsync(room);
+            await Clients.Group(inviteLink).ReceiveChatMessage(message);
         }
 
         public async Task CreateRoom()
@@ -45,28 +49,30 @@ namespace Karata.Web.Hubs
             var user = await _userManager.FindByEmailAsync(Context.UserIdentifier);
             var room = new Room
             {
-                Link = Guid.NewGuid().ToString(),
+                InviteLink = Guid.NewGuid().ToString(),
                 Creator = user,
             };
-            _roomService.Rooms.Add(room.Link, room);
+            await _roomService.CreateAsync(room);
 
-            // Add player to room
+            // Add player to game
             room.Game.Players.Add(user);
-            await Clients.OthersInGroup(room.Link).AddPlayerToRoom(user);
-            await Groups.AddToGroupAsync(Context.ConnectionId, room.Link);
+            await _gameService.UpdateAsync(room.Game);
+            await Clients.OthersInGroup(room.InviteLink).AddPlayerToRoom(user);
+            await Groups.AddToGroupAsync(Context.ConnectionId, room.InviteLink);
             await Clients.Caller.AddToRoom(room);
-
-            _roomService.Update(room);
         }
 
-        public async Task JoinRoom(string roomLink)
+        public async Task JoinRoom(string inviteLink)
         {
-            var room = _roomService.Rooms[roomLink];
+            var room = await _roomService.FindByInviteLinkAsync(inviteLink);
 
             // Check game status
             if (room.Game.Started)
             {
-                await Clients.Caller.ReceiveSystemMessage(new("This game has already started."));
+                var message = new SystemMessage { Text = "This game has already started." };
+                room.SystemMessages.Add(message);
+                await _roomService.UpdateAsync(room);
+                await Clients.Caller.ReceiveSystemMessage(message);
                 return;
             }
 
@@ -74,51 +80,61 @@ namespace Karata.Web.Hubs
 
             // Add player to room
             room.Game.Players.Add(user);
-            await Clients.OthersInGroup(roomLink).AddPlayerToRoom(user);
-            await Groups.AddToGroupAsync(Context.ConnectionId, room.Link);
+            await _gameService.UpdateAsync(room.Game);
+            await Clients.OthersInGroup(inviteLink).AddPlayerToRoom(user);
+            await Groups.AddToGroupAsync(Context.ConnectionId, room.InviteLink);
             await Clients.Caller.AddToRoom(room);
-
-            _roomService.Update(room);
         }
 
-        public async Task LeaveRoom(string roomLink)
+        public async Task LeaveRoom(string inviteLink)
         {
-            var room = _roomService.Rooms[roomLink];
+            var room = await _roomService.FindByInviteLinkAsync(inviteLink);
             var user = await _userManager.FindByEmailAsync(Context.UserIdentifier);
 
             // Check game status
             if (room.Game.Started || room.Creator.Id == user.Id)
             {
                 // TODO: Handle this gracefully, as well as accidental disconnection.
-                await Clients.Caller.ReceiveSystemMessage(new("Please don't do this. The game isn't built to handle it."));
+                var message = new SystemMessage
+                {
+                    Text = "Please don't do this. The game isn't built to handle it."
+                };
+                room.SystemMessages.Add(message);
+                await _roomService.UpdateAsync(room);
+                await Clients.Caller.ReceiveSystemMessage(message);
                 return;
             }
 
             // Remove player from room
             room.Game.Players.Remove(user);
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.Link);
+            await _gameService.UpdateAsync(room.Game);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.InviteLink);
             await Clients.Caller.RemoveFromRoom();
-            await Clients.OthersInGroup(room.Link).RemovePlayerFromRoom(user);
-
-            _roomService.Update(room);
+            await Clients.OthersInGroup(room.InviteLink).RemovePlayerFromRoom(user);
         }
 
-        public async Task StartGame(string roomLink)
+        public async Task StartGame(string inviteLink)
         {
-            var room = _roomService.Rooms[roomLink];
+            var room = await _roomService.FindByInviteLinkAsync(inviteLink);
             var game = room.Game;
 
             // Check caller role
             if (room.Creator.Email != Context.UserIdentifier)
             {
-                await Clients.Caller.ReceiveSystemMessage(new("You are not allowed to perform that action."));
+                var message = new SystemMessage { Text = "You are not allowed to perform that action." };
+                room.SystemMessages.Add(message);
+                await _roomService.UpdateAsync(room);
+                await Clients.Caller.ReceiveSystemMessage(message);
                 return;
             };
 
             // Check player number
             if (game.Players.Count < 2 || game.Players.Count > 4)
             {
-                await Clients.Caller.ReceiveSystemMessage(new("A game needs 2-4 players."));
+                var message = new SystemMessage { Text = "A game needs 2-4 players." };
+                room.SystemMessages.Add(message);
+                await _roomService.UpdateAsync(room);
+                await Clients.Caller.ReceiveSystemMessage(message);
                 return;
             };
 
@@ -129,7 +145,7 @@ namespace Karata.Web.Hubs
             int dealtCount = 1;
             var topCard = game.Deck.Deal();
             game.Pile.Cards.Push(topCard);
-            await Clients.Group(roomLink).AddCardToPile(topCard);
+            await Clients.Group(inviteLink).AddCardToPile(topCard);
 
             // Deal player cards
             foreach (var player in game.Players)
@@ -141,25 +157,26 @@ namespace Karata.Web.Hubs
             }
 
             // TODO: Explicit card movements (Deck -> Hand, Hand -> Pile, etc).
-            await Clients.Group(roomLink).RemoveCardsFromDeck(dealtCount);
+            await Clients.Group(inviteLink).RemoveCardsFromDeck(dealtCount);
 
             // Start game
             game.Started = true;
-            await Clients.Group(roomLink).UpdateGameStatus(true);
-
-            room.Game = game;
-            _roomService.Update(room);
+            await Clients.Group(inviteLink).UpdateGameStatus(true);
+            await _gameService.UpdateAsync(game);
         }
 
-        public async Task<bool> PerformTurn(string roomLink, List<Card> turn)
+        public async Task<bool> PerformTurn(string inviteLink, List<Card> turn)
         {
-            var room = _roomService.Rooms[roomLink];
+            var room = await _roomService.FindByInviteLinkAsync(inviteLink);
             var game = room.Game;
 
             // Check game status
             if (!game.Started)
             {
-                await Clients.Caller.ReceiveSystemMessage(new("The game has not started yet."));
+                var message = new SystemMessage { Text = "The game has not started yet." };
+                room.SystemMessages.Add(message);
+                await _roomService.UpdateAsync(room);
+                await Clients.Caller.ReceiveSystemMessage(message);
                 return false;
             }
 
@@ -168,14 +185,20 @@ namespace Karata.Web.Hubs
             var currentUser = await _userManager.FindByEmailAsync(Context.UserIdentifier);
             if (requiredUser.Id != currentUser.Id)
             {
-                await Clients.Caller.ReceiveSystemMessage(new("It is not your turn!"));
+                var message = new SystemMessage{ Text = "It is not your turn!" };
+                room.SystemMessages.Add(message);
+                await _roomService.UpdateAsync(room);
+                await Clients.Caller.ReceiveSystemMessage(message);
                 return false;
             }
 
             // Process turn
             if (!_engine.ValidateTurn(topCard: game.Pile.Cards.Peek(), turnCards: turn))
             {
-                await Clients.Caller.ReceiveSystemMessage(new("That card sequence is invalid"));
+                var message = new SystemMessage{ Text = "That card sequence is invalid" };
+                room.SystemMessages.Add(message);
+                await _roomService.UpdateAsync(room);
+                await Clients.Caller.ReceiveSystemMessage(message);
                 return false;
             }
 
@@ -183,26 +206,27 @@ namespace Karata.Web.Hubs
             foreach (var card in turn)
             {
                 game.Pile.Cards.Push(card);
-                await Clients.Group(roomLink).AddCardToPile(card);
+                await Clients.Group(inviteLink).AddCardToPile(card);
             }
 
             // Remove cards from player hand
             game.Players.Single(p => p.Email == currentUser.Email).Hand
                 .RemoveAll(card => turn.Contains(card));
 
+            // TODO: Post turn actions
+
             // Update current turn
             var isLastPlayer = game.CurrentTurn == game.Players.Count - 1;
             game.CurrentTurn = isLastPlayer ? 0 : game.CurrentTurn + 1;
-            await Clients.Group(roomLink).UpdateTurn(game.CurrentTurn);
+            await Clients.Group(inviteLink).UpdateTurn(game.CurrentTurn);
+            await _gameService.UpdateAsync(game);
 
-            room.Game = game;
-            _roomService.Update(room);
             return true;
         }
 
-        public async Task PickCard(string roomLink)
+        public async Task PickCard(string inviteLink)
         {
-            var room = _roomService.Rooms[roomLink];
+            var room = await _roomService.FindByInviteLinkAsync(inviteLink);
             var game = room.Game;
 
             // Check turn
@@ -210,7 +234,10 @@ namespace Karata.Web.Hubs
             var currentUser = await _userManager.FindByEmailAsync(Context.UserIdentifier);
             if (requiredUser.Id != currentUser.Id)
             {
-                await Clients.Caller.ReceiveSystemMessage(new("It is not your turn!"));
+                var message = new SystemMessage { Text = "It is not your turn!" };
+                room.SystemMessages.Add(message);
+                await _roomService.UpdateAsync(room);
+                await Clients.Caller.ReceiveSystemMessage(message);
                 return;
             }
 
@@ -221,12 +248,12 @@ namespace Karata.Web.Hubs
                 {
                     // Remove cards from pile
                     var pileCards = game.Pile.Reclaim();
-                    await Clients.Group(roomLink).ReclaimPile();
+                    await Clients.Group(inviteLink).ReclaimPile();
 
                     // Add cards to deck
                     foreach (var pileCard in pileCards)
                         game.Deck.Cards.Push(pileCard);
-                    await Clients.Group(roomLink).AddCardsToDeck(pileCards.Count);
+                    await Clients.Group(inviteLink).AddCardsToDeck(pileCards.Count);
 
                     // Shuffle & deal
                     game.Deck.Shuffle();
@@ -237,7 +264,7 @@ namespace Karata.Web.Hubs
                     // TODO: Game over.
                 }
             };
-            await Clients.Group(roomLink).RemoveCardsFromDeck(1);
+            await Clients.Group(inviteLink).RemoveCardsFromDeck(1);
 
             // Add card to player hand
             game.Players.Single(p => p.Email == Context.UserIdentifier).Hand.Add(card);
@@ -246,10 +273,8 @@ namespace Karata.Web.Hubs
             // Update player turn
             var isLastPlayer = game.CurrentTurn == game.Players.Count - 1;
             game.CurrentTurn = isLastPlayer ? 0 : game.CurrentTurn + 1;
-            await Clients.Group(roomLink).UpdateTurn(game.CurrentTurn);
-
-            room.Game = game;
-            _roomService.Update(room);
+            await Clients.Group(inviteLink).UpdateTurn(game.CurrentTurn);
+            await _gameService.UpdateAsync(game);
         }
     }
 }

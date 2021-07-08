@@ -150,7 +150,7 @@ else
                     </div>
                     @if (viewDetails)
                     {
-                        <p>Room ID: <br> @currentRoom.Link</p>
+                        <p>Room ID: <br> @currentRoom.InviteLink</p>
                         <p>Created at: <br> @currentRoom.CreatedAt</p>
                         <p>Creator: <br> @currentRoom.Creator.Email</p>
                         <p>Players: <br> @currentRoom.Game.Players.Count</p>
@@ -177,11 +177,11 @@ else
                 <hr>
 
                 <ul id="messagesList" class="list-group list-group-flush">
-                    @foreach (var message in currentRoom.Messages)
+                    @foreach (var message in currentRoom.ChatMessages)
                     {
                         <li class="list-group-item">
                             <div class="fw-bold">
-                                @if (message.Sender == Me.Email)
+                                @if (message.Sender.Email == Me.Email)
                                 {
                                     <i class="bi bi-person-fill me-2"></i>
                                 }
@@ -295,7 +295,7 @@ else
 
         hubConnection.On<ChatMessage>("ReceiveChatMessage", message =>
         {
-            currentRoom.Messages.Add(message);
+            currentRoom.ChatMessages.Add(message);
             StateHasChanged();
         });
 
@@ -355,7 +355,7 @@ else
             return;
         }
 
-        await hubConnection.SendAsync("SendChatMessage", currentRoom.Link, textInput);
+        await hubConnection.SendAsync("SendChatMessage", currentRoom.InviteLink, textInput);
         textInput = string.Empty;
     }
 
@@ -371,20 +371,20 @@ else
         await hubConnection.SendAsync("JoinRoom", inviteLink);
     }
 
-    async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", currentRoom.Link);
+    async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", currentRoom.InviteLink);
 
-    async Task StartGame() => await hubConnection.SendAsync("StartGame", currentRoom.Link);
+    async Task StartGame() => await hubConnection.SendAsync("StartGame", currentRoom.InviteLink);
 
     async Task PerformTurn()
     {
-        if (await hubConnection.InvokeAsync<bool>("PerformTurn", currentRoom.Link, currentTurn))
+        if (await hubConnection.InvokeAsync<bool>("PerformTurn", currentRoom.InviteLink, currentTurn))
             Me.Hand.RemoveAll(card => currentTurn.Contains(card));
 
         currentTurn.Clear();
         StateHasChanged();
     }
 
-    async Task PickCard() => await hubConnection.SendAsync("PickCard", currentRoom.Link);
+    async Task PickCard() => await hubConnection.SendAsync("PickCard", currentRoom.InviteLink);
 
     public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
 

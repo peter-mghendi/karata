@@ -8,7 +8,7 @@ namespace Karata.Web.Models
     public class ApplicationUser : IdentityUser {
         [NotMapped]
         public List<Card> Hand { get; set; } = new();
-        [NotMapped]
         public List<Room> CreatedRooms { get; set; } = new();
+        public ICollection<ChatMessage> SendMessages { get; set; }
     }
 }
