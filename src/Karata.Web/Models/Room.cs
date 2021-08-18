@@ -7,10 +7,9 @@ namespace Karata.Web.Models
     {
         public int Id { get; set; }
         public string InviteLink { get; set; }
-        public ApplicationUser Creator { get; set; }
-        public Game Game { get; set; } = new ();
+        public virtual ApplicationUser Creator { get; set; }
+        public virtual Game Game { get; set; } = new ();
         public DateTime CreatedAt { get; } = DateTime.Now;
-        public ICollection<ChatMessage> ChatMessages { get; set; }
-        public ICollection<SystemMessage> SystemMessages { get; set; }
+        public virtual ICollection<Chat> Chats { get; set; } = new List<Chat>();
     }
 }

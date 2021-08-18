@@ -12,38 +12,18 @@ namespace Karata.Web.Services
 
         public RoomService(ApplicationDbContext dbContext) => _dbContext = dbContext;
 
-        public async Task<Room> CreateAsync(
+        public async Task CreateAsync(
             Room room,
-            CancellationToken cancellationToken = default)
-        {
-            await _dbContext.Rooms.AddAsync(room, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            return room;
-        }
+            CancellationToken cancellationToken = default) =>
+            _ = await _dbContext.Rooms.AddAsync(room, cancellationToken);
 
-        public async Task<Room> UpdateAsync(
-            Room room,
-            CancellationToken cancellationToken = default)
-        {
-            _dbContext.Entry(room).State = EntityState.Modified;
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            return room;
-        }
-
-        public async Task<Room> DeleteAsync(
-            Room room,
-            CancellationToken cancellationToken = default)
-        {
-            _dbContext.Rooms.Remove(room);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            return room;
-        }
+        public void Delete(Room room) => _dbContext.Rooms.Remove(room);
 
         public async Task<Room> FindByInviteLinkAsync(
             string inviteLink,
-            CancellationToken cancellationToken = default)
-        {
-            return await _dbContext.Rooms.SingleAsync(r => r.InviteLink == inviteLink, cancellationToken);
-        }
+            CancellationToken cancellationToken = default) =>
+            await _dbContext.Rooms.SingleAsync(r => r.InviteLink == inviteLink, cancellationToken);
+
+        public void Update(Room room) => _dbContext.Entry(room).State = EntityState.Modified;
     }
 }

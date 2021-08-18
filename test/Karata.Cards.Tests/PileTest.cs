@@ -9,21 +9,16 @@ namespace Karata.Cards.Tests
         public void PilePropertyTest()
         {
             var pile = new Pile();
-            Assert.Empty(pile.Cards);
-
-            pile.Cards = Deck.StandardDeck.Cards;
-            Assert.NotEmpty(pile.Cards);
-            Assert.Equal(54, pile.Cards.Count);
-            Assert.Equal(pile.Cards.Distinct().Count(), pile.Cards.Count);
+            Assert.Empty(pile);
         }
 
         [Fact]
         public void ReclaimTest()
         {
-            var pile = new Pile() { Cards = Deck.StandardDeck.Cards };
+            var pile = new Pile(Deck.StandardDeck.ToList());
             pile.Reclaim();
 
-            Assert.Single<Card>(pile.Cards);
+            Assert.Single<Card>(pile);
         }
     }
 }

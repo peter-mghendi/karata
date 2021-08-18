@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Karata.Cards.Shufflers;
 using Xunit;
-using static Karata.Cards.Shufflers.ShuffleAlgorithm;
 
 namespace Karata.Cards.Tests
 {
@@ -15,7 +13,7 @@ namespace Karata.Cards.Tests
         public void DeckPropertyTest()
         {
             var deck = new Deck();
-            Assert.Empty(deck.Cards);
+            Assert.Empty(deck);
         }
 
         [Fact]
@@ -23,22 +21,20 @@ namespace Karata.Cards.Tests
         {
             var deck = Deck.StandardDeck;
 
-            Assert.NotEmpty(deck.Cards);
-            Assert.Equal(StandardDeckSize, deck.Cards.Count);
-            Assert.Equal(deck.Cards.Distinct().Count(), deck.Cards.Count);
+            Assert.NotEmpty(deck);
+            Assert.Equal(StandardDeckSize, deck.Count);
+            Assert.Equal(deck.Distinct().Count(), deck.Count);
         }
 
-        [Theory]
-        [InlineData(FisherYates)]
-        [InlineData(OrderByRandom)]
-        public void ShuffleAlgorithmTest(ShuffleAlgorithm shuffleAlgorithm)
+        [Fact]
+        public void ShuffleTest()
         {
             var deck = Deck.StandardDeck;
 
-            deck.Shuffle(shuffleAlgorithm);
-            Assert.NotEmpty(deck.Cards);
-            Assert.Equal(StandardDeckSize, deck.Cards.Count);
-            Assert.Equal(deck.Cards.Distinct().Count(), deck.Cards.Count);
+            deck.Shuffle();
+            Assert.NotEmpty(deck);
+            Assert.Equal(StandardDeckSize, deck.Count);
+            Assert.Equal(deck.Distinct().Count(), deck.Count);
         }
 
         [Fact]
@@ -50,8 +46,8 @@ namespace Karata.Cards.Tests
             _ = standardDeck.Deal();
 
             Assert.Throws<InvalidOperationException>(emptyDeck.Deal);
-            Assert.Equal(StandardDeckSize - 1, standardDeck.Cards.Count);
-            Assert.Equal(standardDeck.Cards.Distinct().Count(), standardDeck.Cards.Count);
+            Assert.Equal(StandardDeckSize - 1, standardDeck.Count);
+            Assert.Equal(standardDeck.Distinct().Count(), standardDeck.Count);
         }
 
         [Theory]
@@ -70,8 +66,8 @@ namespace Karata.Cards.Tests
             }
             else dealt = deck.DealMany(num);
 
-            Assert.Equal(StandardDeckSize - num, deck.Cards.Count);
-            Assert.Equal(deck.Cards.Distinct().Count(), deck.Cards.Count);
+            Assert.Equal(StandardDeckSize - num, deck.Count);
+            Assert.Equal(deck.Distinct().Count(), deck.Count);
             Assert.Equal(num, dealt.Count);
             Assert.Equal(dealt.Distinct().Count(), dealt.Count);
         }
@@ -82,18 +78,17 @@ namespace Karata.Cards.Tests
             var emptyDeck = new Deck();
             var standardDeck = Deck.StandardDeck;
 
-            Assert.Empty(emptyDeck.Cards);
+            Assert.Empty(emptyDeck);
 
             Assert.False(emptyDeck.TryDeal(out var card));
             Assert.Null(card);
-            Assert.Empty(emptyDeck.Cards);
+            Assert.Empty(emptyDeck);
 
             Assert.True(standardDeck.TryDeal(out card));
             Assert.NotNull(card);
 
-            Assert.Equal(StandardDeckSize - 1, standardDeck.Cards.Count);
-            Assert.Equal(standardDeck.Cards.Distinct().Count(), standardDeck.Cards.Count);
-
+            Assert.Equal(StandardDeckSize - 1, standardDeck.Count);
+            Assert.Equal(standardDeck.Distinct().Count(), standardDeck.Count);
         }
 
         [Theory]
@@ -109,8 +104,8 @@ namespace Karata.Cards.Tests
 
             if (shouldSucceed)
             {
-                Assert.Equal(StandardDeckSize - num, deck.Cards.Count);
-                Assert.Equal(deck.Cards.Distinct().Count(), deck.Cards.Count);
+                Assert.Equal(StandardDeckSize - num, deck.Count);
+                Assert.Equal(deck.Distinct().Count(), deck.Count);
 
                 Assert.NotNull(dealt);
 
@@ -119,8 +114,8 @@ namespace Karata.Cards.Tests
             }
             else 
             {
-                Assert.Equal(StandardDeckSize, deck.Cards.Count);
-                Assert.Equal(deck.Cards.Distinct().Count(), deck.Cards.Count);
+                Assert.Equal(StandardDeckSize, deck.Count);
+                Assert.Equal(deck.Distinct().Count(), deck.Count);
 
                 Assert.Null(dealt);
             }   

@@ -14,8 +14,8 @@ namespace Karata.Web.Hubs.Clients
         Task AddCardRangeToPile(List<Card> cards);
         Task AddPlayerToRoom(ApplicationUser player);
         Task AddToRoom(Room room);
-        Task ReceiveChatMessage(ChatMessage message);
-        Task ReceiveSystemMessage(SystemMessage message);
+        Task ReceiveChat(Chat message);
+        Task ReceiveSystemMessage(string message);
         Task ReclaimPile();
         Task RemoveCardsFromDeck(int num);
         Task RemoveFromRoom();

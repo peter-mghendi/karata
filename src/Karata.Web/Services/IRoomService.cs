@@ -6,9 +6,9 @@ namespace Karata.Web.Services
 {
     public interface IRoomService
     {
-        Task<Room> CreateAsync(Room room, CancellationToken cancellationToken = default);
-        Task<Room> DeleteAsync(Room room, CancellationToken cancellationToken = default);
+        Task CreateAsync(Room room, CancellationToken cancellationToken = default);
+        void Delete(Room room);
         Task<Room> FindByInviteLinkAsync(string inviteLink, CancellationToken cancellationToken = default);
-        Task<Room> UpdateAsync(Room room, CancellationToken cancellationToken = default);
+        void Update(Room room);
     }
 }

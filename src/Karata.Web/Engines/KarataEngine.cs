@@ -17,8 +17,8 @@ namespace Karata.Web.Engines
 
             for (int i = 1; i < sequence.Count; i++)
             {
-                Card thisCard = sequence[i];
-                Card prevCard = sequence[i - 1];
+                var thisCard = sequence[i];
+                var prevCard = sequence[i - 1];
 
                 // A Joker should allow any card on either side
                 if (thisCard.IsJoker || prevCard.IsJoker)
@@ -33,18 +33,8 @@ namespace Karata.Web.Engines
                 // Subsequent cards
                 else
                 {
-                    // Previous card is not a question
-                    if (!prevCard.IsQuestion)
-                    {
-                        if (thisCard.Face != prevCard.Face)
-                            return false;
-                    }
-                    // Previous card is a question
-                    else
-                    {
-                        if (thisCard.Face != prevCard.Face && thisCard.Suit != prevCard.Suit)
-                            return false;
-                    }
+                    if (thisCard.Face != prevCard.Face && thisCard.Suit != prevCard.Suit)
+                        return false;
                 }
             }
 
@@ -61,7 +51,7 @@ namespace Karata.Web.Engines
             // If the last card played is a "question" card, the player has to immediately pick a card
             if (turnCards.Count == 0)
             {
-
+                // TODO
             }
             else
             {
