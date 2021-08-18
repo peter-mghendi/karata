@@ -3,18 +3,20 @@ using System;
 using Karata.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Karata.Web.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210707124354_AddBasicData")]
+    partial class AddBasicData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "5.0.7");
+                .HasAnnotation("ProductVersion", "5.0.6");
 
             modelBuilder.Entity("Karata.Web.Models.ApplicationUser", b =>
                 {
@@ -37,9 +39,6 @@ namespace Karata.Web.Data.Migrations
 
                     b.Property<int?>("GameId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("Hand")
-                        .HasColumnType("TEXT");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("INTEGER");
@@ -88,7 +87,7 @@ namespace Karata.Web.Data.Migrations
                     b.ToTable("AspNetUsers");
                 });
 
-            modelBuilder.Entity("Karata.Web.Models.Chat", b =>
+            modelBuilder.Entity("Karata.Web.Models.ChatMessage", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -109,7 +108,7 @@ namespace Karata.Web.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Chats");
+                    b.ToTable("ChatMessages");
                 });
 
             modelBuilder.Entity("Karata.Web.Models.Game", b =>
@@ -120,12 +119,6 @@ namespace Karata.Web.Data.Migrations
 
                     b.Property<int>("CurrentTurn")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("Deck")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Pile")
-                        .HasColumnType("TEXT");
 
                     b.Property<int>("RoomId")
                         .HasColumnType("INTEGER");
@@ -158,6 +151,28 @@ namespace Karata.Web.Data.Migrations
                     b.HasIndex("CreatorId");
 
                     b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("Karata.Web.Models.SystemMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("RoomId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Sent")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("SystemMessages");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -299,35 +314,48 @@ namespace Karata.Web.Data.Migrations
                         .HasForeignKey("GameId");
                 });
 
-            modelBuilder.Entity("Karata.Web.Models.Chat", b =>
+            modelBuilder.Entity("Karata.Web.Models.ChatMessage", b =>
                 {
-                    b.HasOne("Karata.Web.Models.Room", null)
-                        .WithMany("Chats")
+                    b.HasOne("Karata.Web.Models.Room", "Room")
+                        .WithMany("ChatMessages")
                         .HasForeignKey("RoomId");
 
                     b.HasOne("Karata.Web.Models.ApplicationUser", "Sender")
-                        .WithMany()
+                        .WithMany("SendMessages")
                         .HasForeignKey("SenderId");
+
+                    b.Navigation("Room");
 
                     b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("Karata.Web.Models.Game", b =>
                 {
-                    b.HasOne("Karata.Web.Models.Room", null)
+                    b.HasOne("Karata.Web.Models.Room", "Room")
                         .WithOne("Game")
                         .HasForeignKey("Karata.Web.Models.Game", "RoomId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Room");
                 });
 
             modelBuilder.Entity("Karata.Web.Models.Room", b =>
                 {
                     b.HasOne("Karata.Web.Models.ApplicationUser", "Creator")
-                        .WithMany()
+                        .WithMany("CreatedRooms")
                         .HasForeignKey("CreatorId");
 
                     b.Navigation("Creator");
+                });
+
+            modelBuilder.Entity("Karata.Web.Models.SystemMessage", b =>
+                {
+                    b.HasOne("Karata.Web.Models.Room", "Room")
+                        .WithMany("SystemMessages")
+                        .HasForeignKey("RoomId");
+
+                    b.Navigation("Room");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -381,6 +409,13 @@ namespace Karata.Web.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Karata.Web.Models.ApplicationUser", b =>
+                {
+                    b.Navigation("CreatedRooms");
+
+                    b.Navigation("SendMessages");
+                });
+
             modelBuilder.Entity("Karata.Web.Models.Game", b =>
                 {
                     b.Navigation("Players");
@@ -388,9 +423,11 @@ namespace Karata.Web.Data.Migrations
 
             modelBuilder.Entity("Karata.Web.Models.Room", b =>
                 {
-                    b.Navigation("Chats");
+                    b.Navigation("ChatMessages");
 
                     b.Navigation("Game");
+
+                    b.Navigation("SystemMessages");
                 });
 #pragma warning restore 612, 618
         }

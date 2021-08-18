@@ -5,12 +5,11 @@ namespace Karata.Web.Models
 {
     public class Room
     {
-        public string Link { get; set; }
-        public User Creator { get; set; }
-        public Game Game { get; set; } = new ();
-        public List<ChatMessage> Messages = new();
+        public int Id { get; set; }
+        public string InviteLink { get; set; }
+        public virtual ApplicationUser Creator { get; set; }
+        public virtual Game Game { get; set; } = new ();
         public DateTime CreatedAt { get; } = DateTime.Now;
-
-        // public List<User> Members { get => Game.Players; set; } = new();
+        public virtual ICollection<Chat> Chats { get; set; } = new List<Chat>();
     }
 }

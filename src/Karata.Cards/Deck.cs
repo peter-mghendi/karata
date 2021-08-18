@@ -1,65 +1,92 @@
 using System;
 using System.Collections.Generic;
-using Karata.Cards.Shufflers;
 using static Karata.Cards.Card;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
-using static Karata.Cards.Shufflers.ShuffleAlgorithm;
 
 namespace Karata.Cards
 {
-    public class Deck
+    public class Deck : Stack<Card>
     {
-        public Stack<Card> Cards { get; set; } = new();
+        private readonly Random _random = new();
+
+        public Deck(IEnumerable<Card> collection) : base(collection)
+        {
+        }
+
+        public Deck() : base()
+        {
+        }
 
         public static Deck StandardDeck
         {
             get
             {
-                var cards = new Stack<Card>();
+                var deck = new Deck();
                 foreach (var suit in Enum.GetValues<CardSuit>())
                 {
                     if (suit is BlackJoker or RedJoker) continue;
                     foreach (var face in Enum.GetValues<CardFace>())
                     {
                         if (face is None) continue;
-                        cards.Push(new(suit, face));
+                        deck.Push(new(suit, face));
                     }
                 }
 
-                cards.Push(new(BlackJoker, None));
-                cards.Push(new(RedJoker, None));
-                return new() { Cards = new(cards) };
+                deck.Push(new(BlackJoker, None));
+                deck.Push(new(RedJoker, None));
+                return new Deck(deck);
             }
         }
 
-        // Use a custom shuffling function
-        public void Shuffle(Func<Stack<Card>, Stack<Card>> shuffleFunc) => Cards = shuffleFunc(Cards);
+        public void Shuffle()
+        {
+            var cardArray = ToArray();
+            var i = cardArray.Length;
+            while (--i > 0) {
+                var j = _random.Next(i + 1);
+                var temp = cardArray[j];
+                cardArray[j] = cardArray[i];
+                cardArray[i] = temp;
+            }
 
-        // Use a custom IShuffler
-        public void Shuffle(IShuffler shuffler) => Shuffle(shuffleFunc: shuffler.Shuffle);
+            Clear();
+            foreach(var card in cardArray) Push(card);
+        }
 
-        // Use a built-in shuffle algorithm.
-        // Use (and fall back on) Fisher-Yates shuffle by default.
-        // TODO: Source Generators for built-in shufflers.
-        public void Shuffle(ShuffleAlgorithm shuffleAlgorithm = Default) =>
-            Shuffle(shuffler: shuffleAlgorithm switch
-            {
-                OrderByRandom => new OrderByRandomShuffler(),
-                FisherYates or _ => new FisherYatesShuffler()
-            });
+        // Deal single card without checking deck size first.
+        public Card Deal() => Pop();
 
-        public Card Deal() => Cards.Pop();
-
-        // TODO: Check for cards == 0
+        // Deal multiple cards without checking deck size first.
         public List<Card> DealMany(int num)
         {
-            var list = new List<Card>();
-            for(int i = 0; i < num; i++)
-            {
-                list.Add(Cards.Pop());
-            }
-            return list;
+            var dealt = new List<Card>();
+            for (int i = 0; i < num; i++)
+                dealt.Add(Deal());
+
+            return dealt;
+        }
+
+        // Check deck size before attempting to deal single card.
+        public bool TryDeal(out Card dealt)
+        {
+            dealt = default;
+            if (Count <= 0)
+                return false;
+
+            dealt = Deal();
+            return true;
+        }
+
+        // Check deck size before attempting to deal multiple cards.
+        public bool TryDealMany(int num, out List<Card> dealt)
+        {
+            dealt = default;
+            if (Count < num)
+                return false;
+
+            dealt = DealMany(num);
+            return true;
         }
     }
 }

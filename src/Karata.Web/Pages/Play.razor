@@ -3,7 +3,8 @@
 @using Karata.Web.Models
 @using Karata.Web.Services
 @using Microsoft.AspNetCore.SignalR.Client
-@using static Karata.Cards.Card.CardSuit;
+@using static Karata.Cards.Card.CardFace
+@using static Karata.Cards.Card.CardSuit
 
 @page "/play"
 @attribute [Authorize]
@@ -77,10 +78,10 @@ else
             <div class="col-8">
                 @if (@currentRoom.Game.Started)
                 {
-                    <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Username</p>
-                    <p>Deck Size: @currentRoom.Game.Deck.Cards.Count</p>
-                    <p>Pile Size: @currentRoom.Game.Pile.Cards.Count</p>
-                    <p>Top Card: @currentRoom.Game.Pile.Cards.Peek().Name</p>
+                    <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Email</p>
+                    <p>Deck Size: @currentRoom.Game.Deck.Count</p>
+                    <p>Pile Size: @currentRoom.Game.Pile.Count</p>
+                    <p>Top Card: @currentRoom.Game.Pile.Peek().Name</p>
                     <div class="row">
                         <div class="col-6">
                             <p>My cards:</p>
@@ -149,9 +150,9 @@ else
                     </div>
                     @if (viewDetails)
                     {
-                        <p>Room ID: <br> @currentRoom.Link</p>
+                        <p>Room ID: <br> @currentRoom.InviteLink</p>
                         <p>Created at: <br> @currentRoom.CreatedAt</p>
-                        <p>Creator: <br> @currentRoom.Creator.Username</p>
+                        <p>Creator: <br> @currentRoom.Creator.Email</p>
                         <p>Players: <br> @currentRoom.Game.Players.Count</p>
                         <p>Started: <br> @currentRoom.Game.Started</p>
 
@@ -176,11 +177,11 @@ else
                 <hr>
 
                 <ul id="messagesList" class="list-group list-group-flush">
-                    @foreach (var message in currentRoom.Messages)
+                    @foreach (var message in currentRoom.Chats)
                     {
                         <li class="list-group-item">
                             <div class="fw-bold">
-                                @if (message.Sender == Me.Username)
+                                @if (message.Sender.Email == Me.Email)
                                 {
                                     <i class="bi bi-person-fill me-2"></i>
                                 }
@@ -218,19 +219,21 @@ else
     {
         get
         {
-            var handCopy = new List<Card>(Me.Hand.Cards);
+            var handCopy = new List<Card>(Me.Hand);
             handCopy.RemoveAll(card => currentTurn.Contains(card));
             return handCopy;
         }
     }
-    private User Me => currentRoom.Game.Players.Single(u => u.Username == username);
+    private ApplicationUser Me => currentRoom.Game.Players.Single(u => u.Email == username);
 
     protected override async Task OnInitializedAsync()
     {
+        // Get username from AuthenticationStateProvider
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         username = authState.User.Identity.Name;
 
-        var container = new CookieContainer(); ;
+        // Set up SignalR with Cookie auth
+        var container = new CookieContainer(); 
         container.Add(new Cookie
         {
             Name = ".AspNetCore.Identity.Application",
@@ -245,37 +248,42 @@ else
         })
         .Build();
 
+        hubConnection.On<int>("AddCardsToDeck", num =>
+        {
+            for (int i = 0; i < num; i++)
+                currentRoom.Game.Deck.Push(new(Spades, Ace));
+            StateHasChanged();
+        }); 
+
         hubConnection.On<Card>("AddCardToHand", card =>
         {
-            currentRoom.Game.Players.Single(u => u.Username == username).Hand.Cards.Add(card);
+            currentRoom.Game.Players.Single(u => u.Email == username).Hand.Add(card);
             StateHasChanged();
         });
 
         hubConnection.On<Card>("AddCardToPile", card =>
         {
-            currentRoom.Game.Pile.Cards.Push(card);
+            currentRoom.Game.Pile.Push(card);
             StateHasChanged();
         });
 
         hubConnection.On<List<Card>>("AddCardRangeToHand", cards =>
         {
-            currentRoom.Game.Players.Single(u => u.Username == username).Hand.Cards.AddRange(cards);
+            currentRoom.Game.Players.Single(u => u.Email == username).Hand.AddRange(cards);
             StateHasChanged();
         });
 
         hubConnection.On<List<Card>>("AddCardRangeToPile", cards =>
         {
             foreach (var card in cards)
-            {
-                currentRoom.Game.Pile.Cards.Push(card);
-            }
+                currentRoom.Game.Pile.Push(card);
             StateHasChanged();
         });
 
-        hubConnection.On<User>("AddPlayerToRoom", async player =>
+        hubConnection.On<ApplicationUser>("AddPlayerToRoom", async player =>
         {
             currentRoom.Game.Players.Add(player);
-            await AlertAsync($"{player.Username} has joined the room");
+            await LogAsync($"{player.Email} has joined the room");
             StateHasChanged();
         });
 
@@ -285,21 +293,27 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<ChatMessage>("ReceiveChatMessage", message =>
+        hubConnection.On<Chat>("ReceiveChat", message =>
         {
-            currentRoom.Messages.Add(message);
+            currentRoom.Chats.Add(message);
             StateHasChanged();
         });
 
         // TODO: Non-blocking implementation
-        hubConnection.On<SystemMessage>("ReceiveSystemMessage", async message =>
+        hubConnection.On<string>("ReceiveSystemMessage", async message =>
         {
-            await AlertAsync(message.Text);
+            await LogAsync(message);
+        });
+
+        hubConnection.On("ReclaimPile", () =>
+        {
+            _ = currentRoom.Game.Pile.Reclaim();
+            StateHasChanged();
         });
 
         hubConnection.On<int>("RemoveCardsFromDeck", num =>
         {
-            currentRoom.Game.Deck.DealMany(num);
+            _ = currentRoom.Game.Deck.DealMany(num);
             StateHasChanged();
         });
 
@@ -309,10 +323,10 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<User>("RemovePlayerFromRoom", async player =>
+        hubConnection.On<ApplicationUser>("RemovePlayerFromRoom", async player =>
         {
-            currentRoom.Game.Players.RemoveAll(p => p.Username == player.Username);
-            await AlertAsync($"{player.Username} has left the room");
+            _ = currentRoom.Game.Players.Remove(player);
+            await LogAsync($"{player.Email} has left the room");
             StateHasChanged();
         });
 
@@ -326,24 +340,9 @@ else
         {
             currentRoom.Game.Started = started;
             if (started)
-            {
-                await AlertAsync("The game has started. No new players may join.");
-            }
+                await LogAsync("The game has started. No new players may join.");
             StateHasChanged();
         });
-
-        // TODO Server-side implementation
-        /** 
-        hubConnection.On<List<Card>>("AddCardsToDeck", cards =>
-        {
-            foreach (var card in cards)
-            {
-                currentRoom.Game.Deck.Cards.Push(card);
-            }
-
-            StateHasChanged();
-        }); 
-        */
 
         await hubConnection.StartAsync();
     }
@@ -352,11 +351,11 @@ else
     {
         if (string.IsNullOrWhiteSpace(textInput))
         {
-            await AlertAsync("Type in a message to send.");
+            await LogAsync("Type in a message to send.");
             return;
         }
 
-        await hubConnection.SendAsync("SendChatMessage", currentRoom.Link, textInput);
+        await hubConnection.SendAsync("SendChat", currentRoom.InviteLink, textInput);
         textInput = string.Empty;
     }
 
@@ -366,38 +365,32 @@ else
     {
         if (string.IsNullOrWhiteSpace(inviteLink))
         {
-            await AlertAsync("Please supply an invite link and, where applicable, a password.");
+            await LogAsync("Please supply an invite link and, where applicable, a password.");
             return;
         }
         await hubConnection.SendAsync("JoinRoom", inviteLink);
     }
 
-    async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", currentRoom.Link);
+    async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", currentRoom.InviteLink);
 
-    async Task StartGame() => await hubConnection.SendAsync("StartGame", currentRoom.Link);
+    async Task StartGame() => await hubConnection.SendAsync("StartGame", currentRoom.InviteLink);
 
     async Task PerformTurn()
     {
-        if (await hubConnection.InvokeAsync<bool>("PerformTurn", currentRoom.Link, currentTurn))
-        {
-            Me.Hand.Cards.RemoveAll(card => currentTurn.Contains(card));
-        }
+        if (await hubConnection.InvokeAsync<bool>("PerformTurn", currentRoom.InviteLink, currentTurn))
+            Me.Hand.RemoveAll(card => currentTurn.Contains(card));
 
-        
-            currentTurn.Clear();
-            StateHasChanged();
+        currentTurn.Clear();
+        StateHasChanged();
     }
 
-    async Task PickCard()
-    {
-        await hubConnection.SendAsync("PickCard", currentRoom.Link);
-    }
+    async Task PickCard() => await hubConnection.SendAsync("PickCard", currentRoom.InviteLink);
 
     public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
 
-    public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
+    private async Task LogAsync(string text) => await JSRuntime.InvokeVoidAsync("console.log", text);
 
-    private async Task AlertAsync(string text) => await JSRuntime.InvokeVoidAsync("alert", text);
+    public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
 
     private string GetCardIcon(Card card) => card.Suit switch
     {
