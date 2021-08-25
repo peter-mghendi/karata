@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using Karata.Cards.Extensions;
 using static Karata.Cards.Card;
+using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
+using static Karata.Cards.Extensions.CardExtensions;
 
 namespace Karata.Cards
 {
@@ -29,12 +32,12 @@ namespace Karata.Cards
                     foreach (var face in Enum.GetValues<CardFace>())
                     {
                         if (face is None) continue;
-                        deck.Push(new(suit, face));
+                        deck.Push(face.Of(suit));
                     }
                 }
 
-                deck.Push(new(BlackJoker, None));
-                deck.Push(new(RedJoker, None));
+                deck.Push(Joker(Black));
+                deck.Push(Joker(Red));
                 return new Deck(deck);
             }
         }

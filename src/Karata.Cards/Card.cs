@@ -6,7 +6,7 @@ using static Karata.Cards.Card.CardSuit;
 
 namespace Karata.Cards
 {
-    public partial record Card(CardSuit Suit, CardFace Face)
+    public partial record Card(CardFace Face, CardSuit Suit)
     {
         public string Name => Suit switch
         {

@@ -9,11 +9,11 @@ namespace Karata.Cards.Tests
     public class CardTest
     {
         [Theory]
-        [InlineData(Spades, Ace, "Ace of Spades", 1, Black)]
-        [InlineData(RedJoker, None, "Red Joker", 0, Red)]
-        public void CardPropertyTest(CardSuit suit, CardFace face, string name, uint rank, CardColor color)
+        [InlineData(Ace, Spades, "Ace of Spades", 1, Black)]
+        [InlineData(None, RedJoker, "Red Joker", 0, Red)]
+        public void CardPropertyTest(CardFace face, CardSuit suit, string name, uint rank, CardColor color)
         {
-            var card = new Card(suit, face);
+            var card = new Card(face, suit);
             Assert.Equal(name, card.Name);
             Assert.Equal(rank, card.Rank);
             Assert.Equal(color, card.Color);

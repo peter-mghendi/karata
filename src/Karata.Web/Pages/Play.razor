@@ -1,5 +1,6 @@
 @using System.Net
 @using Karata.Cards
+@using Karata.Cards.Extensions
 @using Karata.Web.Models
 @using Karata.Web.Services
 @using Microsoft.AspNetCore.SignalR.Client
@@ -254,7 +255,7 @@ else
         hubConnection.On<uint>("AddCardsToDeck", num =>
         {
             for (int i = 0; i < num; i++)
-                currentRoom.Game.Deck.Push(new(Spades, Ace));
+                currentRoom.Game.Deck.Push(Ace.Of(Spades));
             StateHasChanged();
         }); 
 
