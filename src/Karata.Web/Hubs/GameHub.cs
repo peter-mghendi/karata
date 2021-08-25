@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Karata.Cards;
-using Karata.Web.Data;
 using Karata.Web.Engines;
 using Karata.Web.Hubs.Clients;
 using Karata.Web.Models;
@@ -11,6 +10,7 @@ using Karata.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 
 namespace Karata.Web.Hubs
 {
@@ -19,16 +19,19 @@ namespace Karata.Web.Hubs
     public class GameHub : Hub<IGameClient>
     {
         private readonly IEngine _engine;
+        private readonly ILogger<GameHub> _logger;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IRoomService _roomService;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public GameHub(
             IEngine engine,
+            ILogger<GameHub> logger,
             IUnitOfWork unitOfWork,
             UserManager<ApplicationUser> userManager)
         {
             _engine = engine;
+            _logger = logger;
             _unitOfWork = unitOfWork;
             _roomService = _unitOfWork.RoomService;
             _userManager = userManager;
@@ -70,7 +73,7 @@ namespace Karata.Web.Hubs
             var room = await _roomService.FindByInviteLinkAsync(inviteLink);
 
             // Check game status
-            if (room.Game.Started)
+            if (room.Game.IsStarted)
             {
                 await Clients.Caller.ReceiveSystemMessage("This game has already started.");
                 return;
@@ -92,7 +95,7 @@ namespace Karata.Web.Hubs
             var user = await _userManager.FindByEmailAsync(Context.UserIdentifier);
 
             // Check game status
-            if (room.Game.Started || room.Creator.Id == user.Id)
+            if (room.Game.IsStarted || room.Creator.Id == user.Id)
             {
                 // TODO: Handle this gracefully, as well as accidental disconnection.
                 await Clients.Caller.ReceiveSystemMessage("Please don't do this. The game isn't built to handle it.");
@@ -140,7 +143,10 @@ namespace Karata.Web.Hubs
             // TODO: Explicit card movements (Deck -> Hand, Hand -> Pile, etc).
             foreach (var player in game.Players)
             {
-                var dealtCount = 4;
+                player.Hand.Clear();
+                await Clients.User(player.Email).EmptyHand();
+
+                uint dealtCount = 4;
 
                 var dealt = deck.DealMany(dealtCount);
                 await Clients.Group(inviteLink).RemoveCardsFromDeck(dealtCount);
@@ -150,18 +156,18 @@ namespace Karata.Web.Hubs
             }
 
             // Start game
-            game.Started = true;
+            game.IsStarted = true;
             await Clients.Group(inviteLink).UpdateGameStatus(true);
             await _unitOfWork.CompleteAsync();
         }
 
-        public async Task<bool> PerformTurn(string inviteLink, List<Card> turn)
+        public async Task<bool> PerformTurn(string inviteLink, List<Card> cardList)
         {
             var room = await _roomService.FindByInviteLinkAsync(inviteLink);
             var game = room.Game;
 
             // Check game status
-            if (!game.Started)
+            if (!game.IsStarted)
             {
                 await Clients.Caller.ReceiveSystemMessage("The game has not started yet.");
                 return false;
@@ -177,14 +183,14 @@ namespace Karata.Web.Hubs
             }
 
             // Process turn
-            if (!_engine.ValidateTurn(topCard: game.Pile.Peek(), turnCards: turn))
+            if (!_engine.ValidateTurnCards(game, cardList))
             {
                 await Clients.Caller.ReceiveSystemMessage("That card sequence is invalid");
                 return false;
             }
 
-            // Add cards to deck
-            foreach (var card in turn)
+            // Add cards to pile
+            foreach (var card in cardList)
             {
                 game.Pile.Push(card);
                 await Clients.Group(inviteLink).AddCardToPile(card);
@@ -192,68 +198,54 @@ namespace Karata.Web.Hubs
 
             // Remove cards from player hand
             game.Players.Single(p => p.Email == currentUser.Email).Hand
-                .RemoveAll(card => turn.Contains(card));
+                .RemoveAll(card => cardList.Contains(card));
 
-            // TODO: Post turn actions
+            // Post turn actions
+            // EXPERIMENTAL!
+            var delta = _engine.GenerateTurnDelta(game, cardList);
+            game.ApplyGameDelta(delta);
 
-            // Update current turn
-            var isLastPlayer = game.CurrentTurn == game.Players.Count - 1;
-            game.CurrentTurn = isLastPlayer ? 0 : game.CurrentTurn + 1;
+            // Check whether there are cards to pick.
+            if (game.Pick > 0)
+            {
+                // Remove card from pile
+                if (!game.Deck.TryDealMany(game.Pick, out List<Card> cards))
+                {
+                    if (game.Pile.Count > game.Pick)
+                    {
+                        // Remove cards from pile
+                        var pileCards = game.Pile.Reclaim();
+                        await Clients.Group(inviteLink).ReclaimPile();
+
+                        // Add cards to deck
+                        foreach (var pileCard in pileCards)
+                            game.Deck.Push(pileCard);
+                        await Clients.Group(inviteLink)
+                            .AddCardsToDeck((uint)pileCards.Count);
+
+                        // Shuffle & deal
+                        game.Deck.Shuffle();
+                        cards = game.Deck.DealMany(game.Pick);
+                    }
+                    else
+                    {
+                        // TODO: Game over.
+                    }
+                };
+                await Clients.Group(inviteLink).RemoveCardsFromDeck(1);
+
+                // Add cards to player hand
+                game.Players.Single(p => p.Email == Context.UserIdentifier).Hand.AddRange(cards);
+                await Clients.Caller.AddCardRangeToHand(cards);
+
+                // Reset pick counter
+                game.Pick = 0;
+            }
 
             await Clients.Group(inviteLink).UpdateTurn(game.CurrentTurn);
             await _unitOfWork.CompleteAsync();
 
             return true;
-        }
-
-        public async Task PickCard(string inviteLink)
-        {
-            var room = await _roomService.FindByInviteLinkAsync(inviteLink);
-            var game = room.Game;
-
-            // Check turn
-            var requiredUser = game.Players[game.CurrentTurn];
-            var currentUser = await _userManager.FindByEmailAsync(Context.UserIdentifier);
-            if (requiredUser.Id != currentUser.Id)
-            {
-                await Clients.Caller.ReceiveSystemMessage("It is not your turn!");
-                return;
-            }
-
-            // Remove card from pile
-            if (!game.Deck.TryDeal(out Card card))
-            {
-                if (game.Pile.Count > 1)
-                {
-                    // Remove cards from pile
-                    var pileCards = game.Pile.Reclaim();
-                    await Clients.Group(inviteLink).ReclaimPile();
-
-                    // Add cards to deck
-                    foreach (var pileCard in pileCards)
-                        game.Deck.Push(pileCard);
-                    await Clients.Group(inviteLink).AddCardsToDeck(pileCards.Count);
-
-                    // Shuffle & deal
-                    game.Deck.Shuffle();
-                    card = game.Deck.Deal();
-                }
-                else
-                {
-                    // TODO: Game over.
-                }
-            };
-            await Clients.Group(inviteLink).RemoveCardsFromDeck(1);
-
-            // Add card to player hand
-            game.Players.Single(p => p.Email == Context.UserIdentifier).Hand.Add(card);
-            await Clients.Caller.AddCardToHand(card);
-
-            // Update player turn
-            var isLastPlayer = game.CurrentTurn == game.Players.Count - 1;
-            game.CurrentTurn = isLastPlayer ? 0 : game.CurrentTurn + 1;
-            await Clients.Group(inviteLink).UpdateTurn(game.CurrentTurn);
-            await _unitOfWork.CompleteAsync();
         }
     }
 }

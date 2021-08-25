@@ -76,7 +76,7 @@ else
     <div class="container">
         <div class="row">
             <div class="col-8">
-                @if (@currentRoom.Game.Started)
+                @if (@currentRoom.Game.IsStarted)
                 {
                     <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Email</p>
                     <p>Deck Size: @currentRoom.Game.Deck.Count</p>
@@ -121,11 +121,14 @@ else
 
                     <div class="d-flex">
                         <button class="btn btn-outline-primary mx-auto" @onclick="PerformTurn">
-                            Perform Turn
-                        </button>
-
-                        <button class="btn btn-outline-secondary mx-auto" @onclick="PickCard">
-                            Pick Card
+                            @if(currentTurn.Count > 0) 
+                            { 
+                               <span>Perform Turn</span>
+                            }
+                            else 
+                            {
+                                <span>Pick Card</span> 
+                            }
                         </button>
                     </div>
                 }
@@ -154,7 +157,7 @@ else
                         <p>Created at: <br> @currentRoom.CreatedAt</p>
                         <p>Creator: <br> @currentRoom.Creator.Email</p>
                         <p>Players: <br> @currentRoom.Game.Players.Count</p>
-                        <p>Started: <br> @currentRoom.Game.Started</p>
+                        <p>Started: <br> @currentRoom.Game.IsStarted</p>
 
                         <div id="join-room" class="row g-2">
                             <div class="col-12 col-md-6">
@@ -248,7 +251,7 @@ else
         })
         .Build();
 
-        hubConnection.On<int>("AddCardsToDeck", num =>
+        hubConnection.On<uint>("AddCardsToDeck", num =>
         {
             for (int i = 0; i < num; i++)
                 currentRoom.Game.Deck.Push(new(Spades, Ace));
@@ -293,13 +296,18 @@ else
             StateHasChanged();
         });
 
+        hubConnection.On("EmptyHand", () =>
+        {
+            currentRoom.Game.Players.Single(u => u.Email == username).Hand.Clear();
+            StateHasChanged();
+        });
+
         hubConnection.On<Chat>("ReceiveChat", message =>
         {
             currentRoom.Chats.Add(message);
             StateHasChanged();
         });
 
-        // TODO: Non-blocking implementation
         hubConnection.On<string>("ReceiveSystemMessage", async message =>
         {
             await LogAsync(message);
@@ -311,7 +319,7 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<int>("RemoveCardsFromDeck", num =>
+        hubConnection.On<uint>("RemoveCardsFromDeck", num =>
         {
             _ = currentRoom.Game.Deck.DealMany(num);
             StateHasChanged();
@@ -338,7 +346,7 @@ else
 
         hubConnection.On<bool>("UpdateGameStatus", async started =>
         {
-            currentRoom.Game.Started = started;
+            currentRoom.Game.IsStarted = started;
             if (started)
                 await LogAsync("The game has started. No new players may join.");
             StateHasChanged();
@@ -383,8 +391,6 @@ else
         currentTurn.Clear();
         StateHasChanged();
     }
-
-    async Task PickCard() => await hubConnection.SendAsync("PickCard", currentRoom.InviteLink);
 
     public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
 

@@ -11,7 +11,7 @@ namespace Karata.Cards.Tests
         [Theory]
         [InlineData(Spades, Ace, "Ace of Spades", 1, Black)]
         [InlineData(RedJoker, None, "Red Joker", 0, Red)]
-        public void CardPropertyTest(CardSuit suit, CardFace face, string name, int rank, CardColor color)
+        public void CardPropertyTest(CardSuit suit, CardFace face, string name, uint rank, CardColor color)
         {
             var card = new Card(suit, face);
             Assert.Equal(name, card.Name);

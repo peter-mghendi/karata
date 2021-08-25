@@ -42,6 +42,12 @@ namespace Karata.Web.Data
                     ));
 
             modelBuilder.Entity<Game>()
+                .Property(g => g.CurrentRequest)
+                .HasConversion(
+                    request => JsonSerializer.Serialize(request, default),
+                    json => JsonSerializer.Deserialize<Card>(json, default));
+
+            modelBuilder.Entity<Game>()
                 .Property(g => g.Deck)
                 .HasConversion(
                     deck => JsonSerializer.Serialize(deck, default),

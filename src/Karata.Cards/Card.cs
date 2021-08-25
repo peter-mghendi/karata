@@ -14,7 +14,7 @@ namespace Karata.Cards
             _ => $"{Face} of {Suit}"
         };
 
-        public int Rank => Face switch
+        public uint Rank => Face switch
         {
             None => 0,
             Ace => 1,

@@ -58,7 +58,7 @@ namespace Karata.Cards
         public Card Deal() => Pop();
 
         // Deal multiple cards without checking deck size first.
-        public List<Card> DealMany(int num)
+        public List<Card> DealMany(uint num)
         {
             var dealt = new List<Card>();
             for (int i = 0; i < num; i++)
@@ -79,7 +79,7 @@ namespace Karata.Cards
         }
 
         // Check deck size before attempting to deal multiple cards.
-        public bool TryDealMany(int num, out List<Card> dealt)
+        public bool TryDealMany(uint num, out List<Card> dealt)
         {
             dealt = default;
             if (Count < num)
