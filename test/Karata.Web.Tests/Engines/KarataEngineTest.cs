@@ -54,29 +54,25 @@ namespace Karata.Web.Tests.Engines
             var data = new List<(Game, List<Card>, bool, GameDelta)>();
 
             // #1 - No cards played - VALID
-            var game1 = new Game();
-            game1.Pile.Push(Nine.Of(Spades));
+            var game1 = CreateTestGame();
             var cards1 = new List<Card>();
             var delta1 = new GameDelta() { Pick = 1 };
             data.Add((game1, cards1, true, delta1));
 
             // #2 - Single card of matching suit - VALID
-            var game2 = new Game();
-            game2.Pile.Push(Nine.Of(Spades));
+            var game2 = CreateTestGame();
             var cards2 = new List<Card>() { Ten.Of(Spades) };
             var delta2 = new GameDelta();
             data.Add((game2, cards2, true, delta2));
 
             // #3 - Single card of different suit - INVALID
-            var game3 = new Game();
-            game3.Pile.Push(Nine.Of(Spades));
+            var game3 = CreateTestGame();
             var cards3 = new List<Card>() { Ten.Of(Hearts) };
             var delta3 = new GameDelta();
             data.Add((game3, cards3, false, delta3));
 
             // #4 - Multiple cards of same face - VALID
-            var game4 = new Game();
-            game4.Pile.Push(Nine.Of(Spades));
+            var game4 = CreateTestGame();
             var cards4 = new List<Card>() {
                 Nine.Of(Hearts),
                 Nine.Of(Diamonds),
@@ -86,42 +82,80 @@ namespace Karata.Web.Tests.Engines
             data.Add((game4, cards4, true, delta4));
 
             // #5 - Single Jack of matching suit - VALID
-            var game5 = new Game();
-            game5.Pile.Push(Nine.Of(Spades));
+            var game5 = CreateTestGame();
             var cards5 = new List<Card>() { Jack.Of(Spades) };
             var delta5 = new GameDelta() { Skip = 2 };
-            data.Add((game5, cards5, true, delta5 ));
+            data.Add((game5, cards5, true, delta5));
 
             // #6 - Multiple Jacks - VALID
-            var game6 = new Game();
-            game6.Pile.Push(Nine.Of(Spades));
-            var cards6 = new List<Card>() { 
+            var game6 = CreateTestGame();
+            var cards6 = new List<Card>() {
                 Jack.Of(Spades),
                 Jack.Of(Hearts),
                 Jack.Of(Diamonds),
-                Jack.Of(Clubs) 
+                Jack.Of(Clubs)
             };
             var delta6 = new GameDelta() { Skip = 5 };
-            data.Add((game6, cards6, true, delta6 ));
+            data.Add((game6, cards6, true, delta6));
 
             // #7 - Single King - VALID
-            var game7 = new Game();
-            game7.Pile.Push(Nine.Of(Spades));
+            var game7 = CreateTestGame();
             var cards7 = new List<Card>() { King.Of(Spades) };
             var delta7 = new GameDelta { Reverse = true };
             data.Add((game7, cards7, true, delta7));
 
             // #8 - Even number of Kings - VALID
-            var game8 = new Game();
-            game8.Pile.Push(Nine.Of(Spades));
-            var cards8 = new List<Card>() { 
+            var game8 = CreateTestGame();
+            var cards8 = new List<Card>() {
                 King.Of(Spades),
-                King.Of(Hearts), 
+                King.Of(Hearts),
             };
             var delta8 = new GameDelta { Skip = 0 };
             data.Add((game8, cards8, true, delta8));
 
+            // #9 - Single Question Card - VALID
+            var game9 = CreateTestGame();
+            var cards9 = new List<Card>() { Queen.Of(Spades) };
+            var delta9 = new GameDelta { Pick = 1 };
+            data.Add((game9, cards9, true, delta9));
+
+            // #10 - Single Question Card wih answer - VALID
+            var game10 = CreateTestGame();
+            var cards10 = new List<Card>() {
+                Queen.Of(Spades),
+                Four.Of(Spades)
+            };
+            var delta10 = new GameDelta();
+            data.Add((game10, cards10, true, delta10));
+
+            // #11 - Multiple Question cards in valid order - VALID
+            var game11 = CreateTestGame();
+            var cards11 = new List<Card> {
+                Queen.Of(Spades),
+                Eight.Of(Spades),
+                Eight.Of(Diamonds),
+                Queen.Of(Diamonds)
+            };
+            var delta11 = new GameDelta() { Pick = 1 };
+            data.Add((game11, cards11, true, delta11));
+
+            // #12 - Multiple Question cards in invalid order - INVALID
+            var game12 = CreateTestGame();
+            var cards12 = new List<Card>() {
+                Queen.Of(Spades),
+                Eight.Of(Diamonds)
+            };
+            var delta12 = new GameDelta() { Pick = 1 };
+            data.Add((game12, cards12, false, delta12));
+
             return data;
+        }
+
+        private static Game CreateTestGame()
+        {
+            var game = new Game();
+            game.Pile.Push(Nine.Of(Spades));
+            return game;
         }
     }
 }

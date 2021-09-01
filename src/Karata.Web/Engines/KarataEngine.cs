@@ -75,8 +75,16 @@ namespace Karata.Web.Engines
                     //     && prevCard.IsQuestion || prevCard.IsJoker)
                     //     continue;
 
-                    if (thisCard.Face != prevCard.Face)
-                        return false;
+                    if (prevCard.IsQuestion)
+                    {
+                        if (thisCard.Face != prevCard.Face && thisCard.Suit != prevCard.Suit)
+                            return false;
+                    }
+                    else
+                    {
+                        if (thisCard.Face != prevCard.Face)
+                            return false;
+                    }
                 }
             }
 
@@ -106,8 +114,8 @@ namespace Karata.Web.Engines
             }
             else
             {
-                // var lastCard = turnCards[^1];
-                
+                var lastCard = turnCards[^1];
+
                 foreach (var card in turnCards)
                 {
                     if (card is { Face: Jack }) ++delta.Skip;
@@ -115,11 +123,11 @@ namespace Karata.Web.Engines
                 }
 
                 // If the last card played is a "question" card, the player has to immediately pick a card
-                // if (lastCard.IsQuestion)
-                // {
-                //     delta.Pick = 1;
-                //     return delta;
-                // }
+                if (lastCard.IsQuestion)
+                {
+                    delta.Pick = 1;
+                    return delta;
+                }
 
                 // if (lastCard.IsBomb)
                 // {
