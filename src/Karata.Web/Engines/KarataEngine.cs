@@ -1,9 +1,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using Karata.Cards;
+using Karata.Cards.Extensions;
 using Karata.Web.Models;
+using static Karata.Cards.Card.CardFace;
+using static Karata.Cards.Card.CardSuit;
 using static Karata.Web.Models.Game;
 
+// TODO: Eventually move this out into its own classlib
+// Use interfaces IGame, ITurn, IHand
+// Concrete implementations for Card, Deck, Pile
+// This class should not interact with ApplicationUser or Room at all
 namespace Karata.Web.Engines
 {
     public class KarataEngine : IEngine
@@ -101,11 +108,11 @@ namespace Karata.Web.Engines
             {
                 // var lastCard = turnCards[^1];
                 
-                // foreach (var card in turnCards)
-                // {
-                //     if (card is { Face: Jack }) ++delta.Skip;
-                //     if (card is { Face: King }) delta.Reverse = !delta.Reverse;
-                // }
+                foreach (var card in turnCards)
+                {
+                    if (card is { Face: Jack }) ++delta.Skip;
+                    if (card is { Face: King }) delta.Reverse = !delta.Reverse;
+                }
 
                 // If the last card played is a "question" card, the player has to immediately pick a card
                 // if (lastCard.IsQuestion)
@@ -125,6 +132,10 @@ namespace Karata.Web.Engines
                 //         // TODO Handle card "requests"
                 //     }
                 // }
+
+                // For an even number of kickbacks, the current player plays again.
+                var kingCount = turnCards.Count(card => card is { Face: King });
+                if (kingCount is > 0 && kingCount % 2 == 0) delta.Skip = 0;
             }
 
             return delta;

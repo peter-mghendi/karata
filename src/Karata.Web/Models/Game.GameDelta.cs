@@ -6,7 +6,7 @@ namespace Karata.Web.Models
     {
         public record GameDelta
         {
-            // public bool Reverse { get; set; } = false;
+            public bool Reverse { get; set; } = false;
             public uint Skip { get; set; } = 1;
             // public Card Request { get; set; } = null;
 
@@ -19,8 +19,8 @@ namespace Karata.Web.Models
 
         public void ApplyGameDelta(GameDelta delta)
         {
-            // if (delta.Reverse) IsForward = !IsForward;
             // if (delta.Request is not null) CurrentRequest = delta.Request;
+            if (delta.Reverse) IsForward = !IsForward;
             Pick = delta.Pick;
             Skip(delta.Skip);
         }

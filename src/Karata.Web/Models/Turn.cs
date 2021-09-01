@@ -6,6 +6,7 @@ namespace Karata.Web.Models
 {
     // This class is used to hold the turn information.
     // This is the key to the game "replay" feature.
+    // Acts like a "delta" to Hand/Game.
     // Work in progress, do not use yet.
     [Obsolete("Work in progress, do not use yet.")]
     public class Turn

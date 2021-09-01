@@ -57,7 +57,7 @@ namespace Karata.Web.Tests.Engines
             var game1 = new Game();
             game1.Pile.Push(Nine.Of(Spades));
             var cards1 = new List<Card>();
-            var delta1 = new GameDelta() with { Pick = 1 };
+            var delta1 = new GameDelta() { Pick = 1 };
             data.Add((game1, cards1, true, delta1));
 
             // #2 - Single card of matching suit - VALID
@@ -84,6 +84,42 @@ namespace Karata.Web.Tests.Engines
             };
             var delta4 = new GameDelta();
             data.Add((game4, cards4, true, delta4));
+
+            // #5 - Single Jack of matching suit - VALID
+            var game5 = new Game();
+            game5.Pile.Push(Nine.Of(Spades));
+            var cards5 = new List<Card>() { Jack.Of(Spades) };
+            var delta5 = new GameDelta() { Skip = 2 };
+            data.Add((game5, cards5, true, delta5 ));
+
+            // #6 - Multiple Jacks - VALID
+            var game6 = new Game();
+            game6.Pile.Push(Nine.Of(Spades));
+            var cards6 = new List<Card>() { 
+                Jack.Of(Spades),
+                Jack.Of(Hearts),
+                Jack.Of(Diamonds),
+                Jack.Of(Clubs) 
+            };
+            var delta6 = new GameDelta() { Skip = 5 };
+            data.Add((game6, cards6, true, delta6 ));
+
+            // #7 - Single King - VALID
+            var game7 = new Game();
+            game7.Pile.Push(Nine.Of(Spades));
+            var cards7 = new List<Card>() { King.Of(Spades) };
+            var delta7 = new GameDelta { Reverse = true };
+            data.Add((game7, cards7, true, delta7));
+
+            // #8 - Even number of Kings - VALID
+            var game8 = new Game();
+            game8.Pile.Push(Nine.Of(Spades));
+            var cards8 = new List<Card>() { 
+                King.Of(Spades),
+                King.Of(Hearts), 
+            };
+            var delta8 = new GameDelta { Skip = 0 };
+            data.Add((game8, cards8, true, delta8));
 
             return data;
         }
