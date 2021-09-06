@@ -164,17 +164,16 @@ namespace Karata.Web.Hubs
         public async Task<bool> PerformTurn(string inviteLink, List<Card> cardList)
         {
             var room = await _roomService.FindByInviteLinkAsync(inviteLink);
-            var game = room.Game;
 
             // Check game status
-            if (!game.IsStarted)
+            if (!room.Game.IsStarted)
             {
                 await Clients.Caller.ReceiveSystemMessage("The game has not started yet.");
                 return false;
             }
 
             // Check turn
-            var requiredUser = game.Players[game.CurrentTurn];
+            var requiredUser = room.Game.Players[room.Game.CurrentTurn];
             var currentUser = await _userManager.FindByEmailAsync(Context.UserIdentifier);
             if (requiredUser.Id != currentUser.Id)
             {
@@ -183,7 +182,7 @@ namespace Karata.Web.Hubs
             }
 
             // Process turn
-            if (!_engine.ValidateTurnCards(game, cardList))
+            if (!_engine.ValidateTurnCards(room.Game, cardList))
             {
                 await Clients.Caller.ReceiveSystemMessage("That card sequence is invalid");
                 return false;
@@ -192,40 +191,40 @@ namespace Karata.Web.Hubs
             // Add cards to pile
             foreach (var card in cardList)
             {
-                game.Pile.Push(card);
+                room.Game.Pile.Push(card);
                 await Clients.Group(inviteLink).AddCardToPile(card);
             }
 
             // Remove cards from player hand
-            game.Players.Single(p => p.Email == currentUser.Email).Hand
+            room.Game.Players.Single(p => p.Email == currentUser.Email).Hand
                 .RemoveAll(card => cardList.Contains(card));
 
             // Post turn actions
             // EXPERIMENTAL!
-            var delta = _engine.GenerateTurnDelta(game, cardList);
-            game.ApplyGameDelta(delta);
+            var delta = _engine.GenerateTurnDelta(room.Game, cardList);
+            room.Game.ApplyGameDelta(delta);
 
             // Check whether there are cards to pick.
-            if (game.Pick > 0)
+            if (room.Game.Pick > 0)
             {
                 // Remove card from pile
-                if (!game.Deck.TryDealMany(game.Pick, out List<Card> cards))
+                if (!room.Game.Deck.TryDealMany(room.Game.Pick, out List<Card> cards))
                 {
-                    if (game.Pile.Count > game.Pick)
+                    if (room.Game.Pile.Count + room.Game.Deck.Count - 1 > room.Game.Pick)
                     {
                         // Remove cards from pile
-                        var pileCards = game.Pile.Reclaim();
+                        var pileCards = room.Game.Pile.Reclaim();
                         await Clients.Group(inviteLink).ReclaimPile();
 
                         // Add cards to deck
                         foreach (var pileCard in pileCards)
-                            game.Deck.Push(pileCard);
+                            room.Game.Deck.Push(pileCard);
                         await Clients.Group(inviteLink)
                             .AddCardsToDeck((uint)pileCards.Count);
 
                         // Shuffle & deal
-                        game.Deck.Shuffle();
-                        cards = game.Deck.DealMany(game.Pick);
+                        room.Game.Deck.Shuffle();
+                        cards = room.Game.Deck.DealMany(room.Game.Pick);
                     }
                     else
                     {
@@ -235,14 +234,14 @@ namespace Karata.Web.Hubs
                 await Clients.Group(inviteLink).RemoveCardsFromDeck(1);
 
                 // Add cards to player hand
-                game.Players.Single(p => p.Email == Context.UserIdentifier).Hand.AddRange(cards);
+                room.Game.Players.Single(p => p.Email == Context.UserIdentifier).Hand.AddRange(cards);
                 await Clients.Caller.AddCardRangeToHand(cards);
 
                 // Reset pick counter
-                game.Pick = 0;
+                room.Game.Pick = 0;
             }
 
-            await Clients.Group(inviteLink).UpdateTurn(game.CurrentTurn);
+            await Clients.Group(inviteLink).UpdateTurn(room.Game.CurrentTurn);
             await _unitOfWork.CompleteAsync();
 
             return true;

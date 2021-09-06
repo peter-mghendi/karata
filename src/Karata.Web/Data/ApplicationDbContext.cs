@@ -50,7 +50,7 @@ namespace Karata.Web.Data
             modelBuilder.Entity<Game>()
                 .Property(g => g.Deck)
                 .HasConversion(
-                    deck => JsonSerializer.Serialize(deck, default),
+                    deck => JsonSerializer.Serialize(deck.Reverse(), default),
                     json => JsonSerializer.Deserialize<Deck>(json, default),
                     new ValueComparer<Deck>(
                         (s1, s2) => s1.SequenceEqual(s2),
@@ -61,13 +61,19 @@ namespace Karata.Web.Data
             modelBuilder.Entity<Game>()
                 .Property(g => g.Pile)
                 .HasConversion(
-                    pile => JsonSerializer.Serialize(pile, default),
+                    pile => JsonSerializer.Serialize(pile.Reverse(), default),
                     json => JsonSerializer.Deserialize<Pile>(json, default),
                     new ValueComparer<Pile>(
                         (s1, s2) => s1.SequenceEqual(s2),
                         s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                         s => new(s.Reverse())
                     ));
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            // optionsBuilder.LogTo(Console.WriteLine);
+            // optionsBuilder.EnableSensitiveDataLogging();
         }
     }
 }
