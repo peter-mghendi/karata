@@ -82,7 +82,7 @@ else
                     <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Email</p>
                     <p>Deck Size: @currentRoom.Game.Deck.Count</p>
                     <p>Pile Size: @currentRoom.Game.Pile.Count</p>
-                    <p>Top Card: @currentRoom.Game.Pile.Peek().Name</p>
+                    <p>Top Card: @currentRoom.Game.Pile.Peek().GetName()</p>
                     <div class="row">
                         <div class="col-6">
                             <p>My cards:</p>
@@ -92,7 +92,7 @@ else
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span>
                                             <i class="@($"bi {GetCardIcon(card)} me-2")"></i>
-                                            @card.Name
+                                            @card.GetName()
                                         </span>
                                         <button class="btn btn-outline-success" @onclick="() => AddCardToTurn(card)">
                                             <i class="bi bi-plus text-success"></i>
@@ -109,7 +109,7 @@ else
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span>
                                             <i class="@($"bi {GetCardIcon(card)} me-2")"></i>
-                                            @card.Name
+                                            @card.GetName()
                                         </span>
                                         <button class="btn btn-outline-danger" @onclick="() => RemoveCardFromTurn(card)">
                                             <i class="bi bi-trash text-danger"></i>

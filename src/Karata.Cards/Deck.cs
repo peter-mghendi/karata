@@ -31,13 +31,13 @@ namespace Karata.Cards
                     if (suit is BlackJoker or RedJoker) continue;
                     foreach (var face in Enum.GetValues<CardFace>())
                     {
-                        if (face is None) continue;
+                        if (face is Joker) continue;
                         deck.Push(face.Of(suit));
                     }
                 }
 
-                deck.Push(Joker(Black));
-                deck.Push(Joker(Red));
+                deck.Push(JokerOfColor(Black));
+                deck.Push(JokerOfColor(Red));
                 return new Deck(deck);
             }
         }

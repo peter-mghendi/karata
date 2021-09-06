@@ -75,7 +75,7 @@ namespace Karata.Web.Engines
                     //     && prevCard.IsQuestion || prevCard.IsJoker)
                     //     continue;
 
-                    if (prevCard.IsQuestion)
+                    if (prevCard.IsQuestion())
                     {
                         if (thisCard.Face != prevCard.Face && thisCard.Suit != prevCard.Suit)
                             return false;
@@ -123,7 +123,7 @@ namespace Karata.Web.Engines
                 }
 
                 // If the last card played is a "question" card, the player has to immediately pick a card
-                if (lastCard.IsQuestion)
+                if (lastCard.IsQuestion())
                 {
                     delta.Pick = 1;
                     return delta;

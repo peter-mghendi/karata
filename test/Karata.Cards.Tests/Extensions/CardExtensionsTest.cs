@@ -10,13 +10,13 @@ namespace Karata.Cards.Tests
     public class CardExtensionsTest
     {
         [Fact]
-        public void JokerTest()
+        public void JokerOfColorTest()
         {
-            var blackJoker1 = new Card(None, BlackJoker);
-            var blackJoker2 = Joker(Black);
+            var blackJoker1 = new Card(Joker, BlackJoker);
+            var blackJoker2 = JokerOfColor(Black);
 
-            var redJoker1 = new Card(None, RedJoker);
-            var redJoker2 = Joker(Red);
+            var redJoker1 = new Card(Joker, RedJoker);
+            var redJoker2 = JokerOfColor(Red);
 
             Assert.Equal(blackJoker1, blackJoker2);
             Assert.Equal(redJoker1, redJoker2);
