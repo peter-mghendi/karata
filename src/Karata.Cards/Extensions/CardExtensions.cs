@@ -42,8 +42,12 @@ namespace Karata.Cards.Extensions
             _ => throw new ArgumentException("Invalid face", nameof(card))
         };
 
-        public static CardColor GetColor(this Card card)
-            => (card.Suit is Spades or Clubs or BlackJoker) ? Black : Red;
+        public static CardColor GetColor(this Card card) => card.Suit switch
+        {
+            Spades or Clubs or BlackJoker => Black,
+            Hearts or Diamonds or RedJoker => Red,
+            _ => throw new ArgumentException("Invalid suit", nameof(card))
+        };
 
         public static bool IsBomb(this Card card)
             => card.Face is Two or Three || card.IsJoker();
