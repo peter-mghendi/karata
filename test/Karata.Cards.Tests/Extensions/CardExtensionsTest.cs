@@ -12,14 +12,20 @@ namespace Karata.Cards.Tests
     public class CardExtensionsTest
     {
         [Theory]
-        [InlineData(BlackJoker, Black)]
-        [InlineData(RedJoker, Red)]
-        public void JokerOfColorTest(CardSuit suit, CardColor color)
+        [InlineData(Black, BlackJoker, false)]
+        [InlineData(Red, RedJoker, false)]
+        [InlineData((CardColor)3, default(CardSuit), true)]
+        public void JokerOfColorTest(CardColor color, CardSuit suit, bool throws)
         {
             var expectedJoker = new Card(Joker, suit);
-            var actualJoker = JokerOfColor(color);
 
-            Assert.Equal(expectedJoker, actualJoker);
+            if (throws)
+                Assert.Throws<ArgumentException>(() => _ = JokerOfColor(color));
+            else
+            {
+                var actualJoker = JokerOfColor(color);
+                Assert.Equal(expectedJoker, actualJoker);
+            }
         }
 
         [Fact]
@@ -41,7 +47,6 @@ namespace Karata.Cards.Tests
         }
 
         [Theory]
-        [InlineData(Joker, BlackJoker, 0, false)]
         [InlineData(Ace, Spades, 1, false)]
         [InlineData((CardFace)14, Spades, default(uint), true)]
         public void GetRankTest(CardFace face, CardSuit suit, uint rank, bool throws)
@@ -55,8 +60,12 @@ namespace Karata.Cards.Tests
         }
 
         [Theory]
+        [InlineData(Joker, BlackJoker, Black, false)]
         [InlineData(Joker, RedJoker, Red, false)]
         [InlineData(Ace, Spades, Black, false)]
+        [InlineData(Ace, Hearts, Red, false)]
+        [InlineData(Ace, Clubs, Black, false)]
+        [InlineData(Ace, Diamonds, Red, false)]
         [InlineData(Ace, (CardSuit)7, default(CardColor), true)]
         public void GetColorTest(CardFace face, CardSuit suit, CardColor color, bool throws)
         {
@@ -76,16 +85,6 @@ namespace Karata.Cards.Tests
         {
             var card = new Card(face, suit);
             Assert.Equal(isBomb, card.IsBomb());
-        }
-
-        [Theory]
-        [InlineData(Joker, BlackJoker, true)]
-        [InlineData(Ace, Spades, false)]
-        [InlineData(Three, Spades, false)]
-        public void IsJokerTest(CardFace face, CardSuit suit, bool isJoker)
-        {
-            var card = new Card(face, suit);
-            Assert.Equal(isJoker, card.IsJoker());
         }
 
         [Theory]

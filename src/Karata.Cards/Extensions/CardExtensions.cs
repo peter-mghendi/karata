@@ -10,50 +10,31 @@ namespace Karata.Cards.Extensions
     {
         public static Card Of(this CardFace face, CardSuit suit) => new(face, suit);
 
-        public static Card JokerOfColor(CardColor color) => Joker.Of(color switch
+        public static Card JokerOfColor(CardColor color)
         {
-            Black => BlackJoker,
-            Red => RedJoker,
-            _ => throw new ArgumentException("Invalid color", nameof(color))
-        });
+            if (!Enum.IsDefined(color)) 
+                throw new ArgumentException("Invalid color", nameof(color));
+            return Joker.Of(color is Black ? BlackJoker : RedJoker);
+        }
 
-        public static string GetName(this Card card) => card.Suit switch
-        {
-            BlackJoker or RedJoker => $"{card.Suit.ToString()[0..^5]} Joker",
-            _ => $"{card.Face} of {card.Suit}"
-        };
+        public static string GetName(this Card card) => card.Face is Joker 
+            ? $"{card.Suit.ToString()[0..^5]} Joker"
+            : $"{card.Face} of {card.Suit}";
 
-        public static uint GetRank(this Card card) => card.Face switch
-        {
-            Joker => 0,
-            Ace => 1,
-            Two => 2,
-            Three => 3,
-            Four => 4,
-            Five => 5,
-            Six => 6,
-            Seven => 7,
-            Eight => 8,
-            Nine => 9,
-            Ten => 10,
-            Jack => 11,
-            Queen => 12,
-            King => 13,
-            _ => throw new ArgumentException("Invalid face", nameof(card))
-        };
+        public static uint GetRank(this Card card) => !Enum.IsDefined(card.Face) 
+            ? throw new ArgumentException("Invalid face", nameof(card)) 
+            : (uint)card.Face;
 
-        public static CardColor GetColor(this Card card) => card.Suit switch
+        public static CardColor GetColor(this Card card)
         {
-            Spades or Clubs or BlackJoker => Black,
-            Hearts or Diamonds or RedJoker => Red,
-            _ => throw new ArgumentException("Invalid suit", nameof(card))
-        };
+            if (card.Suit is Spades or Clubs or BlackJoker) return Black;
+            if (card.Suit is Hearts or Diamonds or RedJoker) return Red;
+            throw new ArgumentException("Invalid suit", nameof(card));
+        }
 
         public static bool IsBomb(this Card card)
-            => card.Face is Two or Three || card.IsJoker();
+            => card.Face is Two or Three or Joker;
 
-        public static bool IsJoker(this Card card)
-            => card.Suit is BlackJoker or RedJoker && card.Face is Joker;
 
         public static bool IsQuestion(this Card card)
             => card.Face is Queen or Eight;
