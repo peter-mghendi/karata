@@ -35,8 +35,13 @@ namespace Karata.Cards.Extensions
         public static bool IsBomb(this Card card)
             => card.Face is Two or Three or Joker;
 
-
         public static bool IsQuestion(this Card card)
             => card.Face is Queen or Eight;
+
+        public static bool FaceEquals(this Card thisCard, Card otherCard)
+            => thisCard.Face == otherCard.Face;
+
+        public static bool SuitEquals(this Card thisCard, Card otherCard)
+            => thisCard.Suit == otherCard.Suit;
     }
 }

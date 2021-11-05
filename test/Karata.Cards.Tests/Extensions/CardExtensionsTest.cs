@@ -94,7 +94,30 @@ namespace Karata.Cards.Tests
         public void IsQuestionTest(CardFace face, CardSuit suit, bool isQuestion)
         {
             var card = new Card(face, suit);
-            Assert.Equal(isQuestion, card.IsQuestion());
+            var actual = card.IsQuestion();
+            Assert.Equal(isQuestion, actual);
+        }
+
+        [Theory]
+        [InlineData(Ace, Nine, false)]
+        [InlineData(Nine, Nine, true)]
+        public void FaceEquals(CardFace face1, CardFace face2, bool faceEquals)
+        {
+            var card1 = new Card(face1, Spades);
+            var card2 = new Card(face2, Spades);
+            var actual = card1.FaceEquals(card2);
+            Assert.Equal(faceEquals, actual);
+        }
+
+        [Theory]
+        [InlineData(Spades, Spades, true)]
+        [InlineData(Hearts, Spades, false)]
+        public void SuitEquals(CardSuit suit1, CardSuit suit2, bool suitEquals)
+        {
+            var card1 = new Card(Ace, suit1);
+            var card2 = new Card(Ace, suit2);
+            var actual = card1.SuitEquals(card2);
+            Assert.Equal(suitEquals, actual);
         }
     }
 }
