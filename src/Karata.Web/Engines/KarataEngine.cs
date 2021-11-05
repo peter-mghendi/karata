@@ -22,7 +22,7 @@ namespace Karata.Web.Engines
             if (turnCards.Count == 0) return true;
 
             var topCard = game.Pile.Peek();
-            // var firstCard = turnCards[0];
+            var firstCard = turnCards[0];
 
             // If a card has been requested, that card must start the turn.
             // if (game.CurrentRequest is not null)
@@ -30,22 +30,26 @@ namespace Karata.Web.Engines
             //     var request = game.CurrentRequest;
 
             //     // Face is not none and not the same as the requested card.
-            //     if (request.Face is not None && firstCard.Face != request.Face) return false;
+            //     if (request.Face is not None && !firstCard.FaceEquals(prevCard)) return false;
 
             //     // Suit is not the same as the requested card.
             //     if (firstCard.Suit != request.Suit) return false;
             // }
 
             // If the top card is a "bomb", the next card should counter or block it.
-            // if (topCard.IsBomb && game.Pick > 0 && firstCard is not { Face: Ace })
+            // if (topCard.IsBomb() && game.Pick > 0 && firstCard is not { Face: Ace })
             // {
-            //     // Joker can only be countered by a joker.
-            //     if (topCard.IsJoker && !firstCard.IsJoker)
-            //         return false;
-
-            //     // Numeric "bomb" cards can only be countered by a card of equal or higher value.
-            //     else if (firstCard.Rank > topCard.Rank)
-            //         return false;
+            //     if (topCard is { Face: Joker })
+            //     {
+            //         // Joker can only be countered by a joker.
+            //         if (firstCard is not { Face: Joker })
+            //             return false;
+            //     }
+            //     else
+            //     {
+            //         // 2 and 3 can be countered by 2, 3 and Joker.
+            //         if (!firstCard.IsBomb()) return false;
+            //     }
             // }
 
             // Everything, everything.
@@ -59,31 +63,36 @@ namespace Karata.Web.Engines
                 // First card
                 if (i == 1)
                 {
-                    // Joker as the first card allows any card after it.
-                    // if (prevCard.IsJoker)
-                    //     continue;
+                    // Joker goes on top of anything
+                    if (thisCard is { Face: Joker }) continue;
 
-                    if (thisCard.Face != prevCard.Face && thisCard.Suit != prevCard.Suit)
-                        return false;
+                    // Anything goes on top of a joker
+                    if (prevCard is not { Face: Joker })
+                    {
+                        if (!thisCard.FaceEquals(prevCard) && !thisCard.SuitEquals(prevCard))
+                            return false;
+                    }
                 }
                 // Subsequent cards
                 else
                 {
-                    // Joker as the last card allows only question or joker before it.
-                    // if (i == sequence.Count - 1 /* last card */
-                    //     && thisCard.IsJoker
-                    //     && prevCard.IsQuestion || prevCard.IsJoker)
-                    //     continue;
-
-                    if (prevCard.IsQuestion())
+                    if (thisCard is { Face: Joker })
                     {
-                        if (thisCard.Face != prevCard.Face && thisCard.Suit != prevCard.Suit)
+                        if (!prevCard.IsQuestion() && prevCard is not { Face: Joker })
                             return false;
                     }
                     else
                     {
-                        if (thisCard.Face != prevCard.Face)
-                            return false;
+                        if (prevCard.IsQuestion())
+                        {
+                            if (!thisCard.FaceEquals(prevCard) && !thisCard.SuitEquals(prevCard))
+                                return false;
+                        }
+                        else
+                        {
+                            if (!thisCard.FaceEquals(prevCard))
+                                return false;
+                        }
                     }
                 }
             }

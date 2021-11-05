@@ -6,8 +6,10 @@ using Karata.Cards.Extensions;
 using Karata.Web.Engines;
 using Karata.Web.Models;
 using Xunit;
+using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
+using static Karata.Cards.Extensions.CardExtensions;
 using static Karata.Web.Models.Game;
 
 namespace Karata.Web.Tests.Engines
@@ -53,6 +55,10 @@ namespace Karata.Web.Tests.Engines
         {
             var data = new List<(Game, List<Card>, bool, GameDelta)>();
 
+            /*
+             * BASIC OPERATIONS
+             */
+
             // #1 - No cards played - VALID
             var game1 = CreateTestGame();
             var cards1 = new List<Card>();
@@ -81,6 +87,10 @@ namespace Karata.Web.Tests.Engines
             var delta4 = new GameDelta();
             data.Add((game4, cards4, true, delta4));
 
+            /*
+             * JACK
+             */
+
             // #5 - Single Jack of matching suit - VALID
             var game5 = CreateTestGame();
             var cards5 = new List<Card>() { Jack.Of(Spades) };
@@ -98,6 +108,10 @@ namespace Karata.Web.Tests.Engines
             var delta6 = new GameDelta() { Skip = 5 };
             data.Add((game6, cards6, true, delta6));
 
+            /*
+             * KING
+             */
+
             // #7 - Single King - VALID
             var game7 = CreateTestGame();
             var cards7 = new List<Card>() { King.Of(Spades) };
@@ -112,6 +126,10 @@ namespace Karata.Web.Tests.Engines
             };
             var delta8 = new GameDelta { Skip = 0 };
             data.Add((game8, cards8, true, delta8));
+
+            /*
+             * QUESTIONS
+             */
 
             // #9 - Single Question Card - VALID
             var game9 = CreateTestGame();
@@ -148,13 +166,53 @@ namespace Karata.Web.Tests.Engines
             var delta12 = new GameDelta() { Pick = 1 };
             data.Add((game12, cards12, false, delta12));
 
+            /*
+             * JOKERS
+             */
+
+            // #13 - Joker as the only card - VALID
+            // TODO - Revisit
+            var game13 = CreateTestGame();
+            var cards13 = new List<Card>() { JokerOfColor(Black) };
+            var delta13 = new GameDelta();
+            data.Add((game13, cards13, true, delta13));
+
+            // #14 - Multiple cards involving Joker - VALID
+            // TODO - Revisit
+            var game14 = CreateTestGame();
+            var cards14 = new List<Card>() { 
+                Queen.Of(Spades),
+                Eight.Of(Spades),
+                JokerOfColor(Black), 
+                JokerOfColor(Red)
+            };
+            var delta14 = new GameDelta();
+            data.Add((game14, cards14, true, delta14));
+
+            // #15 - Multiple cards involving Joker - INVALID
+            // TODO - Revisit
+            var game15 = CreateTestGame();
+            var cards15 = new List<Card>() { 
+                JokerOfColor(Black),
+                Seven.Of(Spades) 
+            };
+            var delta15 = new GameDelta();
+            data.Add((game15, cards15, false, delta15));
+
+            // #16 - Joker at the bottom - VALID
+            // TODO - Revisit
+            var game16 = CreateTestGame(JokerOfColor(Black));
+            var cards16 = new List<Card>() { Seven.Of(Spades) };
+            var delta16 = new GameDelta();
+            data.Add((game16, cards16, true, delta16));
+
             return data;
         }
 
-        private static Game CreateTestGame()
+        private static Game CreateTestGame(Card firstCard = null)
         {
             var game = new Game();
-            game.Pile.Push(Nine.Of(Spades));
+            game.Pile.Push(firstCard ??= Nine.Of(Spades));
             return game;
         }
     }
