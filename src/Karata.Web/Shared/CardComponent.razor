@@ -1,0 +1,24 @@
+@using Karata.Cards;
+@using Karata.Cards.Extensions;
+@using static Karata.Cards.Card.CardFace;
+
+@if (FaceUp) 
+{
+    <img class="card" src="@imageUrl" />
+}
+else
+{
+    <img class="card" src="img/cards/Back.svg" />
+}
+
+@code {
+    [Parameter]
+    public Card Card { get; set; }
+
+    [Parameter]
+    public bool FaceUp { get; set; }
+
+    private string imageUrl => Card is { Face: Joker} 
+        ? $"img/cards/{Card.Suit.ToString()}.svg"
+        : $"img/cards/{Card.Face.ToString()}{Card.Suit.ToString()}.svg";
+}

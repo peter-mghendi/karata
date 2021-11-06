@@ -1,0 +1,17 @@
+@using Karata.Cards
+
+<div class="hand">
+    @foreach (var card in Cards)
+    {
+        <CardComponent Card="@card" FaceUp="@FaceUp" />
+    }
+</div>
+
+@code
+{
+    [Parameter]
+    public List<Card> Cards { get; set; }
+
+    [Parameter]
+    public bool FaceUp { get; set; }
+}

@@ -1,0 +1,56 @@
+#table {
+    --center-offset: 37.5%;
+    --edge-offset-vertical: 16px;
+    --edge-offset-horizontal: 8px;
+}
+
+#table {
+    width: 100%;
+    height: 100%;
+    background-color: green;
+    position: relative;
+}
+
+.hand-container {
+    position: absolute;
+}
+
+#top {
+    left: var(--center-offset);
+    top: var(--edge-offset-vertical);
+    transform: rotate(180deg);
+}
+
+#bottom {
+    right: var(--center-offset);
+    bottom: var(--edge-offset-vertical);
+    transform: rotate(0);
+}
+
+#left {
+    bottom: var(--center-offset);
+    left: var(--edge-offset-horizontal);
+    transform: rotate(90deg);
+}
+
+#right {
+    top: var(--center-offset);
+    right: var(--edge-offset-horizontal);
+    transform: rotate(270deg);
+}
+
+#deck {
+    position: absolute;
+    top: var(--center-offset);
+    left: 35%;
+    height: 133px;
+    width: 90px;
+}
+
+#pile {
+    position: absolute;
+    top: var(--center-offset);
+    right: 35%;
+    height: 133px;
+    width: 90px;
+}

@@ -77,6 +77,7 @@ else
     <div class="container">
         <div class="row">
             <div class="col-8">
+                <CardTable />
                 @if (@currentRoom.Game.IsStarted)
                 {
                     <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Email</p>
@@ -161,10 +162,12 @@ else
                         <p>Started: <br> @currentRoom.Game.IsStarted</p>
 
                         <div id="join-room" class="row g-2">
-                            <div class="col-12 col-md-6">
+                            @if(currentRoom.Creator.Email == Me.Email) {
+                            <div class="col">
                                 <button class="btn btn-outline-success w-100" @onclick="StartGame">Start Game</button>
                             </div>
-                            <div class="col-12 col-md-6">
+                            }
+                            <div class="col">
                                 <button class="btn btn-outline-danger w-100" @onclick="LeaveRoom">Leave Room</button>
                             </div>
                         </div>
