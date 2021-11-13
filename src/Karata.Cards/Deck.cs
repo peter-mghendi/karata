@@ -30,7 +30,7 @@ namespace Karata.Cards
                     if (suit is BlackJoker or RedJoker) continue;
                     foreach (var face in Enum.GetValues<CardFace>())
                     {
-                        if (face is Joker) continue;
+                        if (face is None or Joker) continue;
                         deck.Push(face.Of(suit));
                     }
                 }

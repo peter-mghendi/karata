@@ -47,7 +47,7 @@ namespace Karata.Cards.Tests
 
         [Theory]
         [InlineData(Ace, Spades, 1, false)]
-        [InlineData((CardFace)14, Spades, default(uint), true)]
+        [InlineData((CardFace)15, Spades, default(uint), true)]
         public void GetRankTest(CardFace face, CardSuit suit, uint rank, bool throws)
         {
             var card = new Card(face, suit);

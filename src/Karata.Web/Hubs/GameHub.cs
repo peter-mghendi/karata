@@ -10,28 +10,28 @@ using Karata.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
 
 namespace Karata.Web.Hubs
 {
     // TODO Run async calls concurrently
+    // Here be dragons.
     [Authorize]
     public class GameHub : Hub<IGameClient>
     {
         private readonly IEngine _engine;
-        private readonly ILogger<GameHub> _logger;
+        // private readonly ILogger<GameHub> _logger;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IRoomService _roomService;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public GameHub(
             IEngine engine,
-            ILogger<GameHub> logger,
+            // ILogger<GameHub> logger,
             IUnitOfWork unitOfWork,
             UserManager<ApplicationUser> userManager)
         {
             _engine = engine;
-            _logger = logger;
+            // _logger = logger;
             _unitOfWork = unitOfWork;
             _roomService = _unitOfWork.RoomService;
             _userManager = userManager;
@@ -161,6 +161,7 @@ namespace Karata.Web.Hubs
             await _unitOfWork.CompleteAsync();
         }
 
+        // TODO: Throw an error instead of using the boolean
         public async Task<bool> PerformTurn(string inviteLink, List<Card> cardList)
         {
             var room = await _roomService.FindByInviteLinkAsync(inviteLink);
@@ -203,10 +204,20 @@ namespace Karata.Web.Hubs
             room.Game.Players.Single(p => p.Email == currentUser.Email).Hand
                 .RemoveAll(card => cardList.Contains(card));
 
-            // Post turn actions
-            // EXPERIMENTAL!
+            // Generate delta and update game state.
             var delta = _engine.GenerateTurnDelta(room.Game, cardList);
-            room.Game.ApplyGameDelta(delta);
+            if (delta.HasRequest) 
+            {
+                // Get the request from the frontend.
+                // Use TaskCompletionSource for this.
+                // REF: https://github.com/SignalR/SignalR/issues/1149#issuecomment-302611992
+            }
+            if (delta.Reverse)
+            {
+                room.Game.IsForward = !room.Game.IsForward;
+            }
+            room.Game.Give = delta.Give;
+            room.Game.Pick = delta.Pick;
 
             // Check whether there are cards to pick.
             if (room.Game.Pick > 0)
@@ -243,6 +254,30 @@ namespace Karata.Web.Hubs
 
                 // Reset pick counter
                 room.Game.Pick = 0;
+            }
+
+            // TODO: Check whether the game is over.
+            // var player = room.Game.Players.Single(p => p.Email == currentUser.Email);
+            // if (player.Hand.Count == 0 && player.IsLastCard) GameOver();
+            
+            // TODO: Prompt for last card status.
+            // Use TaskCompletionSource for this.
+            // REF: https://github.com/SignalR/SignalR/issues/1149#issuecomment-302611992
+
+            // Next turn
+            var lastIndex = room.Game.Players.Count - 1;
+            for (uint i = 0; i < delta.Skip; i++)
+            {
+                if (room.Game.IsForward)
+                {
+                    room.Game.CurrentTurn = room.Game.CurrentTurn == lastIndex
+                        ? 0 : room.Game.CurrentTurn + 1;
+                }
+                else
+                {
+                    room.Game.CurrentTurn = room.Game.CurrentTurn == 0
+                        ? lastIndex : room.Game.CurrentTurn - 1;
+                }
             }
 
             await Clients.Group(inviteLink).UpdateTurn(room.Game.CurrentTurn);

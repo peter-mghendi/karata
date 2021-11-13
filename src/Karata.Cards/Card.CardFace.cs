@@ -4,7 +4,7 @@ namespace Karata.Cards
     {
         public enum CardFace 
         {
-            Joker,
+            None,
             Ace,
             Two,
             Three,
@@ -17,7 +17,8 @@ namespace Karata.Cards
             Ten,
             Jack,
             Queen,
-            King
+            King,
+            Joker
         }
     }
 }
