@@ -3,7 +3,6 @@
 @using static Karata.Cards.Card.CardColor
 @using static Karata.Cards.Card.CardFace
 @using static Karata.Cards.Card.CardSuit
-@using static Karata.Cards.Extensions.CardExtensions
 
 <div id="table">
     <div id="top" class="hand-container">
@@ -18,16 +17,16 @@
     <div id="bottom" class="hand-container">
         <HandComponent Cards="@Cards" FaceUp="true" />
     </div>
-    <img id="deck" src="img/cards/Back.svg"/>
-    <img id="pile" src="img/cards/NineHearts.svg"/>
+    <img id="deck" src="img/cards/Back.svg" />
+    <img id="pile" src="img/cards/NineHearts.svg" />
 </div>
 
 @code {
-    public List<Card> Cards { get; set; } = new ()
+    public List<Card> Cards { get; set; } = new()
     {
         Ace.Of(Spades),
         Nine.Of(Spades),
         Queen.Of(Spades),
-        JokerOfColor(Black)
+        Black.ColoredJoker()
     };
 }

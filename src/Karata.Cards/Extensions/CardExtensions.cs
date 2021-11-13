@@ -10,7 +10,7 @@ namespace Karata.Cards.Extensions
     {
         public static Card Of(this CardFace face, CardSuit suit) => new(face, suit);
 
-        public static Card JokerOfColor(CardColor color)
+        public static Card ColoredJoker(this CardColor color)
         {
             if (!Enum.IsDefined(color)) 
                 throw new ArgumentException("Invalid color", nameof(color));

@@ -5,7 +5,6 @@ using static Karata.Cards.Card;
 using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
-using static Karata.Cards.Extensions.CardExtensions;
 
 namespace Karata.Cards
 {
@@ -36,8 +35,8 @@ namespace Karata.Cards
                     }
                 }
 
-                deck.Push(JokerOfColor(Black));
-                deck.Push(JokerOfColor(Red));
+                deck.Push(Black.ColoredJoker());
+                deck.Push(Red.ColoredJoker());
                 return new Deck(deck);
             }
         }

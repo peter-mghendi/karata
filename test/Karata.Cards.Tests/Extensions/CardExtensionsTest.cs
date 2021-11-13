@@ -5,29 +5,11 @@ using static Karata.Cards.Card;
 using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
-using static Karata.Cards.Extensions.CardExtensions;
 
 namespace Karata.Cards.Tests
 {
     public class CardExtensionsTest
     {
-        [Theory]
-        [InlineData(Black, BlackJoker, false)]
-        [InlineData(Red, RedJoker, false)]
-        [InlineData((CardColor)3, default(CardSuit), true)]
-        public void JokerOfColorTest(CardColor color, CardSuit suit, bool throws)
-        {
-            var expectedJoker = new Card(Joker, suit);
-
-            if (throws)
-                Assert.Throws<ArgumentException>(() => _ = JokerOfColor(color));
-            else
-            {
-                var actualJoker = JokerOfColor(color);
-                Assert.Equal(expectedJoker, actualJoker);
-            }
-        }
-
         [Fact]
         public void OfTest()
         {
@@ -35,6 +17,23 @@ namespace Karata.Cards.Tests
             var card2 = Ace.Of(Spades);
 
             Assert.Equal(card1, card2);
+        }
+
+        [Theory]
+        [InlineData(Black, BlackJoker, false)]
+        [InlineData(Red, RedJoker, false)]
+        [InlineData((CardColor)3, default(CardSuit), true)]
+        public void ColoredJokerTest(CardColor color, CardSuit suit, bool throws)
+        {
+            var expectedJoker = new Card(Joker, suit);
+
+            if (throws)
+                Assert.Throws<ArgumentException>(() => _ = color.ColoredJoker());
+            else
+            {
+                var actualJoker = color.ColoredJoker();
+                Assert.Equal(expectedJoker, actualJoker);
+            }
         }
 
         [Theory]

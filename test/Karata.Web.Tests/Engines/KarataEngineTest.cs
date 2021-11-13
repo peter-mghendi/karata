@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Karata.Cards;
@@ -9,7 +8,6 @@ using Xunit;
 using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
-using static Karata.Cards.Extensions.CardExtensions;
 using static Karata.Web.Models.Game;
 
 namespace Karata.Web.Tests.Engines
@@ -172,7 +170,7 @@ namespace Karata.Web.Tests.Engines
 
             // #13 - Joker as the only card - VALID
             var game13 = CreateTestGame();
-            var cards13 = new List<Card>() { JokerOfColor(Black) };
+            var cards13 = new List<Card>() { Black.ColoredJoker() };
             var delta13 = new GameDelta() { Give = 5 };
             data.Add((game13, cards13, true, delta13));
 
@@ -181,8 +179,8 @@ namespace Karata.Web.Tests.Engines
             var cards14 = new List<Card>() { 
                 Queen.Of(Spades),
                 Eight.Of(Spades),
-                JokerOfColor(Black), 
-                JokerOfColor(Red)
+                Black.ColoredJoker(), 
+                Red.ColoredJoker()
             };
             var delta14 = new GameDelta() { Give = 5 };
             data.Add((game14, cards14, true, delta14));
@@ -190,32 +188,32 @@ namespace Karata.Web.Tests.Engines
             // #15 - Multiple cards involving Joker - INVALID
             var game15 = CreateTestGame();
             var cards15 = new List<Card>() { 
-                JokerOfColor(Black),
+                Black.ColoredJoker(),
                 Seven.Of(Spades) 
             };
             var delta15 = new GameDelta();
             data.Add((game15, cards15, false, delta15));
 
             // #16 - Joker at the bottom - VALID
-            var game16 = CreateTestGame(JokerOfColor(Black), 5);
+            var game16 = CreateTestGame(Black.ColoredJoker(), 5);
             var cards16 = new List<Card>();
             var delta16 = new GameDelta() { Pick = 5 };
             data.Add((game16, cards16, true, delta16));
 
             // #17 - Joker at the bottom - VALID
-            var game17 = CreateTestGame(JokerOfColor(Black), 5);
-            var cards17 = new List<Card>() { JokerOfColor(Black) };
+            var game17 = CreateTestGame(Black.ColoredJoker(), 5);
+            var cards17 = new List<Card>() { Black.ColoredJoker() };
             var delta17 = new GameDelta() { Give = 5 };
             data.Add((game17, cards17, true, delta17));
 
             // #18 - Joker at the bottom - VALID
-            var game18 = CreateTestGame(JokerOfColor(Black), 5);
+            var game18 = CreateTestGame(Black.ColoredJoker(), 5);
             var cards18 = new List<Card>() { Ace.Of(Spades) };
             var delta18 = new GameDelta();
             data.Add((game18, cards18, true, delta18));
 
             // #19 - Joker at the bottom - INVALID
-            var game19 = CreateTestGame(JokerOfColor(Black), 5);
+            var game19 = CreateTestGame(Black.ColoredJoker(), 5);
             var cards19 = new List<Card>() { Seven.Of(Spades) };
             var delta19 = new GameDelta();
             data.Add((game19, cards19, false, delta19));
@@ -250,7 +248,7 @@ namespace Karata.Web.Tests.Engines
 
             // "Bomb" at the bottom - VALID
             var game24 = CreateTestGame(Three.Of(Spades), 3);
-            var cards24 = new List<Card>() { JokerOfColor(Black) };
+            var cards24 = new List<Card>() { Black.ColoredJoker() };
             var delta24 = new GameDelta() { Give = 5 };
             data.Add((game24, cards24, true, delta24));
 
@@ -260,7 +258,7 @@ namespace Karata.Web.Tests.Engines
         private static Game CreateTestGame(Card firstCard = null, uint pick = 0)
         {
             var game = new Game() { Pick = pick };
-            game.Pile.Push(firstCard ??= Nine.Of(Spades));
+            game.Pile.Push(firstCard ?? Nine.Of(Spades));
             return game;
         }
     }
