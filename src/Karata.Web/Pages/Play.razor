@@ -77,7 +77,6 @@ else
     <div class="container">
         <div class="row">
             <div class="col-8">
-                <CardTable />
                 @if (@currentRoom.Game.IsStarted)
                 {
                     <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Email</p>
@@ -133,6 +132,10 @@ else
                             }
                         </button>
                     </div>
+                }
+                else
+                {
+                    <CardTable />
                 }
             </div>
             <div class="col-4">
