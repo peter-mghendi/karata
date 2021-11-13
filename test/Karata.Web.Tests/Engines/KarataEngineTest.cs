@@ -167,18 +167,16 @@ namespace Karata.Web.Tests.Engines
             data.Add((game12, cards12, false, delta12));
 
             /*
-             * JOKERS
+             * JOKER
              */
 
             // #13 - Joker as the only card - VALID
-            // TODO - Revisit
             var game13 = CreateTestGame();
             var cards13 = new List<Card>() { JokerOfColor(Black) };
-            var delta13 = new GameDelta();
+            var delta13 = new GameDelta() { Give = 5 };
             data.Add((game13, cards13, true, delta13));
 
             // #14 - Multiple cards involving Joker - VALID
-            // TODO - Revisit
             var game14 = CreateTestGame();
             var cards14 = new List<Card>() { 
                 Queen.Of(Spades),
@@ -186,11 +184,10 @@ namespace Karata.Web.Tests.Engines
                 JokerOfColor(Black), 
                 JokerOfColor(Red)
             };
-            var delta14 = new GameDelta();
+            var delta14 = new GameDelta() { Give = 5 };
             data.Add((game14, cards14, true, delta14));
 
             // #15 - Multiple cards involving Joker - INVALID
-            // TODO - Revisit
             var game15 = CreateTestGame();
             var cards15 = new List<Card>() { 
                 JokerOfColor(Black),
@@ -200,18 +197,69 @@ namespace Karata.Web.Tests.Engines
             data.Add((game15, cards15, false, delta15));
 
             // #16 - Joker at the bottom - VALID
-            // TODO - Revisit
-            var game16 = CreateTestGame(JokerOfColor(Black));
-            var cards16 = new List<Card>() { Seven.Of(Spades) };
-            var delta16 = new GameDelta();
+            var game16 = CreateTestGame(JokerOfColor(Black), 5);
+            var cards16 = new List<Card>();
+            var delta16 = new GameDelta() { Pick = 5 };
             data.Add((game16, cards16, true, delta16));
+
+            // #17 - Joker at the bottom - VALID
+            var game17 = CreateTestGame(JokerOfColor(Black), 5);
+            var cards17 = new List<Card>() { JokerOfColor(Black) };
+            var delta17 = new GameDelta() { Give = 5 };
+            data.Add((game17, cards17, true, delta17));
+
+            // #18 - Joker at the bottom - VALID
+            var game18 = CreateTestGame(JokerOfColor(Black), 5);
+            var cards18 = new List<Card>() { Ace.Of(Spades) };
+            var delta18 = new GameDelta();
+            data.Add((game18, cards18, true, delta18));
+
+            // #19 - Joker at the bottom - INVALID
+            var game19 = CreateTestGame(JokerOfColor(Black), 5);
+            var cards19 = new List<Card>() { Seven.Of(Spades) };
+            var delta19 = new GameDelta();
+            data.Add((game19, cards19, false, delta19));
+
+            /*
+             * OTHER "BOMBS"
+             */
+
+            // "Bomb" at the bottom - VALID
+            var game20 = CreateTestGame(Three.Of(Spades), 3);
+            var cards20 = new List<Card>();
+            var delta20 = new GameDelta() { Pick = 3 };
+            data.Add((game20, cards20, true, delta20));
+
+            // "Bomb" at the bottom - INVALID
+            var game21 = CreateTestGame(Three.Of(Spades), 3);
+            var cards21 = new List<Card>() { Seven.Of(Spades) };
+            var delta21 = new GameDelta();
+            data.Add((game21, cards21, false, delta21));
+
+            // "Bomb" at the bottom - VALID
+            var game22 = CreateTestGame(Three.Of(Spades), 3);
+            var cards22 = new List<Card>() { Two.Of(Spades) };
+            var delta22 = new GameDelta() { Give = 2 };
+            data.Add((game22, cards22, true, delta22));
+
+            // "Bomb" at the bottom - INVALID
+            var game23 = CreateTestGame(Three.Of(Spades), 3);
+            var cards23 = new List<Card>() { Three.Of(Diamonds) };
+            var delta23 = new GameDelta() { Give = 3 };
+            data.Add((game23, cards23, true, delta23));
+
+            // "Bomb" at the bottom - VALID
+            var game24 = CreateTestGame(Three.Of(Spades), 3);
+            var cards24 = new List<Card>() { JokerOfColor(Black) };
+            var delta24 = new GameDelta() { Give = 5 };
+            data.Add((game24, cards24, true, delta24));
 
             return data;
         }
 
-        private static Game CreateTestGame(Card firstCard = null)
+        private static Game CreateTestGame(Card firstCard = null, uint pick = 0)
         {
-            var game = new Game();
+            var game = new Game() { Pick = pick };
             game.Pile.Push(firstCard ??= Nine.Of(Spades));
             return game;
         }

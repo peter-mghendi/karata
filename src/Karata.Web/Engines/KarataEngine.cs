@@ -37,20 +37,20 @@ namespace Karata.Web.Engines
             // }
 
             // If the top card is a "bomb", the next card should counter or block it.
-            // if (topCard.IsBomb() && game.Pick > 0 && firstCard is not { Face: Ace })
-            // {
-            //     if (topCard is { Face: Joker })
-            //     {
-            //         // Joker can only be countered by a joker.
-            //         if (firstCard is not { Face: Joker })
-            //             return false;
-            //     }
-            //     else
-            //     {
-            //         // 2 and 3 can be countered by 2, 3 and Joker.
-            //         if (!firstCard.IsBomb()) return false;
-            //     }
-            // }
+            if (topCard.IsBomb() && game.Pick > 0 && firstCard is not { Face: Ace })
+            {
+                if (topCard is { Face: Joker })
+                {
+                    // Joker can only be countered by a joker.
+                    if (firstCard is not { Face: Joker })
+                        return false;
+                }
+                else
+                {
+                    // 2 and 3 can be countered by 2, 3 and Joker.
+                    if (!firstCard.IsBomb()) return false;
+                }
+            }
 
             // Everything, everything.
             var sequence = new List<Card>(turnCards).Prepend(topCard).ToList();
@@ -111,14 +111,11 @@ namespace Karata.Web.Engines
 
             if (turnCards.Count == 0)
             {
-                // If the last card played is a "bomb" card, the player has to immediately pick a card
-                // if (game.Pick > 0)
-                // {
-                //     delta.Pick = game.Pick;
-                //     return delta;
-                // }
-
                 delta.Pick = 1;
+
+                // If the last card played is a "bomb" card, the player has to immediately pick cards.
+                if (game.Pick > 0) delta.Pick = game.Pick;
+                
                 return delta;
             }
             else
@@ -138,11 +135,11 @@ namespace Karata.Web.Engines
                     return delta;
                 }
 
-                // if (lastCard.IsBomb)
-                // {
-                //     delta.Give = lastCard.IsJoker ? 5 : ((uint)lastCard.Face);
-                //     return delta;
-                // }
+                if (lastCard.IsBomb())
+                {
+                    delta.Give = lastCard is { Face: Joker } ? 5 : ((uint)lastCard.Face);
+                    return delta;
+                }
 
                 //     if (lastCard.Face is Ace)
                 //     {

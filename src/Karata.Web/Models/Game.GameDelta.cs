@@ -11,7 +11,7 @@ namespace Karata.Web.Models
             // public Card Request { get; set; } = null;
 
             // Cards given to the next player
-            // public uint Give { get; set; } = 0;
+            public uint Give { get; set; } = 0;
 
             // Cards the current player should pick
             public uint Pick { get; set; } = 0;
@@ -21,6 +21,7 @@ namespace Karata.Web.Models
         {
             // if (delta.Request is not null) CurrentRequest = delta.Request;
             if (delta.Reverse) IsForward = !IsForward;
+            Give = delta.Give;
             Pick = delta.Pick;
             Skip(delta.Skip);
         }

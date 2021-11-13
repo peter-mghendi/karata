@@ -181,6 +181,10 @@ namespace Karata.Web.Hubs
                 return false;
             }
 
+            // Cards from last turn
+            room.Game.Pick = room.Game.Give;
+            room.Game.Give = 0;
+
             // Process turn
             if (!_engine.ValidateTurnCards(room.Game, cardList))
             {

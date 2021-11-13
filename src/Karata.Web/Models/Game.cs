@@ -13,6 +13,7 @@ namespace Karata.Web.Models
         public bool IsForward { get; set; } = true;
 
         public Card CurrentRequest { get; set; } = null;
+        public uint Give { get; set; } = 0;
         public uint Pick { get; set; } = 0;
 
         public virtual Deck Deck { get; set; } = Deck.StandardDeck;
