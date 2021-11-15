@@ -16,6 +16,8 @@ namespace Karata.Web.Hubs.Clients
         Task AddPlayerToRoom(ApplicationUser player);
         Task AddToRoom(Room room);
         Task EmptyHand();
+        Task NotifyInvalidTurn();
+        Task NotifyValidTurn();
         Task PromptCardRequest(Guid identifier);
         Task ReceiveChat(Chat message);
         Task ReceiveSystemMessage(string message);

@@ -167,7 +167,7 @@ namespace Karata.Web.Hubs
         }
 
         // TODO: Throw an error instead of using the boolean
-        public async Task<bool> PerformTurn(string inviteLink, List<Card> cardList)
+        public async Task PerformTurn(string inviteLink, List<Card> cardList)
         {
             // Identifier and TaskCompletionSource for multi-threaded tasks.
             var identifier = Guid.NewGuid();
@@ -179,7 +179,8 @@ namespace Karata.Web.Hubs
             if (!room.Game.IsStarted)
             {
                 await Clients.Caller.ReceiveSystemMessage("The game has not started yet.");
-                return false;
+                await Clients.Caller.NotifyInvalidTurn();
+                return;
             }
 
             // Check turn
@@ -188,7 +189,8 @@ namespace Karata.Web.Hubs
             if (requiredUser.Id != currentUser.Id)
             {
                 await Clients.Caller.ReceiveSystemMessage("It is not your turn!");
-                return false;
+                await Clients.Caller.NotifyInvalidTurn();
+                return;
             }
 
             // Cards from last turn
@@ -199,7 +201,8 @@ namespace Karata.Web.Hubs
             if (!_engine.ValidateTurnCards(room.Game, cardList))
             {
                 await Clients.Caller.ReceiveSystemMessage("That card sequence is invalid");
-                return false;
+                await Clients.Caller.NotifyInvalidTurn();
+                return;
             }
 
             // Add cards to pile
@@ -310,7 +313,7 @@ namespace Karata.Web.Hubs
             await Clients.Group(inviteLink).UpdateTurn(room.Game.CurrentTurn);
             await _unitOfWork.CompleteAsync();
 
-            return true;
+            await Clients.Caller.NotifyValidTurn();
         }
 
         // TODO: This is not being called

@@ -323,6 +323,19 @@ else
             StateHasChanged();
         });
 
+        hubConnection.On("NotifyInvalidTurn", () =>
+        {
+            currentTurn.Clear();
+            StateHasChanged();
+        });
+
+        hubConnection.On("NotifyValidTurn", () =>
+        {
+            Me.Hand.RemoveAll(card => currentTurn.Contains(card));
+            currentTurn.Clear();
+            StateHasChanged();
+        });
+
         hubConnection.On<Guid>("PromptCardRequest", identifier =>
         {
             // TODO: Actually implement this.
@@ -419,9 +432,7 @@ else
 
     async Task PerformTurn()
     {
-        var isSuccessful = await hubConnection.InvokeAsync<bool>("PerformTurn", currentRoom.InviteLink, currentTurn);
-        if (isSuccessful) Me.Hand.RemoveAll(card => currentTurn.Contains(card));
-        currentTurn.Clear();
+        await hubConnection.SendAsync("PerformTurn", currentRoom.InviteLink, currentTurn);
         StateHasChanged();
     }
 
