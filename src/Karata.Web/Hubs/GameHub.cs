@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Karata.Cards;
+using Karata.Cards.Extensions;
 using Karata.Web.Engines;
 using Karata.Web.Hubs.Clients;
 using Karata.Web.Models;
@@ -10,28 +12,31 @@ using Karata.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 
 namespace Karata.Web.Hubs
 {
+
     // TODO Run async calls concurrently
     // Here be dragons.
     [Authorize]
     public class GameHub : Hub<IGameClient>
     {
         private readonly IEngine _engine;
-        // private readonly ILogger<GameHub> _logger;
+        private readonly ILogger<GameHub> _logger;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IRoomService _roomService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private static readonly ConcurrentDictionary<Guid, TaskCompletionSource<Card>> _cardRequests = new();
 
         public GameHub(
             IEngine engine,
-            // ILogger<GameHub> logger,
+            ILogger<GameHub> logger,
             IUnitOfWork unitOfWork,
             UserManager<ApplicationUser> userManager)
         {
             _engine = engine;
-            // _logger = logger;
+            _logger = logger;
             _unitOfWork = unitOfWork;
             _roomService = _unitOfWork.RoomService;
             _userManager = userManager;
@@ -164,6 +169,10 @@ namespace Karata.Web.Hubs
         // TODO: Throw an error instead of using the boolean
         public async Task<bool> PerformTurn(string inviteLink, List<Card> cardList)
         {
+            // Identifier and TaskCompletionSource for multi-threaded tasks.
+            var identifier = Guid.NewGuid();
+            var tcs = new TaskCompletionSource<Card>();
+
             var room = await _roomService.FindByInviteLinkAsync(inviteLink);
 
             // Check game status
@@ -206,11 +215,29 @@ namespace Karata.Web.Hubs
 
             // Generate delta and update game state.
             var delta = _engine.GenerateTurnDelta(room.Game, cardList);
-            if (delta.HasRequest) 
+            if (delta.HasRequest)
             {
                 // Get the request from the frontend.
                 // Use TaskCompletionSource for this.
                 // REF: https://github.com/SignalR/SignalR/issues/1149#issuecomment-302611992
+
+                // TODO Handle GUID collisions.
+                _cardRequests.TryAdd(identifier, tcs);
+                await Clients.Caller.PromptCardRequest(identifier);
+
+                try
+                {
+                    // Wait for the client to respond
+                    // TODO: Cancel this task if the client disconnects (potentially by just adding a timeout)
+                    var card = await tcs.Task;
+                    _logger.LogInformation(card.GetName());
+                    // room.Game.CurrentRequest = await tcs.Task;
+                }
+                finally
+                {
+                    // Remove the tcs from the dictionary so that we don't leak memory
+                    _cardRequests.TryRemove(identifier, out tcs);
+                }
             }
             if (delta.Reverse)
             {
@@ -259,7 +286,7 @@ namespace Karata.Web.Hubs
             // TODO: Check whether the game is over.
             // var player = room.Game.Players.Single(p => p.Email == currentUser.Email);
             // if (player.Hand.Count == 0 && player.IsLastCard) GameOver();
-            
+
             // TODO: Prompt for last card status.
             // Use TaskCompletionSource for this.
             // REF: https://github.com/SignalR/SignalR/issues/1149#issuecomment-302611992
@@ -284,6 +311,21 @@ namespace Karata.Web.Hubs
             await _unitOfWork.CompleteAsync();
 
             return true;
+        }
+
+        // TODO: This is not being called
+        public void RequestCard(Guid identifier, Card request)
+        {
+            _logger.LogInformation("Response received. Identifier: {Identifier}, Card: {Card}", identifier, request);
+            // if (_cardRequests.TryGetValue(identifier, out TaskCompletionSource<Card> tcs))
+            // {
+            //     // Trigger the task continuation
+            //     tcs.TrySetResult(request);
+            // }
+            // else
+            // {
+            //     // Client response for something that isn't being tracked, might be an error
+            // }
         }
     }
 }

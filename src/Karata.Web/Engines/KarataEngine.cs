@@ -63,11 +63,11 @@ namespace Karata.Web.Engines
                 // First card
                 if (i == 1)
                 {
-                    // Joker goes on top of anything
-                    if (thisCard is { Face: Joker }) continue;
+                    // Ace and joker go on top of anything
+                    if (thisCard is { Face: Ace or Joker }) continue;
 
-                    // Anything goes on top of a joker
-                    if (prevCard is not { Face: Joker })
+                    // Anything goes on top of an ace or joker
+                    if (prevCard is not { Face: Ace or Joker })
                     {
                         if (!thisCard.FaceEquals(prevCard) && !thisCard.SuitEquals(prevCard))
                             return false;
@@ -76,7 +76,12 @@ namespace Karata.Web.Engines
                 // Subsequent cards
                 else
                 {
-                    if (thisCard is { Face: Joker })
+                    if (thisCard is { Face: Ace })
+                    {
+                        if (!prevCard.IsQuestion() && prevCard is not { Face: Ace })
+                            return false;
+                    }
+                    else if (thisCard is { Face: Joker })
                     {
                         if (!prevCard.IsQuestion() && prevCard is not { Face: Joker })
                             return false;
@@ -135,19 +140,23 @@ namespace Karata.Web.Engines
                     return delta;
                 }
 
+                // If the last card played is a "bomb" card, the next player should pick some cards.
                 if (lastCard.IsBomb())
                 {
                     delta.Give = lastCard is { Face: Joker } ? 5 : ((uint)lastCard.Face);
                     return delta;
                 }
 
-                //     if (lastCard.Face is Ace)
-                //     {
-                //         // TODO Handle card "requests"
-                //     }
-                // }
+                // If the last card played is an ace and nothing is being blocked, a card should be requested.
+                // TODO: Handle Ace of Spades being worth two regular Aces.
+                if (lastCard is { Face: Ace } && game.Pick == 0)
+                {
+                    delta.HasRequest = true;
+                    var aceCount = turnCards.Count(card => card is { Face: Ace });
+                    if (aceCount > 1) delta.HasSpecificRequest = true;
+                }
 
-                // For an even number of kickbacks, the current player plays again.
+                // For an even number of "kickbacks", the current player plays again.
                 var kingCount = turnCards.Count(card => card is { Face: King });
                 if (kingCount is > 0 && kingCount % 2 == 0) delta.Skip = 0;
             }

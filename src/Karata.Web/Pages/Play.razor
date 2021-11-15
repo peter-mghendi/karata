@@ -79,10 +79,21 @@ else
             <div class="col-8">
                 @if (@currentRoom.Game.IsStarted)
                 {
+                    @if (requestIdentifier is not null)
+                    {
+                        <button @onclick="() => RequestCard(Queen.Of(Hearts))">
+                            Request Queen of Hearts
+                        </button>
+                    }
+
                     <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Email</p>
                     <p>Deck Size: @currentRoom.Game.Deck.Count</p>
                     <p>Pile Size: @currentRoom.Game.Pile.Count</p>
-                    <p>Top Card: @currentRoom.Game.Pile.Peek().GetName()</p>
+                    <p>
+                        Top Card:
+                        <i class="@($"bi {GetCardIcon(currentRoom.Game.Pile.Peek())} mx-1")"></i>
+                        @currentRoom.Game.Pile.Peek().GetName()
+                    </p>
                     <div class="row mb-2">
                         <div class="col-6">
                             <p>My cards:</p>
@@ -122,13 +133,13 @@ else
 
                     <div class="d-flex">
                         <button class="btn btn-outline-primary mx-auto" @onclick="PerformTurn">
-                            @if(currentTurn.Count > 0) 
-                            { 
-                               <span>Perform Turn</span>
-                            }
-                            else 
+                            @if (currentTurn.Count > 0)
                             {
-                                <span>Pick Card(s)</span> 
+                                <span>Perform Turn</span>
+                            }
+                            else
+                            {
+                                <span>Pick Card(s)</span>
                             }
                         </button>
                     </div>
@@ -165,10 +176,12 @@ else
                         <p>Started: <br> @currentRoom.Game.IsStarted</p>
 
                         <div id="join-room" class="row g-2">
-                            @if(currentRoom.Creator.Email == Me.Email) {
-                            <div class="col">
-                                <button class="btn btn-outline-success w-100" @onclick="StartGame">Start Game</button>
-                            </div>
+                            @if (currentRoom.Creator.Email == Me.Email)
+                            {
+                                <div class="col">
+                                    <button class="btn btn-outline-success w-100 @(currentRoom.Game.IsStarted ? "disabled" : "")"
+                            @onclick="StartGame">Start Game</button>
+                                </div>
                             }
                             <div class="col">
                                 <button class="btn btn-outline-danger w-100" @onclick="LeaveRoom">Leave Room</button>
@@ -221,6 +234,7 @@ else
     // UI state
     private string textInput;
     private bool viewDetails = true;
+    private Guid? requestIdentifier = null;
 
     // Game state
     private Room currentRoom = null;
@@ -243,7 +257,7 @@ else
         username = authState.User.Identity.Name;
 
         // Set up SignalR with Cookie auth
-        var container = new CookieContainer(); 
+        var container = new CookieContainer();
         container.Add(new Cookie
         {
             Name = ".AspNetCore.Identity.Application",
@@ -263,7 +277,7 @@ else
             for (int i = 0; i < num; i++)
                 currentRoom.Game.Deck.Push(Ace.Of(Spades));
             StateHasChanged();
-        }); 
+        });
 
         hubConnection.On<Card>("AddCardToHand", card =>
         {
@@ -306,6 +320,13 @@ else
         hubConnection.On("EmptyHand", () =>
         {
             currentRoom.Game.Players.Single(u => u.Email == username).Hand.Clear();
+            StateHasChanged();
+        });
+
+        hubConnection.On<Guid>("PromptCardRequest", identifier =>
+        {
+            // TODO: Actually implement this.
+            requestIdentifier = identifier;
             StateHasChanged();
         });
 
@@ -390,11 +411,16 @@ else
 
     async Task StartGame() => await hubConnection.SendAsync("StartGame", currentRoom.InviteLink);
 
+    async Task RequestCard(Card request)
+    {
+        await LogAsync($"Requesting {request.GetName()} for identifier {requestIdentifier}...");
+        // TODO: Request card
+    }
+
     async Task PerformTurn()
     {
-        if (await hubConnection.InvokeAsync<bool>("PerformTurn", currentRoom.InviteLink, currentTurn))
-            Me.Hand.RemoveAll(card => currentTurn.Contains(card));
-
+        var isSuccessful = await hubConnection.InvokeAsync<bool>("PerformTurn", currentRoom.InviteLink, currentTurn);
+        if (isSuccessful) Me.Hand.RemoveAll(card => currentTurn.Contains(card));
         currentTurn.Clear();
         StateHasChanged();
     }
@@ -402,6 +428,8 @@ else
     public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
 
     private async Task LogAsync(string text) => await JSRuntime.InvokeVoidAsync("console.log", text);
+
+    private async Task<bool> ConfirmAsync(string text) => await JSRuntime.InvokeAsync<bool>("confirm", text);
 
     public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
 

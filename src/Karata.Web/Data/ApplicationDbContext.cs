@@ -25,6 +25,8 @@ namespace Karata.Web.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            JsonSerializerOptions options = new(JsonSerializerDefaults.Web);
+
             modelBuilder.Entity<Room>()
                 .HasOne(r => r.Game)
                 .WithOne()
@@ -33,8 +35,8 @@ namespace Karata.Web.Data
             modelBuilder.Entity<ApplicationUser>()
                 .Property(a => a.Hand)
                 .HasConversion(
-                    hand => JsonSerializer.Serialize(hand, default),
-                    json => JsonSerializer.Deserialize<List<Card>>(json, default),
+                    hand => JsonSerializer.Serialize(hand, options),
+                    json => JsonSerializer.Deserialize<List<Card>>(json, options),
                     new ValueComparer<List<Card>>(
                         (s1, s2) => s1.SequenceEqual(s2),
                         s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
@@ -44,14 +46,14 @@ namespace Karata.Web.Data
             modelBuilder.Entity<Game>()
                 .Property(g => g.CurrentRequest)
                 .HasConversion(
-                    request => JsonSerializer.Serialize(request, default),
-                    json => JsonSerializer.Deserialize<Card>(json, default));
+                    request => JsonSerializer.Serialize(request, options),
+                    json => JsonSerializer.Deserialize<Card>(json, options));
 
             modelBuilder.Entity<Game>()
                 .Property(g => g.Deck)
                 .HasConversion(
-                    deck => JsonSerializer.Serialize(deck.Reverse(), default),
-                    json => JsonSerializer.Deserialize<Deck>(json, default),
+                    deck => JsonSerializer.Serialize(deck.Reverse(), options),
+                    json => JsonSerializer.Deserialize<Deck>(json, options),
                     new ValueComparer<Deck>(
                         (s1, s2) => s1.SequenceEqual(s2),
                         s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
@@ -61,8 +63,8 @@ namespace Karata.Web.Data
             modelBuilder.Entity<Game>()
                 .Property(g => g.Pile)
                 .HasConversion(
-                    pile => JsonSerializer.Serialize(pile.Reverse(), default),
-                    json => JsonSerializer.Deserialize<Pile>(json, default),
+                    pile => JsonSerializer.Serialize(pile.Reverse(), options),
+                    json => JsonSerializer.Deserialize<Pile>(json, options),
                     new ValueComparer<Pile>(
                         (s1, s2) => s1.SequenceEqual(s2),
                         s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
