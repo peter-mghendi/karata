@@ -15,6 +15,10 @@
     position: absolute;
 }
 
+::deep #bottom .card:hover {
+    z-index: 100;
+}
+
 #top {
     left: var(--center-offset);
     top: var(--edge-offset-vertical);
@@ -43,7 +47,6 @@
     position: absolute;
     top: var(--center-offset);
     left: 35%;
-    height: 133px;
     width: 90px;
 }
 
@@ -51,6 +54,5 @@
     position: absolute;
     top: var(--center-offset);
     right: 35%;
-    height: 133px;
     width: 90px;
 }
