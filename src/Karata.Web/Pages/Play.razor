@@ -4,6 +4,7 @@
 @using Karata.Web.Models
 @using Karata.Web.Services
 @using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.Extensions.Logging;
 @using static Karata.Cards.Card.CardFace
 @using static Karata.Cards.Card.CardSuit
 
@@ -31,7 +32,7 @@ else if (currentRoom is null)
             <div class="col-12 col-md-6">
                 <div class="form-floating">
                     <input type="text" class="form-control" id="inviteLink"
-                    placeholder="00000000-0000-​0000-0000-000000000000" @bind="inviteLink">
+                    placeholder="@Guid.Empty" @bind="inviteLink">
                     <label for="inviteLink">Invite Link</label>
                 </div>
             </div>
@@ -224,6 +225,7 @@ else
     [Inject]
     public CookieService CookieService { get; set; }
     private HubConnection hubConnection;
+    private HubConnection requestConnection;
     private string username;
 
     // Join screen state
@@ -248,6 +250,7 @@ else
             return handCopy;
         }
     }
+
     private ApplicationUser Me => currentRoom.Game.Players.Single(u => u.Email == username);
 
     protected override async Task OnInitializedAsync()
@@ -267,6 +270,13 @@ else
 
         hubConnection = new HubConnectionBuilder()
         .WithUrl(NavigationManager.ToAbsoluteUri("/game"), options =>
+        {
+            options.Cookies = container;
+        })
+        .Build();
+
+        requestConnection = new HubConnectionBuilder()
+        .WithUrl(NavigationManager.ToAbsoluteUri("/request"), options =>
         {
             options.Cookies = container;
         })
@@ -323,24 +333,25 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On("NotifyInvalidTurn", () =>
+        hubConnection.On<bool>("NotifyTurnProcessed", valid =>
         {
+            if (valid) Me.Hand.RemoveAll(card => currentTurn.Contains(card));
+            requestIdentifier = null;
             currentTurn.Clear();
             StateHasChanged();
         });
 
-        hubConnection.On("NotifyValidTurn", () =>
-        {
-            Me.Hand.RemoveAll(card => currentTurn.Contains(card));
-            currentTurn.Clear();
-            StateHasChanged();
-        });
-
-        hubConnection.On<Guid>("PromptCardRequest", identifier =>
+        hubConnection.On<Guid, bool>("PromptCardRequest", (identifier, specific) =>
         {
             // TODO: Actually implement this.
             requestIdentifier = identifier;
             StateHasChanged();
+        });
+
+        hubConnection.On<Guid>("PromptLastCardRequest", async identifier =>
+        {
+            var lastCard = await ConfirmAsync("Are you on your last card?");
+            await requestConnection.SendAsync("SetLastCard");
         });
 
         hubConnection.On<Chat>("ReceiveChat", message =>
@@ -394,6 +405,7 @@ else
         });
 
         await hubConnection.StartAsync();
+        await requestConnection.StartAsync();
     }
 
     async Task Send()
@@ -427,7 +439,7 @@ else
     async Task RequestCard(Card request)
     {
         await LogAsync($"Requesting {request.GetName()} for identifier {requestIdentifier}...");
-        // TODO: Request card
+        await requestConnection.SendAsync("RequestCard", requestIdentifier ?? Guid.Empty, request);
     }
 
     async Task PerformTurn()

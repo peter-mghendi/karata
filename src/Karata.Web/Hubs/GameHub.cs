@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Karata.Cards;
-using Karata.Cards.Extensions;
 using Karata.Web.Engines;
 using Karata.Web.Hubs.Clients;
 using Karata.Web.Models;
@@ -12,31 +11,39 @@ using Karata.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
 
 namespace Karata.Web.Hubs
 {
-
-    // TODO Run async calls concurrently
-    // Here be dragons.
+    /** 
+     *  NOTE:
+     *  Here be dragons.
+     *  Implemented herein is (one half of) a mechanism to prompt for values from the frontend.
+     *  (See adjacent RequestHub for the other half.)
+     *  I use a ConcurrentDictionary, TaskCompletionSource<T> and EAP for this.
+     *
+     *  REF: https://docs.microsoft.com/en-us/dotnet/standard/parallel-programming/how-to-wrap=eap-patterns-in-a-task
+     *  REF: https://devblogs.microsoft.com/premier-developer/the-danger-of-the-taskcompletionsourcet-class
+     *  REF: https://github.com/SignalR/SignalR/issues/1149#issuecomment-302611992
+     */
     [Authorize]
     public class GameHub : Hub<IGameClient>
     {
         private readonly IEngine _engine;
-        private readonly ILogger<GameHub> _logger;
+        // private readonly ILogger<GameHub> _logger;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IRoomService _roomService;
         private readonly UserManager<ApplicationUser> _userManager;
-        private static readonly ConcurrentDictionary<Guid, TaskCompletionSource<Card>> _cardRequests = new();
+        public static readonly ConcurrentDictionary<Guid, TaskCompletionSource<Card>> CardRequests = new();
+        // public static readonly ConcurrentDictionary<Guid, TaskCompletionSource<bool>> LastCardRequests = new();
 
         public GameHub(
             IEngine engine,
-            ILogger<GameHub> logger,
+            // ILogger<GameHub> logger,
             IUnitOfWork unitOfWork,
             UserManager<ApplicationUser> userManager)
         {
             _engine = engine;
-            _logger = logger;
+            // _logger = logger;
             _unitOfWork = unitOfWork;
             _roomService = _unitOfWork.RoomService;
             _userManager = userManager;
@@ -127,6 +134,13 @@ namespace Karata.Web.Hubs
                 return;
             };
 
+            // Check game status
+            if (game.IsStarted)
+            {
+                await Clients.Caller.ReceiveSystemMessage("This game has already begun.");
+                return;
+            };
+
             // Check player number
             if (game.Players.Count < 2 || game.Players.Count > 4)
             {
@@ -166,20 +180,15 @@ namespace Karata.Web.Hubs
             await _unitOfWork.CompleteAsync();
         }
 
-        // TODO: Throw an error instead of using the boolean
         public async Task PerformTurn(string inviteLink, List<Card> cardList)
         {
-            // Identifier and TaskCompletionSource for multi-threaded tasks.
-            var identifier = Guid.NewGuid();
-            var tcs = new TaskCompletionSource<Card>();
-
             var room = await _roomService.FindByInviteLinkAsync(inviteLink);
 
             // Check game status
             if (!room.Game.IsStarted)
             {
                 await Clients.Caller.ReceiveSystemMessage("The game has not started yet.");
-                await Clients.Caller.NotifyInvalidTurn();
+                await Clients.Caller.NotifyTurnProcessed(valid: false);
                 return;
             }
 
@@ -189,7 +198,7 @@ namespace Karata.Web.Hubs
             if (requiredUser.Id != currentUser.Id)
             {
                 await Clients.Caller.ReceiveSystemMessage("It is not your turn!");
-                await Clients.Caller.NotifyInvalidTurn();
+                await Clients.Caller.NotifyTurnProcessed(valid: false);
                 return;
             }
 
@@ -201,7 +210,7 @@ namespace Karata.Web.Hubs
             if (!_engine.ValidateTurnCards(room.Game, cardList))
             {
                 await Clients.Caller.ReceiveSystemMessage("That card sequence is invalid");
-                await Clients.Caller.NotifyInvalidTurn();
+                await Clients.Caller.NotifyTurnProcessed(valid: false);
                 return;
             }
 
@@ -220,26 +229,27 @@ namespace Karata.Web.Hubs
             var delta = _engine.GenerateTurnDelta(room.Game, cardList);
             if (delta.HasRequest)
             {
-                // Get the request from the frontend.
-                // Use TaskCompletionSource for this.
-                // REF: https://github.com/SignalR/SignalR/issues/1149#issuecomment-302611992
-
                 // TODO Handle GUID collisions.
-                _cardRequests.TryAdd(identifier, tcs);
-                await Clients.Caller.PromptCardRequest(identifier);
+                // GUID identifier and TaskCompletionSource for parallel requests.
+                var identifier = Guid.NewGuid();
+                var tcs = new TaskCompletionSource<Card>();
+                CardRequests.TryAdd(identifier, tcs);
+
+                // TODO: Separate card and suit requests.
+                await Clients.Caller.PromptCardRequest(identifier, delta.HasSpecificRequest);
 
                 try
                 {
                     // Wait for the client to respond
                     // TODO: Cancel this task if the client disconnects (potentially by just adding a timeout)
                     var card = await tcs.Task;
-                    _logger.LogInformation(card.GetName());
+                    Console.WriteLine($"Request: {card}, Specific: {delta.HasSpecificRequest}");
                     // room.Game.CurrentRequest = await tcs.Task;
                 }
                 finally
                 {
                     // Remove the tcs from the dictionary so that we don't leak memory
-                    _cardRequests.TryRemove(identifier, out tcs);
+                    CardRequests.TryRemove(identifier, out tcs);
                 }
             }
             if (delta.Reverse)
@@ -290,9 +300,23 @@ namespace Karata.Web.Hubs
             // var player = room.Game.Players.Single(p => p.Email == currentUser.Email);
             // if (player.Hand.Count == 0 && player.IsLastCard) GameOver();
 
-            // TODO: Prompt for last card status.
-            // Use TaskCompletionSource for this.
-            // REF: https://github.com/SignalR/SignalR/issues/1149#issuecomment-302611992
+            // var lastCardIdentifier = Guid.NewGuid();
+            // var lastCardTcs = new TaskCompletionSource<bool>();
+            // LastCardRequests.TryAdd(lastCardIdentifier, lastCardTcs);
+            // await Clients.Caller.PromptLastCardRequest(lastCardIdentifier);
+
+            // try
+            // {
+            //     // Wait for the client to respond
+            //     // TODO: Cancel this task if the client disconnects (potentially by just adding a timeout)
+            //     var isLastCard = await lastCardTcs.Task;
+            //     Console.WriteLine($"Last card: {isLastCard}");
+            // }
+            // finally
+            // {
+            //     // Remove the tcs from the dictionary so that we don't leak memory
+            //     LastCardRequests.TryRemove(lastCardIdentifier, out lastCardTcs);
+            // }
 
             // Next turn
             var lastIndex = room.Game.Players.Count - 1;
@@ -313,22 +337,7 @@ namespace Karata.Web.Hubs
             await Clients.Group(inviteLink).UpdateTurn(room.Game.CurrentTurn);
             await _unitOfWork.CompleteAsync();
 
-            await Clients.Caller.NotifyValidTurn();
-        }
-
-        // TODO: This is not being called
-        public void RequestCard(Guid identifier, Card request)
-        {
-            _logger.LogInformation("Response received. Identifier: {Identifier}, Card: {Card}", identifier, request);
-            // if (_cardRequests.TryGetValue(identifier, out TaskCompletionSource<Card> tcs))
-            // {
-            //     // Trigger the task continuation
-            //     tcs.TrySetResult(request);
-            // }
-            // else
-            // {
-            //     // Client response for something that isn't being tracked, might be an error
-            // }
+            await Clients.Caller.NotifyTurnProcessed(valid: true);
         }
     }
 }
