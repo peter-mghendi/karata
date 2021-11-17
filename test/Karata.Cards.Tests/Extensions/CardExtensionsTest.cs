@@ -77,6 +77,29 @@ namespace Karata.Cards.Tests
         }
 
         [Theory]
+        [InlineData(Nine, Spades, 0)]
+        [InlineData(Ace, Diamonds, 1)]
+        [InlineData(Ace, Spades, 2)]
+        public void GetAceValueTest(CardFace face, CardSuit suit, uint value)
+        {
+            var card = new Card(face, suit);
+            var actual = card.GetAceValue();
+            Assert.Equal(value, actual);
+        }
+
+        [Theory]
+        [InlineData(Ace, Spades, 0)]
+        [InlineData(Two, Spades, 2)]
+        [InlineData(Three, Spades, 3)]
+        [InlineData(Joker, BlackJoker, 5)]
+        public void GetPickValueTest(CardFace face, CardSuit suit, uint value)
+        {
+            var card = new Card(face, suit);
+            var actual = card.GetPickValue();
+            Assert.Equal(value, actual);
+        }
+
+        [Theory]
         [InlineData(Joker, BlackJoker, true)]
         [InlineData(Ace, Spades, false)]
         [InlineData(Three, Spades, true)]
@@ -117,17 +140,6 @@ namespace Karata.Cards.Tests
             var card2 = new Card(Ace, suit2);
             var actual = card1.SuitEquals(card2);
             Assert.Equal(suitEquals, actual);
-        }
-
-        [Theory]
-        [InlineData(Nine, Spades, 0)]
-        [InlineData(Ace, Diamonds, 1)]
-        [InlineData(Ace, Spades, 2)]
-        public void AceValueTest(CardFace face, CardSuit suit, uint value)
-        {
-            var card = new Card(face, suit);
-            var actual = card.AceValue();
-            Assert.Equal(value, actual);
         }
     }
 }

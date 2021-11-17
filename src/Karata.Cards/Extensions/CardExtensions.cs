@@ -32,6 +32,18 @@ namespace Karata.Cards.Extensions
             throw new ArgumentException("Invalid suit", nameof(card));
         }
 
+        public static uint GetAceValue(this Card card) {
+            if (card is not { Face: Ace }) return 0;
+            if (card is not { Suit: Spades }) return 1;
+            return 2;
+        }
+
+        public static uint GetPickValue(this Card card) {
+            if (card is { Face: Joker }) return 5;
+            if (card is { Face: Two or Three }) return card.GetRank();
+            return 0;
+        }
+
         public static bool IsBomb(this Card card)
             => card.Face is Two or Three or Joker;
 
@@ -43,11 +55,5 @@ namespace Karata.Cards.Extensions
 
         public static bool SuitEquals(this Card thisCard, Card otherCard)
             => thisCard.Suit == otherCard.Suit;
-
-        public static uint AceValue(this Card card) {
-            if (card is not { Face: Ace }) return 0;
-            if (card is not { Suit: Spades }) return 1;
-            return 2;
-        }
     }
 }

@@ -143,14 +143,14 @@ namespace Karata.Web.Engines
                 // If the last card played is a "bomb" card, the next player should pick some cards.
                 if (lastCard.IsBomb())
                 {
-                    delta.Give = lastCard is { Face: Joker } ? 5 : ((uint)lastCard.Face);
+                    delta.Give = lastCard.GetPickValue();
                     return delta;
                 }
 
                 // If the last card played is an ace and nothing is being blocked, a card should be requested.
                 if (lastCard is { Face: Ace })
                 {
-                    var aceValueCount = turnCards.Sum(card => card.AceValue());
+                    var aceValueCount = turnCards.Sum(card => card.GetAceValue());
                     if (game.Pick > 0) --aceValueCount;
 
                     if (aceValueCount > 0) 
