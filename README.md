@@ -45,8 +45,7 @@ I'm looking into a way to make the rules configurable without complicating the c
 - Players may choose to enable a one or two card "fine" for invalid moves.
 - Fines are off by default and enabled on a per-game basis.
 - The winner is the first player to discard all of theiir cards while on "last card" status.
-- A player cannot enter "last card" status while in possesion of an Ace, "Bomb", Jack or King
-- Any number of Aces is valid, but three or four aces have have no special effects.
+- A player cannot enter "last card" status while in possesion of an Ace, "Bomb", Jack or King.
 
 ### Aces
 - Ace of Spades equals two regular Aces.
@@ -54,6 +53,7 @@ I'm looking into a way to make the rules configurable without complicating the c
 - Two Aces (or equivalent) can be used to request a specific card.
 - Aces can be used to block "bomb" cards.
 - Aces can play anywhere.
+- Any number of Aces is valid, but three or four aces have have no special effects.
 
 ### "Bombs" - Twos, Threes and Jokers
 - Two, three and joker cards cause the next player to pick two, three or five cards respectively.
