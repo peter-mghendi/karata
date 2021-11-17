@@ -100,7 +100,7 @@ namespace Karata.Cards.Tests
         [Theory]
         [InlineData(Ace, Nine, false)]
         [InlineData(Nine, Nine, true)]
-        public void FaceEquals(CardFace face1, CardFace face2, bool faceEquals)
+        public void FaceEqualsTest(CardFace face1, CardFace face2, bool faceEquals)
         {
             var card1 = new Card(face1, Spades);
             var card2 = new Card(face2, Spades);
@@ -111,12 +111,23 @@ namespace Karata.Cards.Tests
         [Theory]
         [InlineData(Spades, Spades, true)]
         [InlineData(Hearts, Spades, false)]
-        public void SuitEquals(CardSuit suit1, CardSuit suit2, bool suitEquals)
+        public void SuitEqualsTest(CardSuit suit1, CardSuit suit2, bool suitEquals)
         {
             var card1 = new Card(Ace, suit1);
             var card2 = new Card(Ace, suit2);
             var actual = card1.SuitEquals(card2);
             Assert.Equal(suitEquals, actual);
+        }
+
+        [Theory]
+        [InlineData(Nine, Spades, 0)]
+        [InlineData(Ace, Diamonds, 1)]
+        [InlineData(Ace, Spades, 2)]
+        public void AceValueTest(CardFace face, CardSuit suit, uint value)
+        {
+            var card = new Card(face, suit);
+            var actual = card.AceValue();
+            Assert.Equal(value, actual);
         }
     }
 }

@@ -43,5 +43,11 @@ namespace Karata.Cards.Extensions
 
         public static bool SuitEquals(this Card thisCard, Card otherCard)
             => thisCard.Suit == otherCard.Suit;
+
+        public static uint AceValue(this Card card) {
+            if (card is not { Face: Ace }) return 0;
+            if (card is not { Suit: Spades }) return 1;
+            return 2;
+        }
     }
 }

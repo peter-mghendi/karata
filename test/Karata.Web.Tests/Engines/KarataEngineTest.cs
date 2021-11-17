@@ -77,7 +77,7 @@ namespace Karata.Web.Tests.Engines
 
             // #4 - Multiple cards of same face - VALID
             var game4 = CreateTestGame();
-            var cards4 = new List<Card> 
+            var cards4 = new List<Card>
             {
                 Nine.Of(Hearts),
                 Nine.Of(Diamonds),
@@ -98,7 +98,7 @@ namespace Karata.Web.Tests.Engines
 
             // #6 - Multiple Jacks - VALID
             var game6 = CreateTestGame();
-            var cards6 = new List<Card> 
+            var cards6 = new List<Card>
             {
                 Jack.Of(Spades),
                 Jack.Of(Hearts),
@@ -150,7 +150,7 @@ namespace Karata.Web.Tests.Engines
 
             // #11 - Multiple Question cards in valid order - VALID
             var game11 = CreateTestGame();
-            var cards11 = new List<Card> 
+            var cards11 = new List<Card>
             {
                 Queen.Of(Spades),
                 Eight.Of(Spades),
@@ -216,7 +216,7 @@ namespace Karata.Web.Tests.Engines
 
             // #18 - Joker at the bottom - VALID
             var game18 = CreateTestGame(Black.ColoredJoker(), 5);
-            var cards18 = new List<Card> { Ace.Of(Spades) };
+            var cards18 = new List<Card> { Ace.Of(Diamonds) };
             var delta18 = new GameDelta();
             data.Add((game18, cards18, true, delta18));
 
@@ -272,28 +272,58 @@ namespace Karata.Web.Tests.Engines
 
             // #26 - Two Aces - VALID
             var game26 = CreateTestGame();
-            var cards26 = new List<Card> 
-            { 
+            var cards26 = new List<Card>
+            {
                 Ace.Of(Diamonds),
                 Ace.Of(Clubs)
             };
-            var delta26 = new GameDelta { 
-                HasRequest = true, 
-                HasSpecificRequest = true 
+            var delta26 = new GameDelta
+            {
+                HasRequest = true,
+                HasSpecificRequest = true
             };
             data.Add((game26, cards26, true, delta26));
 
             // #27 - Ace of Spades - VALID
+            var game27 = CreateTestGame();
+            var cards27 = new List<Card> { Ace.Of(Spades) };
+            var delta27 = new GameDelta
+            {
+                HasRequest = true,
+                HasSpecificRequest = true
+            };
+            data.Add((game27, cards27, true, delta27));
+
             // #28 - Multiple Aces on top of a "bomb" - VALID
+            var game28 = CreateTestGame(Three.Of(Spades), 3);
+            var cards28 = new List<Card> { Ace.Of(Spades) };
+            var delta28 = new GameDelta { HasRequest = true };
+            data.Add((game28, cards28, true, delta28));
+
             // #29 - Card request - VALID
+            // var game29 = CreateTestGame(Ace.Of(Spades), request: Nine.Of(Spades));
+            // var cards29 = new List<Card> { Nine.Of(Spades) };
+            // var delta29 = new GameDelta ();
+            // data.Add((game29, cards29, true, delta29));
+
             // #30 - Card request - INVALID
+            // var game30 = CreateTestGame(Ace.Of(Spades), request: Nine.Of(Spades));
+            // var cards30 = new List<Card> { Nine.Of(Diamonds) };
+            // var delta30 = new GameDelta ();
+            // data.Add((game30, cards30, false, delta30));
+
+            // #31 - Card request - INVALID
+            // var game31 = CreateTestGame(Ace.Of(Diamonds), request: None.Of(Spades));
+            // var cards31 = new List<Card> { Nine.Of(Diamonds) };
+            // var delta31 = new GameDelta ();
+            // data.Add((game31, cards31, false, delta31));
 
             return data;
         }
 
-        private static Game CreateTestGame(Card firstCard = null, uint pick = 0)
+        private static Game CreateTestGame(Card firstCard = null, uint pick = 0, Card request = null)
         {
-            var game = new Game() { Pick = pick };
+            var game = new Game() { Pick = pick, CurrentRequest = request };
             game.Pile.Push(firstCard ?? Nine.Of(Spades));
             return game;
         }

@@ -30,7 +30,7 @@ namespace Karata.Web.Engines
             //     var request = game.CurrentRequest;
 
             //     // Face is not none and not the same as the requested card.
-            //     if (request.Face is not None && !firstCard.FaceEquals(prevCard)) return false;
+            //     if (request.Face is not None && !firstCard.FaceEquals(firstCard)) return false;
 
             //     // Suit is not the same as the requested card.
             //     if (firstCard.Suit != request.Suit) return false;
@@ -148,12 +148,16 @@ namespace Karata.Web.Engines
                 }
 
                 // If the last card played is an ace and nothing is being blocked, a card should be requested.
-                // TODO: Handle Ace of Spades being worth two regular Aces.
-                if (lastCard is { Face: Ace } && game.Pick == 0)
+                if (lastCard is { Face: Ace })
                 {
-                    delta.HasRequest = true;
-                    var aceCount = turnCards.Count(card => card is { Face: Ace });
-                    if (aceCount > 1) delta.HasSpecificRequest = true;
+                    var aceValueCount = turnCards.Sum(card => card.AceValue());
+                    if (game.Pick > 0) --aceValueCount;
+
+                    if (aceValueCount > 0) 
+                    {
+                        delta.HasRequest = true;
+                        if (aceValueCount > 1) delta.HasSpecificRequest = true;
+                    }                    
                 }
 
                 // For an even number of "kickbacks", the current player plays again.

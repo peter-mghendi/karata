@@ -242,8 +242,6 @@ namespace Karata.Web.Hubs
                 {
                     // Wait for the client to respond
                     // TODO: Cancel this task if the client disconnects (potentially by just adding a timeout)
-                    var card = await tcs.Task;
-                    Console.WriteLine($"Request: {card}, Specific: {delta.HasSpecificRequest}");
                     // room.Game.CurrentRequest = await tcs.Task;
                 }
                 finally
@@ -300,6 +298,8 @@ namespace Karata.Web.Hubs
             // var player = room.Game.Players.Single(p => p.Email == currentUser.Email);
             // if (player.Hand.Count == 0 && player.IsLastCard) GameOver();
 
+            // TODO: Make this "smart"
+            // i.e player cannot be on their last card if they have a  Ace, Two, Three, Jack, King or Joker
             // var lastCardIdentifier = Guid.NewGuid();
             // var lastCardTcs = new TaskCompletionSource<bool>();
             // LastCardRequests.TryAdd(lastCardIdentifier, lastCardTcs);
