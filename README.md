@@ -46,6 +46,7 @@ I'm looking into a way to make the rules configurable without complicating the c
 - Fines are off by default and enabled on a per-game basis.
 - The winner is the first player to discard all of theiir cards while on "last card" status.
 - A player cannot enter "last card" status while in possesion of an Ace, "Bomb", Jack or King
+- Any number of Aces is valid, but three or four aces have have no special effects.
 
 ### Aces
 - Ace of Spades equals two regular Aces.
