@@ -4,7 +4,6 @@
 @using Karata.Web.Models
 @using Karata.Web.Services
 @using Microsoft.AspNetCore.SignalR.Client
-@using Microsoft.Extensions.Logging;
 @using static Karata.Cards.Card.CardFace
 @using static Karata.Cards.Card.CardSuit
 
@@ -31,8 +30,7 @@ else if (currentRoom is null)
         <div id="join-room" class="row g-2">
             <div class="col-12 col-md-6">
                 <div class="form-floating">
-                    <input type="text" class="form-control" id="inviteLink"
-                    placeholder="@Guid.Empty" @bind="inviteLink">
+                    <input type="text" class="form-control" id="inviteLink" placeholder="@Guid.Empty" @bind="inviteLink">
                     <label for="inviteLink">Invite Link</label>
                 </div>
             </div>
@@ -80,21 +78,22 @@ else
             <div class="col-8">
                 @if (@currentRoom.Game.IsStarted)
                 {
-                    @if (requestIdentifier is not null)
-                    {
-                        <button @onclick="() => RequestCard(Queen.Of(Hearts))">
-                            Request Queen of Hearts
-                        </button>
-                    }
-
                     <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Email</p>
                     <p>Deck Size: @currentRoom.Game.Deck.Count</p>
                     <p>Pile Size: @currentRoom.Game.Pile.Count</p>
                     <p>
                         Top Card:
-                        <i class="@($"bi {GetCardIcon(currentRoom.Game.Pile.Peek())} mx-1")"></i>
+                        <i class="mx-1 @GetCardIcon(currentRoom.Game.Pile.Peek())"></i>
                         @currentRoom.Game.Pile.Peek().GetName()
                     </p>
+                    @if (currentRoom.Game.CurrentRequest is not null)
+                    {
+                        <p>
+                            Current Request:
+                            <i class="mx-1 @GetCardIcon(currentRoom.Game.CurrentRequest)"></i>
+                            @currentRoom.Game.CurrentRequest.GetName()
+                        </p>
+                    }
                     <div class="row mb-2">
                         <div class="col-6">
                             <p>My cards:</p>
@@ -226,6 +225,8 @@ else
     public CookieService CookieService { get; set; }
     private HubConnection hubConnection;
     private HubConnection requestConnection;
+    [CascadingParameter]
+    private IModalService ModalService { get; set; }
     private string username;
 
     // Join screen state
@@ -236,7 +237,6 @@ else
     // UI state
     private string textInput;
     private bool viewDetails = true;
-    private Guid? requestIdentifier = null;
 
     // Game state
     private Room currentRoom = null;
@@ -336,16 +336,16 @@ else
         hubConnection.On<bool>("NotifyTurnProcessed", valid =>
         {
             if (valid) Me.Hand.RemoveAll(card => currentTurn.Contains(card));
-            requestIdentifier = null;
             currentTurn.Clear();
             StateHasChanged();
         });
 
-        hubConnection.On<Guid, bool>("PromptCardRequest", (identifier, specific) =>
+        hubConnection.On<Guid, bool>("PromptCardRequest", async (identifier, specific) =>
         {
-            // TODO: Actually implement this.
-            requestIdentifier = identifier;
-            StateHasChanged();
+            var parameters = new ModalParameters();
+            parameters.Add(nameof(CardRequestModal.Specific), specific);
+            var result = await ModalService.Show<CardRequestModal>("Request a card", parameters).Result;
+            await requestConnection.SendAsync("RequestCard", identifier, (Card)result.Data);
         });
 
         hubConnection.On<Guid>("PromptLastCardRequest", async identifier =>
@@ -387,6 +387,12 @@ else
         {
             _ = currentRoom.Game.Players.Remove(player);
             await LogAsync($"{player.Email} has left the room");
+            StateHasChanged();
+        });
+
+        hubConnection.On<Card>("SetCurrentRequest", request =>
+        {
+            currentRoom.Game.CurrentRequest = request;
             StateHasChanged();
         });
 
@@ -436,12 +442,6 @@ else
 
     async Task StartGame() => await hubConnection.SendAsync("StartGame", currentRoom.InviteLink);
 
-    async Task RequestCard(Card request)
-    {
-        await LogAsync($"Requesting {request.GetName()} for identifier {requestIdentifier}...");
-        await requestConnection.SendAsync("RequestCard", requestIdentifier ?? Guid.Empty, request);
-    }
-
     async Task PerformTurn()
     {
         await hubConnection.SendAsync("PerformTurn", currentRoom.InviteLink, currentTurn);
@@ -456,7 +456,7 @@ else
 
     public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
 
-    private string GetCardIcon(Card card) => card.Suit switch
+    private string GetCardIcon(Card card) => "bi " + card.Suit switch
     {
         Spades => "bi-suit-spade-fill",
         Hearts => "bi-suit-heart-fill text-danger",

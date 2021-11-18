@@ -4,12 +4,8 @@ using Karata.Cards;
 using Karata.Cards.Extensions;
 using Karata.Web.Models;
 using static Karata.Cards.Card.CardFace;
-using static Karata.Cards.Card.CardSuit;
 using static Karata.Web.Models.Game;
 
-// TODO: Eventually move this out into its own classlib
-// Use interfaces IGame, ITurn, IHand
-// Concrete implementations for Card, Deck, Pile
 // This class should not interact with ApplicationUser or Room at all
 namespace Karata.Web.Engines
 {
@@ -25,16 +21,17 @@ namespace Karata.Web.Engines
             var firstCard = turnCards[0];
 
             // If a card has been requested, that card must start the turn.
-            // if (game.CurrentRequest is not null)
-            // {
-            //     var request = game.CurrentRequest;
+            if (game.CurrentRequest is not null && firstCard is not { Face: Ace })
+            {
+                // TODO: Handle blocking of specific requests with two Aces
+                var request = game.CurrentRequest;
 
-            //     // Face is not none and not the same as the requested card.
-            //     if (request.Face is not None && !firstCard.FaceEquals(firstCard)) return false;
+                // Face is not none and not the same as the requested card.
+                if (request is not { Face: None } && !firstCard.FaceEquals(request)) return false;
 
-            //     // Suit is not the same as the requested card.
-            //     if (firstCard.Suit != request.Suit) return false;
-            // }
+                // Suit is not the same as the requested card.
+                if (!firstCard.SuitEquals(request)) return false;
+            }
 
             // If the top card is a "bomb", the next card should counter or block it.
             if (topCard.IsBomb() && game.Pick > 0 && firstCard is not { Face: Ace })
@@ -110,13 +107,11 @@ namespace Karata.Web.Engines
         {
             var delta = new GameDelta();
 
-            // Everything, everything.
-            // var topCard = game.Deck.Peek();
-            // var sequence = new List<Card>(turnCards).Prepend(topCard).ToList();
-
             if (turnCards.Count == 0)
             {
                 delta.Pick = 1;
+                if (game.CurrentRequest is not null)
+                    delta.RemovesPreviousRequest = false;
 
                 // If the last card played is a "bomb" card, the player has to immediately pick cards.
                 if (game.Pick > 0) delta.Pick = game.Pick;

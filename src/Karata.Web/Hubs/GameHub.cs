@@ -227,6 +227,14 @@ namespace Karata.Web.Hubs
 
             // Generate delta and update game state.
             var delta = _engine.GenerateTurnDelta(room.Game, cardList);
+            
+            // Remove request
+            if (delta.RemovesPreviousRequest) 
+            {
+                room.Game.CurrentRequest = null;
+                await Clients.Group(inviteLink).SetCurrentRequest(null);
+            }
+
             if (delta.HasRequest)
             {
                 // TODO Handle GUID collisions.
@@ -235,14 +243,15 @@ namespace Karata.Web.Hubs
                 var tcs = new TaskCompletionSource<Card>();
                 CardRequests.TryAdd(identifier, tcs);
 
-                // TODO: Separate card and suit requests.
                 await Clients.Caller.PromptCardRequest(identifier, delta.HasSpecificRequest);
 
                 try
                 {
-                    // Wait for the client to respond
+                    // Wait for the client to respond then set request
                     // TODO: Cancel this task if the client disconnects (potentially by just adding a timeout)
-                    // room.Game.CurrentRequest = await tcs.Task;
+                    var request = await tcs.Task;
+                    room.Game.CurrentRequest = request;
+                    await Clients.Group(inviteLink).SetCurrentRequest(request);
                 }
                 finally
                 {

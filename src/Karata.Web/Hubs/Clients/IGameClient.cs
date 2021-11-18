@@ -25,6 +25,7 @@ namespace Karata.Web.Hubs.Clients
         Task RemoveCardsFromDeck(uint num);
         Task RemoveFromRoom();
         Task RemovePlayerFromRoom(ApplicationUser player);
+        Task SetCurrentRequest(Card request);
         Task UpdateGameStatus(bool started);
         Task UpdateTurn(int turn);
     }

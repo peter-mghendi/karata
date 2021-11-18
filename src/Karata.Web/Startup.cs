@@ -1,4 +1,5 @@
 using System.Linq;
+using Blazored.Modal;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -44,6 +45,7 @@ namespace Karata.Web
             services.AddScoped<CookieService>();
             services.AddScoped<IRoomService, RoomService>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddBlazoredModal();
             services.AddDatabaseDeveloperPageExceptionFilter();
             services.AddResponseCompression(opts =>
             {

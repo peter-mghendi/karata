@@ -301,22 +301,40 @@ namespace Karata.Web.Tests.Engines
             data.Add((game28, cards28, true, delta28));
 
             // #29 - Card request - VALID
-            // var game29 = CreateTestGame(Ace.Of(Spades), request: Nine.Of(Spades));
-            // var cards29 = new List<Card> { Nine.Of(Spades) };
-            // var delta29 = new GameDelta ();
-            // data.Add((game29, cards29, true, delta29));
+            var game29 = CreateTestGame(Ace.Of(Spades), request: Nine.Of(Spades));
+            var cards29 = new List<Card> { Nine.Of(Spades) };
+            var delta29 = new GameDelta();
+            data.Add((game29, cards29, true, delta29));
 
             // #30 - Card request - INVALID
-            // var game30 = CreateTestGame(Ace.Of(Spades), request: Nine.Of(Spades));
-            // var cards30 = new List<Card> { Nine.Of(Diamonds) };
-            // var delta30 = new GameDelta ();
-            // data.Add((game30, cards30, false, delta30));
+            var game30 = CreateTestGame(Ace.Of(Spades), request: Nine.Of(Spades));
+            var cards30 = new List<Card> { Nine.Of(Diamonds) };
+            var delta30 = new GameDelta();
+            data.Add((game30, cards30, false, delta30));
 
             // #31 - Card request - INVALID
-            // var game31 = CreateTestGame(Ace.Of(Diamonds), request: None.Of(Spades));
-            // var cards31 = new List<Card> { Nine.Of(Diamonds) };
-            // var delta31 = new GameDelta ();
-            // data.Add((game31, cards31, false, delta31));
+            var game31 = CreateTestGame(Ace.Of(Spades), request: Nine.Of(Spades));
+            var cards31 = new List<Card> { Four.Of(Spades) };
+            var delta31 = new GameDelta();
+            data.Add((game31, cards31, false, delta31));
+
+            // #32 - Card request - INVALID
+            var game32 = CreateTestGame(Ace.Of(Diamonds), request: None.Of(Spades));
+            var cards32 = new List<Card> { Nine.Of(Diamonds) };
+            var delta32 = new GameDelta();
+            data.Add((game32, cards32, false, delta32));
+
+            // #33 - Card request - VALID
+            var game33 = CreateTestGame(Ace.Of(Diamonds), request: None.Of(Spades));
+            var cards33 = new List<Card> { Ace.Of(Clubs) };
+            var delta33 = new GameDelta() { HasRequest = true };
+            data.Add((game33, cards33, true, delta33));
+
+            // #34 - Card request - VALID
+            var game34 = CreateTestGame(Ace.Of(Diamonds), request: None.Of(Spades));
+            var cards34 = new List<Card>();
+            var delta34 = new GameDelta { RemovesPreviousRequest = false, Pick = 1 };
+            data.Add((game34, cards34, true, delta34));
 
             return data;
         }
