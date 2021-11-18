@@ -78,6 +78,20 @@ else
             <div class="col-8">
                 @if (@currentRoom.Game.IsStarted)
                 {
+                    @if (lastCardIdentifier is not null)
+                    {
+                        <div class="hstack gap-3 rounded-3 bg-light p-2">
+                            <div class="lead me-auto">Are you on your last card?</div>
+                            <button class="btn btn-outline-success" @onclick="() => SendLastCardStatus(true)">
+                                Yes
+                            </button>
+                            <div class="vr"></div>
+                            <button class="btn btn-outline-danger" @onclick="() => SendLastCardStatus(false)">
+                                No
+                            </button>
+                        </div>
+                    }
+
                     <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Email</p>
                     <p>Deck Size: @currentRoom.Game.Deck.Count</p>
                     <p>Pile Size: @currentRoom.Game.Pile.Count</p>
@@ -237,6 +251,7 @@ else
     // UI state
     private string textInput;
     private bool viewDetails = true;
+    private Guid? lastCardIdentifier = null;
 
     // Game state
     private Room currentRoom = null;
@@ -333,9 +348,19 @@ else
             StateHasChanged();
         });
 
+        hubConnection.On<ApplicationUser>("EndGame", async winner =>
+        {
+            var winnerText = winner is null ? "no" : $"{winner} as the";
+            await LogAsync($"The game ended with {winnerText} winner.");
+            await Task.Delay(TimeSpan.FromSeconds(3));
+            currentRoom = null;
+            StateHasChanged();
+        });
+
         hubConnection.On<bool>("NotifyTurnProcessed", valid =>
         {
             if (valid) Me.Hand.RemoveAll(card => currentTurn.Contains(card));
+            lastCardIdentifier = null;
             currentTurn.Clear();
             StateHasChanged();
         });
@@ -348,10 +373,10 @@ else
             await requestConnection.SendAsync("RequestCard", identifier, (Card)result.Data);
         });
 
-        hubConnection.On<Guid>("PromptLastCardRequest", async identifier =>
+        hubConnection.On<Guid>("PromptLastCardRequest", identifier =>
         {
-            var lastCard = await ConfirmAsync("Are you on your last card?");
-            await requestConnection.SendAsync("SetLastCard", lastCard);
+            lastCardIdentifier = identifier;
+            StateHasChanged();
         });
 
         hubConnection.On<Chat>("ReceiveChat", message =>
@@ -449,6 +474,11 @@ else
     }
 
     public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
+
+    private async Task SendLastCardStatus(bool isLastCard)
+    {
+        await requestConnection.SendAsync("SetLastCardStatus", lastCardIdentifier, isLastCard);
+    }
 
     private async Task LogAsync(string text) => await JSRuntime.InvokeVoidAsync("console.log", text);
 

@@ -18,8 +18,13 @@ namespace Karata.Web.Hubs
      *  NOTE:
      *  Here be dragons.
      *  Implemented herein is (one half of) a mechanism to prompt for values from the frontend.
-     *  (See adjacent RequestHub for the other half.)
+     *  (See adjacent RequestHub for the other half, and Play.razor for usage)
+     *  Basically a mini RPC framework on top of websockets.
      *  I use a ConcurrentDictionary, TaskCompletionSource<T> and EAP for this.
+     *
+     *  The backend will "pause" processing this request, and "ask" the frontend for a value on another thread.
+     *  The response will be sent to RequestHub, whose job it is to figure out which request it is for.
+     *  RequestHub will then signal GameHub, which gets rid of the new thread and "resumes" the old one.
      *
      *  REF: https://docs.microsoft.com/en-us/dotnet/standard/parallel-programming/how-to-wrap=eap-patterns-in-a-task
      *  REF: https://devblogs.microsoft.com/premier-developer/the-danger-of-the-taskcompletionsourcet-class
@@ -34,7 +39,7 @@ namespace Karata.Web.Hubs
         private readonly IRoomService _roomService;
         private readonly UserManager<ApplicationUser> _userManager;
         public static readonly ConcurrentDictionary<Guid, TaskCompletionSource<Card>> CardRequests = new();
-        // public static readonly ConcurrentDictionary<Guid, TaskCompletionSource<bool>> LastCardRequests = new();
+        public static readonly ConcurrentDictionary<Guid, TaskCompletionSource<bool>> LastCardRequests = new();
 
         public GameHub(
             IEngine engine,
@@ -227,9 +232,9 @@ namespace Karata.Web.Hubs
 
             // Generate delta and update game state.
             var delta = _engine.GenerateTurnDelta(room.Game, cardList);
-            
+
             // Remove request
-            if (delta.RemovesPreviousRequest) 
+            if (delta.RemovesPreviousRequest)
             {
                 room.Game.CurrentRequest = null;
                 await Clients.Group(inviteLink).SetCurrentRequest(null);
@@ -270,7 +275,7 @@ namespace Karata.Web.Hubs
             if (room.Game.Pick > 0)
             {
                 // Remove card from pile
-                if (!room.Game.Deck.TryDealMany(room.Game.Pick, out List<Card> cards))
+                if (!room.Game.Deck.TryDealMany(room.Game.Pick, out var cards))
                 {
                     if (room.Game.Pile.Count + room.Game.Deck.Count - 1 > room.Game.Pick)
                     {
@@ -290,7 +295,10 @@ namespace Karata.Web.Hubs
                     }
                     else
                     {
-                        // TODO: Game over.
+                        // GAMEOVER
+                        await Clients.Caller.NotifyTurnProcessed(valid: true);
+                        await Clients.Group(inviteLink).EndGame(winner: null);
+                        return;
                     }
                 };
                 await Clients.Group(inviteLink).RemoveCardsFromDeck(1);
@@ -304,28 +312,40 @@ namespace Karata.Web.Hubs
             }
 
             // TODO: Check whether the game is over.
-            // var player = room.Game.Players.Single(p => p.Email == currentUser.Email);
-            // if (player.Hand.Count == 0 && player.IsLastCard) GameOver();
+            var player = room.Game.Players.Single(p => p.Email == currentUser.Email);
+            if (player.Hand.Count == 0 && player.IsLastCard)
+            {
+                
+                // GAMEOVER
+                await Clients.Caller.NotifyTurnProcessed(valid: true);
+                room.Game.Winner = room.Game.Players.Single(p => p.Email == currentUser.Email);;
 
-            // TODO: Make this "smart"
-            // i.e player cannot be on their last card if they have a  Ace, Two, Three, Jack, King or Joker
-            // var lastCardIdentifier = Guid.NewGuid();
-            // var lastCardTcs = new TaskCompletionSource<bool>();
-            // LastCardRequests.TryAdd(lastCardIdentifier, lastCardTcs);
-            // await Clients.Caller.PromptLastCardRequest(lastCardIdentifier);
+                await Clients.Group(inviteLink).EndGame(winner: player);
+                await _unitOfWork.CompleteAsync(); // Save winner to DB
+                return;
+            }
 
-            // try
-            // {
-            //     // Wait for the client to respond
-            //     // TODO: Cancel this task if the client disconnects (potentially by just adding a timeout)
-            //     var isLastCard = await lastCardTcs.Task;
-            //     Console.WriteLine($"Last card: {isLastCard}");
-            // }
-            // finally
-            // {
-            //     // Remove the tcs from the dictionary so that we don't leak memory
-            //     LastCardRequests.TryRemove(lastCardIdentifier, out lastCardTcs);
-            // }
+            // TODO: Make this "smart"?
+            // i.e player cannot be on their last card if they have a  Ace, "Bomb", Jack or King
+            var lastCardIdentifier = Guid.NewGuid();
+            var lastCardTcs = new TaskCompletionSource<bool>();
+            LastCardRequests.TryAdd(lastCardIdentifier, lastCardTcs);
+            await Clients.Caller.PromptLastCardRequest(lastCardIdentifier);
+
+            try
+            {
+                // Wait for the client to respond
+                // TODO: Cancel this task if the client disconnects (potentially by just adding a timeout)
+                var isLastCard = await lastCardTcs.Task;
+                room.Game.Players.Single(p => p.Email == currentUser.Email).IsLastCard = isLastCard;
+                if (isLastCard) await Clients.OthersInGroup(inviteLink)
+                        .ReceiveSystemMessage($"{player.Email} is on their last card.");
+            }
+            finally
+            {
+                // Remove the tcs from the dictionary so that we don't leak memory
+                LastCardRequests.TryRemove(lastCardIdentifier, out lastCardTcs);
+            }
 
             // Next turn
             var lastIndex = room.Game.Players.Count - 1;
@@ -345,7 +365,6 @@ namespace Karata.Web.Hubs
 
             await Clients.Group(inviteLink).UpdateTurn(room.Game.CurrentTurn);
             await _unitOfWork.CompleteAsync();
-
             await Clients.Caller.NotifyTurnProcessed(valid: true);
         }
     }

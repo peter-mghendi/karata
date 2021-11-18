@@ -19,6 +19,7 @@ namespace Karata.Web.Models
         public virtual Deck Deck { get; set; } = Deck.StandardDeck;
         public virtual Pile Pile { get; set; } = new();
 
+        public virtual ApplicationUser Winner { get; set; } = null;
         public virtual List<ApplicationUser> Players { get; set; } = new();
         public int CurrentTurn { get; set; } = 0;
 

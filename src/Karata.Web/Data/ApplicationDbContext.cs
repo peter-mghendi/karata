@@ -32,6 +32,11 @@ namespace Karata.Web.Data
                 .WithOne()
                 .HasForeignKey<Game>(g => g.RoomId);
 
+            modelBuilder.Entity<Game>()
+                .HasOne(r => r.Winner)
+                .WithMany()
+                .IsRequired(false);
+
             modelBuilder.Entity<ApplicationUser>()
                 .Property(a => a.Hand)
                 .HasConversion(
