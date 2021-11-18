@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Karata.Cards.Extensions;
 using static Karata.Cards.Card;
+using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
 
@@ -28,13 +30,13 @@ namespace Karata.Cards
                     if (suit is BlackJoker or RedJoker) continue;
                     foreach (var face in Enum.GetValues<CardFace>())
                     {
-                        if (face is None) continue;
-                        deck.Push(new(suit, face));
+                        if (face is None or Joker) continue;
+                        deck.Push(face.Of(suit));
                     }
                 }
 
-                deck.Push(new(BlackJoker, None));
-                deck.Push(new(RedJoker, None));
+                deck.Push(Black.ColoredJoker());
+                deck.Push(Red.ColoredJoker());
                 return new Deck(deck);
             }
         }
@@ -58,7 +60,7 @@ namespace Karata.Cards
         public Card Deal() => Pop();
 
         // Deal multiple cards without checking deck size first.
-        public List<Card> DealMany(int num)
+        public List<Card> DealMany(uint num)
         {
             var dealt = new List<Card>();
             for (int i = 0; i < num; i++)
@@ -79,7 +81,7 @@ namespace Karata.Cards
         }
 
         // Check deck size before attempting to deal multiple cards.
-        public bool TryDealMany(int num, out List<Card> dealt)
+        public bool TryDealMany(uint num, out List<Card> dealt)
         {
             dealt = default;
             if (Count < num)

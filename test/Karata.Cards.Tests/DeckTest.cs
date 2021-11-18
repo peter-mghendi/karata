@@ -7,7 +7,7 @@ namespace Karata.Cards.Tests
 {
     public class DeckTest
     {
-        private const int StandardDeckSize = 54;
+        private const uint StandardDeckSize = 54;
 
         [Fact]
         public void DeckPropertyTest()
@@ -22,7 +22,7 @@ namespace Karata.Cards.Tests
             var deck = Deck.StandardDeck;
 
             Assert.NotEmpty(deck);
-            Assert.Equal(StandardDeckSize, deck.Count);
+            Assert.Equal(StandardDeckSize, (uint)deck.Count);
             Assert.Equal(deck.Distinct().Count(), deck.Count);
         }
 
@@ -33,7 +33,7 @@ namespace Karata.Cards.Tests
 
             deck.Shuffle();
             Assert.NotEmpty(deck);
-            Assert.Equal(StandardDeckSize, deck.Count);
+            Assert.Equal(StandardDeckSize, (uint)deck.Count);
             Assert.Equal(deck.Distinct().Count(), deck.Count);
         }
 
@@ -46,7 +46,7 @@ namespace Karata.Cards.Tests
             _ = standardDeck.Deal();
 
             Assert.Throws<InvalidOperationException>(emptyDeck.Deal);
-            Assert.Equal(StandardDeckSize - 1, standardDeck.Count);
+            Assert.Equal(StandardDeckSize - 1, (uint) standardDeck.Count);
             Assert.Equal(standardDeck.Distinct().Count(), standardDeck.Count);
         }
 
@@ -54,7 +54,7 @@ namespace Karata.Cards.Tests
         [InlineData(0, false)]
         [InlineData(10, false)]
         [InlineData(55, true)]
-        public void DealManyTest(int num, bool throws)
+        public void DealManyTest(uint num, bool throws)
         {
             var deck = Deck.StandardDeck;
             List<Card> dealt;
@@ -66,9 +66,9 @@ namespace Karata.Cards.Tests
             }
             else dealt = deck.DealMany(num);
 
-            Assert.Equal(StandardDeckSize - num, deck.Count);
+            Assert.Equal(StandardDeckSize - num, (uint)deck.Count);
             Assert.Equal(deck.Distinct().Count(), deck.Count);
-            Assert.Equal(num, dealt.Count);
+            Assert.Equal(num, (uint) dealt.Count);
             Assert.Equal(dealt.Distinct().Count(), dealt.Count);
         }
 
@@ -87,7 +87,7 @@ namespace Karata.Cards.Tests
             Assert.True(standardDeck.TryDeal(out card));
             Assert.NotNull(card);
 
-            Assert.Equal(StandardDeckSize - 1, standardDeck.Count);
+            Assert.Equal(StandardDeckSize - 1, (uint)standardDeck.Count);
             Assert.Equal(standardDeck.Distinct().Count(), standardDeck.Count);
         }
 
@@ -95,7 +95,7 @@ namespace Karata.Cards.Tests
         [InlineData(0, true)]
         [InlineData(10, true)]
         [InlineData(55, false)]
-        public void TryDealManyTest(int num, bool shouldSucceed)
+        public void TryDealManyTest(uint num, bool shouldSucceed)
         {
             var deck = Deck.StandardDeck;
             var success = deck.TryDealMany(num, out var dealt);
@@ -104,17 +104,17 @@ namespace Karata.Cards.Tests
 
             if (shouldSucceed)
             {
-                Assert.Equal(StandardDeckSize - num, deck.Count);
+                Assert.Equal(StandardDeckSize - num, (uint)deck.Count);
                 Assert.Equal(deck.Distinct().Count(), deck.Count);
 
                 Assert.NotNull(dealt);
 
-                Assert.Equal(num, dealt.Count);
+                Assert.Equal(num, (uint)dealt.Count);
                 Assert.Equal(dealt.Distinct().Count(), dealt.Count);
             }
             else 
             {
-                Assert.Equal(StandardDeckSize, deck.Count);
+                Assert.Equal(StandardDeckSize, (uint)deck.Count);
                 Assert.Equal(deck.Distinct().Count(), deck.Count);
 
                 Assert.Null(dealt);

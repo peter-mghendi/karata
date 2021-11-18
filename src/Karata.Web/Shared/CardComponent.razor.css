@@ -1,0 +1,8 @@
+.card {
+    width: 90px;
+    float: left;
+}
+
+.card:not(:first-child) {
+    margin-left: -70px;
+}

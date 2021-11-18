@@ -1,4 +1,5 @@
 using System.Linq;
+using Blazored.Modal;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -27,12 +28,15 @@ namespace Karata.Web
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ApplicationDbContext>(options => {
+            services.AddDbContext<ApplicationDbContext>(options =>
+            {
                 options.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
                 options.UseLazyLoadingProxies();
             });
-            services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+            services.AddDefaultIdentity<ApplicationUser>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = true;
+            }).AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
@@ -41,9 +45,13 @@ namespace Karata.Web
             services.AddScoped<CookieService>();
             services.AddScoped<IRoomService, RoomService>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddBlazoredModal();
             services.AddDatabaseDeveloperPageExceptionFilter();
-            services.AddResponseCompression(opts => opts.MimeTypes = ResponseCompressionDefaults.MimeTypes
-                .Concat(new[] { "application/octet-stream" }));
+            services.AddResponseCompression(opts =>
+            {
+                opts.MimeTypes = ResponseCompressionDefaults.MimeTypes
+                    .Concat(new[] { "application/octet-stream" });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -74,6 +82,7 @@ namespace Karata.Web
                 endpoints.MapControllers();
                 endpoints.MapBlazorHub();
                 endpoints.MapHub<GameHub>("/game");
+                endpoints.MapHub<RequestHub>("/request");
                 endpoints.MapFallbackToPage("/_Host");
             });
         }

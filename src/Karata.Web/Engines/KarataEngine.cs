@@ -1,16 +1,53 @@
 using System.Collections.Generic;
 using System.Linq;
 using Karata.Cards;
+using Karata.Cards.Extensions;
+using Karata.Web.Models;
 using static Karata.Cards.Card.CardFace;
+using static Karata.Web.Models.Game;
 
+// This class should not interact with ApplicationUser or Room at all
 namespace Karata.Web.Engines
 {
     public class KarataEngine : IEngine
     {
-        // TODO: Game state object
-        public bool ValidateTurn(Card topCard, List<Card> turnCards)
+        // TODO: Configurable game rules.
+        public bool ValidateTurnCards(Game game, List<Card> turnCards)
         {
-            // TODO: If a card has been requested, that card must start the turn.
+            // Early exit
+            if (turnCards.Count == 0) return true;
+
+            var topCard = game.Pile.Peek();
+            var firstCard = turnCards[0];
+
+            // If a card has been requested, that card must start the turn.
+            if (game.CurrentRequest is not null && firstCard is not { Face: Ace })
+            {
+                // TODO: Handle blocking of specific requests with two Aces
+                var request = game.CurrentRequest;
+
+                // Face is not none and not the same as the requested card.
+                if (request is not { Face: None } && !firstCard.FaceEquals(request)) return false;
+
+                // Suit is not the same as the requested card.
+                if (!firstCard.SuitEquals(request)) return false;
+            }
+
+            // If the top card is a "bomb", the next card should counter or block it.
+            if (topCard.IsBomb() && game.Pick > 0 && firstCard is not { Face: Ace })
+            {
+                if (topCard is { Face: Joker })
+                {
+                    // Joker can only be countered by a joker.
+                    if (firstCard is not { Face: Joker })
+                        return false;
+                }
+                else
+                {
+                    // 2 and 3 can be countered by 2, 3 and Joker.
+                    if (!firstCard.IsBomb()) return false;
+                }
+            }
 
             // Everything, everything.
             var sequence = new List<Card>(turnCards).Prepend(topCard).ToList();
@@ -20,21 +57,45 @@ namespace Karata.Web.Engines
                 var thisCard = sequence[i];
                 var prevCard = sequence[i - 1];
 
-                // A Joker should allow any card on either side
-                if (thisCard.IsJoker || prevCard.IsJoker)
-                    continue;
-
                 // First card
                 if (i == 1)
                 {
-                    if (thisCard.Face != prevCard.Face && thisCard.Suit != prevCard.Suit)
-                        return false;
+                    // Ace and joker go on top of anything
+                    if (thisCard is { Face: Ace or Joker }) continue;
+
+                    // Anything goes on top of an ace or joker
+                    if (prevCard is not { Face: Ace or Joker })
+                    {
+                        if (!thisCard.FaceEquals(prevCard) && !thisCard.SuitEquals(prevCard))
+                            return false;
+                    }
                 }
                 // Subsequent cards
                 else
                 {
-                    if (thisCard.Face != prevCard.Face && thisCard.Suit != prevCard.Suit)
-                        return false;
+                    if (thisCard is { Face: Ace })
+                    {
+                        if (!prevCard.IsQuestion() && prevCard is not { Face: Ace })
+                            return false;
+                    }
+                    else if (thisCard is { Face: Joker })
+                    {
+                        if (!prevCard.IsQuestion() && prevCard is not { Face: Joker })
+                            return false;
+                    }
+                    else
+                    {
+                        if (prevCard.IsQuestion())
+                        {
+                            if (!thisCard.FaceEquals(prevCard) && !thisCard.SuitEquals(prevCard))
+                                return false;
+                        }
+                        else
+                        {
+                            if (!thisCard.FaceEquals(prevCard))
+                                return false;
+                        }
+                    }
                 }
             }
 
@@ -42,47 +103,64 @@ namespace Karata.Web.Engines
             return true;
         }
 
-        // TODO: Game state object
-        public void ProcessPostTurnActions(Card topCard, List<Card> turnCards, out uint pickedCards)
+        public GameDelta GenerateTurnDelta(Game game, List<Card> turnCards)
         {
-            pickedCards = 0;
-            var lastCard = turnCards[^1];
+            var delta = new GameDelta();
 
-            // If the last card played is a "question" card, the player has to immediately pick a card
             if (turnCards.Count == 0)
             {
-                // TODO
+                delta.Pick = 1;
+                if (game.CurrentRequest is not null)
+                    delta.RemovesPreviousRequest = false;
+
+                // If the last card played is a "bomb" card, the player has to immediately pick cards.
+                if (game.Pick > 0) delta.Pick = game.Pick;
+                
+                return delta;
             }
             else
             {
+                var lastCard = turnCards[^1];
+
+                foreach (var card in turnCards)
+                {
+                    if (card is { Face: Jack }) ++delta.Skip;
+                    if (card is { Face: King }) delta.Reverse = !delta.Reverse;
+                }
+
                 // If the last card played is a "question" card, the player has to immediately pick a card
-                if (lastCard.IsQuestion)
+                if (lastCard.IsQuestion())
                 {
-                    pickedCards = 1;
-                    return;
+                    delta.Pick = 1;
+                    return delta;
                 }
 
-                if (lastCard.IsBomb)
+                // If the last card played is a "bomb" card, the next player should pick some cards.
+                if (lastCard.IsBomb())
                 {
-                    pickedCards = lastCard.IsJoker ? 5 : ((uint)lastCard.Face);
-                    return;
+                    delta.Give = lastCard.GetPickValue();
+                    return delta;
                 }
 
-                if (lastCard.Face is King)
+                // If the last card played is an ace and nothing is being blocked, a card should be requested.
+                if (lastCard is { Face: Ace })
                 {
-                    // TODO Handle game "kickbacks"
+                    var aceValueCount = turnCards.Sum(card => card.GetAceValue());
+                    if (game.Pick > 0) --aceValueCount;
+
+                    if (aceValueCount > 0) 
+                    {
+                        delta.HasRequest = true;
+                        if (aceValueCount > 1) delta.HasSpecificRequest = true;
+                    }                    
                 }
 
-                if (lastCard.Face is Jack)
-                {
-                    // TODO Handle player "jumps"
-                }
-
-                if (lastCard.Face is Ace)
-                {
-                    // TODO Handle card "requests"
-                }
+                // For an even number of "kickbacks", the current player plays again.
+                var kingCount = turnCards.Count(card => card is { Face: King });
+                if (kingCount is > 0 && kingCount % 2 == 0) delta.Skip = 0;
             }
+
+            return delta;
         }
     }
 }

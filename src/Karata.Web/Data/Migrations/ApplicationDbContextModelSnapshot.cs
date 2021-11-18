@@ -41,6 +41,9 @@ namespace Karata.Web.Data.Migrations
                     b.Property<string>("Hand")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsLastCard")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("INTEGER");
 
@@ -118,11 +121,26 @@ namespace Karata.Web.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("CurrentRequest")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("CurrentTurn")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Deck")
                         .HasColumnType("TEXT");
+
+                    b.Property<uint>("Give")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsForward")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsStarted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<uint>("Pick")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Pile")
                         .HasColumnType("TEXT");
@@ -130,13 +148,15 @@ namespace Karata.Web.Data.Migrations
                     b.Property<int>("RoomId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("Started")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("WinnerId")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("RoomId")
                         .IsUnique();
+
+                    b.HasIndex("WinnerId");
 
                     b.ToTable("Games");
                 });
@@ -319,6 +339,12 @@ namespace Karata.Web.Data.Migrations
                         .HasForeignKey("Karata.Web.Models.Game", "RoomId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Karata.Web.Models.ApplicationUser", "Winner")
+                        .WithMany()
+                        .HasForeignKey("WinnerId");
+
+                    b.Navigation("Winner");
                 });
 
             modelBuilder.Entity("Karata.Web.Models.Room", b =>

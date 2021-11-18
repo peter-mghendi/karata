@@ -17,7 +17,8 @@ namespace Karata.Cards
             Ten,
             Jack,
             Queen,
-            King
+            King,
+            Joker
         }
     }
 }
