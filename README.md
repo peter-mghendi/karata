@@ -18,7 +18,7 @@ There is also a custom cards library [here](https://github.com/sixpeteunder/kara
 ## Features
 - [x] Real-time in-game chat.
 - [x] Real-time gameplay.
-- [x] Game logic - (Just a few finishing touches).
+- [x] Game logic.
 - [ ] Configurable "fines" (off by default) - Trivial.
 - [ ] Password-protected rooms - Trivial.
 - [ ] New UI - [In progress](https://github.com/sixpeteunder/karata/commit/4d12942a51b67801c772f4fd27d6bc507e7cf0d4), blocked by my knowledge of CSS 😂.
@@ -46,6 +46,7 @@ I'm looking into a way to make the rules configurable without complicating the c
 - Fines are off by default and enabled on a per-game basis.
 - The winner is the first player to discard all of theiir cards while on "last card" status.
 - A player cannot enter "last card" status while in possesion of an Ace, "Bomb", Jack or King.
+- A card sequence that would usually cause the player to play again, e.g two Kings or "jumping" everyone, is counted as its own turn.
 
 ### Aces
 - Ace of Spades equals two regular Aces.
@@ -54,6 +55,7 @@ I'm looking into a way to make the rules configurable without complicating the c
 - Aces can be used to block "bomb" cards.
 - Aces can play anywhere.
 - Any number of Aces is valid, but three or four aces have have no special effects.
+- Two aces can request a specific Joker but one Ace can not request a Joker.
 
 ### "Bombs" - Twos, Threes and Jokers
 - Two, three and joker cards cause the next player to pick two, three or five cards respectively.
@@ -74,7 +76,7 @@ I'm looking into a way to make the rules configurable without complicating the c
 - Queen and Eight cards are "Question" cards which require an "Answer".
 - A Queen or Eight must be played on top of a card of the same face or suit.
 - Valid answer cards are any cards of the same face or suit (including other questions.
-- "Bombs", "Jumps", "Kickbacks" and Aces are valid answer cards.
+- Everything is a valid answer card.
 
 ### "Kickbacks" - Kings
 - A King will cause the direction of the game to reverse.
