@@ -1,6 +1,6 @@
 [![Build + Test](https://github.com/sixpeteunder/karata/actions/workflows/dotnet.yml/badge.svg)](https://github.com/sixpeteunder/karata/actions/workflows/dotnet.yml)
 
-> Gameplay is done! The next target is moving the game to .NET 6. Work on this hasn't begun yet.
+> STATUS: Currently clearing out items from the [backlog](https://github.com/sixpeteunder/karata/tree/backlog).
 
 # karata
 
