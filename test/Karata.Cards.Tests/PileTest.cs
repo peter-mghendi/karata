@@ -1,24 +1,23 @@
 using System.Linq;
 using Xunit;
 
-namespace Karata.Cards.Tests
+namespace Karata.Cards.Tests;
+
+public class PileTest
 {
-    public class PileTest
+    [Fact]
+    public void PilePropertyTest()
     {
-        [Fact]
-        public void PilePropertyTest()
-        {
-            var pile = new Pile();
-            Assert.Empty(pile);
-        }
+        var pile = new Pile();
+        Assert.Empty(pile);
+    }
 
-        [Fact]
-        public void ReclaimTest()
-        {
-            var pile = new Pile(Deck.StandardDeck.ToList());
-            pile.Reclaim();
+    [Fact]
+    public void ReclaimTest()
+    {
+        var pile = new Pile(Deck.StandardDeck.ToList());
+        pile.Reclaim();
 
-            Assert.Single<Card>(pile);
-        }
+        Assert.Single<Card>(pile);
     }
 }

@@ -1,24 +1,23 @@
-namespace Karata.Cards
+namespace Karata.Cards;
+
+public partial record class Card
 {
-    public partial record Card
+    public enum CardFace 
     {
-        public enum CardFace 
-        {
-            None,
-            Ace,
-            Two,
-            Three,
-            Four,
-            Five,
-            Six,
-            Seven,
-            Eight,
-            Nine,
-            Ten,
-            Jack,
-            Queen,
-            King,
-            Joker
-        }
+        None,
+        Ace,
+        Two,
+        Three,
+        Four,
+        Five,
+        Six,
+        Seven,
+        Eight,
+        Nine,
+        Ten,
+        Jack,
+        Queen,
+        King,
+        Joker
     }
 }
