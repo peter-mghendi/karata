@@ -1,21 +1,18 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Karata.Web.Data;
 
-namespace Karata.Web.Services
+namespace Karata.Web.Services;
+
+public class UnitOfWork : IUnitOfWork
 {
-    public class UnitOfWork : IUnitOfWork
+    private readonly ApplicationDbContext _context;
+    public IRoomService RoomService { get; }
+
+    public UnitOfWork(ApplicationDbContext context, IRoomService roomService)
     {
-        private readonly ApplicationDbContext _context;
-        public IRoomService RoomService { get; }
-
-        public UnitOfWork(ApplicationDbContext context, IRoomService roomService)
-        {
-            _context = context;
-            RoomService = roomService;
-        }
-
-        public async Task<int> CompleteAsync(CancellationToken cancellationToken = default) =>
-            await _context.SaveChangesAsync(cancellationToken);
+        _context = context;
+        RoomService = roomService;
     }
+
+    public async Task<int> CompleteAsync(CancellationToken cancellationToken = default) =>
+        await _context.SaveChangesAsync(cancellationToken);
 }

@@ -1,11 +1,8 @@
-using System.Collections.Generic;
-using Karata.Cards;
 using Microsoft.AspNetCore.Identity;
 
-namespace Karata.Web.Models
-{
-    public class ApplicationUser : IdentityUser {
-        public bool IsLastCard { get; set; } = false;
-        public List<Card> Hand { get; set; } = new();
-    }
+namespace Karata.Web.Models;
+
+public class ApplicationUser : IdentityUser {
+    public bool IsLastCard { get; set; } = false;
+    public List<Card> Hand { get; set; } = new();
 }

@@ -1,12 +1,8 @@
-using System.Threading;
-using System.Threading.Tasks;
+namespace Karata.Web.Services;
 
-namespace Karata.Web.Services
+public interface IUnitOfWork
 {
-    public interface IUnitOfWork
-    {
-        IRoomService RoomService { get; }
+    IRoomService RoomService { get; }
 
-        Task<int> CompleteAsync(CancellationToken cancellationToken = default);
-    }
+    Task<int> CompleteAsync(CancellationToken cancellationToken = default);
 }

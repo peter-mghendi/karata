@@ -1,15 +1,14 @@
-namespace Karata.Cards
+namespace Karata.Cards;
+
+public partial record class Card
 {
-    public partial record Card
+    public enum CardSuit
     {
-        public enum CardSuit 
-        {
-            Spades,
-            Hearts,
-            Clubs,
-            Diamonds,
-            BlackJoker,
-            RedJoker
-        }
+        Spades,
+        Hearts,
+        Clubs,
+        Diamonds,
+        BlackJoker,
+        RedJoker
     }
 }

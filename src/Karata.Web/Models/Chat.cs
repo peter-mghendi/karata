@@ -1,12 +1,9 @@
-using System;
+namespace Karata.Web.Models;
 
-namespace Karata.Web.Models
+public class Chat
 {
-    public class Chat
-    {
-        public int Id { get; set; }
-        public string Text { get; set; }
-        public virtual ApplicationUser Sender { get; set; }
-        public DateTime Sent { get; } = DateTime.Now;
-    }
+    public int Id { get; set; }
+    public string Text { get; set; }
+    public virtual ApplicationUser Sender { get; set; }
+    public DateTime Sent { get; } = DateTime.Now;
 }

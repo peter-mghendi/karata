@@ -1,7 +1,6 @@
-namespace Karata.Web.Services
+namespace Karata.Web.Services;
+
+public class CookieService
 {
-    public class CookieService
-    {
-        public string Cookie { get; set; }
-    }
+    public string Cookie { get; set; }
 }

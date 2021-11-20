@@ -1,11 +1,10 @@
-namespace Karata.Cards
+namespace Karata.Cards;
+
+public partial record class Card
 {
-    public partial record Card
+    public enum CardColor
     {
-        public enum CardColor
-        {
-            Black,
-            Red
-        }
+        Black,
+        Red
     }
 }
