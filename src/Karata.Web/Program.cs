@@ -1,4 +1,5 @@
 using Blazored.Modal;
+using Blazored.Toast;
 using Karata.Web.Areas.Identity;
 using Karata.Web.Data;
 using Karata.Web.Engines;
@@ -31,6 +32,7 @@ builder.Services.AddScoped<CookieService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddBlazoredModal();
+builder.Services.AddBlazoredToast();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddResponseCompression(opts =>
 {

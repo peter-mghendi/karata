@@ -86,7 +86,8 @@ public class GameHub : Hub<IGameClient>
         // Check game status
         if (room.Game.IsStarted)
         {
-            await Clients.Caller.ReceiveSystemMessage("This game has already started.");
+            var message = new SystemMessage("This game has already started.", MessageType.Error);
+            await Clients.Caller.ReceiveSystemMessage(message);
             return;
         }
 
@@ -109,7 +110,8 @@ public class GameHub : Hub<IGameClient>
         if (room.Game.IsStarted || room.Creator.Id == user.Id)
         {
             // TODO: Handle this gracefully, as well as accidental disconnection.
-            await Clients.Caller.ReceiveSystemMessage("Please don't do this. The game isn't built to handle it.");
+            var message = new SystemMessage("Please don't do this. The game isn't built to handle it.", MessageType.Error);
+            await Clients.Caller.ReceiveSystemMessage(message);
             return;
         }
 
@@ -129,21 +131,24 @@ public class GameHub : Hub<IGameClient>
         // Check caller role
         if (room.Creator.Email != Context.UserIdentifier)
         {
-            await Clients.Caller.ReceiveSystemMessage("You are not allowed to perform that action.");
+            var message = new SystemMessage("You are not allowed to perform that action.", MessageType.Error);
+            await Clients.Caller.ReceiveSystemMessage(message);
             return;
         };
 
         // Check game status
         if (game.IsStarted)
         {
-            await Clients.Caller.ReceiveSystemMessage("This game has already begun.");
+            var message = new SystemMessage("This game has already begun.", MessageType.Error);
+            await Clients.Caller.ReceiveSystemMessage(message);
             return;
         };
 
         // Check player number
         if (game.Players.Count < 2 || game.Players.Count > 4)
         {
-            await Clients.Caller.ReceiveSystemMessage("A game needs 2-4 players.");
+            var message = new SystemMessage("A game needs 2-4 players.", MessageType.Error);
+            await Clients.Caller.ReceiveSystemMessage(message);
             return;
         };
 
@@ -186,7 +191,8 @@ public class GameHub : Hub<IGameClient>
         // Check game status
         if (!room.Game.IsStarted)
         {
-            await Clients.Caller.ReceiveSystemMessage("The game has not started yet.");
+            var message = new SystemMessage("The game has not started yet.", MessageType.Error);
+            await Clients.Caller.ReceiveSystemMessage(message);
             await Clients.Caller.NotifyTurnProcessed(valid: false);
             return;
         }
@@ -196,7 +202,8 @@ public class GameHub : Hub<IGameClient>
         var currentUser = await _userManager.FindByEmailAsync(Context.UserIdentifier);
         if (requiredUser.Id != currentUser.Id)
         {
-            await Clients.Caller.ReceiveSystemMessage("It is not your turn!");
+            var message = new SystemMessage("It is not your turn!", MessageType.Error);
+            await Clients.Caller.ReceiveSystemMessage(message);
             await Clients.Caller.NotifyTurnProcessed(valid: false);
             return;
         }
@@ -208,7 +215,8 @@ public class GameHub : Hub<IGameClient>
         // Process turn
         if (!_engine.ValidateTurnCards(room.Game, cardList))
         {
-            await Clients.Caller.ReceiveSystemMessage("That card sequence is invalid");
+            var message = new SystemMessage("That card sequence is invalid!", MessageType.Error);
+            await Clients.Caller.ReceiveSystemMessage(message);
             await Clients.Caller.NotifyTurnProcessed(valid: false);
             return;
         }
@@ -333,7 +341,7 @@ public class GameHub : Hub<IGameClient>
             var isLastCard = await lastCardTcs.Task;
             room.Game.Players.Single(p => p.Email == currentUser.Email).IsLastCard = isLastCard;
             if (isLastCard) await Clients.OthersInGroup(inviteLink)
-                    .ReceiveSystemMessage($"{player.Email} is on their last card.");
+                    .ReceiveSystemMessage(new($"{player.Email} is on their last card.", MessageType.Warning));
         }
         finally
         {

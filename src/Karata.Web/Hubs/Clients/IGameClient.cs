@@ -15,7 +15,7 @@ public interface IGameClient
     Task PromptCardRequest(Guid identifier, bool specific);
     Task PromptLastCardRequest(Guid identifier);
     Task ReceiveChat(Chat message);
-    Task ReceiveSystemMessage(string message);
+    Task ReceiveSystemMessage(SystemMessage message);
     Task ReclaimPile();
     Task RemoveCardsFromDeck(uint num);
     Task RemoveFromRoom();

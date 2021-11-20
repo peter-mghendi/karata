@@ -10,6 +10,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
+@inject IToastService ToastService
 
 @if (!IsConnected)
 {
@@ -324,10 +325,10 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<ApplicationUser>("AddPlayerToRoom", async player =>
+        hubConnection.On<ApplicationUser>("AddPlayerToRoom", player =>
         {
             currentRoom.Game.Players.Add(player);
-            await LogAsync($"{player.Email} has joined the room");
+            ShowToast($"{player.Email} has joined the room", ToastLevel.Info);
             StateHasChanged();
         });
 
@@ -346,7 +347,7 @@ else
         hubConnection.On<ApplicationUser>("EndGame", async winner =>
         {
             var winnerText = winner is null ? "no" : $"{winner} as the";
-            await LogAsync($"The game ended with {winnerText} winner.");
+            ShowToast($"The game ended with {winnerText} winner.", ToastLevel.Info);
             await Task.Delay(TimeSpan.FromSeconds(3));
             currentRoom = null;
             StateHasChanged();
@@ -380,9 +381,17 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<string>("ReceiveSystemMessage", async message =>
+        hubConnection.On<SystemMessage>("ReceiveSystemMessage", message =>
         {
-            await LogAsync(message);
+            var level = message.Type switch
+            {
+                MessageType.Error => ToastLevel.Error,
+                MessageType.Info => ToastLevel.Info,
+                MessageType.Success => ToastLevel.Success,
+                MessageType.Warning => ToastLevel.Warning,
+                _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
+            };
+            ShowToast(message.Text, level);
         });
 
         hubConnection.On("ReclaimPile", () =>
@@ -403,10 +412,10 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<ApplicationUser>("RemovePlayerFromRoom", async player =>
+        hubConnection.On<ApplicationUser>("RemovePlayerFromRoom", player =>
         {
             _ = currentRoom.Game.Players.Remove(player);
-            await LogAsync($"{player.Email} has left the room");
+            ShowToast($"{player.Email} has left the room", ToastLevel.Info);
             StateHasChanged();
         });
 
@@ -422,11 +431,12 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<bool>("UpdateGameStatus", async started =>
+        hubConnection.On<bool>("UpdateGameStatus", started =>
         {
             currentRoom.Game.IsStarted = started;
             if (started)
-                await LogAsync("The game has started. No new players may join.");
+                ShowToast("The game has started. No new players may join.", ToastLevel.Info);
+                
             StateHasChanged();
         });
 
@@ -438,7 +448,7 @@ else
     {
         if (string.IsNullOrWhiteSpace(textInput))
         {
-            await LogAsync("Type in a message to send.");
+            ShowToast("Message field cannot be empty.", ToastLevel.Error);
             return;
         }
 
@@ -452,7 +462,7 @@ else
     {
         if (string.IsNullOrWhiteSpace(inviteLink))
         {
-            await LogAsync("Please supply an invite link and, where applicable, a password.");
+            ShowToast("Invite link cannot be empty.", ToastLevel.Info);
             return;
         }
         await hubConnection.SendAsync("JoinRoom", inviteLink);
@@ -475,8 +485,12 @@ else
         await requestConnection.SendAsync("SetLastCardStatus", lastCardIdentifier, isLastCard);
     }
 
-    private async Task LogAsync(string text) => await JSRuntime.InvokeVoidAsync("console.log", text);
+    private void ShowToast(string message, ToastLevel level)
+    {
+        ToastService.ShowToast(level, message);
+    }
 
+    // TODO Use a toast for this?
     private async Task<bool> ConfirmAsync(string text) => await JSRuntime.InvokeAsync<bool>("confirm", text);
 
     public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
