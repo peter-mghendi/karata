@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Collections.Concurrent;
 using Karata.Web.Engines;
 using Karata.Web.Hubs.Clients;
@@ -5,6 +7,7 @@ using Karata.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using static Karata.Cards.Card.CardFace;
 
 namespace Karata.Web.Hubs;
 
@@ -154,10 +157,18 @@ public class GameHub : Hub<IGameClient>
 
         // Shuffle deck
         var deck = game.Deck;
-        deck.Shuffle();
 
         // Deal starting card
-        var topCard = deck.Deal();
+        Card? topCard = null;
+        do
+        {
+            if (topCard is not null)
+                deck.Push(topCard);
+            deck.Shuffle();
+            topCard = deck.Deal();
+        } 
+        while (!IsBoring(topCard));
+
         await Clients.Group(inviteLink).RemoveCardsFromDeck(1);
         game.Pile.Push(topCard);
         await Clients.Group(inviteLink).AddCardToPile(topCard);
@@ -229,6 +240,8 @@ public class GameHub : Hub<IGameClient>
         }
 
         // Remove cards from player hand
+        // TODO: Move this here.
+        // await Clients.Caller.NotifyTurnProcessed(valid: true);
         room.Game.Players.Single(p => p.Email == currentUser.Email).Hand
             .RemoveAll(card => cardList.Contains(card));
 
@@ -300,14 +313,16 @@ public class GameHub : Hub<IGameClient>
                     // GAMEOVER
                     await Clients.Caller.NotifyTurnProcessed(valid: true);
                     await Clients.Group(inviteLink).EndGame(winner: null);
+                    // TODO: Remove everyone from the game.
+                    // await Groups.RemoveFromGroupAsync(Context.ConnectionId, inviteLink);
                     return;
                 }
             };
             await Clients.Group(inviteLink).RemoveCardsFromDeck(1);
 
             // Add cards to player hand
-            room.Game.Players.Single(p => p.Email == Context.UserIdentifier).Hand.AddRange(cards);
-            await Clients.Caller.AddCardRangeToHand(cards);
+            room.Game.Players.Single(p => p.Email == Context.UserIdentifier).Hand.AddRange(cards!);
+            await Clients.Caller.AddCardRangeToHand(cards!);
 
             // Reset pick counter
             room.Game.Pick = 0;
@@ -315,16 +330,21 @@ public class GameHub : Hub<IGameClient>
 
         // TODO: Check whether the game is over.
         var player = room.Game.Players.Single(p => p.Email == currentUser.Email);
-        if (player.Hand.Count == 0 && player.IsLastCard)
+        if (player.Hand.Count == 0)
         {
-            
-            // GAMEOVER
-            await Clients.Caller.NotifyTurnProcessed(valid: true);
-            room.Game.Winner = room.Game.Players.Single(p => p.Email == currentUser.Email);;
-
-            await Clients.Group(inviteLink).EndGame(winner: player);
-            await _unitOfWork.CompleteAsync(); // Save winner to DB
-            return;
+            if (player.IsLastCard && IsBoring(cardList[^1]))
+            {
+                // GAMEOVER
+                await Clients.Caller.NotifyTurnProcessed(valid: true);
+                room.Game.Winner = room.Game.Players.Single(p => p.Email == currentUser.Email);
+                await Clients.Group(inviteLink).EndGame(winner: room.Game.Winner);
+                // TODO: Remove everyone from the room.
+                // await Groups.RemoveFromGroupAsync(Context.ConnectionId, inviteLink);
+                await _unitOfWork.CompleteAsync(); // Save winner to DB
+                return;
+            } 
+            else await Clients.OthersInGroup(inviteLink)
+                    .ReceiveSystemMessage(new($"{player.Email} is cardless.", MessageType.Info));
         }
 
         // TODO: Make this "smart"?
@@ -369,4 +389,9 @@ public class GameHub : Hub<IGameClient>
         await _unitOfWork.CompleteAsync();
         await Clients.Caller.NotifyTurnProcessed(valid: true);
     }
+    
+    private static bool IsBoring (Card card) =>
+        !card.IsBomb()
+        && !card.IsQuestion()
+        && card is not { Face: Ace or Jack or King };
 }
