@@ -1,3 +1,5 @@
+#nullable enable
+
 using Microsoft.AspNetCore.Identity;
 
 namespace Karata.Web.Models;

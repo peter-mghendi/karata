@@ -1,5 +1,6 @@
+#nullable enable
+
 using static Karata.Cards.Card.CardFace;
-using static Karata.Cards.Card.CardSuit;
 
 namespace Karata.Web.Engines;
 

@@ -1,3 +1,5 @@
+#nullable enable
+
 using Karata.Web.Data;
 
 namespace Karata.Web.Services;

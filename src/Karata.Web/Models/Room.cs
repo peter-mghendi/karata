@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace Karata.Web.Models;
 
 public class Room

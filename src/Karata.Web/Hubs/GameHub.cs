@@ -166,7 +166,7 @@ public class GameHub : Hub<IGameClient>
                 deck.Push(topCard);
             deck.Shuffle();
             topCard = deck.Deal();
-        } 
+        }
         while (!IsBoring(topCard));
 
         await Clients.Group(inviteLink).RemoveCardsFromDeck(1);
@@ -342,33 +342,36 @@ public class GameHub : Hub<IGameClient>
                 // await Groups.RemoveFromGroupAsync(Context.ConnectionId, inviteLink);
                 await _unitOfWork.CompleteAsync(); // Save winner to DB
                 return;
-            } 
+            }
             else await Clients.OthersInGroup(inviteLink)
                     .ReceiveSystemMessage(new($"{player.Email} is cardless.", MessageType.Info));
         }
 
         // TODO: Make this "smart"?
         // i.e player cannot be on their last card if they have a  Ace, "Bomb", Jack or King
-        var lastCardIdentifier = Guid.NewGuid();
-        var lastCardTcs = new TaskCompletionSource<bool>();
-        LastCardRequests.TryAdd(lastCardIdentifier, lastCardTcs);
-        await Clients.Caller.PromptLastCardRequest(lastCardIdentifier);
-
-        try
+        if (player.Hand.Count > 0)
         {
-            // Wait for the client to respond
-            // TODO: Cancel this task if the client disconnects (potentially by just adding a timeout)
-            var isLastCard = await lastCardTcs.Task;
-            room.Game.Players.Single(p => p.Email == currentUser.Email).IsLastCard = isLastCard;
-            if (isLastCard) await Clients.OthersInGroup(inviteLink)
-                    .ReceiveSystemMessage(new($"{player.Email} is on their last card.", MessageType.Warning));
-        }
-        finally
-        {
-            // Remove the tcs from the dictionary so that we don't leak memory
-            LastCardRequests.TryRemove(lastCardIdentifier, out lastCardTcs);
-        }
+            var lastCardIdentifier = Guid.NewGuid();
+            var lastCardTcs = new TaskCompletionSource<bool>();
+            LastCardRequests.TryAdd(lastCardIdentifier, lastCardTcs);
+            await Clients.Caller.PromptLastCardRequest(lastCardIdentifier);
 
+            try
+            {
+                // Wait for the client to respond
+                // TODO: Cancel this task if the client disconnects (potentially by just adding a timeout)
+                var isLastCard = await lastCardTcs.Task;
+                room.Game.Players.Single(p => p.Email == currentUser.Email).IsLastCard = isLastCard;
+                if (isLastCard) await Clients.OthersInGroup(inviteLink)
+                        .ReceiveSystemMessage(new($"{player.Email} is on their last card.", MessageType.Warning));
+            }
+            finally
+            {
+                // Remove the tcs from the dictionary so that we don't leak memory
+                LastCardRequests.TryRemove(lastCardIdentifier, out lastCardTcs);
+            }
+        }
+        
         // Next turn
         var lastIndex = room.Game.Players.Count - 1;
         for (uint i = 0; i < delta.Skip; i++)
@@ -389,8 +392,8 @@ public class GameHub : Hub<IGameClient>
         await _unitOfWork.CompleteAsync();
         await Clients.Caller.NotifyTurnProcessed(valid: true);
     }
-    
-    private static bool IsBoring (Card card) =>
+
+    private static bool IsBoring(Card card) =>
         !card.IsBomb()
         && !card.IsQuestion()
         && card is not { Face: Ace or Jack or King };

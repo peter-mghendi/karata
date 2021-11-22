@@ -1,3 +1,5 @@
+#nullable enable
+
 namespace Karata.Web.Models;
 
 // This class is used to hold the turn information.
@@ -6,7 +8,7 @@ namespace Karata.Web.Models;
 // Work in progress, do not use yet.
 public class Turn
 {
-    public List<Card> Cards { get; set; }
+    public List<Card> Cards { get; set; } = new();
     public int GameId { get; set; }
     public int PlayerId { get; set; }
 }

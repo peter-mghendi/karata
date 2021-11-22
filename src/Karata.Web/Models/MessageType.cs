@@ -1,3 +1,5 @@
+#nullable enable
+
 namespace Karata.Web.Models;
 
 public enum MessageType

@@ -1,3 +1,4 @@
+#nullable enable
 
 using Karata.Web.Hubs.Clients;
 using Microsoft.AspNetCore.Authorization;

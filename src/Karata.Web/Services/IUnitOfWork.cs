@@ -1,3 +1,5 @@
+#nullable enable
+
 namespace Karata.Web.Services;
 
 public interface IUnitOfWork
