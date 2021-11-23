@@ -1,3 +1,5 @@
+#nullable enable
+
 using Blazored.Modal;
 using Blazored.Toast;
 using Karata.Web.Areas.Identity;
@@ -26,6 +28,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
+builder.Services.AddSingleton<IPasswordService, PasswordService>();
 builder.Services.AddSingleton<IEngine, KarataEngine>();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<ApplicationUser>>();
 builder.Services.AddScoped<CookieService>();

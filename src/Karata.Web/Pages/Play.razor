@@ -26,13 +26,13 @@ else if (currentRoom is null)
         <div id="join-room" class="row g-2">
             <div class="col-12 col-md-6">
                 <div class="form-floating">
-                    <input type="text" class="form-control" id="inviteLink" placeholder="@Guid.Empty" @bind="inviteLink">
+                    <input type="text" class="form-control" id="inviteLink" placeholder="@Guid.Empty" autocomplete="room-code" @bind="inviteLink">
                     <label for="inviteLink">Invite Link</label>
                 </div>
             </div>
             <div class="col-12 col-md-6">
                 <div class="form-floating">
-                    <input type="text" class="form-control" id="invitePassword" placeholder="password"
+                    <input type="password" class="form-control" id="invitePassword" placeholder="password" autocomplete="room-pass"
                     @bind="invitePassword">
                     <label for="invitePassword">Password (If Applicable)</label>
                 </div>
@@ -52,7 +52,7 @@ else if (currentRoom is null)
         <div id="create-room" class="row g-2">
             <div class="col">
                 <div class="form-floating">
-                    <input type="text" class="form-control" id="createPassword" placeholder="password"
+                    <input type="password" class="form-control" id="createPassword" placeholder="password" autocomplete="new-password"
                     @bind="createPassword">
                     <label for="createPassword">Password (Optional)</label>
                 </div>
@@ -456,7 +456,7 @@ else
         textInput = string.Empty;
     }
 
-    async Task CreateRoom() => await hubConnection.SendAsync("CreateRoom");
+    async Task CreateRoom() => await hubConnection.SendAsync("CreateRoom", createPassword);
 
     async Task JoinRoom()
     {
@@ -465,7 +465,7 @@ else
             ShowToast("Invite link cannot be empty.", ToastLevel.Info);
             return;
         }
-        await hubConnection.SendAsync("JoinRoom", inviteLink);
+        await hubConnection.SendAsync("JoinRoom", inviteLink, invitePassword);
     }
 
     async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", currentRoom.InviteLink);
@@ -490,10 +490,11 @@ else
         ToastService.ShowToast(level, message);
     }
 
-    // TODO Use a toast for this?
-    private async Task<bool> ConfirmAsync(string text) => await JSRuntime.InvokeAsync<bool>("confirm", text);
-
-    public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
+    public async ValueTask DisposeAsync() 
+    {
+        await hubConnection.DisposeAsync();
+        await requestConnection.DisposeAsync();
+    }
 
     private string GetCardIcon(Card card) => "bi " + card.Suit switch
     {

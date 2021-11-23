@@ -1,6 +1,7 @@
 #nullable enable
 
 using System.Collections.Concurrent;
+using System.Text;
 using Karata.Web.Engines;
 using Karata.Web.Hubs.Clients;
 using Karata.Web.Services;
@@ -31,8 +32,9 @@ namespace Karata.Web.Hubs;
 public class GameHub : Hub<IGameClient>
 {
     private readonly IEngine _engine;
-    // private readonly ILogger<GameHub> _logger;
+    private readonly ILogger<GameHub> _logger;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPasswordService _passwordService;
     private readonly IRoomService _roomService;
     private readonly UserManager<ApplicationUser> _userManager;
     public static readonly ConcurrentDictionary<Guid, TaskCompletionSource<Card>> CardRequests = new();
@@ -40,12 +42,14 @@ public class GameHub : Hub<IGameClient>
 
     public GameHub(
         IEngine engine,
-        // ILogger<GameHub> logger,
+        ILogger<GameHub> logger,
+        IPasswordService passwordService,
         IUnitOfWork unitOfWork,
         UserManager<ApplicationUser> userManager)
     {
         _engine = engine;
-        // _logger = logger;
+        _logger = logger;
+        _passwordService = passwordService;
         _unitOfWork = unitOfWork;
         _roomService = _unitOfWork.RoomService;
         _userManager = userManager;
@@ -63,7 +67,7 @@ public class GameHub : Hub<IGameClient>
         await _unitOfWork.CompleteAsync();
     }
 
-    public async Task CreateRoom()
+    public async Task CreateRoom(string? password)
     {
         // Create room
         var user = await _userManager.FindByEmailAsync(Context.UserIdentifier);
@@ -72,9 +76,16 @@ public class GameHub : Hub<IGameClient>
             InviteLink = Guid.NewGuid().ToString(),
             Creator = user,
         };
+
+        if (!string.IsNullOrWhiteSpace(password))
+        {
+            room.Salt = PasswordService.GenerateSalt();
+            room.Hash = _passwordService.HashPassword(Encoding.UTF8.GetBytes(password), room.Salt);
+        }
+
         await _roomService.CreateAsync(room);
 
-        // Add player to game
+        // Add creator to game
         room.Game.Players.Add(user);
         await Clients.OthersInGroup(room.InviteLink).AddPlayerToRoom(user);
         await Groups.AddToGroupAsync(Context.ConnectionId, room.InviteLink);
@@ -82,9 +93,26 @@ public class GameHub : Hub<IGameClient>
         await _unitOfWork.CompleteAsync();
     }
 
-    public async Task JoinRoom(string inviteLink)
+    public async Task JoinRoom(string inviteLink, string? password)
     {
         var room = await _roomService.FindByInviteLinkAsync(inviteLink);
+        if (room.Hash is not null)
+        {
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                var message = new SystemMessage("You need to enter a password to join this room.", MessageType.Error);
+                await Clients.Caller.ReceiveSystemMessage(message);
+                return;
+            }
+
+            var bytes = Encoding.UTF8.GetBytes(password);
+            if (!_passwordService.VerifyPassword(bytes, room.Salt!, room.Hash))
+            {
+                var message = new SystemMessage("The password you entered is incorrect.", MessageType.Error);
+                await Clients.Caller.ReceiveSystemMessage(message);
+                return;
+            }
+        }
 
         // Check game status
         if (room.Game.IsStarted)
@@ -99,7 +127,7 @@ public class GameHub : Hub<IGameClient>
         // Add player to room
         room.Game.Players.Add(user);
         await Clients.OthersInGroup(inviteLink).AddPlayerToRoom(user);
-        await Groups.AddToGroupAsync(Context.ConnectionId, room.InviteLink);
+        await Groups.AddToGroupAsync(Context.ConnectionId, room.InviteLink!);
         await Clients.Caller.AddToRoom(room);
         await _unitOfWork.CompleteAsync();
     }
@@ -110,7 +138,7 @@ public class GameHub : Hub<IGameClient>
         var user = await _userManager.FindByEmailAsync(Context.UserIdentifier);
 
         // Check game status
-        if (room.Game.IsStarted || room.Creator.Id == user.Id)
+        if (room.Game.IsStarted || room.Creator!.Id == user.Id)
         {
             // TODO: Handle this gracefully, as well as accidental disconnection.
             var message = new SystemMessage("Please don't do this. The game isn't built to handle it.", MessageType.Error);
@@ -120,9 +148,9 @@ public class GameHub : Hub<IGameClient>
 
         // Remove player from room
         room.Game.Players.Remove(user);
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.InviteLink);
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.InviteLink!);
         await Clients.Caller.RemoveFromRoom();
-        await Clients.OthersInGroup(room.InviteLink).RemovePlayerFromRoom(user);
+        await Clients.OthersInGroup(room.InviteLink!).RemovePlayerFromRoom(user);
         await _unitOfWork.CompleteAsync();
     }
 
@@ -132,7 +160,7 @@ public class GameHub : Hub<IGameClient>
         var game = room.Game;
 
         // Check caller role
-        if (room.Creator.Email != Context.UserIdentifier)
+        if (room.Creator!.Email != Context.UserIdentifier)
         {
             var message = new SystemMessage("You are not allowed to perform that action.", MessageType.Error);
             await Clients.Caller.ReceiveSystemMessage(message);
@@ -371,7 +399,7 @@ public class GameHub : Hub<IGameClient>
                 LastCardRequests.TryRemove(lastCardIdentifier, out lastCardTcs);
             }
         }
-        
+
         // Next turn
         var lastIndex = room.Game.Players.Count - 1;
         for (uint i = 0; i < delta.Skip; i++)
