@@ -14,8 +14,8 @@ There is also a custom cards library [here](https://github.com/sixpeteunder/kara
 - [x] Real-time in-game chat.
 - [x] Real-time gameplay.
 - [x] Game logic.
+- [x] Password-protected rooms.
 - [ ] Configurable "fines" (off by default) - Trivial.
-- [ ] Password-protected rooms - Trivial.
 - [ ] New UI - [In progress](https://github.com/sixpeteunder/karata/commit/4d12942a51b67801c772f4fd27d6bc507e7cf0d4), blocked by my knowledge of CSS 😂.
 - [ ] Configurable rules - technically already possible via [IEngine](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/Engines/IEngine.cs).
 - [ ] Resumable games - [some steps made](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/Models/Turn.cs).
