@@ -13,16 +13,9 @@ using static Karata.Cards.Card.CardFace;
 namespace Karata.Web.Hubs;
 
 /** 
-  *  NOTE:
   *  Here be dragons.
-  *  Implemented herein is (one half of) a mechanism to prompt for values from the frontend.
-  *  (See adjacent RequestHub for the other half, and Play.razor for usage)
-  *  Basically a mini RPC framework on top of websockets.
+  *  Implemented herein is a mechanism to prompt for values from the frontend.
   *  I use a ConcurrentDictionary, TaskCompletionSource<T> and EAP for this.
-  *
-  *  The backend will "pause" processing this request, and "ask" the frontend for a value on another thread.
-  *  The response will be sent to RequestHub, whose job it is to figure out which request it is for.
-  *  RequestHub will then signal GameHub, which gets rid of the new thread and "resumes" the old one.
   *
   *  REF: https://docs.microsoft.com/en-us/dotnet/standard/parallel-programming/how-to-wrap-eap-patterns-in-a-task
   *  REF: https://devblogs.microsoft.com/premier-developer/the-danger-of-the-taskcompletionsourcet-class
@@ -37,8 +30,8 @@ public class GameHub : Hub<IGameClient>
     private readonly IPasswordService _passwordService;
     private readonly IRoomService _roomService;
     private readonly UserManager<ApplicationUser> _userManager;
-    public static readonly ConcurrentDictionary<Guid, TaskCompletionSource<Card>> CardRequests = new();
-    public static readonly ConcurrentDictionary<Guid, TaskCompletionSource<bool>> LastCardRequests = new();
+    public static readonly ConcurrentDictionary<string, TaskCompletionSource<Card>> CardRequests = new();
+    public static readonly ConcurrentDictionary<string, TaskCompletionSource<bool>> LastCardRequests = new();
 
     public GameHub(
         IEngine engine,
@@ -225,6 +218,14 @@ public class GameHub : Hub<IGameClient>
 
     public async Task PerformTurn(string inviteLink, List<Card> cardList)
     {
+        // Check for ukora
+        if (CardRequests.ContainsKey(Context.ConnectionId) || LastCardRequests.ContainsKey(Context.ConnectionId))
+        {
+            var message = new SystemMessage("You can't perform a turn while you have a pending request.", MessageType.Error);
+            await Clients.Caller.ReceiveSystemMessage(message);
+            return;
+        }
+
         var room = await _roomService.FindByInviteLinkAsync(inviteLink);
 
         // Check game status
@@ -269,6 +270,9 @@ public class GameHub : Hub<IGameClient>
 
         // Remove cards from player hand
         // TODO: Move this here.
+        // Reminder: Do that by using a popup to prompt for last card status.
+        // Reminder: We want to make the frontend appear more responsive.
+        // Reminder: Because NotifyTurnProcessed triggers UI updates.
         // await Clients.Caller.NotifyTurnProcessed(valid: true);
         room.Game.Players.Single(p => p.Email == currentUser.Email).Hand
             .RemoveAll(card => cardList.Contains(card));
@@ -287,11 +291,10 @@ public class GameHub : Hub<IGameClient>
         {
             // TODO Handle GUID collisions.
             // GUID identifier and TaskCompletionSource for parallel requests.
-            var identifier = Guid.NewGuid();
-            var tcs = new TaskCompletionSource<Card>();
-            CardRequests.TryAdd(identifier, tcs);
+            var tcs = new TaskCompletionSource<Card>(TaskCreationOptions.RunContinuationsAsynchronously);
+            CardRequests.TryAdd(Context.ConnectionId, tcs);
 
-            await Clients.Caller.PromptCardRequest(identifier, delta.HasSpecificRequest);
+            await Clients.Caller.PromptCardRequest(Context.ConnectionId, delta.HasSpecificRequest);
 
             try
             {
@@ -304,7 +307,7 @@ public class GameHub : Hub<IGameClient>
             finally
             {
                 // Remove the tcs from the dictionary so that we don't leak memory
-                CardRequests.TryRemove(identifier, out tcs);
+                CardRequests.TryRemove(Context.ConnectionId, out tcs);
             }
         }
         if (delta.Reverse)
@@ -379,10 +382,9 @@ public class GameHub : Hub<IGameClient>
         // i.e player cannot be on their last card if they have a  Ace, "Bomb", Jack or King
         if (player.Hand.Count > 0)
         {
-            var lastCardIdentifier = Guid.NewGuid();
-            var lastCardTcs = new TaskCompletionSource<bool>();
-            LastCardRequests.TryAdd(lastCardIdentifier, lastCardTcs);
-            await Clients.Caller.PromptLastCardRequest(lastCardIdentifier);
+            var lastCardTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            LastCardRequests.TryAdd(Context.ConnectionId, lastCardTcs);
+            await Clients.Caller.PromptLastCardRequest(Context.ConnectionId);
 
             try
             {
@@ -396,7 +398,7 @@ public class GameHub : Hub<IGameClient>
             finally
             {
                 // Remove the tcs from the dictionary so that we don't leak memory
-                LastCardRequests.TryRemove(lastCardIdentifier, out lastCardTcs);
+                LastCardRequests.TryRemove(Context.ConnectionId, out lastCardTcs);
             }
         }
 
@@ -419,6 +421,33 @@ public class GameHub : Hub<IGameClient>
         await Clients.Group(inviteLink).UpdateTurn(room.Game.CurrentTurn);
         await _unitOfWork.CompleteAsync();
         await Clients.Caller.NotifyTurnProcessed(valid: true);
+    }
+
+    public void RequestCard(string identifier, Card request)
+    {
+        if (CardRequests.TryGetValue(identifier, out var tcs))
+        {
+            // Trigger the task continuation
+            tcs.TrySetResult(request);
+        }
+        else
+        {
+            // Client response for something that isn't being tracked, might be an error
+        }
+    }
+
+    public void SetLastCardStatus(string identifier, bool lastCard)
+    {
+        Console.WriteLine($"{identifier} is {(lastCard ? "on" : "off")} their last card.");
+        if (LastCardRequests.TryGetValue(identifier, out var tcs))
+        {
+            // Trigger the task continuation
+            tcs.TrySetResult(lastCard);
+        }
+        else
+        {
+            // Client response for something that isn't being tracked, might be an error
+        }
     }
 
     private static bool IsBoring(Card card) =>

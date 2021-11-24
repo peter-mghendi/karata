@@ -27,6 +27,10 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+builder.Services.AddSignalR().AddHubOptions<GameHub>(options =>
+{
+    options.MaximumParallelInvocationsPerClient = 2;
+});
 builder.Services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
 builder.Services.AddSingleton<IPasswordService, PasswordService>();
 builder.Services.AddSingleton<IEngine, KarataEngine>();
@@ -66,7 +70,6 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllers();
     endpoints.MapBlazorHub();
     endpoints.MapHub<GameHub>("/game");
-    endpoints.MapHub<RequestHub>("/request");
     endpoints.MapFallbackToPage("/_Host");
 });
 

@@ -76,7 +76,7 @@ else
                 {
                     @if (lastCardIdentifier is not null)
                     {
-                        <div class="hstack gap-3 rounded-3 bg-light p-2">
+                        <div class="hstack gap-3 rounded-3 bg-light p-2 mb-3">
                             <div class="lead me-auto">Are you on your last card?</div>
                             <button class="btn btn-outline-success" @onclick="() => SendLastCardStatus(true)">
                                 Yes
@@ -234,7 +234,7 @@ else
     [Inject]
     public CookieService CookieService { get; set; }
     private HubConnection hubConnection;
-    private HubConnection requestConnection;
+
     [CascadingParameter]
     private IModalService ModalService { get; set; }
     private string username;
@@ -247,7 +247,7 @@ else
     // UI state
     private string textInput;
     private bool viewDetails = true;
-    private Guid? lastCardIdentifier = null;
+    private string lastCardIdentifier = null;
 
     // Game state
     private Room currentRoom = null;
@@ -281,13 +281,6 @@ else
 
         hubConnection = new HubConnectionBuilder()
         .WithUrl(NavigationManager.ToAbsoluteUri("/game"), options =>
-        {
-            options.Cookies = container;
-        })
-        .Build();
-
-        requestConnection = new HubConnectionBuilder()
-        .WithUrl(NavigationManager.ToAbsoluteUri("/request"), options =>
         {
             options.Cookies = container;
         })
@@ -361,15 +354,17 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<Guid, bool>("PromptCardRequest", async (identifier, specific) =>
+        hubConnection.On<string, bool>("PromptCardRequest", async (identifier, specific) =>
         {
             var parameters = new ModalParameters();
             parameters.Add(nameof(CardRequestModal.Specific), specific);
-            var result = await ModalService.Show<CardRequestModal>("Request a card", parameters).Result;
-            await requestConnection.SendAsync("RequestCard", identifier, (Card)result.Data);
+            var options = new ModalOptions { DisableBackgroundCancel = true };
+            var modal = ModalService.Show<CardRequestModal>("Request a card", parameters, options);
+            var result = await modal.Result;
+            await hubConnection.SendAsync("RequestCard", identifier, (Card)result.Data);
         });
 
-        hubConnection.On<Guid>("PromptLastCardRequest", identifier =>
+        hubConnection.On<string>("PromptLastCardRequest", identifier =>
         {
             lastCardIdentifier = identifier;
             StateHasChanged();
@@ -441,7 +436,6 @@ else
         });
 
         await hubConnection.StartAsync();
-        await requestConnection.StartAsync();
     }
 
     async Task Send()
@@ -482,7 +476,7 @@ else
 
     private async Task SendLastCardStatus(bool isLastCard)
     {
-        await requestConnection.SendAsync("SetLastCardStatus", lastCardIdentifier, isLastCard);
+        await hubConnection.SendAsync("SetLastCardStatus", lastCardIdentifier, isLastCard);
     }
 
     private void ShowToast(string message, ToastLevel level)
@@ -490,11 +484,7 @@ else
         ToastService.ShowToast(level, message);
     }
 
-    public async ValueTask DisposeAsync() 
-    {
-        await hubConnection.DisposeAsync();
-        await requestConnection.DisposeAsync();
-    }
+    public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
 
     private string GetCardIcon(Card card) => "bi " + card.Suit switch
     {
