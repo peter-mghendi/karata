@@ -74,20 +74,6 @@ else
             <div class="col-8">
                 @if (@currentRoom.Game.IsStarted)
                 {
-                    @if (lastCardIdentifier is not null)
-                    {
-                        <div class="hstack gap-3 rounded-3 bg-light p-2 mb-3">
-                            <div class="lead me-auto">Are you on your last card?</div>
-                            <button class="btn btn-outline-success" @onclick="() => SendLastCardStatus(true)">
-                                Yes
-                            </button>
-                            <div class="vr"></div>
-                            <button class="btn btn-outline-danger" @onclick="() => SendLastCardStatus(false)">
-                                No
-                            </button>
-                        </div>
-                    }
-
                     <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Email</p>
                     <p>Deck Size: @currentRoom.Game.Deck.Count</p>
                     <p>Pile Size: @currentRoom.Game.Pile.Count</p>
@@ -247,7 +233,6 @@ else
     // UI state
     private string textInput;
     private bool viewDetails = true;
-    private string lastCardIdentifier = null;
 
     // Game state
     private Room currentRoom = null;
@@ -349,25 +334,29 @@ else
         hubConnection.On<bool>("NotifyTurnProcessed", valid =>
         {
             if (valid) Me.Hand.RemoveAll(card => currentTurn.Contains(card));
-            lastCardIdentifier = null;
             currentTurn.Clear();
             StateHasChanged();
         });
 
-        hubConnection.On<string, bool>("PromptCardRequest", async (identifier, specific) =>
+        hubConnection.On<bool>("PromptCardRequest", async specific =>
         {
             var parameters = new ModalParameters();
             parameters.Add(nameof(CardRequestModal.Specific), specific);
             var options = new ModalOptions { DisableBackgroundCancel = true };
             var modal = ModalService.Show<CardRequestModal>("Request a card", parameters, options);
             var result = await modal.Result;
-            await hubConnection.SendAsync("RequestCard", identifier, (Card)result.Data);
+            await hubConnection.SendAsync("RequestCard", (Card)result.Data);
         });
 
-        hubConnection.On<string>("PromptLastCardRequest", identifier =>
+        hubConnection.On("PromptLastCardRequest", async () =>
         {
-            lastCardIdentifier = identifier;
-            StateHasChanged();
+            var options = new ModalOptions { 
+                DisableBackgroundCancel = true, 
+                HideCloseButton = true
+            };
+            var modal = ModalService.Show<LastCardPromptModal>("Last card?", options);
+            var result = await modal.Result;
+            await hubConnection.SendAsync("SetLastCardStatus", (bool)result.Data);
         });
 
         hubConnection.On<Chat>("ReceiveChat", message =>
@@ -473,11 +462,6 @@ else
     }
 
     public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
-
-    private async Task SendLastCardStatus(bool isLastCard)
-    {
-        await hubConnection.SendAsync("SetLastCardStatus", lastCardIdentifier, isLastCard);
-    }
 
     private void ShowToast(string message, ToastLevel level)
     {

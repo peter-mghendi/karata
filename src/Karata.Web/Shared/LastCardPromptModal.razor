@@ -1,0 +1,21 @@
+<div class="row g-2">
+    <div class="col">
+        <button class="btn btn-outline-success w-100 h-100" @onclick="() => SendStatus(true)">
+            Yes!
+        </button>
+    </div>
+    <div class="col">
+        <button class="btn btn-outline-danger w-100 h-100" @onclick="() => SendStatus(false)">
+            No!
+        </button>
+    </div>
+</div>
+
+@code
+{
+    [CascadingParameter]
+    BlazoredModalInstance ModalInstance { get; set; }
+
+    private async Task SendStatus(bool status) =>
+        await ModalInstance.CloseAsync(ModalResult.Ok(status));
+}

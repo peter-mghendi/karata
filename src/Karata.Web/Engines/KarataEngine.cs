@@ -7,7 +7,6 @@ namespace Karata.Web.Engines;
 // This class should not interact with ApplicationUser or Room at all
 public class KarataEngine : IEngine
 {
-    // TODO: Configurable game rules.
     public bool ValidateTurnCards(Game game, List<Card> turnCards)
     {
         // Early exit

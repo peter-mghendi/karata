@@ -14,8 +14,8 @@ public interface IGameClient
     Task EndGame(ApplicationUser? winner);
     Task EmptyHand();
     Task NotifyTurnProcessed(bool valid);
-    Task PromptCardRequest(string identifier, bool specific);
-    Task PromptLastCardRequest(string identifier);
+    Task PromptCardRequest(bool specific);
+    Task PromptLastCardRequest();
     Task ReceiveChat(Chat message);
     Task ReceiveSystemMessage(SystemMessage message);
     Task ReclaimPile();
