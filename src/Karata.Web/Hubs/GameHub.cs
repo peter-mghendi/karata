@@ -52,7 +52,6 @@ public class GameHub : Hub<IGameClient>
         var message = new Chat { Text = text, Sender = user };
 
         room.Chats.Add(message);
-
         await Clients.Group(inviteLink).ReceiveChat(message);
         await _unitOfWork.CompleteAsync();
     }
@@ -225,10 +224,13 @@ public class GameHub : Hub<IGameClient>
 
     public async Task PerformTurn(string inviteLink, List<Card> cardList)
     {
+        // Setup
         var room = await _roomService.FindByInviteLinkAsync(inviteLink);
         var game = room.Game;
-        var turn = game.CurrentTurn;
-        var player = game.Players[turn];
+        var currentTurn = game.CurrentTurn;
+        var player = game.Players[currentTurn];
+        var turn = new Turn(player.Id, cardList);
+        game.Turns.Add(turn);
 
         // Check for ukora
         if (CardRequests.ContainsKey(Context.ConnectionId) || LastCardRequests.ContainsKey(Context.ConnectionId))
@@ -301,6 +303,7 @@ public class GameHub : Hub<IGameClient>
                 // TODO: Cancel this task if the client disconnects (potentially by just adding a timeout)
                 var request = await tcs.Task; // Wait for the client to respond
                 game.CurrentRequest = request;
+                turn.Request = request;
                 await Clients.Group(inviteLink).SetCurrentRequest(request);
             }
             finally
@@ -381,8 +384,12 @@ public class GameHub : Hub<IGameClient>
                 // TODO: Cancel this task if the client disconnects (potentially by just adding a timeout)
                 var isLastCard = await lastCardTcs.Task; // Wait for the client to respond
                 player.IsLastCard = isLastCard;
-                if (isLastCard) await Clients.OthersInGroup(inviteLink)
-                        .ReceiveSystemMessage(new($"{player.Email} is on their last card.", MessageType.Warning));
+                if (isLastCard) 
+                { 
+                    turn.IsLastCard = true;
+                    var message = new SystemMessage($"{player.Email} is on their last card.", MessageType.Warning);
+                    await Clients.OthersInGroup(inviteLink).ReceiveSystemMessage(message);
+                }
             }
             finally
             {
@@ -394,10 +401,11 @@ public class GameHub : Hub<IGameClient>
         var lastIndex = game.Players.Count - 1;
         for (uint i = 0; i < delta.Skip; i++)
         {
-            if (game.IsForward) game.CurrentTurn = turn == lastIndex ? 0 : ++turn;
-            else game.CurrentTurn = turn == 0 ? lastIndex : --turn;
+            if (game.IsForward) 
+                game.CurrentTurn = currentTurn == lastIndex ? 0 : ++currentTurn;
+            else 
+                game.CurrentTurn = currentTurn == 0 ? lastIndex : --currentTurn;
         }
-
         await Clients.Group(inviteLink).UpdateTurn(game.CurrentTurn);
         await _unitOfWork.CompleteAsync();
     }

@@ -10,6 +10,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Chat> Chats { get; set; }
     public DbSet<Game> Games { get; set; }
     public DbSet<Room> Rooms { get; set; }
+    public DbSet<Turn> Turns { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
@@ -69,6 +70,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                     (s1, s2) => s1.SequenceEqual(s2),
                     s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                     s => new(s.Reverse())
+                ));
+
+        modelBuilder.Entity<Turn>()
+            .Property(t => t.Request)
+            .HasConversion(
+                request => JsonSerializer.Serialize(request, options),
+                json => JsonSerializer.Deserialize<Card>(json, options));
+
+        modelBuilder.Entity<Turn>()
+            .Property(t => t.Cards)
+            .HasConversion(
+                cards => JsonSerializer.Serialize(cards, options),
+                json => JsonSerializer.Deserialize<List<Card>>(json, options),
+                new ValueComparer<List<Card>>(
+                    (s1, s2) => s1.SequenceEqual(s2),
+                    s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                    s => s.ToList()
                 ));
     }
 
