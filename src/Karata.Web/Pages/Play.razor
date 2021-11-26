@@ -72,22 +72,24 @@ else
     <div class="container">
         <div class="row">
             <div class="col-8">
-                @if (@currentRoom.Game.IsStarted)
+                @if (@Game.IsStarted)
                 {
-                    <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Email</p>
-                    <p>Deck Size: @currentRoom.Game.Deck.Count</p>
-                    <p>Pile Size: @currentRoom.Game.Pile.Count</p>
+                    <p>Current Turn: @Game.Players[Game.CurrentTurn].Email</p>
+                    <p>Deck Size: @Game.Deck.Count</p>
+                    <p>Pile Size: @Game.Pile.Count</p>
                     <p>
                         Top Card:
-                        <i class="mx-1 @GetCardIcon(currentRoom.Game.Pile.Peek())"></i>
-                        @currentRoom.Game.Pile.Peek().GetName()
+                        <i class="mx-1 @GetCardIcon(Game.Pile.Peek())"></i>
+                        @Game.Pile.Peek().GetName()
                     </p>
-                    @if (currentRoom.Game.CurrentRequest is not null)
+                    @if (Game.CurrentRequest is not null)
                     {
                         <p>
                             Current Request:
-                            <i class="mx-1 @GetCardIcon(currentRoom.Game.CurrentRequest)"></i>
-                            @currentRoom.Game.CurrentRequest.GetName()
+                            <i class="mx-1 @GetCardIcon(Game.CurrentRequest)"></i>
+                            @(Game.CurrentRequest.Face is None 
+                                ? Game.CurrentRequest.Face.ToString()
+                                : Game.CurrentRequest.GetName())
                         </p>
                     }
                     <div class="row mb-2">
@@ -168,14 +170,14 @@ else
                         <p>Room ID: <br> @currentRoom.InviteLink</p>
                         <p>Created at: <br> @currentRoom.CreatedAt</p>
                         <p>Creator: <br> @currentRoom.Creator.Email</p>
-                        <p>Players: <br> @currentRoom.Game.Players.Count</p>
-                        <p>Started: <br> @currentRoom.Game.IsStarted</p>
+                        <p>Players: <br> @Game.Players.Count</p>
+                        <p>Started: <br> @Game.IsStarted</p>
 
                         <div id="join-room" class="row g-2">
-                            @if (currentRoom.Creator.Email == Me.Email)
+                            @if (currentRoom.Creator.Id == Player.Id)
                             {
                                 <div class="col">
-                                    <button class="btn btn-outline-success w-100 @(currentRoom.Game.IsStarted ? "disabled" : "")"
+                                    <button class="btn btn-outline-success w-100 @(Game.IsStarted ? "disabled" : "")"
                             @onclick="StartGame">Start Game</button>
                                 </div>
                             }
@@ -200,7 +202,7 @@ else
                     {
                         <li class="list-group-item">
                             <div class="fw-bold">
-                                @if (message.Sender.Email == Me.Email)
+                                @if (message.Sender.Id == Player.Id)
                                 {
                                     <i class="bi bi-person-fill me-2"></i>
                                 }
@@ -241,13 +243,15 @@ else
     {
         get
         {
-            var handCopy = new List<Card>(Me.Hand);
+            var handCopy = new List<Card>(Hand.Cards);
             handCopy.RemoveAll(card => currentTurn.Contains(card));
             return handCopy;
         }
     }
 
-    private ApplicationUser Me => currentRoom.Game.Players.Single(u => u.Email == username);
+    private Game Game => currentRoom.Game;
+    private ApplicationUser Player => Game.Players.Single(u => u.Email == username);
+    private Hand Hand => Player.Hands.Single(h => h.GameId == Game.Id);
 
     protected override async Task OnInitializedAsync()
     {
@@ -274,38 +278,38 @@ else
         hubConnection.On<uint>("AddCardsToDeck", num =>
         {
             for (int i = 0; i < num; i++)
-                currentRoom.Game.Deck.Push(Ace.Of(Spades));
+                Game.Deck.Push(Ace.Of(Spades));
             StateHasChanged();
         });
 
         hubConnection.On<Card>("AddCardToHand", card =>
         {
-            currentRoom.Game.Players.Single(u => u.Email == username).Hand.Add(card);
+            Hand.Cards.Add(card);
             StateHasChanged();
         });
 
         hubConnection.On<Card>("AddCardToPile", card =>
         {
-            currentRoom.Game.Pile.Push(card);
+            Game.Pile.Push(card);
             StateHasChanged();
         });
 
         hubConnection.On<List<Card>>("AddCardRangeToHand", cards =>
         {
-            currentRoom.Game.Players.Single(u => u.Email == username).Hand.AddRange(cards);
+            Hand.Cards.AddRange(cards);
             StateHasChanged();
         });
 
         hubConnection.On<List<Card>>("AddCardRangeToPile", cards =>
         {
             foreach (var card in cards)
-                currentRoom.Game.Pile.Push(card);
+                Game.Pile.Push(card);
             StateHasChanged();
         });
 
         hubConnection.On<ApplicationUser>("AddPlayerToRoom", player =>
         {
-            currentRoom.Game.Players.Add(player);
+            Game.Players.Add(player);
             ShowToast($"{player.Email} has joined the room", ToastLevel.Info);
             StateHasChanged();
         });
@@ -316,24 +320,17 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On("EmptyHand", () =>
-        {
-            currentRoom.Game.Players.Single(u => u.Email == username).Hand.Clear();
-            StateHasChanged();
-        });
-
-        hubConnection.On<ApplicationUser>("EndGame", async winner =>
+        hubConnection.On<ApplicationUser>("EndGame", winner =>
         {
             var winnerText = winner is null ? "no" : $"{winner} as the";
             ShowToast($"The game ended with {winnerText} winner.", ToastLevel.Info);
-            await Task.Delay(TimeSpan.FromSeconds(3));
             currentRoom = null;
             StateHasChanged();
         });
 
         hubConnection.On<bool>("NotifyTurnProcessed", valid =>
         {
-            if (valid) Me.Hand.RemoveAll(card => currentTurn.Contains(card));
+            if (valid) Hand.Cards.RemoveAll(card => currentTurn.Contains(card));
             currentTurn.Clear();
             StateHasChanged();
         });
@@ -380,13 +377,13 @@ else
 
         hubConnection.On("ReclaimPile", () =>
         {
-            _ = currentRoom.Game.Pile.Reclaim();
+            _ = Game.Pile.Reclaim();
             StateHasChanged();
         });
 
         hubConnection.On<uint>("RemoveCardsFromDeck", num =>
         {
-            _ = currentRoom.Game.Deck.DealMany(num);
+            _ = Game.Deck.DealMany(num);
             StateHasChanged();
         });
 
@@ -398,26 +395,26 @@ else
 
         hubConnection.On<ApplicationUser>("RemovePlayerFromRoom", player =>
         {
-            _ = currentRoom.Game.Players.Remove(player);
+            _ = Game.Players.Remove(player);
             ShowToast($"{player.Email} has left the room", ToastLevel.Info);
             StateHasChanged();
         });
 
         hubConnection.On<Card>("SetCurrentRequest", request =>
         {
-            currentRoom.Game.CurrentRequest = request;
+            Game.CurrentRequest = request;
             StateHasChanged();
         });
 
         hubConnection.On<int>("UpdateTurn", turn =>
         {
-            currentRoom.Game.CurrentTurn = turn;
+            Game.CurrentTurn = turn;
             StateHasChanged();
         });
 
         hubConnection.On<bool>("UpdateGameStatus", started =>
         {
-            currentRoom.Game.IsStarted = started;
+            Game.IsStarted = started;
             if (started)
                 ShowToast("The game has started. No new players may join.", ToastLevel.Info);
                 

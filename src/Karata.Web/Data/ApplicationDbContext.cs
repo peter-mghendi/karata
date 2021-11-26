@@ -9,6 +9,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public DbSet<Chat> Chats { get; set; }
     public DbSet<Game> Games { get; set; }
+    public DbSet<Hand> Hands { get; set; }
     public DbSet<Room> Rooms { get; set; }
     public DbSet<Turn> Turns { get; set; }
 
@@ -32,17 +33,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .HasOne(r => r.Winner)
             .WithMany()
             .IsRequired(false);
-
-        modelBuilder.Entity<ApplicationUser>()
-            .Property(a => a.Hand)
-            .HasConversion(
-                hand => JsonSerializer.Serialize(hand, options),
-                json => JsonSerializer.Deserialize<List<Card>>(json, options),
-                new ValueComparer<List<Card>>(
-                    (s1, s2) => s1.SequenceEqual(s2),
-                    s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                    s => s.ToList()
-                ));
 
         modelBuilder.Entity<Game>()
             .Property(g => g.CurrentRequest)
@@ -70,6 +60,17 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                     (s1, s2) => s1.SequenceEqual(s2),
                     s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                     s => new(s.Reverse())
+                ));
+
+        modelBuilder.Entity<Hand>()
+            .Property(h => h.Cards)
+            .HasConversion(
+                cards => JsonSerializer.Serialize(cards, options),
+                json => JsonSerializer.Deserialize<List<Card>>(json, options),
+                new ValueComparer<List<Card>>(
+                    (s1, s2) => s1.SequenceEqual(s2),
+                    s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                    s => s.ToList()
                 ));
 
         modelBuilder.Entity<Turn>()

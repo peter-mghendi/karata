@@ -65,6 +65,9 @@ public class GameHub : Hub<IGameClient>
             InviteLink = Guid.NewGuid().ToString(),
             Creator = user,
         };
+        var game = room.Game;
+        var hand = new Hand(user.Id);
+        game.Hands.Add(hand);
 
         if (!string.IsNullOrWhiteSpace(password))
         {
@@ -75,7 +78,7 @@ public class GameHub : Hub<IGameClient>
         await _roomService.CreateAsync(room);
 
         // Add creator to game
-        room.Game.Players.Add(user);
+        game.Players.Add(user);
         await Clients.OthersInGroup(room.InviteLink).AddPlayerToRoom(user);
         await Groups.AddToGroupAsync(Context.ConnectionId, room.InviteLink);
         await Clients.Caller.AddToRoom(room);
@@ -84,8 +87,10 @@ public class GameHub : Hub<IGameClient>
 
     public async Task JoinRoom(string inviteLink, string? password)
     {
+        var user = await _userManager.FindByEmailAsync(Context.UserIdentifier);
         var room = await _roomService.FindByInviteLinkAsync(inviteLink);
         var game = room.Game;
+        var hand = new Hand(user.Id);
         
         if (room.Hash is not null)
         {
@@ -122,8 +127,8 @@ public class GameHub : Hub<IGameClient>
         }
 
         // Add player to room
-        var user = await _userManager.FindByEmailAsync(Context.UserIdentifier);
         game.Players.Add(user);
+        game.Hands.Add(hand);
         await Clients.OthersInGroup(inviteLink).AddPlayerToRoom(user);
         await Groups.AddToGroupAsync(Context.ConnectionId, room.InviteLink!);
         await Clients.Caller.AddToRoom(room);
@@ -204,15 +209,12 @@ public class GameHub : Hub<IGameClient>
         // TODO: Explicit card movements (Deck -> Hand, Hand -> Pile, etc).
         foreach (var player in game.Players)
         {
-            player.Hand.Clear();
-            await Clients.User(player.Email).EmptyHand();
-
             uint dealtCount = 4;
 
             var dealt = deck.DealMany(dealtCount);
             await Clients.Group(inviteLink).RemoveCardsFromDeck(dealtCount);
 
-            player.Hand.AddRange(dealt);
+            player.Hands.Single(h => h.GameId == game.Id).Cards.AddRange(dealt);
             await Clients.User(player.Email).AddCardRangeToHand(dealt);
         }
 
@@ -229,6 +231,7 @@ public class GameHub : Hub<IGameClient>
         var game = room.Game;
         var currentTurn = game.CurrentTurn;
         var player = game.Players[currentTurn];
+        var hand = player.Hands.Single(h => h.GameId == game.Id);
         var turn = new Turn(player.Id, cardList);
         game.Turns.Add(turn);
 
@@ -280,7 +283,7 @@ public class GameHub : Hub<IGameClient>
 
         // Remove cards from player hand
         await Clients.Caller.NotifyTurnProcessed(valid: true);
-        player.Hand.RemoveAll(card => cardList.Contains(card));
+        hand.Cards.RemoveAll(card => cardList.Contains(card));
 
         // Generate delta and update game state.
         var delta = _engine.GenerateTurnDelta(game, cardList);
@@ -348,15 +351,15 @@ public class GameHub : Hub<IGameClient>
             await Clients.Group(inviteLink).RemoveCardsFromDeck(1);
 
             // Add cards to player hand and reset counter
-            player.Hand.AddRange(cards!);
+            hand.Cards.AddRange(cards!);
             await Clients.Caller.AddCardRangeToHand(cards!);            
             game.Pick = 0;
         }
 
         // Check whether the game is over.
-        if (player.Hand.Count == 0)
+        if (hand.Cards.Count == 0)
         {
-            if (player.IsLastCard && IsBoring(cardList[^1]))
+            if (hand.IsLastCard && IsBoring(cardList[^1]))
             {
                 await Clients.Caller.NotifyTurnProcessed(valid: true);
                 game.Winner = player;
@@ -383,7 +386,7 @@ public class GameHub : Hub<IGameClient>
             {  
                 // TODO: Cancel this task if the client disconnects (potentially by just adding a timeout)
                 var isLastCard = await lastCardTcs.Task; // Wait for the client to respond
-                player.IsLastCard = isLastCard;
+                hand.IsLastCard = isLastCard;
                 if (isLastCard) 
                 { 
                     turn.IsLastCard = true;
