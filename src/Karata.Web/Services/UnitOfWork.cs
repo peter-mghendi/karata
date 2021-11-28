@@ -6,10 +6,10 @@ namespace Karata.Web.Services;
 
 public class UnitOfWork : IUnitOfWork
 {
-    private readonly ApplicationDbContext _context;
+    private readonly KarataContext _context;
     public IRoomService RoomService { get; }
 
-    public UnitOfWork(ApplicationDbContext context, IRoomService roomService)
+    public UnitOfWork(KarataContext context, IRoomService roomService)
     {
         _context = context;
         RoomService = roomService;

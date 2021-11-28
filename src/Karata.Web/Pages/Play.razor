@@ -1,6 +1,8 @@
 @using System.Net
+@using System.Text.Json.Serialization
 @using Karata.Web.Services
 @using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.Extensions.Logging
 
 @page "/play"
 @attribute [Authorize]
@@ -74,7 +76,7 @@ else
             <div class="col-8">
                 @if (@Game.IsStarted)
                 {
-                    <p>Current Turn: @Game.Players[Game.CurrentTurn].Email</p>
+                    <p>Current Turn: @Game.Hands[Game.CurrentTurn].User.Email</p>
                     <p>Deck Size: @Game.Deck.Count</p>
                     <p>Pile Size: @Game.Pile.Count</p>
                     <p>
@@ -170,7 +172,7 @@ else
                         <p>Room ID: <br> @currentRoom.InviteLink</p>
                         <p>Created at: <br> @currentRoom.CreatedAt</p>
                         <p>Creator: <br> @currentRoom.Creator.Email</p>
-                        <p>Players: <br> @Game.Players.Count</p>
+                        <p>Players: <br> @Game.Hands.Count</p>
                         <p>Started: <br> @Game.IsStarted</p>
 
                         <div id="join-room" class="row g-2">
@@ -208,7 +210,7 @@ else
                                 }
                                 @message.Sender
                             </div>
-                            <div class="small text-muted">@message.Sent</div>
+                            <div class="small textss-muted">@message.Sent</div>
                             @message.Text
                         </li>
                     }
@@ -250,8 +252,8 @@ else
     }
 
     private Game Game => currentRoom.Game;
-    private ApplicationUser Player => Game.Players.Single(u => u.Email == username);
-    private Hand Hand => Player.Hands.Single(h => h.GameId == Game.Id);
+    private Hand Hand => Game.Hands.Single(h => h.User.Email == username);
+    private User Player => Hand.User;
 
     protected override async Task OnInitializedAsync()
     {
@@ -272,6 +274,15 @@ else
         .WithUrl(NavigationManager.ToAbsoluteUri("/game"), options =>
         {
             options.Cookies = container;
+        })
+        .AddJsonProtocol(options =>
+        {
+            options.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+        })
+        .ConfigureLogging(logging =>
+        {
+            logging.AddConsole();
+            logging.SetMinimumLevel(LogLevel.Information);
         })
         .Build();
 
@@ -307,10 +318,10 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<ApplicationUser>("AddPlayerToRoom", player =>
+        hubConnection.On<Hand>("AddHandToRoom", hand =>
         {
-            Game.Players.Add(player);
-            ShowToast($"{player.Email} has joined the room", ToastLevel.Info);
+            Game.Hands.Add(hand);
+            ShowToast($"{hand.User.Email} has joined the room", ToastLevel.Info);
             StateHasChanged();
         });
 
@@ -320,7 +331,7 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<ApplicationUser>("EndGame", winner =>
+        hubConnection.On<User>("EndGame", winner =>
         {
             var winnerText = winner is null ? "no" : $"{winner} as the";
             ShowToast($"The game ended with {winnerText} winner.", ToastLevel.Info);
@@ -393,10 +404,10 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<ApplicationUser>("RemovePlayerFromRoom", player =>
+        hubConnection.On<Hand>("RemoveHandFromRoom", hand =>
         {
-            _ = Game.Players.Remove(player);
-            ShowToast($"{player.Email} has left the room", ToastLevel.Info);
+            _ = Game.Hands.Remove(hand);
+            ShowToast($"{hand.User.Email} has left the room", ToastLevel.Info);
             StateHasChanged();
         });
 

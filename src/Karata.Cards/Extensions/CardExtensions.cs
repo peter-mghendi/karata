@@ -1,4 +1,3 @@
-using System;
 using static Karata.Cards.Card;
 using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
@@ -8,7 +7,11 @@ namespace Karata.Cards.Extensions
 {
     public static class CardExtensions
     {
-        public static Card Of(this CardFace face, CardSuit suit) => new(face, suit);
+        public static Card Of(this CardFace face, CardSuit suit) => new() 
+        { 
+            Face = face,
+            Suit = suit
+        };
 
         public static Card ColoredJoker(this CardColor color)
         {

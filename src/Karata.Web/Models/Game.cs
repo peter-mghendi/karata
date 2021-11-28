@@ -17,8 +17,7 @@ public class Game
     public Deck Deck { get; set; } = Deck.StandardDeck;
     public Pile Pile { get; set; } = new();
 
-    public virtual List<ApplicationUser> Players { get; set; } = new();
-    public virtual ApplicationUser? Winner { get; set; } = null;
+    public virtual User? Winner { get; set; } = null;
     public virtual List<Hand> Hands { get; set; } = new();
     public virtual List<Turn> Turns { get; set; } = new();
 

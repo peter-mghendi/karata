@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Karata.Web.Data;
 
-public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+public class KarataContext : IdentityDbContext<User>
 {
     public DbSet<Chat> Chats { get; set; }
     public DbSet<Game> Games { get; set; }
@@ -13,7 +13,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Room> Rooms { get; set; }
     public DbSet<Turn> Turns { get; set; }
 
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    public KarataContext(DbContextOptions<KarataContext> options)
         : base(options)
     {
     }

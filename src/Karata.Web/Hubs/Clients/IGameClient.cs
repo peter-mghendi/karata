@@ -9,9 +9,9 @@ public interface IGameClient
     Task AddCardToPile(Card card);
     Task AddCardRangeToHand(List<Card> cards); 
     Task AddCardRangeToPile(List<Card> cards);
-    Task AddPlayerToRoom(ApplicationUser player);
+    Task AddHandToRoom(Hand hand);
     Task AddToRoom(Room room);
-    Task EndGame(ApplicationUser? winner);
+    Task EndGame(User? winner);
     Task NotifyTurnProcessed(bool valid);
     Task PromptCardRequest(bool specific);
     Task PromptLastCardRequest();
@@ -20,7 +20,7 @@ public interface IGameClient
     Task ReclaimPile();
     Task RemoveCardsFromDeck(uint num);
     Task RemoveFromRoom();
-    Task RemovePlayerFromRoom(ApplicationUser player);
+    Task RemoveHandFromRoom(Hand hand);
     Task SetCurrentRequest(Card? request);
     Task UpdateGameStatus(bool started);
     Task UpdateTurn(int turn);
