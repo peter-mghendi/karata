@@ -13,7 +13,7 @@ public class CardExtensionsTest
     [Fact]
     public void OfTest()
     {
-        var card1 = new Card(Ace, Spades);
+        var card1 = new Card{ Face = Ace, Suit = Spades };
         var card2 = Ace.Of(Spades);
 
         Assert.Equal(card1, card2);
@@ -25,7 +25,7 @@ public class CardExtensionsTest
     [InlineData((CardColor)3, default(CardSuit), true)]
     public void ColoredJokerTest(CardColor color, CardSuit suit, bool throws)
     {
-        var expectedJoker = new Card(Joker, suit);
+        var expectedJoker = new Card{ Face = Joker, Suit = suit };
 
         if (throws)
             Assert.Throws<ArgumentException>(() => _ = color.ColoredJoker());
@@ -41,7 +41,7 @@ public class CardExtensionsTest
     [InlineData(Joker, BlackJoker, "Black Joker")]
     public void GetNameTest(CardFace face, CardSuit suit, string name)
     {
-        var card = new Card(face, suit);
+        var card = new Card{ Face = face, Suit = suit };
         Assert.Equal(name, card.GetName());
     }
 
@@ -50,7 +50,7 @@ public class CardExtensionsTest
     [InlineData((CardFace)15, Spades, default(uint), true)]
     public void GetRankTest(CardFace face, CardSuit suit, uint rank, bool throws)
     {
-        var card = new Card(face, suit);
+        var card = new Card{ Face = face, Suit = suit };
 
         if (throws)
             Assert.Throws<ArgumentException>(() => _ = card.GetRank());
@@ -68,7 +68,7 @@ public class CardExtensionsTest
     [InlineData(Ace, (CardSuit)7, default(CardColor), true)]
     public void GetColorTest(CardFace face, CardSuit suit, CardColor color, bool throws)
     {
-        var card = new Card(face, suit);
+        var card = new Card{ Face = face, Suit = suit };
 
         if (throws)
             Assert.Throws<ArgumentException>(() => _ = card.GetColor());
@@ -82,7 +82,7 @@ public class CardExtensionsTest
     [InlineData(Ace, Spades, 2)]
     public void GetAceValueTest(CardFace face, CardSuit suit, uint value)
     {
-        var card = new Card(face, suit);
+        var card = new Card{ Face = face, Suit = suit };
         var actual = card.GetAceValue();
         Assert.Equal(value, actual);
     }
@@ -94,7 +94,7 @@ public class CardExtensionsTest
     [InlineData(Joker, BlackJoker, 5)]
     public void GetPickValueTest(CardFace face, CardSuit suit, uint value)
     {
-        var card = new Card(face, suit);
+        var card = new Card{ Face = face, Suit = suit };
         var actual = card.GetPickValue();
         Assert.Equal(value, actual);
     }
@@ -105,7 +105,7 @@ public class CardExtensionsTest
     [InlineData(Three, Spades, true)]
     public void IsBombTest(CardFace face, CardSuit suit, bool isBomb)
     {
-        var card = new Card(face, suit);
+        var card = new Card { Face = face, Suit = suit };
         Assert.Equal(isBomb, card.IsBomb());
     }
 
@@ -115,7 +115,7 @@ public class CardExtensionsTest
     [InlineData(Queen, Spades, true)]
     public void IsQuestionTest(CardFace face, CardSuit suit, bool isQuestion)
     {
-        var card = new Card(face, suit);
+        var card = new Card { Face = face, Suit = suit };
         var actual = card.IsQuestion();
         Assert.Equal(isQuestion, actual);
     }
@@ -125,8 +125,8 @@ public class CardExtensionsTest
     [InlineData(Nine, Nine, true)]
     public void FaceEqualsTest(CardFace face1, CardFace face2, bool faceEquals)
     {
-        var card1 = new Card(face1, Spades);
-        var card2 = new Card(face2, Spades);
+        var card1 = new Card { Face = face1, Suit = Spades };
+        var card2 = new Card { Face = face2, Suit = Spades };
         var actual = card1.FaceEquals(card2);
         Assert.Equal(faceEquals, actual);
     }
@@ -136,8 +136,8 @@ public class CardExtensionsTest
     [InlineData(Hearts, Spades, false)]
     public void SuitEqualsTest(CardSuit suit1, CardSuit suit2, bool suitEquals)
     {
-        var card1 = new Card(Ace, suit1);
-        var card2 = new Card(Ace, suit2);
+        var card1 = new Card { Face = Ace, Suit = suit1 };
+        var card2 = new Card { Face = Ace, Suit = suit2 };
         var actual = card1.SuitEquals(card2);
         Assert.Equal(suitEquals, actual);
     }
