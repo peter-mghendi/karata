@@ -1,3 +1,5 @@
+#nullable enable
+
 namespace Karata.Web.Hubs.Clients;
 
 public interface IGameClient
@@ -7,20 +9,19 @@ public interface IGameClient
     Task AddCardToPile(Card card);
     Task AddCardRangeToHand(List<Card> cards); 
     Task AddCardRangeToPile(List<Card> cards);
-    Task AddPlayerToRoom(ApplicationUser player);
+    Task AddHandToRoom(Hand hand);
     Task AddToRoom(Room room);
-    Task EndGame(ApplicationUser winner);
-    Task EmptyHand();
+    Task EndGame(User? winner);
     Task NotifyTurnProcessed(bool valid);
-    Task PromptCardRequest(Guid identifier, bool specific);
-    Task PromptLastCardRequest(Guid identifier);
+    Task PromptCardRequest(bool specific);
+    Task PromptLastCardRequest();
     Task ReceiveChat(Chat message);
-    Task ReceiveSystemMessage(string message);
+    Task ReceiveSystemMessage(SystemMessage message);
     Task ReclaimPile();
     Task RemoveCardsFromDeck(uint num);
     Task RemoveFromRoom();
-    Task RemovePlayerFromRoom(ApplicationUser player);
-    Task SetCurrentRequest(Card request);
+    Task RemoveHandFromRoom(Hand hand);
+    Task SetCurrentRequest(Card? request);
     Task UpdateGameStatus(bool started);
     Task UpdateTurn(int turn);
 }

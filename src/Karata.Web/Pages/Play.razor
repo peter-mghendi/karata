@@ -1,6 +1,8 @@
 @using System.Net
+@using System.Text.Json.Serialization
 @using Karata.Web.Services
 @using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.Extensions.Logging
 
 @page "/play"
 @attribute [Authorize]
@@ -10,6 +12,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
+@inject IToastService ToastService
 
 @if (!IsConnected)
 {
@@ -25,13 +28,13 @@ else if (currentRoom is null)
         <div id="join-room" class="row g-2">
             <div class="col-12 col-md-6">
                 <div class="form-floating">
-                    <input type="text" class="form-control" id="inviteLink" placeholder="@Guid.Empty" @bind="inviteLink">
+                    <input type="text" class="form-control" id="inviteLink" placeholder="@Guid.Empty" autocomplete="room-code" @bind="inviteLink">
                     <label for="inviteLink">Invite Link</label>
                 </div>
             </div>
             <div class="col-12 col-md-6">
                 <div class="form-floating">
-                    <input type="text" class="form-control" id="invitePassword" placeholder="password"
+                    <input type="password" class="form-control" id="invitePassword" placeholder="password" autocomplete="room-pass"
                     @bind="invitePassword">
                     <label for="invitePassword">Password (If Applicable)</label>
                 </div>
@@ -51,7 +54,7 @@ else if (currentRoom is null)
         <div id="create-room" class="row g-2">
             <div class="col">
                 <div class="form-floating">
-                    <input type="text" class="form-control" id="createPassword" placeholder="password"
+                    <input type="password" class="form-control" id="createPassword" placeholder="password" autocomplete="new-password"
                     @bind="createPassword">
                     <label for="createPassword">Password (Optional)</label>
                 </div>
@@ -71,36 +74,24 @@ else
     <div class="container">
         <div class="row">
             <div class="col-8">
-                @if (@currentRoom.Game.IsStarted)
+                @if (@Game.IsStarted)
                 {
-                    @if (lastCardIdentifier is not null)
-                    {
-                        <div class="hstack gap-3 rounded-3 bg-light p-2">
-                            <div class="lead me-auto">Are you on your last card?</div>
-                            <button class="btn btn-outline-success" @onclick="() => SendLastCardStatus(true)">
-                                Yes
-                            </button>
-                            <div class="vr"></div>
-                            <button class="btn btn-outline-danger" @onclick="() => SendLastCardStatus(false)">
-                                No
-                            </button>
-                        </div>
-                    }
-
-                    <p>Current Turn: @currentRoom.Game.Players[currentRoom.Game.CurrentTurn].Email</p>
-                    <p>Deck Size: @currentRoom.Game.Deck.Count</p>
-                    <p>Pile Size: @currentRoom.Game.Pile.Count</p>
+                    <p>Current Turn: @Game.Hands[Game.CurrentTurn].User.Email</p>
+                    <p>Deck Size: @Game.Deck.Count</p>
+                    <p>Pile Size: @Game.Pile.Count</p>
                     <p>
                         Top Card:
-                        <i class="mx-1 @GetCardIcon(currentRoom.Game.Pile.Peek())"></i>
-                        @currentRoom.Game.Pile.Peek().GetName()
+                        <i class="mx-1 @GetCardIcon(Game.Pile.Peek())"></i>
+                        @Game.Pile.Peek().GetName()
                     </p>
-                    @if (currentRoom.Game.CurrentRequest is not null)
+                    @if (Game.CurrentRequest is not null)
                     {
                         <p>
                             Current Request:
-                            <i class="mx-1 @GetCardIcon(currentRoom.Game.CurrentRequest)"></i>
-                            @currentRoom.Game.CurrentRequest.GetName()
+                            <i class="mx-1 @GetCardIcon(Game.CurrentRequest)"></i>
+                            @(Game.CurrentRequest.Face is None 
+                                ? Game.CurrentRequest.Face.ToString()
+                                : Game.CurrentRequest.GetName())
                         </p>
                     }
                     <div class="row mb-2">
@@ -181,14 +172,14 @@ else
                         <p>Room ID: <br> @currentRoom.InviteLink</p>
                         <p>Created at: <br> @currentRoom.CreatedAt</p>
                         <p>Creator: <br> @currentRoom.Creator.Email</p>
-                        <p>Players: <br> @currentRoom.Game.Players.Count</p>
-                        <p>Started: <br> @currentRoom.Game.IsStarted</p>
+                        <p>Players: <br> @Game.Hands.Count</p>
+                        <p>Started: <br> @Game.IsStarted</p>
 
                         <div id="join-room" class="row g-2">
-                            @if (currentRoom.Creator.Email == Me.Email)
+                            @if (currentRoom.Creator.Id == Player.Id)
                             {
                                 <div class="col">
-                                    <button class="btn btn-outline-success w-100 @(currentRoom.Game.IsStarted ? "disabled" : "")"
+                                    <button class="btn btn-outline-success w-100 @(Game.IsStarted ? "disabled" : "")"
                             @onclick="StartGame">Start Game</button>
                                 </div>
                             }
@@ -213,13 +204,13 @@ else
                     {
                         <li class="list-group-item">
                             <div class="fw-bold">
-                                @if (message.Sender.Email == Me.Email)
+                                @if (message.Sender.Id == Player.Id)
                                 {
                                     <i class="bi bi-person-fill me-2"></i>
                                 }
                                 @message.Sender
                             </div>
-                            <div class="small text-muted">@message.Sent</div>
+                            <div class="small textss-muted">@message.Sent</div>
                             @message.Text
                         </li>
                     }
@@ -233,7 +224,7 @@ else
     [Inject]
     public CookieService CookieService { get; set; }
     private HubConnection hubConnection;
-    private HubConnection requestConnection;
+
     [CascadingParameter]
     private IModalService ModalService { get; set; }
     private string username;
@@ -246,7 +237,6 @@ else
     // UI state
     private string textInput;
     private bool viewDetails = true;
-    private Guid? lastCardIdentifier = null;
 
     // Game state
     private Room currentRoom = null;
@@ -255,13 +245,15 @@ else
     {
         get
         {
-            var handCopy = new List<Card>(Me.Hand);
+            var handCopy = new List<Card>(Hand.Cards);
             handCopy.RemoveAll(card => currentTurn.Contains(card));
             return handCopy;
         }
     }
 
-    private ApplicationUser Me => currentRoom.Game.Players.Single(u => u.Email == username);
+    private Game Game => currentRoom.Game;
+    private Hand Hand => Game.Hands.Single(h => h.User.Email == username);
+    private User Player => Hand.User;
 
     protected override async Task OnInitializedAsync()
     {
@@ -283,51 +275,53 @@ else
         {
             options.Cookies = container;
         })
-        .Build();
-
-        requestConnection = new HubConnectionBuilder()
-        .WithUrl(NavigationManager.ToAbsoluteUri("/request"), options =>
+        .AddJsonProtocol(options =>
         {
-            options.Cookies = container;
+            options.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+        })
+        .ConfigureLogging(logging =>
+        {
+            logging.AddConsole();
+            logging.SetMinimumLevel(LogLevel.Information);
         })
         .Build();
 
         hubConnection.On<uint>("AddCardsToDeck", num =>
         {
             for (int i = 0; i < num; i++)
-                currentRoom.Game.Deck.Push(Ace.Of(Spades));
+                Game.Deck.Push(Ace.Of(Spades));
             StateHasChanged();
         });
 
         hubConnection.On<Card>("AddCardToHand", card =>
         {
-            currentRoom.Game.Players.Single(u => u.Email == username).Hand.Add(card);
+            Hand.Cards.Add(card);
             StateHasChanged();
         });
 
         hubConnection.On<Card>("AddCardToPile", card =>
         {
-            currentRoom.Game.Pile.Push(card);
+            Game.Pile.Push(card);
             StateHasChanged();
         });
 
         hubConnection.On<List<Card>>("AddCardRangeToHand", cards =>
         {
-            currentRoom.Game.Players.Single(u => u.Email == username).Hand.AddRange(cards);
+            Hand.Cards.AddRange(cards);
             StateHasChanged();
         });
 
         hubConnection.On<List<Card>>("AddCardRangeToPile", cards =>
         {
             foreach (var card in cards)
-                currentRoom.Game.Pile.Push(card);
+                Game.Pile.Push(card);
             StateHasChanged();
         });
 
-        hubConnection.On<ApplicationUser>("AddPlayerToRoom", async player =>
+        hubConnection.On<Hand>("AddHandToRoom", hand =>
         {
-            currentRoom.Game.Players.Add(player);
-            await LogAsync($"{player.Email} has joined the room");
+            Game.Hands.Add(hand);
+            ShowToast($"{hand.User.Email} has joined the room", ToastLevel.Info);
             StateHasChanged();
         });
 
@@ -337,41 +331,40 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On("EmptyHand", () =>
-        {
-            currentRoom.Game.Players.Single(u => u.Email == username).Hand.Clear();
-            StateHasChanged();
-        });
-
-        hubConnection.On<ApplicationUser>("EndGame", async winner =>
+        hubConnection.On<User>("EndGame", winner =>
         {
             var winnerText = winner is null ? "no" : $"{winner} as the";
-            await LogAsync($"The game ended with {winnerText} winner.");
-            await Task.Delay(TimeSpan.FromSeconds(3));
+            ShowToast($"The game ended with {winnerText} winner.", ToastLevel.Info);
             currentRoom = null;
             StateHasChanged();
         });
 
         hubConnection.On<bool>("NotifyTurnProcessed", valid =>
         {
-            if (valid) Me.Hand.RemoveAll(card => currentTurn.Contains(card));
-            lastCardIdentifier = null;
+            if (valid) Hand.Cards.RemoveAll(card => currentTurn.Contains(card));
             currentTurn.Clear();
             StateHasChanged();
         });
 
-        hubConnection.On<Guid, bool>("PromptCardRequest", async (identifier, specific) =>
+        hubConnection.On<bool>("PromptCardRequest", async specific =>
         {
             var parameters = new ModalParameters();
             parameters.Add(nameof(CardRequestModal.Specific), specific);
-            var result = await ModalService.Show<CardRequestModal>("Request a card", parameters).Result;
-            await requestConnection.SendAsync("RequestCard", identifier, (Card)result.Data);
+            var options = new ModalOptions { DisableBackgroundCancel = true };
+            var modal = ModalService.Show<CardRequestModal>("Request a card", parameters, options);
+            var result = await modal.Result;
+            await hubConnection.SendAsync("RequestCard", (Card)result.Data);
         });
 
-        hubConnection.On<Guid>("PromptLastCardRequest", identifier =>
+        hubConnection.On("PromptLastCardRequest", async () =>
         {
-            lastCardIdentifier = identifier;
-            StateHasChanged();
+            var options = new ModalOptions { 
+                DisableBackgroundCancel = true, 
+                HideCloseButton = true
+            };
+            var modal = ModalService.Show<LastCardPromptModal>("Last card?", options);
+            var result = await modal.Result;
+            await hubConnection.SendAsync("SetLastCardStatus", (bool)result.Data);
         });
 
         hubConnection.On<Chat>("ReceiveChat", message =>
@@ -380,20 +373,28 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<string>("ReceiveSystemMessage", async message =>
+        hubConnection.On<SystemMessage>("ReceiveSystemMessage", message =>
         {
-            await LogAsync(message);
+            var level = message.Type switch
+            {
+                MessageType.Error => ToastLevel.Error,
+                MessageType.Info => ToastLevel.Info,
+                MessageType.Success => ToastLevel.Success,
+                MessageType.Warning => ToastLevel.Warning,
+                _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
+            };
+            ShowToast(message.Text, level);
         });
 
         hubConnection.On("ReclaimPile", () =>
         {
-            _ = currentRoom.Game.Pile.Reclaim();
+            _ = Game.Pile.Reclaim();
             StateHasChanged();
         });
 
         hubConnection.On<uint>("RemoveCardsFromDeck", num =>
         {
-            _ = currentRoom.Game.Deck.DealMany(num);
+            _ = Game.Deck.DealMany(num);
             StateHasChanged();
         });
 
@@ -403,42 +404,42 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<ApplicationUser>("RemovePlayerFromRoom", async player =>
+        hubConnection.On<Hand>("RemoveHandFromRoom", hand =>
         {
-            _ = currentRoom.Game.Players.Remove(player);
-            await LogAsync($"{player.Email} has left the room");
+            _ = Game.Hands.Remove(hand);
+            ShowToast($"{hand.User.Email} has left the room", ToastLevel.Info);
             StateHasChanged();
         });
 
         hubConnection.On<Card>("SetCurrentRequest", request =>
         {
-            currentRoom.Game.CurrentRequest = request;
+            Game.CurrentRequest = request;
             StateHasChanged();
         });
 
         hubConnection.On<int>("UpdateTurn", turn =>
         {
-            currentRoom.Game.CurrentTurn = turn;
+            Game.CurrentTurn = turn;
             StateHasChanged();
         });
 
-        hubConnection.On<bool>("UpdateGameStatus", async started =>
+        hubConnection.On<bool>("UpdateGameStatus", started =>
         {
-            currentRoom.Game.IsStarted = started;
+            Game.IsStarted = started;
             if (started)
-                await LogAsync("The game has started. No new players may join.");
+                ShowToast("The game has started. No new players may join.", ToastLevel.Info);
+                
             StateHasChanged();
         });
 
         await hubConnection.StartAsync();
-        await requestConnection.StartAsync();
     }
 
     async Task Send()
     {
         if (string.IsNullOrWhiteSpace(textInput))
         {
-            await LogAsync("Type in a message to send.");
+            ShowToast("Message field cannot be empty.", ToastLevel.Error);
             return;
         }
 
@@ -446,16 +447,16 @@ else
         textInput = string.Empty;
     }
 
-    async Task CreateRoom() => await hubConnection.SendAsync("CreateRoom");
+    async Task CreateRoom() => await hubConnection.SendAsync("CreateRoom", createPassword);
 
     async Task JoinRoom()
     {
         if (string.IsNullOrWhiteSpace(inviteLink))
         {
-            await LogAsync("Please supply an invite link and, where applicable, a password.");
+            ShowToast("Invite link cannot be empty.", ToastLevel.Info);
             return;
         }
-        await hubConnection.SendAsync("JoinRoom", inviteLink);
+        await hubConnection.SendAsync("JoinRoom", inviteLink, invitePassword);
     }
 
     async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", currentRoom.InviteLink);
@@ -470,14 +471,10 @@ else
 
     public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
 
-    private async Task SendLastCardStatus(bool isLastCard)
+    private void ShowToast(string message, ToastLevel level)
     {
-        await requestConnection.SendAsync("SetLastCardStatus", lastCardIdentifier, isLastCard);
+        ToastService.ShowToast(level, message);
     }
-
-    private async Task LogAsync(string text) => await JSRuntime.InvokeVoidAsync("console.log", text);
-
-    private async Task<bool> ConfirmAsync(string text) => await JSRuntime.InvokeAsync<bool>("confirm", text);
 
     public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
 

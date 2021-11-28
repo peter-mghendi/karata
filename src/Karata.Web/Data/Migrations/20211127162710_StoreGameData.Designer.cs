@@ -3,93 +3,21 @@ using System;
 using Karata.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+#nullable disable
 
 namespace Karata.Web.Data.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(KarataContext))]
+    [Migration("20211127162710_StoreGameData")]
+    partial class StoreGameData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "5.0.7");
-
-            modelBuilder.Entity("Karata.Web.Models.ApplicationUser", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("GameId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Hand")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsLastCard")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("NormalizedEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("NormalizedUserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GameId");
-
-                    b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
-
-                    b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex");
-
-                    b.ToTable("AspNetUsers");
-                });
+            modelBuilder.HasAnnotation("ProductVersion", "6.0.0");
 
             modelBuilder.Entity("Karata.Web.Models.Chat", b =>
                 {
@@ -128,6 +56,7 @@ namespace Karata.Web.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Deck")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<uint>("Give")
@@ -143,6 +72,7 @@ namespace Karata.Web.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Pile")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("RoomId")
@@ -161,6 +91,34 @@ namespace Karata.Web.Data.Migrations
                     b.ToTable("Games");
                 });
 
+            modelBuilder.Entity("Karata.Web.Models.Hand", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Cards")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("GameId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsLastCard")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Hands");
+                });
+
             modelBuilder.Entity("Karata.Web.Models.Room", b =>
                 {
                     b.Property<int>("Id")
@@ -170,14 +128,114 @@ namespace Karata.Web.Data.Migrations
                     b.Property<string>("CreatorId")
                         .HasColumnType("TEXT");
 
+                    b.Property<byte[]>("Hash")
+                        .HasColumnType("BLOB");
+
                     b.Property<string>("InviteLink")
                         .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("Salt")
+                        .HasColumnType("BLOB");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CreatorId");
 
                     b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("Karata.Web.Models.Turn", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Cards")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("GameId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsLastCard")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Request")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Turns");
+                });
+
+            modelBuilder.Entity("Karata.Web.Models.User", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex");
+
+                    b.ToTable("AspNetUsers", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -203,7 +261,7 @@ namespace Karata.Web.Data.Migrations
                         .IsUnique()
                         .HasDatabaseName("RoleNameIndex");
 
-                    b.ToTable("AspNetRoles");
+                    b.ToTable("AspNetRoles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -226,7 +284,7 @@ namespace Karata.Web.Data.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims");
+                    b.ToTable("AspNetRoleClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -249,7 +307,7 @@ namespace Karata.Web.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims");
+                    b.ToTable("AspNetUserClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -273,7 +331,7 @@ namespace Karata.Web.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins");
+                    b.ToTable("AspNetUserLogins", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -288,7 +346,7 @@ namespace Karata.Web.Data.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles");
+                    b.ToTable("AspNetUserRoles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -309,14 +367,7 @@ namespace Karata.Web.Data.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens");
-                });
-
-            modelBuilder.Entity("Karata.Web.Models.ApplicationUser", b =>
-                {
-                    b.HasOne("Karata.Web.Models.Game", null)
-                        .WithMany("Players")
-                        .HasForeignKey("GameId");
+                    b.ToTable("AspNetUserTokens", (string)null);
                 });
 
             modelBuilder.Entity("Karata.Web.Models.Chat", b =>
@@ -325,7 +376,7 @@ namespace Karata.Web.Data.Migrations
                         .WithMany("Chats")
                         .HasForeignKey("RoomId");
 
-                    b.HasOne("Karata.Web.Models.ApplicationUser", "Sender")
+                    b.HasOne("Karata.Web.Models.User", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderId");
 
@@ -340,20 +391,48 @@ namespace Karata.Web.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Karata.Web.Models.ApplicationUser", "Winner")
+                    b.HasOne("Karata.Web.Models.User", "Winner")
                         .WithMany()
                         .HasForeignKey("WinnerId");
 
                     b.Navigation("Winner");
                 });
 
+            modelBuilder.Entity("Karata.Web.Models.Hand", b =>
+                {
+                    b.HasOne("Karata.Web.Models.Game", null)
+                        .WithMany("Hands")
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Karata.Web.Models.User", "User")
+                        .WithMany("Hands")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Karata.Web.Models.Room", b =>
                 {
-                    b.HasOne("Karata.Web.Models.ApplicationUser", "Creator")
+                    b.HasOne("Karata.Web.Models.User", "Creator")
                         .WithMany()
                         .HasForeignKey("CreatorId");
 
                     b.Navigation("Creator");
+                });
+
+            modelBuilder.Entity("Karata.Web.Models.Turn", b =>
+                {
+                    b.HasOne("Karata.Web.Models.Game", null)
+                        .WithMany("Turns")
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Karata.Web.Models.User", null)
+                        .WithMany("Turns")
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -367,7 +446,7 @@ namespace Karata.Web.Data.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("Karata.Web.Models.ApplicationUser", null)
+                    b.HasOne("Karata.Web.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -376,7 +455,7 @@ namespace Karata.Web.Data.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("Karata.Web.Models.ApplicationUser", null)
+                    b.HasOne("Karata.Web.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -391,7 +470,7 @@ namespace Karata.Web.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Karata.Web.Models.ApplicationUser", null)
+                    b.HasOne("Karata.Web.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -400,7 +479,7 @@ namespace Karata.Web.Data.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("Karata.Web.Models.ApplicationUser", null)
+                    b.HasOne("Karata.Web.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -409,14 +488,24 @@ namespace Karata.Web.Data.Migrations
 
             modelBuilder.Entity("Karata.Web.Models.Game", b =>
                 {
-                    b.Navigation("Players");
+                    b.Navigation("Hands");
+
+                    b.Navigation("Turns");
                 });
 
             modelBuilder.Entity("Karata.Web.Models.Room", b =>
                 {
                     b.Navigation("Chats");
 
-                    b.Navigation("Game");
+                    b.Navigation("Game")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Karata.Web.Models.User", b =>
+                {
+                    b.Navigation("Hands");
+
+                    b.Navigation("Turns");
                 });
 #pragma warning restore 612, 618
         }

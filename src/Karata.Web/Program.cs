@@ -1,4 +1,8 @@
+#nullable enable
+
+using System.Text.Json.Serialization;
 using Blazored.Modal;
+using Blazored.Toast;
 using Karata.Web.Areas.Identity;
 using Karata.Web.Data;
 using Karata.Web.Engines;
@@ -12,25 +16,35 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<KarataContext>(options =>
 {
     options.UseSqlite(connectionString);
     options.UseLazyLoadingProxies();
 });
-builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
+builder.Services.AddDefaultIdentity<User>(options =>
 {
     options.SignIn.RequireConfirmedAccount = true;
 })
-.AddEntityFrameworkStores<ApplicationDbContext>();
+.AddEntityFrameworkStores<KarataContext>();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+builder.Services.AddSignalR().AddHubOptions<GameHub>(options =>
+{
+    options.MaximumParallelInvocationsPerClient = 2;
+})
+.AddJsonProtocol(options =>
+{
+    options.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+});
 builder.Services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
+builder.Services.AddSingleton<IPasswordService, PasswordService>();
 builder.Services.AddSingleton<IEngine, KarataEngine>();
-builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<ApplicationUser>>();
+builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<User>>();
 builder.Services.AddScoped<CookieService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddBlazoredModal();
+builder.Services.AddBlazoredToast();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddResponseCompression(opts =>
 {
@@ -61,7 +75,6 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllers();
     endpoints.MapBlazorHub();
     endpoints.MapHub<GameHub>("/game");
-    endpoints.MapHub<RequestHub>("/request");
     endpoints.MapFallbackToPage("/_Host");
 });
 

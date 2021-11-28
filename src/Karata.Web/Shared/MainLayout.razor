@@ -1,5 +1,12 @@
 @inherits LayoutComponentBase
 
+@using Blazored.Toast.Configuration
+
+<BlazoredToasts Position="ToastPosition.BottomRight"
+                ShowProgressBar="true" 
+                RemoveToastsOnNavigation="true"	
+                MaxToastCount="5" />
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -8,7 +15,9 @@
     <div class="main">
         <div class="top-row px-4 auth">
             <LoginDisplay />
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+            <a href="https://github.com/sixpeteunder/karata" target="_blank">
+                <i class="bi bi-github me-2"></i> GitHub
+            </a>
         </div>
 
         <div class="content px-4">

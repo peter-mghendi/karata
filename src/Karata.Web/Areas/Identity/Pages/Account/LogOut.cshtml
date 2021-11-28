@@ -1,8 +1,7 @@
 @page
-@using Karata.Web.Models;
 @using Microsoft.AspNetCore.Identity
 @attribute [IgnoreAntiforgeryToken]
-@inject SignInManager<ApplicationUser> SignInManager
+@inject SignInManager<User> SignInManager
 @functions {
     public async Task<IActionResult> OnPost()
     {

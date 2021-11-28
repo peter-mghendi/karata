@@ -1,3 +1,5 @@
+#nullable enable
+
 using Karata.Web.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -5,9 +7,9 @@ namespace Karata.Web.Services;
 
 public class RoomService : IRoomService
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly KarataContext _dbContext;
 
-    public RoomService(ApplicationDbContext dbContext) => _dbContext = dbContext;
+    public RoomService(KarataContext dbContext) => _dbContext = dbContext;
 
     public async Task CreateAsync(
         Room room,
