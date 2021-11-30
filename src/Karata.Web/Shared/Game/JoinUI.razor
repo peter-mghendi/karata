@@ -1,0 +1,78 @@
+@inject IToastService Toast
+
+<div>
+<p class="lead">Join or create a game room to play.</p>
+
+<div class="my-2">
+    <label for="join-room">Join a Room</label>
+    <div id="join-room" class="row g-2">
+        <div class="col-12 col-md-6">
+            <div class="form-floating">
+                <input type="text" class="form-control" id="inviteLink" placeholder="@Guid.Empty" autocomplete="room-code" @bind="inviteLink">
+                <label for="inviteLink">Invite Link</label>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="form-floating">
+                <input type="password" class="form-control" id="invitePassword" placeholder="password" autocomplete="room-pass"
+                @bind="invitePassword">
+                <label for="invitePassword">Password (If Applicable)</label>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="d-flex my-auto">
+                <button class="btn btn-outline-primary align-middle w-100" @onclick="JoinRoom">
+                    Join Room
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="my-2">
+    <label for="create-room">Create a Room</label>
+    <div id="create-room" class="row g-2">
+        <div class="col">
+            <div class="form-floating">
+                <input type="password" class="form-control" id="createPassword" placeholder="password" autocomplete="new-password"
+                @bind="createPassword">
+                <label for="createPassword">Password (Optional)</label>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="d-flex my-auto">
+                <button class="btn btn-outline-primary align-middle w-100" @onclick="CreateRoom">
+                    Create Room
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+@code 
+{
+    [Parameter]
+    public EventCallback<(string InviteLink, string Password)> OnJoin { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnCreate { get; set; }
+
+    // Join screen state
+    private string inviteLink;
+    private string invitePassword;
+    private string createPassword;
+
+    private async Task JoinRoom()
+    {
+        if (string.IsNullOrWhiteSpace(inviteLink))
+        {
+            Toast.ShowWarning("Invite link cannot be empty.");
+            return;
+        }
+        
+        await OnJoin.InvokeAsync((inviteLink, invitePassword));
+    }
+
+    private async Task CreateRoom() => await OnCreate.InvokeAsync(createPassword);
+}

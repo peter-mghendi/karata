@@ -1,73 +1,25 @@
+@page "/play"
+@attribute [Authorize]
+
 @using System.Net
 @using System.Text.Json.Serialization
 @using Karata.Web.Services
 @using Microsoft.AspNetCore.SignalR.Client
-@using Microsoft.Extensions.Logging
-
-@page "/play"
-@attribute [Authorize]
 
 @implements IAsyncDisposable
 
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IJSRuntime JSRuntime
-@inject NavigationManager NavigationManager
-@inject IToastService ToastService
+@inject AuthenticationStateProvider Authenticator
+@inject NavigationManager Navigator
+@inject IToastService Toast
 
-@if (!IsConnected)
+@if (hubConnection.State != HubConnectionState.Connected)
 {
     <p class="lead">You are not connected to a server</p>
     <p class="text-muted">If this message persists, reload this page to establish a connection.</p>
 }
-else if (currentRoom is null)
+else if (room is null)
 {
-    <p class="lead">Join or create a game room to play.</p>
-
-    <div class="my-2">
-        <label for="join-room">Join a Room</label>
-        <div id="join-room" class="row g-2">
-            <div class="col-12 col-md-6">
-                <div class="form-floating">
-                    <input type="text" class="form-control" id="inviteLink" placeholder="@Guid.Empty" autocomplete="room-code" @bind="inviteLink">
-                    <label for="inviteLink">Invite Link</label>
-                </div>
-            </div>
-            <div class="col-12 col-md-6">
-                <div class="form-floating">
-                    <input type="password" class="form-control" id="invitePassword" placeholder="password" autocomplete="room-pass"
-                    @bind="invitePassword">
-                    <label for="invitePassword">Password (If Applicable)</label>
-                </div>
-            </div>
-            <div class="col-12">
-                <div class="d-flex my-auto">
-                    <button class="btn btn-outline-primary align-middle w-100" @onclick="JoinRoom">
-                        Join Room
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="my-2">
-        <label for="create-room">Create a Room</label>
-        <div id="create-room" class="row g-2">
-            <div class="col">
-                <div class="form-floating">
-                    <input type="password" class="form-control" id="createPassword" placeholder="password" autocomplete="new-password"
-                    @bind="createPassword">
-                    <label for="createPassword">Password (Optional)</label>
-                </div>
-            </div>
-            <div class="col-12">
-                <div class="d-flex my-auto">
-                    <button class="btn btn-outline-primary align-middle w-100" @onclick="CreateRoom">
-                        Create Room
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <JoinUI OnJoin="JoinRoom" OnCreate="CreateRoom" />
 }
 else
 {
@@ -76,145 +28,15 @@ else
             <div class="col-8">
                 @if (@Game.IsStarted)
                 {
-                    <p>Current Turn: @Game.Hands[Game.CurrentTurn].User.Email</p>
-                    <p>Deck Size: @Game.Deck.Count</p>
-                    <p>Pile Size: @Game.Pile.Count</p>
-                    <p>
-                        Top Card:
-                        <i class="mx-1 @GetCardIcon(Game.Pile.Peek())"></i>
-                        @Game.Pile.Peek().GetName()
-                    </p>
-                    @if (Game.CurrentRequest is not null)
-                    {
-                        <p>
-                            Current Request:
-                            <i class="mx-1 @GetCardIcon(Game.CurrentRequest)"></i>
-                            @(Game.CurrentRequest.Face is None 
-                                ? Game.CurrentRequest.Face.ToString()
-                                : Game.CurrentRequest.GetName())
-                        </p>
-                    }
-                    <div class="row mb-2">
-                        <div class="col-6">
-                            <p>My cards:</p>
-                            <ul class="list-group list-group-flush">
-                                @foreach (var card in currentHand)
-                                {
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span>
-                                            <i class="@($"bi {GetCardIcon(card)} me-2")"></i>
-                                            @card.GetName()
-                                        </span>
-                                        <button class="btn btn-outline-success" @onclick="() => AddCardToTurn(card)">
-                                            <i class="bi bi-plus text-success"></i>
-                                        </button>
-                                    </li>
-                                }
-                            </ul>
-                        </div>
-                        <div class="col-6">
-                            <p>This turn:</p>
-                            <ul class="list-group list-group-flush">
-                                @foreach (var card in currentTurn)
-                                {
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span>
-                                            <i class="@($"bi {GetCardIcon(card)} me-2")"></i>
-                                            @card.GetName()
-                                        </span>
-                                        <button class="btn btn-outline-danger" @onclick="() => RemoveCardFromTurn(card)">
-                                            <i class="bi bi-trash text-danger"></i>
-                                        </button>
-                                    </li>
-                                }
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="d-flex">
-                        <button class="btn btn-outline-primary mx-auto" @onclick="PerformTurn">
-                            @if (currentTurn.Count > 0)
-                            {
-                                <span>Perform Turn</span>
-                            }
-                            else
-                            {
-                                <span>Pick Card(s)</span>
-                            }
-                        </button>
-                    </div>
+                    <GameUI Game="Game" Hand="Hand" @ref="gameUI" OnPerformTurn="PerformTurn" />
                 }
                 else
                 {
                     <CardTable />
                 }
             </div>
-            <div class="col-4">
-                <div class="mb-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-info">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <span><strong>Room Details</strong></span>
-                        </div>
-                        <button class="btn" @onclick="() => viewDetails = !viewDetails">
-                            @if (viewDetails)
-                            {
-                                <i class="bi bi-chevron-up"></i>
-                            }
-                            else
-                            {
-                                <i class="bi bi-chevron-down"></i>
-                            }
-                        </button>
-                    </div>
-                    @if (viewDetails)
-                    {
-                        <p>Room ID: <br> @currentRoom.InviteLink</p>
-                        <p>Created at: <br> @currentRoom.CreatedAt</p>
-                        <p>Creator: <br> @currentRoom.Creator.Email</p>
-                        <p>Players: <br> @Game.Hands.Count</p>
-                        <p>Started: <br> @Game.IsStarted</p>
-
-                        <div id="join-room" class="row g-2">
-                            @if (currentRoom.Creator.Id == Player.Id)
-                            {
-                                <div class="col">
-                                    <button class="btn btn-outline-success w-100 @(Game.IsStarted ? "disabled" : "")"
-                            @onclick="StartGame">Start Game</button>
-                                </div>
-                            }
-                            <div class="col">
-                                <button class="btn btn-outline-danger w-100" @onclick="LeaveRoom">Leave Room</button>
-                            </div>
-                        </div>
-                    }
-                </div>
-
-                <div class="form-floating mb-2">
-                    <textarea class="form-control" placeholder="Type your message here" id="textInput" style="height: 100px"
-                    @bind="textInput"></textarea>
-                    <label for="textInput">Message</label>
-                </div>
-                <button class="btn btn-outline-primary w-100" @onclick="Send">Send</button>
-
-                <hr>
-
-                <ul id="messagesList" class="list-group list-group-flush">
-                    @foreach (var message in currentRoom.Chats)
-                    {
-                        <li class="list-group-item">
-                            <div class="fw-bold">
-                                @if (message.Sender.Id == Player.Id)
-                                {
-                                    <i class="bi bi-person-fill me-2"></i>
-                                }
-                                @message.Sender
-                            </div>
-                            <div class="small textss-muted">@message.Sent</div>
-                            @message.Text
-                        </li>
-                    }
-                </ul>
+            <div class="col-4" style="height: calc(100vh - 5rem); overflow-y: auto;">
+                <DetailsUI Room="room" Player="Player" OnSend="Send" OnStartGame="StartGame" OnLeaveRoom="LeaveRoom" />
             </div>
         </div>
     </div>
@@ -223,42 +45,20 @@ else
 @code {
     [Inject]
     public CookieService CookieService { get; set; }
-    private HubConnection hubConnection;
-
     [CascadingParameter]
     private IModalService ModalService { get; set; }
+    private HubConnection hubConnection;
     private string username;
-
-    // Join screen state
-    private string inviteLink;
-    private string invitePassword;
-    private string createPassword;
-
-    // UI state
-    private string textInput;
-    private bool viewDetails = true;
-
-    // Game state
-    private Room currentRoom = null;
-    private List<Card> currentTurn = new();
-    private List<Card> currentHand
-    {
-        get
-        {
-            var handCopy = new List<Card>(Hand.Cards);
-            handCopy.RemoveAll(card => currentTurn.Contains(card));
-            return handCopy;
-        }
-    }
-
-    private Game Game => currentRoom.Game;
+    private GameUI gameUI;
+    private Room room = null;
+    private Game Game => room.Game;
     private Hand Hand => Game.Hands.Single(h => h.User.Email == username);
     private User Player => Hand.User;
 
     protected override async Task OnInitializedAsync()
     {
         // Get username from AuthenticationStateProvider
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var authState = await Authenticator.GetAuthenticationStateAsync();
         username = authState.User.Identity.Name;
 
         // Set up SignalR with Cookie auth
@@ -271,25 +71,16 @@ else
         });
 
         hubConnection = new HubConnectionBuilder()
-        .WithUrl(NavigationManager.ToAbsoluteUri("/game"), options =>
+        .WithUrl(Navigator.ToAbsoluteUri("/game"), opts => opts.Cookies = container)
+        .AddJsonProtocol(opts =>
         {
-            options.Cookies = container;
-        })
-        .AddJsonProtocol(options =>
-        {
-            options.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
-        })
-        .ConfigureLogging(logging =>
-        {
-            logging.AddConsole();
-            logging.SetMinimumLevel(LogLevel.Information);
+            opts.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
         })
         .Build();
 
         hubConnection.On<uint>("AddCardsToDeck", num =>
         {
-            for (int i = 0; i < num; i++)
-                Game.Deck.Push(Ace.Of(Spades));
+            for (int i = 0; i < num; i++) Game.Deck.Push(Ace.Of(Spades));
             StateHasChanged();
         });
 
@@ -313,38 +104,31 @@ else
 
         hubConnection.On<List<Card>>("AddCardRangeToPile", cards =>
         {
-            foreach (var card in cards)
-                Game.Pile.Push(card);
+            foreach (var card in cards) Game.Pile.Push(card);
             StateHasChanged();
         });
 
         hubConnection.On<Hand>("AddHandToRoom", hand =>
         {
             Game.Hands.Add(hand);
-            ShowToast($"{hand.User.Email} has joined the room", ToastLevel.Info);
+            Toast.ShowInfo($"{hand.User.Email} has joined the room");
             StateHasChanged();
         });
 
         hubConnection.On<Room>("AddToRoom", room =>
         {
-            currentRoom = room;
+            this.room = room;
             StateHasChanged();
         });
 
         hubConnection.On<User>("EndGame", winner =>
-        {
-            var winnerText = winner is null ? "no" : $"{winner} as the";
-            ShowToast($"The game ended with {winnerText} winner.", ToastLevel.Info);
-            currentRoom = null;
+        {            
+            Toast.ShowInfo($"Game over! {(winner?.Email ?? "Nobody")} won this game.");
+            room = null;
             StateHasChanged();
         });
 
-        hubConnection.On<bool>("NotifyTurnProcessed", valid =>
-        {
-            if (valid) Hand.Cards.RemoveAll(card => currentTurn.Contains(card));
-            currentTurn.Clear();
-            StateHasChanged();
-        });
+        hubConnection.On<bool>("NotifyTurnProcessed", valid => gameUI.NotifyTurnPerformed(valid));
 
         hubConnection.On<bool>("PromptCardRequest", async specific =>
         {
@@ -369,7 +153,7 @@ else
 
         hubConnection.On<Chat>("ReceiveChat", message =>
         {
-            currentRoom.Chats.Add(message);
+            room.Chats.Add(message);
             StateHasChanged();
         });
 
@@ -383,7 +167,7 @@ else
                 MessageType.Warning => ToastLevel.Warning,
                 _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
             };
-            ShowToast(message.Text, level);
+            Toast.ShowToast(level, message.Text);
         });
 
         hubConnection.On("ReclaimPile", () =>
@@ -400,14 +184,14 @@ else
 
         hubConnection.On("RemoveFromRoom", () =>
         {
-            currentRoom = null;
+            room = null;
             StateHasChanged();
         });
 
         hubConnection.On<Hand>("RemoveHandFromRoom", hand =>
         {
             _ = Game.Hands.Remove(hand);
-            ShowToast($"{hand.User.Email} has left the room", ToastLevel.Info);
+            Toast.ShowInfo($"{hand.User.Email} has left the room.");
             StateHasChanged();
         });
 
@@ -426,78 +210,30 @@ else
         hubConnection.On<bool>("UpdateGameStatus", started =>
         {
             Game.IsStarted = started;
-            if (started)
-                ShowToast("The game has started. No new players may join.", ToastLevel.Info);
-                
+            if (started) Toast.ShowInfo("The game has started.");
             StateHasChanged();
         });
 
         await hubConnection.StartAsync();
     }
 
-    async Task Send()
+    async Task Send(string message) =>
+        await hubConnection.SendAsync("SendChat", room.InviteLink, message);
+
+    async Task CreateRoom(string password) => await hubConnection.SendAsync("CreateRoom", password);
+
+    async Task JoinRoom((string InviteLink, string Password) room) => 
+        await hubConnection.SendAsync("JoinRoom", room.InviteLink, room.Password);
+
+    async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", room.InviteLink);
+
+    async Task StartGame() => await hubConnection.SendAsync("StartGame", room.InviteLink);
+
+    async Task PerformTurn(List<Card> cards)
     {
-        if (string.IsNullOrWhiteSpace(textInput))
-        {
-            ShowToast("Message field cannot be empty.", ToastLevel.Error);
-            return;
-        }
-
-        await hubConnection.SendAsync("SendChat", currentRoom.InviteLink, textInput);
-        textInput = string.Empty;
-    }
-
-    async Task CreateRoom() => await hubConnection.SendAsync("CreateRoom", createPassword);
-
-    async Task JoinRoom()
-    {
-        if (string.IsNullOrWhiteSpace(inviteLink))
-        {
-            ShowToast("Invite link cannot be empty.", ToastLevel.Info);
-            return;
-        }
-        await hubConnection.SendAsync("JoinRoom", inviteLink, invitePassword);
-    }
-
-    async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", currentRoom.InviteLink);
-
-    async Task StartGame() => await hubConnection.SendAsync("StartGame", currentRoom.InviteLink);
-
-    async Task PerformTurn()
-    {
-        await hubConnection.SendAsync("PerformTurn", currentRoom.InviteLink, currentTurn);
+        await hubConnection.SendAsync("PerformTurn", room.InviteLink, cards);
         StateHasChanged();
-    }
-
-    public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
-
-    private void ShowToast(string message, ToastLevel level)
-    {
-        ToastService.ShowToast(level, message);
     }
 
     public async ValueTask DisposeAsync() => await hubConnection.DisposeAsync();
-
-    private string GetCardIcon(Card card) => "bi " + card.Suit switch
-    {
-        Spades => "bi-suit-spade-fill",
-        Hearts => "bi-suit-heart-fill text-danger",
-        Clubs => "bi-suit-club-fill",
-        Diamonds => "bi-suit-diamond-fill text-danger",
-        BlackJoker => "bi-circle-fill",
-        RedJoker => "bi-circle-fill text-danger",
-        _ => string.Empty
-    };
-
-    private void AddCardToTurn(Card card)
-    {
-        currentTurn.Add(card);
-        StateHasChanged();
-    }
-
-    private void RemoveCardFromTurn(Card card)
-    {
-        currentTurn.Remove(card);
-        StateHasChanged();
-    }
 }
