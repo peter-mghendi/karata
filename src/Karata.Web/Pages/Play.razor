@@ -84,15 +84,16 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<Card>("AddCardToHand", card =>
-        {
-            Hand.Cards.Add(card);
-            StateHasChanged();
-        });
-
         hubConnection.On<Card>("AddCardToPile", card =>
         {
             Game.Pile.Push(card);
+            StateHasChanged();
+        });
+
+        hubConnection.On<UIHand, int>("AddCardsToPlayerHand", (hand, num) =>
+        {
+            var playerHand = Game.Hands.Single(h => h.User.Email == hand.User.Email);
+            for (int i = 0; i < num; i++) playerHand.Cards.Add(new());
             StateHasChanged();
         });
 
@@ -128,7 +129,7 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<bool>("NotifyTurnProcessed", valid => gameUI.NotifyTurnPerformed(valid));
+        hubConnection.On("NotifyTurnProcessed", () => gameUI.NotifyTurnPerformed());
 
         hubConnection.On<bool>("PromptCardRequest", async specific =>
         {
@@ -179,6 +180,19 @@ else
         hubConnection.On<int>("RemoveCardsFromDeck", num =>
         {
             Game.DeckCount -= num;
+            StateHasChanged();
+        });
+
+        hubConnection.On<UIHand, int>("RemoveCardsFromPlayerHand", (hand, num) =>
+        {
+            var playerHand = Game.Hands.Single(h => h.User.Email == hand.User.Email);
+            for (int i = 0; i < num; i++) playerHand.Cards.RemoveAt(0);
+            StateHasChanged();
+        });
+
+        hubConnection.On<List<Card>>("RemoveCardRangeFromHand", cards =>
+        {
+            Hand.Cards.RemoveAll(c => cards.Contains(c));
             StateHasChanged();
         });
 

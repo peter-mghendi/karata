@@ -232,10 +232,13 @@ public class GameHub : Hub<IGameClient>
         foreach (var hand in game.Hands)
         {
             var dealtCount = 4;
+
             var dealt = deck.DealMany((uint)dealtCount);
             await Clients.Group(inviteLink).RemoveCardsFromDeck(dealtCount);
+
             hand.Cards.AddRange(dealt);
             await Clients.User(hand.User!.Email).AddCardRangeToHand(dealt);
+            await Clients.Users(GetOthers(game.Hands, hand)).AddCardsToPlayerHand(hand.ToUI(), dealtCount);
         }
 
         // Start game
@@ -276,7 +279,7 @@ public class GameHub : Hub<IGameClient>
                 Type = MessageType.Error
             };
             await Clients.Caller.ReceiveSystemMessage(message);
-            await Clients.Caller.NotifyTurnProcessed(valid: false);
+            await Clients.Caller.NotifyTurnProcessed();
             return;
         }
 
@@ -289,7 +292,7 @@ public class GameHub : Hub<IGameClient>
                 Type = MessageType.Error
             };
             await Clients.Caller.ReceiveSystemMessage(message);
-            await Clients.Caller.NotifyTurnProcessed(valid: false);
+            await Clients.Caller.NotifyTurnProcessed();
             return;
         }
 
@@ -305,9 +308,9 @@ public class GameHub : Hub<IGameClient>
                 Type = MessageType.Error
             };
             await Clients.Caller.ReceiveSystemMessage(message);
-            await Clients.Caller.NotifyTurnProcessed(valid: false);
+            await Clients.Caller.NotifyTurnProcessed();
             return;
-        }
+        } 
 
         // Add cards to pile
         foreach (var card in cardList)
@@ -317,7 +320,10 @@ public class GameHub : Hub<IGameClient>
         }
 
         // Remove cards from player hand
-        await Clients.Caller.NotifyTurnProcessed(valid: true);
+        await Clients.Caller.NotifyTurnProcessed();
+        await Clients.Caller.RemoveCardRangeFromHand(cardList);
+        await Clients.Users(GetOthers(game.Hands, hand))
+            .RemoveCardsFromPlayerHand(hand.ToUI(), cardList.Count);
         hand.Cards.RemoveAll(card => cardList.Contains(card));
 
         // Generate delta and update game state.
@@ -360,7 +366,7 @@ public class GameHub : Hub<IGameClient>
                 }
                 else
                 {
-                    await Clients.Caller.NotifyTurnProcessed(valid: true);
+                    await Clients.Caller.NotifyTurnProcessed();
                     await Clients.Group(inviteLink).EndGame(winner: null);
                     // TODO: Remove everyone from the game.
                     // await Groups.RemoveFromGroupAsync(Context.ConnectionId, inviteLink);
@@ -372,6 +378,7 @@ public class GameHub : Hub<IGameClient>
             // Add cards to player hand and reset counter
             hand.Cards.AddRange(cards!);
             await Clients.Caller.AddCardRangeToHand(cards!);
+            await Clients.Users(GetOthers(game.Hands, hand)).AddCardsToPlayerHand(hand.ToUI(), cards!.Count);
             game.Pick = 0;
         }
 
@@ -380,7 +387,7 @@ public class GameHub : Hub<IGameClient>
         {
             if (hand.IsLastCard && IsBoring(cardList[^1]))
             {
-                await Clients.Caller.NotifyTurnProcessed(valid: true);
+                await Clients.Caller.NotifyTurnProcessed();
                 game.Winner = player;
                 await Clients.Group(inviteLink).EndGame(winner: player.ToUI());
                 // TODO: Remove everyone from the room (store connection ids)
@@ -431,6 +438,9 @@ public class GameHub : Hub<IGameClient>
 
     public async Task SetLastCardStatus(bool lastCard) => 
         await this.ResolvePromptAsync(LastCardRequests, Context.ConnectionId, lastCard);
+
+    private static IEnumerable<string> GetOthers(IEnumerable<Hand> hands, Hand hand) => 
+        hands.Where(h => h.User!.Email != hand.User!.Email).Select(h => h.User!.Email!);
 
     private static bool IsBoring(Card card) =>
         !card.IsBomb() && !card.IsQuestion() && card is not { Face: Ace or Jack or King };

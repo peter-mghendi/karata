@@ -1,20 +1,33 @@
 <div>
-    <p>Current Turn: @Game.Hands[Game.CurrentTurn].User.Email</p>
-    <p>Deck Size: @Game.DeckCount</p>
-    <p>Pile Size: @Game.Pile.Count</p>
-    <p>
-        Top Card:
-        <i class="mx-1 @GetCardIcon(Game.Pile.Peek())"></i>
-        @Game.Pile.Peek().GetName()
-    </p>
-    @if (Game.CurrentRequest is Card request)
-    {
-        <p>
-            Current Request:
-            <i class="mx-1 @GetCardIcon(request)"></i>
-            @(request.Face is None ? request.Suit.ToString() : request.GetName())
-        </p>
-    }
+    <div class="row mb-2 g-2">
+        <div class="col-6">
+            <p>Current Turn: @Game.Hands[Game.CurrentTurn].User.Email</p>
+            <p>Deck Size: @Game.DeckCount</p>
+            <p>Pile Size: @Game.Pile.Count</p>
+            <p>
+                Top Card:
+                <i class="mx-1 @GetCardIcon(Game.Pile.Peek())"></i>
+                @Game.Pile.Peek().GetName()
+            </p>
+            @if (Game.CurrentRequest is Card request)
+            {
+                <p>
+                    Current Request:
+                    <i class="mx-1 @GetCardIcon(request)"></i>
+                    @(request.Face is None ? request.Suit.ToString() : request.GetName())
+                </p>
+            }
+        </div>
+        <div class="col-6">
+            <p>Player Hands</p>
+            @foreach (var hand in otherHands)
+            {
+                <p>@(hand.User.Email) has @(hand.Cards.Count) cards.</p>
+            }
+        </div>
+    </div>
+
+
     <div class="row mb-2">
         <div class="col-6">
             <p>My cards:</p>
@@ -89,9 +102,10 @@
         }
     }
 
-    public void NotifyTurnPerformed(bool valid)
+    private List<UIHand> otherHands => Game.Hands.Where(hand => hand.User.Id != Hand.User.Id).ToList();
+
+    public void NotifyTurnPerformed()
     {
-        if (valid) Hand.Cards.RemoveAll(card => currentTurn.Contains(card));
         currentTurn.Clear();
         StateHasChanged();
     }
