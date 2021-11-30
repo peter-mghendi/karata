@@ -1,5 +1,7 @@
 #nullable enable
 
+using Karata.Web.Models.UI;
+
 namespace Karata.Web.Models;
 
 public class Game
@@ -22,4 +24,15 @@ public class Game
     public virtual List<Turn> Turns { get; set; } = new();
 
     public int RoomId { get; set; }
+
+    public UIGame ToUI() => new()
+    {
+        IsForward = IsForward,
+        IsStarted = IsStarted,
+        CurrentRequest = CurrentRequest,
+        CurrentTurn = CurrentTurn,
+        DeckCount = Deck.Count,
+        Pile = Pile,
+        Hands = Hands.Select(h => h.ToUI()).ToList(),
+    };
 }

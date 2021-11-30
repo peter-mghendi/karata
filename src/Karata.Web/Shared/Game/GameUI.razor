@@ -1,20 +1,18 @@
 <div>
     <p>Current Turn: @Game.Hands[Game.CurrentTurn].User.Email</p>
-    <p>Deck Size: @Game.Deck.Count</p>
+    <p>Deck Size: @Game.DeckCount</p>
     <p>Pile Size: @Game.Pile.Count</p>
     <p>
         Top Card:
         <i class="mx-1 @GetCardIcon(Game.Pile.Peek())"></i>
         @Game.Pile.Peek().GetName()
     </p>
-    @if (Game.CurrentRequest is not null)
+    @if (Game.CurrentRequest is Card request)
     {
         <p>
             Current Request:
-            <i class="mx-1 @GetCardIcon(Game.CurrentRequest)"></i>
-            @(Game.CurrentRequest.Face is None
-        ? Game.CurrentRequest.Face.ToString()
-        : Game.CurrentRequest.GetName())
+            <i class="mx-1 @GetCardIcon(request)"></i>
+            @(request.Face is None ? request.Suit.ToString() : request.GetName())
         </p>
     }
     <div class="row mb-2">
@@ -71,10 +69,10 @@
 @code
 {
     [Parameter]
-    public Game Game { get; set; }
+    public UIGame Game { get; set; }
 
     [Parameter]
-    public Hand Hand { get; set; }
+    public UIHand Hand { get; set; }
 
     [Parameter]
     public EventCallback<List<Card>> OnPerformTurn { get; set; }

@@ -60,10 +60,10 @@
 @code
 {
     [Parameter]
-    public Room Room { get; set; }
+    public UIRoom Room { get; set; }
 
     [Parameter]
-    public User Player { get; set; }
+    public UIUser Player { get; set; }
 
     [Parameter]
     public EventCallback<string> OnSend { get; set; }
@@ -74,7 +74,7 @@
     [Parameter]
     public EventCallback OnLeaveRoom { get; set; }
 
-    private Game Game => Room.Game;
+    private UIGame Game => Room.Game;
     private string message;
     private async Task Send()
     {

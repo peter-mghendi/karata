@@ -5,6 +5,7 @@ using System.Text;
 using Karata.Web.Engines;
 using Karata.Web.Extensions;
 using Karata.Web.Hubs.Clients;
+using Karata.Web.Models.UI;
 using Karata.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -46,7 +47,7 @@ public class GameHub : Hub<IGameClient>
         var room = await _roomService.FindByInviteLinkAsync(inviteLink);
         var message = new Chat { Text = text, Sender = user };
         room.Chats.Add(message);
-        await Clients.Group(inviteLink).ReceiveChat(message);
+        await Clients.Group(inviteLink).ReceiveChat(message.ToUI());
         await _unitOfWork.CompleteAsync();
     }
 
@@ -71,9 +72,9 @@ public class GameHub : Hub<IGameClient>
 
         // Add creator to game
         room.Game.Hands.Add(hand);
-        await Clients.OthersInGroup(room.InviteLink).AddHandToRoom(hand);
+        await Clients.OthersInGroup(room.InviteLink).AddHandToRoom(hand.ToUI());
         await Groups.AddToGroupAsync(Context.ConnectionId, room.InviteLink);
-        await Clients.Caller.AddToRoom(room);
+        await Clients.Caller.AddToRoom(room.ToUI());
         await _unitOfWork.CompleteAsync();
     }
 
@@ -136,9 +137,9 @@ public class GameHub : Hub<IGameClient>
 
         // Add player to room
         game.Hands.Add(hand);
-        await Clients.OthersInGroup(inviteLink).AddHandToRoom(hand);
+        await Clients.OthersInGroup(inviteLink).AddHandToRoom(hand.ToUI());
         await Groups.AddToGroupAsync(Context.ConnectionId, room.InviteLink!);
-        await Clients.Caller.AddToRoom(room);
+        await Clients.Caller.AddToRoom(room.ToUI());
         await _unitOfWork.CompleteAsync();
     }
 
@@ -166,7 +167,7 @@ public class GameHub : Hub<IGameClient>
         game.Hands.Remove(hand);
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.InviteLink!);
         await Clients.Caller.RemoveFromRoom();
-        await Clients.OthersInGroup(room.InviteLink!).RemoveHandFromRoom(hand);
+        await Clients.OthersInGroup(room.InviteLink!).RemoveHandFromRoom(hand.ToUI());
         await _unitOfWork.CompleteAsync();
     }
 
@@ -230,8 +231,8 @@ public class GameHub : Hub<IGameClient>
         // TODO: Explicit card movements (Deck -> Hand, Hand -> Pile, etc).
         foreach (var hand in game.Hands)
         {
-            uint dealtCount = 4;
-            var dealt = deck.DealMany(dealtCount);
+            var dealtCount = 4;
+            var dealt = deck.DealMany((uint)dealtCount);
             await Clients.Group(inviteLink).RemoveCardsFromDeck(dealtCount);
             hand.Cards.AddRange(dealt);
             await Clients.User(hand.User!.Email).AddCardRangeToHand(dealt);
@@ -351,7 +352,7 @@ public class GameHub : Hub<IGameClient>
 
                     // Add cards to deck
                     foreach (var pileCard in pileCards) game.Deck.Push(pileCard);
-                    await Clients.Group(inviteLink).AddCardsToDeck((uint)pileCards.Count);
+                    await Clients.Group(inviteLink).AddCardsToDeck(pileCards.Count);
 
                     // Shuffle & deal
                     game.Deck.Shuffle();
@@ -381,7 +382,7 @@ public class GameHub : Hub<IGameClient>
             {
                 await Clients.Caller.NotifyTurnProcessed(valid: true);
                 game.Winner = player;
-                await Clients.Group(inviteLink).EndGame(winner: player);
+                await Clients.Group(inviteLink).EndGame(winner: player.ToUI());
                 // TODO: Remove everyone from the room (store connection ids)
                 // await Groups.RemoveFromGroupAsync(Context.ConnectionId, inviteLink);
                 await _unitOfWork.CompleteAsync();

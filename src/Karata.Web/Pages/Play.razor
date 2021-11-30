@@ -50,10 +50,10 @@ else
     private HubConnection hubConnection;
     private string username;
     private GameUI gameUI;
-    private Room room = null;
-    private Game Game => room.Game;
-    private Hand Hand => Game.Hands.Single(h => h.User.Email == username);
-    private User Player => Hand.User;
+    private UIRoom room = null;
+    private UIGame Game => room.Game;
+    private UIHand Hand => Game.Hands.Single(h => h.User.Email == username);
+    private UIUser Player => Hand.User;
 
     protected override async Task OnInitializedAsync()
     {
@@ -78,9 +78,9 @@ else
         })
         .Build();
 
-        hubConnection.On<uint>("AddCardsToDeck", num =>
+        hubConnection.On<int>("AddCardsToDeck", num =>
         {
-            for (int i = 0; i < num; i++) Game.Deck.Push(Ace.Of(Spades));
+            Game.DeckCount += num;
             StateHasChanged();
         });
 
@@ -108,20 +108,20 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<Hand>("AddHandToRoom", hand =>
+        hubConnection.On<UIHand>("AddHandToRoom", hand =>
         {
             Game.Hands.Add(hand);
             Toast.ShowInfo($"{hand.User.Email} has joined the room");
             StateHasChanged();
         });
 
-        hubConnection.On<Room>("AddToRoom", room =>
+        hubConnection.On<UIRoom>("AddToRoom", room =>
         {
             this.room = room;
             StateHasChanged();
         });
 
-        hubConnection.On<User>("EndGame", winner =>
+        hubConnection.On<UIUser>("EndGame", winner =>
         {            
             Toast.ShowInfo($"Game over! {(winner?.Email ?? "Nobody")} won this game.");
             room = null;
@@ -151,7 +151,7 @@ else
             await hubConnection.SendAsync("SetLastCardStatus", (bool)result.Data);
         });
 
-        hubConnection.On<Chat>("ReceiveChat", message =>
+        hubConnection.On<UIChat>("ReceiveChat", message =>
         {
             room.Chats.Add(message);
             StateHasChanged();
@@ -176,9 +176,9 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<uint>("RemoveCardsFromDeck", num =>
+        hubConnection.On<int>("RemoveCardsFromDeck", num =>
         {
-            _ = Game.Deck.DealMany(num);
+            Game.DeckCount -= num;
             StateHasChanged();
         });
 
@@ -188,7 +188,7 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On<Hand>("RemoveHandFromRoom", hand =>
+        hubConnection.On<UIHand>("RemoveHandFromRoom", hand =>
         {
             _ = Game.Hands.Remove(hand);
             Toast.ShowInfo($"{hand.User.Email} has left the room.");

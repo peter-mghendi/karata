@@ -1,5 +1,7 @@
 #nullable enable
 
+using Karata.Web.Models.UI;
+
 namespace Karata.Web.Models;
 
 public class Room
@@ -12,4 +14,13 @@ public class Room
     public byte[]? Hash { get; set; } = null;
     public byte[]? Salt { get; set; } = null;
     public virtual ICollection<Chat> Chats { get; set; } = new List<Chat>();
+
+    public UIRoom ToUI() => new()
+    {
+        InviteLink = InviteLink,
+        CreatedAt = CreatedAt,
+        Creator = Creator?.ToUI(),
+        Game = Game.ToUI(),
+        Chats = Chats.Select(c => c.ToUI()).ToList()
+    };
 }
