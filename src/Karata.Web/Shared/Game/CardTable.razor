@@ -1,9 +1,12 @@
+@implements IGameInterface
+
 <div id="table">
     @* Me *@
     <div id="bottom" class="hand-container">
-        @* TODO: Wire click handlers *@
-        <HandComponent Cards="@currentHand" FaceUp="true" />
+        <HandComponent Cards="@currentHand" FaceUp="true" OnCardSelected="AddCardToTurn" />
     </div>
+
+    @* TODO Display Turn *@
 
     @* Player 2 *@
     <div id="top" class="hand-container">
@@ -24,10 +27,9 @@
         </div>
     }
     
-    @* TODO: Wire click handlers *@
-    <img id="deck" src="img/cards/Back.svg" /> 
+    <img id="deck" src="img/cards/Back.svg" @onclick="PickCard" /> 
     <img id="pile" src="@ImageUrl(Game.Pile.Peek())" 
-        title="@requestText" />
+        title="@requestText" @onclick="PerformTurn"  />
 </div>
 
 @code {
@@ -42,23 +44,18 @@
 
     private List<Card> currentTurn = new();
 
-    private List<Card> currentHand
-    {
-        get
-        {
-            var handCopy = new List<Card>(Hand.Cards);
-            handCopy.RemoveAll(card => currentTurn.Contains(card));
-            return handCopy;
-        }
-    }
+    private List<Card> currentHand => Hand.Cards.Where(c => !currentTurn.Contains(c)).ToList();
 
     private List<List<Card>> otherHands => Game.Hands.Where(hand => hand.User.Id != Hand.User.Id)
         .Select(hand => hand.Cards)
         .ToList();
 
-    private string requestText => Game.CurrentRequest is null 
-        ? "No card has been requested" 
-        : Game.CurrentRequest.GetName();
+    private string requestText => Game.CurrentRequest switch
+    {
+        null           => "No card has been requested",
+        { Face: None } => Game.CurrentRequest.ToString(),
+        _              => Game.CurrentRequest.GetName()
+    };
 
     public void NotifyTurnPerformed()
     {
@@ -89,7 +86,9 @@
         StateHasChanged();
     }
 
-    private void PerformTurn() => OnPerformTurn.InvokeAsync(currentTurn);
+    private async Task PickCard() => await OnPerformTurn.InvokeAsync(new());
+
+    private async Task PerformTurn() => await OnPerformTurn.InvokeAsync(currentTurn);
 
     private string ImageUrl (Card card) => card is { Face: Joker} 
         ? $"img/cards/{card.Suit.ToString()}.svg"

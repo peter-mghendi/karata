@@ -1,7 +1,7 @@
 <div class="hand">
     @foreach (var card in Cards)
     {
-        <CardComponent Card="@card" FaceUp="@FaceUp" />
+        <CardComponent Card="@card" FaceUp="@FaceUp" OnClick="SelectCard" />
     }
 </div>
 
@@ -12,4 +12,9 @@
 
     [Parameter]
     public bool FaceUp { get; set; }
+
+    [Parameter]
+    public EventCallback<Card> OnCardSelected { get; set; }
+
+    private async Task SelectCard(Card card) => await OnCardSelected.InvokeAsync(card);
 }

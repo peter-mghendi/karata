@@ -1,11 +1,4 @@
-@if (FaceUp) 
-{
-    <img class="card" src="@imageUrl" />
-}
-else
-{
-    <img class="card" src="img/cards/Back.svg" />
-}
+<img class="card" src="@( FaceUp ? imageUrl : "img/cards/Back.svg" )" @onclick="Click" />
 
 @code {
     [Parameter]
@@ -13,6 +6,11 @@ else
 
     [Parameter]
     public bool FaceUp { get; set; }
+
+    [Parameter]
+    public EventCallback<Card> OnClick { get; set; }
+
+    private async Task Click() => await OnClick.InvokeAsync(Card);
 
     private string imageUrl => Card is { Face: Joker} 
         ? $"img/cards/{Card.Suit.ToString()}.svg"

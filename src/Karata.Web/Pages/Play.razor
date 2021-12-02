@@ -30,8 +30,7 @@ else
                 {
                     if(useExperimentalUI)
                     {
-                        @* Remember to move the reference *@
-                        <CardTable Game="Game" Hand="Hand" OnPerformTurn="PerformTurn" />
+                        <CardTable Game="Game" Hand="Hand" @ref="cardTable" OnPerformTurn="PerformTurn" />
                     }
                     else
                     {
@@ -62,7 +61,8 @@ else
     private IModalService ModalService { get; set; }
     private HubConnection hubConnection;
     private string username;
-    private GameUI gameUI;
+    private IGameInterface cardTable;
+    private IGameInterface gameUI;
     private UIRoom room = null;
     private UIGame Game => room.Game;
     private UIHand Hand => Game.Hands.Single(h => h.User.Email == username);
@@ -143,7 +143,11 @@ else
             StateHasChanged();
         });
 
-        hubConnection.On("NotifyTurnProcessed", () => gameUI.NotifyTurnPerformed());
+        hubConnection.On("NotifyTurnProcessed", () =>
+        {
+            cardTable.NotifyTurnPerformed();
+            gameUI.NotifyTurnPerformed();
+        });
 
         hubConnection.On<bool>("PromptCardRequest", async specific =>
         {
