@@ -1,9 +1,6 @@
 <div>
     <div class="row mb-2 g-2">
         <div class="col-6">
-            <p>Current Turn: @Game.Hands[Game.CurrentTurn].User.Email</p>
-            <p>Deck Size: @Game.DeckCount</p>
-            <p>Pile Size: @Game.Pile.Count</p>
             <p>
                 Top Card:
                 <i class="mx-1 @GetCardIcon(Game.Pile.Peek())"></i>

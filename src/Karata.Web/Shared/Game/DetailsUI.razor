@@ -10,6 +10,7 @@
             <p>Room ID: <br> @Room.InviteLink</p>
             <p>Created: <br> @Room.CreatedAt</p>
             <p>Creator: <br> @Room.Creator.Email</p>
+            <p>Current: <br> @Game.Hands[Game.CurrentTurn].User.Email</p>
             <p>Players: <br> @Game.Hands.Count</p>
             <p>Started: <br> @Game.IsStarted</p>
 

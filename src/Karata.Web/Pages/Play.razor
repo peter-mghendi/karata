@@ -28,14 +28,27 @@ else
             <div class="col-8">
                 @if (@Game.IsStarted)
                 {
-                    <GameUI Game="Game" Hand="Hand" @ref="gameUI" OnPerformTurn="PerformTurn" />
+                    if(useExperimentalUI)
+                    {
+                        @* Remember to move the reference *@
+                        <CardTable Game="Game" Hand="Hand" OnPerformTurn="PerformTurn" />
+                    }
+                    else
+                    {
+                        <GameUI Game="Game" Hand="Hand" @ref="gameUI" OnPerformTurn="PerformTurn" />
+                    }  
                 }
                 else
                 {
-                    <CardTable />
+                    <h4>Waiting for players to join. (@Game.Hands.Count/4)</h4>
                 }
             </div>
             <div class="col-4" style="height: calc(100vh - 5rem); overflow-y: auto;">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="useExperimentalUI" @bind="useExperimentalUI" />
+                    <label class="form-check-label" for="useExperimentalUI">Use Experimental UI</label>
+                    <small class="form-text text-muted">Experimental UI is not fully implemented yet. It is still in development.</small>
+                </div>
                 <DetailsUI Room="room" Player="Player" OnSend="Send" OnStartGame="StartGame" OnLeaveRoom="LeaveRoom" />
             </div>
         </div>
@@ -54,6 +67,7 @@ else
     private UIGame Game => room.Game;
     private UIHand Hand => Game.Hands.Single(h => h.User.Email == username);
     private UIUser Player => Hand.User;
+    private bool useExperimentalUI = false;
 
     protected override async Task OnInitializedAsync()
     {

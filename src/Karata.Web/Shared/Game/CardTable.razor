@@ -1,26 +1,97 @@
 <div id="table">
-    <div id="top" class="hand-container">
-        <HandComponent Cards="@Cards" FaceUp="false" />
-    </div>
-    <div id="left" class="hand-container">
-        <HandComponent Cards="@Cards" FaceUp="false" />
-    </div>
-    <div id="right" class="hand-container">
-        <HandComponent Cards="@Cards" FaceUp="false" />
-    </div>
+    @* Me *@
     <div id="bottom" class="hand-container">
-        <HandComponent Cards="@Cards" FaceUp="true" />
+        @* TODO: Wire click handlers *@
+        <HandComponent Cards="@currentHand" FaceUp="true" />
     </div>
-    <img id="deck" src="img/cards/Back.svg" />
-    <img id="pile" src="img/cards/NineHearts.svg" />
+
+    @* Player 2 *@
+    <div id="top" class="hand-container">
+        <HandComponent Cards="@otherHands[0]" FaceUp="false" />
+    </div>
+    
+    @if (otherHands.Count > 1)
+    {
+        <div id="left" class="hand-container">
+            <HandComponent Cards="@otherHands[1]" FaceUp="false" />
+        </div>     
+    }
+    
+    @if (otherHands.Count > 2)
+    {
+        <div id="right" class="hand-container">
+            <HandComponent Cards="@otherHands[1]" FaceUp="false" />
+        </div>
+    }
+    
+    @* TODO: Wire click handlers *@
+    <img id="deck" src="img/cards/Back.svg" /> 
+    <img id="pile" src="@ImageUrl(Game.Pile.Peek())" 
+        title="@requestText" />
 </div>
 
 @code {
-    public List<Card> Cards { get; set; } = new()
+    [Parameter]
+    public UIGame Game { get; set; }
+
+    [Parameter]
+    public UIHand Hand { get; set; }
+
+    [Parameter]
+    public EventCallback<List<Card>> OnPerformTurn { get; set; }
+
+    private List<Card> currentTurn = new();
+
+    private List<Card> currentHand
     {
-        Ace.Of(Spades),
-        Nine.Of(Spades),
-        Queen.Of(Spades),
-        Black.ColoredJoker()
+        get
+        {
+            var handCopy = new List<Card>(Hand.Cards);
+            handCopy.RemoveAll(card => currentTurn.Contains(card));
+            return handCopy;
+        }
+    }
+
+    private List<List<Card>> otherHands => Game.Hands.Where(hand => hand.User.Id != Hand.User.Id)
+        .Select(hand => hand.Cards)
+        .ToList();
+
+    private string requestText => Game.CurrentRequest is null 
+        ? "No card has been requested" 
+        : Game.CurrentRequest.GetName();
+
+    public void NotifyTurnPerformed()
+    {
+        currentTurn.Clear();
+        StateHasChanged();
+    }
+
+    private string GetCardIcon(Card card) => "bi " + card.Suit switch
+    {
+        Spades => "bi-suit-spade-fill",
+        Hearts => "bi-suit-heart-fill text-danger",
+        Clubs => "bi-suit-club-fill",
+        Diamonds => "bi-suit-diamond-fill text-danger",
+        BlackJoker => "bi-circle-fill",
+        RedJoker => "bi-circle-fill text-danger",
+        _ => string.Empty
     };
+
+    private void AddCardToTurn(Card card)
+    {
+        currentTurn.Add(card);
+        StateHasChanged();
+    }
+
+    private void RemoveCardFromTurn(Card card)
+    {
+        currentTurn.Remove(card);
+        StateHasChanged();
+    }
+
+    private void PerformTurn() => OnPerformTurn.InvokeAsync(currentTurn);
+
+    private string ImageUrl (Card card) => card is { Face: Joker} 
+        ? $"img/cards/{card.Suit.ToString()}.svg"
+        : $"img/cards/{card.Face.ToString()}{card.Suit.ToString()}.svg";
 }
