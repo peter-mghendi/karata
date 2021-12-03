@@ -1,6 +1,6 @@
 [![Build + Test](https://github.com/sixpeteunder/karata/actions/workflows/dotnet.yml/badge.svg)](https://github.com/sixpeteunder/karata/actions/workflows/dotnet.yml)
 
-> STATUS: Currently clearing out items from the [backlog](https://github.com/sixpeteunder/karata/tree/backlog).
+> STATUS: Currently making [connection handling](https://github.com/sixpeteunder/karata/issues/8) more robust.
 
 # karata
 
