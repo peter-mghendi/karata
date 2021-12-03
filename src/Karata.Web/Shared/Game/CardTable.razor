@@ -1,0 +1,99 @@
+@implements IGameInterface
+
+<div id="table">
+    @* Me *@
+    <div id="bottom" class="hand-container">
+        <HandComponent Cards="@currentHand" FaceUp="true" OnCardSelected="AddCardToTurn" />
+    </div>
+
+    @* Current Turn *@
+    <div id="turn" class="hand-container">
+        <HandComponent Cards="@currentTurn" FaceUp="true" OnCardSelected="RemoveCardFromTurn" />
+    </div>
+
+    @* Player 2 *@
+    <div id="top" class="hand-container">
+        <HandComponent Cards="@otherHands[0]" FaceUp="false" />
+    </div>
+    
+    @if (otherHands.Count > 1)
+    {
+        <div id="left" class="hand-container">
+            <HandComponent Cards="@otherHands[1]" FaceUp="false" />
+        </div>     
+    }
+    
+    @if (otherHands.Count > 2)
+    {
+        <div id="right" class="hand-container">
+            <HandComponent Cards="@otherHands[1]" FaceUp="false" />
+        </div>
+    }
+    
+    <img id="deck" src="img/cards/Back.svg" @onclick="PickCard" /> 
+    <img id="pile" src="@ImageUrl(Game.Pile.Peek())" 
+        title="@requestText" @onclick="PerformTurn"  />
+</div>
+
+@code {
+    [Parameter]
+    public UIGame Game { get; set; }
+
+    [Parameter]
+    public UIHand Hand { get; set; }
+
+    [Parameter]
+    public EventCallback<List<Card>> OnPerformTurn { get; set; }
+
+    private List<Card> currentTurn = new();
+
+    private List<Card> currentHand => Hand.Cards.Where(c => !currentTurn.Contains(c)).ToList();
+
+    private List<List<Card>> otherHands => Game.Hands.Where(hand => hand.User.Id != Hand.User.Id)
+        .Select(hand => hand.Cards)
+        .ToList();
+
+    private string requestText => Game.CurrentRequest switch
+    {
+        null           => "No card has been requested",
+        { Face: None } => Game.CurrentRequest.ToString(),
+        _              => Game.CurrentRequest.GetName()
+    };
+
+    public void NotifyTurnPerformed()
+    {
+        currentTurn.Clear();
+        StateHasChanged();
+    }
+
+    private string GetCardIcon(Card card) => "bi " + card.Suit switch
+    {
+        Spades => "bi-suit-spade-fill",
+        Hearts => "bi-suit-heart-fill text-danger",
+        Clubs => "bi-suit-club-fill",
+        Diamonds => "bi-suit-diamond-fill text-danger",
+        BlackJoker => "bi-circle-fill",
+        RedJoker => "bi-circle-fill text-danger",
+        _ => string.Empty
+    };
+
+    private void AddCardToTurn(Card card)
+    {
+        currentTurn.Add(card);
+        StateHasChanged();
+    }
+
+    private void RemoveCardFromTurn(Card card)
+    {
+        currentTurn.Remove(card);
+        StateHasChanged();
+    }
+
+    private async Task PickCard() => await OnPerformTurn.InvokeAsync(new());
+
+    private async Task PerformTurn() => await OnPerformTurn.InvokeAsync(currentTurn);
+
+    private string ImageUrl (Card card) => card is { Face: Joker} 
+        ? $"img/cards/{card.Suit.ToString()}.svg"
+        : $"img/cards/{card.Face.ToString()}{card.Suit.ToString()}.svg";
+}

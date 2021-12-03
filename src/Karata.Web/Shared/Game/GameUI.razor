@@ -1,0 +1,136 @@
+@implements IGameInterface
+
+<div>
+    <div class="row mb-2 g-2">
+        <div class="col-6">
+            <p>
+                Top Card:
+                <i class="mx-1 @GetCardIcon(Game.Pile.Peek())"></i>
+                @Game.Pile.Peek().GetName()
+            </p>
+            @if (Game.CurrentRequest is Card request)
+            {
+                <p>
+                    Current Request:
+                    <i class="mx-1 @GetCardIcon(request)"></i>
+                    @(request.Face is None ? request.Suit.ToString() : request.GetName())
+                </p>
+            }
+        </div>
+        <div class="col-6">
+            <p>Player Hands</p>
+            @foreach (var hand in otherHands)
+            {
+                <p>@(hand.User.Email) has @(hand.Cards.Count) cards.</p>
+            }
+        </div>
+    </div>
+
+
+    <div class="row mb-2">
+        <div class="col-6">
+            <p>My cards:</p>
+            <ul class="list-group list-group-flush">
+                @foreach (var card in currentHand)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="@($"bi {GetCardIcon(card)} me-2")"></i>
+                            @card.GetName()
+                        </span>
+                        <button class="btn btn-outline-success" @onclick="() => AddCardToTurn(card)">
+                            <i class="bi bi-plus text-success"></i>
+                        </button>
+                    </li>
+                }
+            </ul>
+        </div>
+        <div class="col-6">
+            <p>This turn:</p>
+            <ul class="list-group list-group-flush">
+                @foreach (var card in currentTurn)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="@($"bi {GetCardIcon(card)} me-2")"></i>
+                            @card.GetName()
+                        </span>
+                        <button class="btn btn-outline-danger" @onclick="() => RemoveCardFromTurn(card)">
+                            <i class="bi bi-trash text-danger"></i>
+                        </button>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+
+    <div class="d-flex">
+        <button class="btn btn-outline-primary mx-auto" @onclick="PerformTurn">
+            @if (currentTurn.Count > 0)
+            {
+                <span>Perform Turn</span>
+            }
+            else
+            {
+                <span>Pick Card(s)</span>
+            }
+        </button>
+    </div>
+</div>
+
+@code
+{
+    [Parameter]
+    public UIGame Game { get; set; }
+
+    [Parameter]
+    public UIHand Hand { get; set; }
+
+    [Parameter]
+    public EventCallback<List<Card>> OnPerformTurn { get; set; }
+
+    private List<Card> currentTurn = new();
+
+    private List<Card> currentHand
+    {
+        get
+        {
+            var handCopy = new List<Card>(Hand.Cards);
+            handCopy.RemoveAll(card => currentTurn.Contains(card));
+            return handCopy;
+        }
+    }
+
+    private List<UIHand> otherHands => Game.Hands.Where(hand => hand.User.Id != Hand.User.Id).ToList();
+
+    public void NotifyTurnPerformed()
+    {
+        currentTurn.Clear();
+        StateHasChanged();
+    }
+
+    private string GetCardIcon(Card card) => "bi " + card.Suit switch
+    {
+        Spades => "bi-suit-spade-fill",
+        Hearts => "bi-suit-heart-fill text-danger",
+        Clubs => "bi-suit-club-fill",
+        Diamonds => "bi-suit-diamond-fill text-danger",
+        BlackJoker => "bi-circle-fill",
+        RedJoker => "bi-circle-fill text-danger",
+        _ => string.Empty
+    };
+
+    private void AddCardToTurn(Card card)
+    {
+        currentTurn.Add(card);
+        StateHasChanged();
+    }
+
+    private void RemoveCardFromTurn(Card card)
+    {
+        currentTurn.Remove(card);
+        StateHasChanged();
+    }
+
+    private void PerformTurn() => OnPerformTurn.InvokeAsync(currentTurn);
+}

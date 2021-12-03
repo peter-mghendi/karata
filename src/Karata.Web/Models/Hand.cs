@@ -1,5 +1,7 @@
 #nullable enable
 
+using Karata.Web.Models.UI;
+
 namespace Karata.Web.Models;
 
 public class Hand
@@ -9,4 +11,10 @@ public class Hand
     public bool IsLastCard { get; set; } = false;
     public int GameId { get; set; }
     public virtual User? User { get; set; }
+
+    public UIHand ToUI() => new()
+    {
+        Cards = Cards,
+        User = User?.ToUI(),
+    };
 }
