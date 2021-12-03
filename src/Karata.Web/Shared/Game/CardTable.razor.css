@@ -47,12 +47,17 @@
     position: absolute;
     top: var(--center-offset);
     left: 35%;
-    width: 90px;
+    width: 75px;
 }
 
 #pile {
     position: absolute;
     top: var(--center-offset);
     right: 35%;
-    width: 90px;
+    width: 75px;
+}
+
+#turn {
+    bottom: 23.5%;
+    right: 37.5%;
 }

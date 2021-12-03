@@ -6,7 +6,10 @@
         <HandComponent Cards="@currentHand" FaceUp="true" OnCardSelected="AddCardToTurn" />
     </div>
 
-    @* TODO Display Turn *@
+    @* Current Turn *@
+    <div id="turn" class="hand-container">
+        <HandComponent Cards="@currentTurn" FaceUp="true" OnCardSelected="RemoveCardFromTurn" />
+    </div>
 
     @* Player 2 *@
     <div id="top" class="hand-container">
