@@ -8,21 +8,29 @@
     <div id="join-room" class="row g-2">
         <div class="col-12 col-md-6">
             <div class="form-floating">
-                <input type="text" class="form-control" id="inviteLink" placeholder="@Guid.Empty" autocomplete="room-code" @bind="inviteLink">
+                <input type="text" class="form-control" id="inviteLink" placeholder="@Guid.Empty" autocomplete="room-code" @bind="inviteLink" disabled="@loading">
                 <label for="inviteLink">Invite Link</label>
             </div>
         </div>
         <div class="col-12 col-md-6">
             <div class="form-floating">
                 <input type="password" class="form-control" id="invitePassword" placeholder="password" autocomplete="room-pass"
-                @bind="invitePassword">
+                @bind="invitePassword" disabled="@loading">
                 <label for="invitePassword">Password (If Applicable)</label>
             </div>
         </div>
         <div class="col-12">
             <div class="d-flex my-auto">
-                <button class="btn btn-outline-primary align-middle w-100" @onclick="JoinRoom">
-                    Join Room
+                <button class="btn btn-outline-primary align-middle w-100" @onclick="JoinRoom" disabled="@loading">
+                    @if (joining)
+                    {
+                        <span class="spinner-grow spinner-grow-sm text-primary" role="status" aria-hidden="true"></span>
+                        <span>Joining Room</span>
+                    }
+                    else
+                    {
+                        <span>Join Room</span>
+                    }
                 </button>
             </div>
         </div>
@@ -35,14 +43,22 @@
         <div class="col">
             <div class="form-floating">
                 <input type="password" class="form-control" id="createPassword" placeholder="password" autocomplete="new-password"
-                @bind="createPassword">
+                @bind="createPassword" disabled="@loading">
                 <label for="createPassword">Password (Optional)</label>
             </div>
         </div>
         <div class="col-12">
             <div class="d-flex my-auto">
-                <button class="btn btn-outline-primary align-middle w-100" @onclick="CreateRoom">
-                    Create Room
+                <button class="btn btn-outline-primary align-middle w-100" @onclick="CreateRoom" disabled="@loading">
+                    @if (creating)
+                    {
+                        <span class="spinner-grow spinner-grow-sm text-primary" role="status" aria-hidden="true"></span>
+                        <span>Creating Room</span>
+                    }
+                    else
+                    {
+                        <span>Create Room</span>
+                    }
                 </button>
             </div>
         </div>
@@ -58,15 +74,20 @@
     [Parameter]
     public EventCallback<string> OnCreate { get; set; }
 
-    // Join screen state
+    private bool joining = false;
+    private bool creating = false;
+    private bool loading => joining || creating;
+
     private string inviteLink;
     private string invitePassword;
     private string createPassword;
 
     private async Task JoinRoom()
     {
+        joining = true;
         if (string.IsNullOrWhiteSpace(inviteLink))
         {
+            joining = false;
             Toast.ShowWarning("Invite link cannot be empty.");
             return;
         }
@@ -74,5 +95,9 @@
         await OnJoin.InvokeAsync((inviteLink, invitePassword));
     }
 
-    private async Task CreateRoom() => await OnCreate.InvokeAsync(createPassword);
+    private async Task CreateRoom()
+    { 
+        creating = true;
+        await OnCreate.InvokeAsync(createPassword);
+    }
 }
