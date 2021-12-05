@@ -12,13 +12,32 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Npgsql; 
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+string connectionString;
+if (builder.Environment.IsDevelopment())
+    connectionString = builder.Configuration["DefaultConnection"];
+else
+{
+    var databaseUri = new Uri(builder.Configuration[(string)"DATABASE_URL"]);
+    var userInfo = databaseUri.UserInfo.Split(':');
+    connectionString = new NpgsqlConnectionStringBuilder
+    {
+        Host = databaseUri.Host,
+        Port = databaseUri.Port,
+        Username = userInfo[0],
+        Password = userInfo[1],
+        Database = databaseUri.LocalPath.TrimStart('/'),
+        SslMode = SslMode.Prefer,
+        TrustServerCertificate = true
+    }.ToString();
+}
 
 builder.Services.AddDbContext<KarataContext>(options =>
 {
-    options.UseSqlite(connectionString);
+    options.UseNpgsql(connectionString);
     options.UseLazyLoadingProxies();
 });
 builder.Services.AddDefaultIdentity<User>(options =>
