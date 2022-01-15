@@ -1,8 +1,8 @@
 #nullable enable
 
 using System.Text.Json.Serialization;
-using Blazored.Modal;
-using Blazored.Toast;
+// using Blazored.Modal;
+// using Blazored.Toast;
 using Karata.Web.Areas.Identity;
 using Karata.Web.Data;
 using Karata.Web.Engines;
@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor.Services;
 using Npgsql; 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -62,8 +63,9 @@ builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuth
 builder.Services.AddScoped<CookieService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddBlazoredModal();
-builder.Services.AddBlazoredToast();
+// builder.Services.AddBlazoredModal();
+// builder.Services.AddBlazoredToast();
+builder.Services.AddMudServices();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddResponseCompression(opts =>
 {

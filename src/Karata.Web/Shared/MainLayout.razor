@@ -1,13 +1,43 @@
 @inherits LayoutComponentBase
 
-@using Blazored.Toast.Configuration
+@* @using Blazored.Toast.Configuration
 
 <BlazoredToasts Position="ToastPosition.BottomRight"
                 ShowProgressBar="true" 
                 RemoveToastsOnNavigation="true"	
-                MaxToastCount="5" />
+                MaxToastCount="5" /> *@
 
-<div class="page">
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="2"  Variant="@DrawerVariant.Temporary">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h5" Class="mt-1">Karata</MudText>
+        </MudDrawerHeader>
+        <NavMenu />
+    </MudDrawer>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}
+
+@* <div class="page">
     <div class="sidebar">
         <NavMenu />
     </div>
@@ -24,4 +54,4 @@
             @Body
         </div>
     </div>
-</div>
+</div> *@

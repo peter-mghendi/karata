@@ -1,4 +1,4 @@
-@inject IToastService Toast
+@* @inject IToastService Toast *@
 
 <div>
     <details class="mb-2">
@@ -81,7 +81,8 @@
     {
         if (string.IsNullOrWhiteSpace(message))
         {
-            Toast.ShowError("You must enter a message to send.");
+            @* TODO *@
+            @* Toast.ShowError("You must enter a message to send."); *@
             return;
         }
 

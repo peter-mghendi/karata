@@ -1,4 +1,4 @@
-@inject IToastService Toast
+@* @inject IToastService Toast *@
 
 <div>
 <p class="lead">Join or create a game room to play.</p>
@@ -88,7 +88,8 @@
         if (string.IsNullOrWhiteSpace(inviteLink))
         {
             joining = false;
-            Toast.ShowWarning("Invite link cannot be empty.");
+            @* TODO *@
+            @* Toast.ShowWarning("Invite link cannot be empty."); *@
             return;
         }
         
