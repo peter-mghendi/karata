@@ -1,86 +1,52 @@
-@* @inject IToastService Toast *@
+@inject ISnackbar Snackbar
 
-<div>
-<p class="lead">Join or create a game room to play.</p>
+<MudText  Typo="Typo.h4" Class="pa-4 mb-4">Join or create a game room to play.</MudText>
 
-<div class="my-2">
-    <label for="join-room">Join a Room</label>
-    <div id="join-room" class="row g-2">
-        <div class="col-12 col-md-6">
-            <div class="form-floating">
-                <input type="text" class="form-control" id="inviteLink" placeholder="@Guid.Empty" autocomplete="room-code" @bind="inviteLink" disabled="@loading">
-                <label for="inviteLink">Invite Link</label>
-            </div>
-        </div>
-        <div class="col-12 col-md-6">
-            <div class="form-floating">
-                <input type="password" class="form-control" id="invitePassword" placeholder="password" autocomplete="room-pass"
-                @bind="invitePassword" disabled="@loading">
-                <label for="invitePassword">Password (If Applicable)</label>
-            </div>
-        </div>
-        <div class="col-12">
-            <div class="d-flex my-auto">
-                <button class="btn btn-outline-primary align-middle w-100" @onclick="JoinRoom" disabled="@loading">
-                    @if (joining)
-                    {
-                        <span class="spinner-grow spinner-grow-sm text-primary" role="status" aria-hidden="true"></span>
-                        <span>Joining Room</span>
-                    }
-                    else
-                    {
-                        <span>Join Room</span>
-                    }
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+<MudPaper Class="pa-4 mb-4">
+    <MudTextField @bind-Value="inviteLink" Label="Invite Link" Variant="Variant.Filled" Class="mb-4"></MudTextField>
+    <MudTextField @bind-Value="invitePassword" Label="Password (If Applicable)" Variant="Variant.Filled" Class="mb-4"></MudTextField>
+    <MudButton Disabled="@loading" OnClick="JoinRoom" Variant="Variant.Filled" Color="Color.Primary">
+        @if (joining)
+        {
+            <MudProgressCircular Class="ms-n1" Color="Color.Primary" Size="Size.Small" Indeterminate="true"/>
+            <MudText Class="ms-2">Joining Room</MudText>
+        }
+        else
+        {
+            <MudText>Join Room</MudText>
+        }
+    </MudButton>
+</MudPaper>
 
-<div class="my-2">
-    <label for="create-room">Create a Room</label>
-    <div id="create-room" class="row g-2">
-        <div class="col">
-            <div class="form-floating">
-                <input type="password" class="form-control" id="createPassword" placeholder="password" autocomplete="new-password"
-                @bind="createPassword" disabled="@loading">
-                <label for="createPassword">Password (Optional)</label>
-            </div>
-        </div>
-        <div class="col-12">
-            <div class="d-flex my-auto">
-                <button class="btn btn-outline-primary align-middle w-100" @onclick="CreateRoom" disabled="@loading">
-                    @if (creating)
-                    {
-                        <span class="spinner-grow spinner-grow-sm text-primary" role="status" aria-hidden="true"></span>
-                        <span>Creating Room</span>
-                    }
-                    else
-                    {
-                        <span>Create Room</span>
-                    }
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-</div>
+<MudPaper Class="pa-4 mb-4">
+    <MudTextField @bind-Value="createPassword" Label="Password (Optional)" Variant="Variant.Filled" Class="mb-4"></MudTextField>
+    <MudButton Disabled="@loading" OnClick="CreateRoom" Variant="Variant.Filled">
+        @if (creating)
+        {
+            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+            <MudText Class="ms-2">Creating Room</MudText>
+        }
+        else
+        {
+            <MudText>Create Room</MudText>
+        }
+    </MudButton>
+</MudPaper>
 
-@code 
-{
+@code {
     [Parameter]
     public EventCallback<(string InviteLink, string Password)> OnJoin { get; set; }
 
     [Parameter]
     public EventCallback<string> OnCreate { get; set; }
 
-    private bool joining = false;
-    private bool creating = false;
-    private bool loading => joining || creating;
-
     private string inviteLink;
     private string invitePassword;
     private string createPassword;
+
+    private bool joining = false;
+    private bool creating = false;
+    private bool loading => joining || creating;
 
     private async Task JoinRoom()
     {
@@ -88,8 +54,8 @@
         if (string.IsNullOrWhiteSpace(inviteLink))
         {
             joining = false;
-            @* TODO *@
-            @* Toast.ShowWarning("Invite link cannot be empty."); *@
+            // TODO: Decouple
+            Snackbar.Add("Invite link cannot be empty.", Severity.Error);
             return;
         }
         
