@@ -10,6 +10,7 @@
 
 @inject AuthenticationStateProvider Authenticator
 @inject NavigationManager Navigator
+@inject IConfiguration Config
 @inject IToastService Toast
 
 @if (hubConnection.State != HubConnectionState.Connected)
@@ -80,7 +81,7 @@ else
         container.Add(new Cookie
         {
             Name = ".AspNetCore.Identity.Application",
-            Domain = "karatagame.herokuapp.com",
+            Domain = Config["CookieDomain"],
             Value = CookieService.Cookie
         });
 

@@ -21,7 +21,7 @@ if (builder.Environment.IsDevelopment())
     connectionString = builder.Configuration["DefaultConnection"];
 else
 {
-    var databaseUri = new Uri(builder.Configuration[(string)"DATABASE_URL"]);
+    var databaseUri = new Uri(builder.Configuration["DATABASE_URL"]);
     var userInfo = databaseUri.UserInfo.Split(':');
     connectionString = new NpgsqlConnectionStringBuilder
     {
