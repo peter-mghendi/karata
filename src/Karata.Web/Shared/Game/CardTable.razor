@@ -8,19 +8,19 @@
 
     @* Current Turn *@
     <div id="turn" class="hand-container">
-        <HandComponent Cards="@currentTurn" FaceUp="true" OnCardSelected="RemoveCardFromTurn" />
+        <HandComponent Cards="@Turn" FaceUp="true" OnCardSelected="RemoveCardFromTurn" />
     </div>
 
     @* Player 2 *@
     <div id="top" class="hand-container">
-        <HandComponent Cards="@otherHands[0]" FaceUp="false" />
+        <HandComponent Cards="@otherHands[0].Cards" FaceUp="false" />
     </div>
 
     @* Player 3 *@
     @if (otherHands.Count > 1)
     {
         <div id="left" class="hand-container">
-            <HandComponent Cards="@otherHands[1]" FaceUp="false" />
+            <HandComponent Cards="@otherHands[1].Cards" FaceUp="false" />
         </div>
     }
 
@@ -28,7 +28,7 @@
     @if (otherHands.Count > 2)
     {
         <div id="right" class="hand-container">
-            <HandComponent Cards="@otherHands[2]" FaceUp="false" />
+            <HandComponent Cards="@otherHands[2].Cards" FaceUp="false" />
         </div>
     }
 
@@ -42,7 +42,8 @@
         title="@requestText" @onclick="PerformTurn" /> *@
 </div>
 
-@code {
+@code 
+{
     [Parameter]
     public UIGame Game { get; set; }
 
@@ -58,15 +59,9 @@
     [Parameter]
     public EventCallback<Card> OnRemoveCardFromTurn { get; set; }
 
-    private List<Card> currentTurn = new();
+    private List<Card> currentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToList();
 
-    private List<Card> currentHand => Hand.Cards
-    .Where(c => !currentTurn.Contains(c)).ToList();
-
-    private List<List<Card>> otherHands => Game.Hands
-    .Where(hand => hand.User.Id != Hand.User.Id)
-    .Select(hand => hand.Cards)
-    .ToList();
+    private List<UIHand> otherHands => Game.Hands.Where(h => h.User.Id != Hand.User.Id).ToList();
 
     private string requestText => Game.CurrentRequest switch
     {

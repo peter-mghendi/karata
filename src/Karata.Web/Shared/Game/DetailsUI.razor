@@ -21,7 +21,7 @@
     <MudExpansionPanel Text="Chat" MaxHeight="500">
         <MudTextField T="string" Label="Type your message:" Variant="Variant.Filled" @bind-Value="@message" Lines="5" />
         <MudButton OnClick="@Send" >Send Message</MudButton>
-        <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+        <MudDivider DividerType="DividerType.Middle" Class="my-4" />
 
         <MudList>
             @foreach (var message in Room.Chats)

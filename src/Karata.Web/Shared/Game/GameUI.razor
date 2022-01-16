@@ -69,7 +69,7 @@
 
     private List<Card> currentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToList();
 
-    private List<UIHand> otherHands => Game.Hands.Where(hand => hand.User.Id != Hand.User.Id).ToList();
+    private List<UIHand> otherHands => Game.Hands.Where(h => h.User.Id != Hand.User.Id).ToList();
   
     private void AddCardToTurn(Card card) => OnAddCardToTurn.InvokeAsync(card);
 

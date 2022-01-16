@@ -36,8 +36,11 @@ else
         </MudDrawer>
         <MudPaper Elevation="1" Class="my-4">
             <MudToolBar>
-                <MudIconButton Icon="@Icons.Rounded.ArrowCircleUp" />
-                <MudIconButton Icon="@Icons.Rounded.ArrowCircleDown" />
+                @if (@Game.IsStarted)
+                {
+                    <MudIconButton Icon="@Icons.Rounded.ArrowCircleUp" OnClick="() => PerformTurn(new())" />
+                    <MudIconButton Icon="@Icons.Rounded.ArrowCircleDown" OnClick="() => PerformTurn(currentTurn)" />
+                }
                 <MudSpacer />
                 <MudIconButton Icon="@Icons.Rounded.PlayArrow" OnClick="StartGame" />
                 <MudIconButton Icon="@Icons.Rounded.PersonRemove" OnClick="LeaveRoom" />
@@ -65,6 +68,8 @@ else
 @code {
     [Inject]
     public CookieService CookieService { get; set; }
+    [Inject] 
+    private IDialogService DialogService { get; set; }
     private HubConnection hubConnection;
     private string username;
     private UIRoom room = null;
@@ -159,25 +164,19 @@ else
 
         hubConnection.On<bool>("PromptCardRequest", async specific =>
         {
-            @* TODO *@
-            @* var parameters = new ModalParameters(); *@
-            @* parameters.Add(nameof(CardRequestModal.Specific), specific); *@
-            @* var options = new ModalOptions { DisableBackgroundCancel = true }; *@
-            @* var modal = ModalService.Show<CardRequestModal>("Request a card", parameters, options); *@
-            @* var result = await modal.Result; *@
-            @* await hubConnection.SendAsync("RequestCard", (Card)result.Data); *@
+            var parameters = new DialogParameters();
+            parameters.Add(nameof(CardRequestModal.Specific), specific);
+            var dialog = DialogService.Show<CardRequestModal>("Request a card", parameters);
+            var result = await dialog.Result;
+            var data = result.Cancelled ? null : (Card)result.Data;
+            await hubConnection.SendAsync("RequestCard", data);
         });
 
         hubConnection.On("PromptLastCardRequest", async () =>
         {
-            @* var options = new ModalOptions {
-                DisableBackgroundCancel = true,
-                HideCloseButton = true
-                }; *@
-            @* TODO *@
-            @* var modal = ModalService.Show<LastCardPromptModal>("Last card?", options); *@
-            @* var result = await modal.Result; *@
-            @* await hubConnection.SendAsync("SetLastCardStatus", (bool)result.Data); *@
+            var dialog = DialogService.ShowMessageBox("Last Card?", "Are you on your last card?", "Yes!", "No");
+            var result = await dialog ?? false;
+            await hubConnection.SendAsync("SetLastCardStatus", result);
         });
 
         hubConnection.On<UIChat>("ReceiveChat", message =>

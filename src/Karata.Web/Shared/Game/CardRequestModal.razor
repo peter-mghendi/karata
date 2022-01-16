@@ -1,68 +1,55 @@
-@* <div>
-    @if (Specific)
-    {
-        <div class="mb-3 form-floating">
-            <select id="faceSelect" class="form-select" @bind="Face">
-                @foreach (var face in Enum.GetValues<CardFace>())
-                {
-                    @if (face is Joker) continue;
-                    <option value="@face">@face</option>
-                }
-            </select>
-            <label for="suitSelect" class="form-label">Face:</label>
-        </div>
-    }
-    <div class="mb-3 form-floating">
-        <select id="suitSelect" class="form-select" @bind="Suit">
-            @foreach (var suit in Enum.GetValues<CardSuit>())
-            {
-                @if (suit is BlackJoker or RedJoker) continue;
-                <option value="@suit">@suit</option>
-            }
-        </select>
-        <label for="suitSelect" class="form-label">Suit:</label>
-    </div>
-    <div class="d-flex mb-3">
-        <button class="btn btn-outline-primary w-100" @onclick="SubmitForm">
-            Request this card
-        </button>
-    </div>
-    @if (Specific)
-    {
-        <div class="row g-2">
-            <div class="col">
-                <button class="btn btn-outline-dark w-100 h-100" @onclick="() => RequestJoker(Black)">
-                    Black Joker
-                </button>
-            </div>
-            <div class="col">
-                <button class="btn btn-outline-danger w-100 h-100" @onclick="() => RequestJoker(Red)">
-                    Red Joker
-                </button>
-            </div>
-        </div>
-    }
+@if (Specific)
+{
+    <MudSelect Class="mb-4" @bind-Value="Face" Label="Face" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
+        @foreach (var face in Enum.GetValues<CardFace>())
+        {
+            @if (face is Joker) continue;
+            <MudSelectItem Value="@face">@face</MudSelectItem>
+        }
+    </MudSelect>
+}
 
-</div>
+<MudSelect Class="mb-4" @bind-Value="Suit" Label="Suit" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
+    @foreach (var suit in Enum.GetValues<CardSuit>())
+    {
+        @if (suit is BlackJoker or RedJoker) continue;
+        <MudSelectItem Value="@suit">@suit</MudSelectItem>
+    }
+</MudSelect>
+
+<MudButton Class="mb-4" OnClick="SubmitForm">Request this card</MudButton>
+
+<MudDivider DividerType="DividerType.Middle" Class="mh-4" />
+
+@if (Specific)
+{
+    <MudGrid Class="mb-4">
+        <MudItem xs="6">
+            <MudButton Color="Color.Dark" OnClick="() => RequestJoker(Black)">Black Joker</MudButton>
+        </MudItem>
+        <MudItem xs="6">
+            <MudButton Color="Color.Error" OnClick="() => RequestJoker(Red)">Red Joker</MudButton>
+        </MudItem>
+    </MudGrid>
+}
 
 @code
 {
     [CascadingParameter]
-    BlazoredModalInstance ModalInstance { get; set; }
+    MudDialogInstance MudDialog { get; set; }
 
     [Parameter]
     public bool Specific { get; set; }
     private CardFace Face { get; set; } = None;
     private CardSuit Suit { get; set; } = Spades;
 
-    private async Task RequestJoker(CardColor color)
+    private void RequestJoker(CardColor color)
     {
         (Face, Suit) = (Joker, color is Black ? BlackJoker : RedJoker);
-        await SubmitForm();
+        SubmitForm();
     }
 
-    private async Task SubmitForm() =>
-    await ModalInstance.CloseAsync(ModalResult.Ok(Face.Of(Suit)));
+    private void SubmitForm() => MudDialog.Close(Face.Of(Suit));
 
-    async Task Cancel() => await ModalInstance.CancelAsync();
-} *@
+    private void Cancel() => MudDialog.Close();
+}
