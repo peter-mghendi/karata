@@ -24,42 +24,50 @@ else if (room is null)
 }
 else
 {
-    <div class="container">
-        <div class="row">
-            <div class="col-8">
-                @if (@Game.IsStarted)
-                {
-                    if(useCardTable)
-                    {
-                        <CardTable Game="Game" Hand="Hand" @ref="cardTable" OnPerformTurn="PerformTurn" />
-                    }
-                    else
-                    {
-                        <GameUI Game="Game" Hand="Hand" @ref="gameUI" OnPerformTurn="PerformTurn" />
-                    }  
-                }
-                else
-                {
-                    <h4>Waiting for players to join. (@Game.Hands.Count/4)</h4>
-                }
-            </div>
-            <div class="col-4" style="height: calc(100vh - 5rem); overflow-y: auto;">
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" id="useCardTable" @bind="useCardTable" />
-                    <label class="form-check-label" for="useCardTable">Use CardTable UI</label>
-                    <small class="form-text text-muted">Turn this off if you experience any issues with the UI.</small>
-                </div>
-                <DetailsUI Room="room" Player="Player" OnSend="Send" OnStartGame="StartGame" OnLeaveRoom="LeaveRoom" />
-            </div>
-        </div>
-    </div>
+    <MudDrawerContainer Class="mud-height-full">
+        <MudDrawer @bind-Open="@open" Elevation="0" Variant="@DrawerVariant.Persistent" Anchor="Anchor.End">
+            <MudDrawerHeader>
+                <MudText Typo="Typo.h6">Game Details</MudText>
+            </MudDrawerHeader>
+            <MudDrawerContainer Class="mud-height-full">
+                <MudSwitch @bind-Checked="useCardTable" Label="Use CardTable UI" />
+                <DetailsUI Room="room" Player="Player" OnSend="Send" />
+            </MudDrawerContainer>
+        </MudDrawer>
+        <MudPaper Elevation="1" Class="mt-4">
+            <MudToolBar>
+                <MudIconButton Icon="@Icons.Rounded.ArrowCircleUp" />
+                <MudIconButton Icon="@Icons.Rounded.ArrowCircleDown" />
+                <MudSpacer />
+                <MudIconButton Icon="@Icons.Rounded.PlayArrow" OnClick="StartGame" />
+                <MudIconButton Icon="@Icons.Rounded.PersonRemove" OnClick="LeaveRoom"/>
+                <MudIconButton Icon="@Icons.Outlined.Menu" Color="Color.Inherit" OnClick="@ToggleDrawer" />
+            </MudToolBar>
+        </MudPaper>
+        @if (@Game.IsStarted)
+        {
+            if (useCardTable)
+            {
+                <CardTable Game="Game" Hand="Hand" @ref="cardTable" OnPerformTurn="PerformTurn" />
+            }
+            else
+            {
+                <GameUI Game="Game" Hand="Hand" @ref="gameUI" OnPerformTurn="PerformTurn" />
+            }
+        }
+        else
+        {
+            <MudText Typo="Typo.h4" Class="pa-4 mb-4">Waiting for players to join. (@Game.Hands.Count/4)</MudText>
+        }
+    </MudDrawerContainer>
+
 }
 
 @code {
     [Inject]
     public CookieService CookieService { get; set; }
     @* [CascadingParameter]
-    private IModalService ModalService { get; set; } *@
+        private IModalService ModalService { get; set; } *@
     private HubConnection hubConnection;
     private string username;
     private IGameInterface cardTable;
@@ -69,6 +77,9 @@ else
     private UIHand Hand => Game.Hands.Single(h => h.User.Email == username);
     private UIUser Player => Hand.User;
     private bool useCardTable = true;
+    bool open = false;
+
+    void ToggleDrawer() => open = !open;
 
     protected override async Task OnInitializedAsync()
     {
@@ -139,7 +150,7 @@ else
         });
 
         hubConnection.On<UIUser>("EndGame", winner =>
-        {            
+        {
             @* TODO *@
             @* Toast.ShowInfo($"Game over! {(winner?.Email ?? "Nobody")} won this game."); *@
             room = null;
@@ -165,10 +176,10 @@ else
 
         hubConnection.On("PromptLastCardRequest", async () =>
         {
-            @* var options = new ModalOptions { 
-                DisableBackgroundCancel = true, 
+            @* var options = new ModalOptions {
+                DisableBackgroundCancel = true,
                 HideCloseButton = true
-            }; *@
+                }; *@
             @* TODO *@
             @* var modal = ModalService.Show<LastCardPromptModal>("Last card?", options); *@
             @* var result = await modal.Result; *@
@@ -184,13 +195,13 @@ else
         hubConnection.On<SystemMessage>("ReceiveSystemMessage", message =>
         {
             @* var level = message.Type switch
-            {
+                {
                 MessageType.Error => ToastLevel.Error,
                 MessageType.Info => ToastLevel.Info,
                 MessageType.Success => ToastLevel.Success,
                 MessageType.Warning => ToastLevel.Warning,
                 _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
-            }; *@
+                }; *@
             @* TODO *@
             @* Toast.ShowToast(level, message.Text); *@
         });
@@ -258,12 +269,12 @@ else
     }
 
     async Task Send(string message) =>
-        await hubConnection.SendAsync("SendChat", room.InviteLink, message);
+    await hubConnection.SendAsync("SendChat", room.InviteLink, message);
 
     async Task CreateRoom(string password) => await hubConnection.SendAsync("CreateRoom", password);
 
-    async Task JoinRoom((string InviteLink, string Password) room) => 
-        await hubConnection.SendAsync("JoinRoom", room.InviteLink, room.Password);
+    async Task JoinRoom((string InviteLink, string Password) room) =>
+    await hubConnection.SendAsync("JoinRoom", room.InviteLink, room.Password);
 
     async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", room.InviteLink);
 

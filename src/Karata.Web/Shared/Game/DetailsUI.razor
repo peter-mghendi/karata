@@ -1,62 +1,46 @@
-@* @inject IToastService Toast *@
+@inject ISnackbar Snackbar 
+<MudExpansionPanels DisableBorders="true" Elevation="0">
+    <MudExpansionPanel Text="Information">
+        <MudList>
+            <MudListItem>Room ID: @Room.InviteLink</MudListItem>
+            <MudListItem>Created: @Room.CreatedAt</MudListItem>
+            <MudListItem>Creator: @Room.Creator.Email</MudListItem>
+            <MudListItem>Current: @Game.Hands[Game.CurrentTurn].User.Email</MudListItem>
+            <MudListItem>Players: @Game.Hands.Count</MudListItem>
+            <MudListItem>Started: @Game.IsStarted</MudListItem>
+        </MudList>
+    </MudExpansionPanel>
+    <MudExpansionPanel Text="Players">
+        <MudList>
+            @foreach (var hand in Game.Hands)
+            {
+                <MudListItem Text="@hand.User.Email"></MudListItem>
+            }
+        </MudList>
+    </MudExpansionPanel>
+    <MudExpansionPanel Text="Chat" MaxHeight="500">
+        <MudTextField T="string" Label="Type your message:" Variant="Variant.Filled" @bind-Value="@message" Lines="5" />
+        <MudButton OnClick="@Send" >Send Message</MudButton>
+        <MudDivider DividerType="DividerType.Middle" Class="my-6" />
 
-<div>
-    <details class="mb-2">
-        <summary class="text-info mb-2">
-            <i class="bi bi-info-circle me-2"></i>
-            <span><strong>Room Details</strong></span>
-        </summary>
-        <div>
-            <p>Room ID: <br> @Room.InviteLink</p>
-            <p>Created: <br> @Room.CreatedAt</p>
-            <p>Creator: <br> @Room.Creator.Email</p>
-            <p>Current: <br> @Game.Hands[Game.CurrentTurn].User.Email</p>
-            <p>Players: <br> @Game.Hands.Count</p>
-            <p>Started: <br> @Game.IsStarted</p>
-
-            <div class="row g-2">
-                @if (Room.Creator.Id == Player.Id && !Game.IsStarted)
-                {
-                    <div class="col">
-                        <button class="btn btn-outline-success w-100" @onclick="StartGame">
-                            Start Game
-                        </button>
+        <MudList>
+            @foreach (var message in Room.Chats)
+            {
+                <MudListItem>
+                    <div>
+                        @if (message.Sender.Id == Player.Id)
+                        {
+                            <MudIcon Icon="@Icons.Rounded.Person" Class="me-2" />
+                        }
+                        <MudText>@message.Sender.Email</MudText>
                     </div>
-                }
-                <div class="col">
-                    <button class="btn btn-outline-danger w-100" @onclick="LeaveRoom">
-                        Leave Room
-                    </button>
-                </div>
-            </div>
-        </div>
-    </details>
-
-    <div class="form-floating mb-2">
-        <textarea class="form-control" id="message" style="height: 100px" @bind="message"></textarea>
-        <label for="message">Type your message:</label>
-    </div>
-    <button class="btn btn-outline-primary w-100" @onclick="Send">Send</button>
-
-    <hr>
-
-    <ul id="messagesList" class="list-group list-group-flush">
-        @foreach (var message in Room.Chats)
-        {
-            <li class="list-group-item">
-                <div class="fw-bold">
-                    @if (message.Sender.Id == Player.Id)
-                    {
-                        <i class="bi bi-person-fill me-2"></i>
-                    }
-                    @message.Sender
-                </div>
-                <div class="small textss-muted">@message.Sent</div>
-                @message.Text
-            </li>
-        }
-    </ul>
-</div>
+                    <MudText>@message.Sent</MudText>
+                    @message.Text
+                </MudListItem>
+            }
+        </MudList>
+    </MudExpansionPanel>
+</MudExpansionPanels>
 
 @code
 {
@@ -69,28 +53,17 @@
     [Parameter]
     public EventCallback<string> OnSend { get; set; }
 
-    [Parameter]
-    public EventCallback OnStartGame { get; set; }
-
-    [Parameter]
-    public EventCallback OnLeaveRoom { get; set; }
-
     private UIGame Game => Room.Game;
     private string message;
     private async Task Send()
     {
         if (string.IsNullOrWhiteSpace(message))
         {
-            @* TODO *@
-            @* Toast.ShowError("You must enter a message to send."); *@
+            Snackbar.Add("You must enter a message to send.", Severity.Error);
             return;
         }
 
         await OnSend.InvokeAsync(message);
         message = "";
     }
-
-    private async Task StartGame() => await OnStartGame.InvokeAsync();
-
-    private async Task LeaveRoom() => await OnLeaveRoom.InvokeAsync();
 }
