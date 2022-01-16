@@ -11,7 +11,7 @@
 @inject AuthenticationStateProvider Authenticator
 @inject NavigationManager Navigator
 @inject IConfiguration Config
-@* @inject IToastService Toast *@
+@inject ISnackbar Snackbar
 
 @if (hubConnection.State != HubConnectionState.Connected)
 {
@@ -25,22 +25,22 @@ else if (room is null)
 else
 {
     <MudDrawerContainer Class="mud-height-full">
-        <MudDrawer @bind-Open="@open" Elevation="0" Variant="@DrawerVariant.Persistent" Anchor="Anchor.End">
+        <MudDrawer @bind-Open="@open" Width="400px" Elevation="1" Variant="@DrawerVariant.Temporary" Anchor="Anchor.End">
             <MudDrawerHeader>
                 <MudText Typo="Typo.h6">Game Details</MudText>
             </MudDrawerHeader>
-            <MudDrawerContainer Class="mud-height-full">
+            <MudItem class="mud-height-full pa-4">
                 <MudSwitch @bind-Checked="useCardTable" Label="Use CardTable UI" />
                 <DetailsUI Room="room" Player="Player" OnSend="Send" />
-            </MudDrawerContainer>
+            </MudItem>
         </MudDrawer>
-        <MudPaper Elevation="1" Class="mt-4">
+        <MudPaper Elevation="1" Class="my-4">
             <MudToolBar>
                 <MudIconButton Icon="@Icons.Rounded.ArrowCircleUp" />
                 <MudIconButton Icon="@Icons.Rounded.ArrowCircleDown" />
                 <MudSpacer />
                 <MudIconButton Icon="@Icons.Rounded.PlayArrow" OnClick="StartGame" />
-                <MudIconButton Icon="@Icons.Rounded.PersonRemove" OnClick="LeaveRoom"/>
+                <MudIconButton Icon="@Icons.Rounded.PersonRemove" OnClick="LeaveRoom" />
                 <MudIconButton Icon="@Icons.Outlined.Menu" Color="Color.Inherit" OnClick="@ToggleDrawer" />
             </MudToolBar>
         </MudPaper>
@@ -48,35 +48,31 @@ else
         {
             if (useCardTable)
             {
-                <CardTable Game="Game" Hand="Hand" @ref="cardTable" OnPerformTurn="PerformTurn" />
+                <CardTable Game="Game" Hand="Hand" Turn="currentTurn" OnAddCardToTurn="AddCardToTurn" OnRemoveCardFromTurn="RemoveCardFromTurn" />
             }
             else
             {
-                <GameUI Game="Game" Hand="Hand" @ref="gameUI" OnPerformTurn="PerformTurn" />
+                <GameUI Game="Game" Hand="Hand" Turn="currentTurn" OnAddCardToTurn="AddCardToTurn" OnRemoveCardFromTurn="RemoveCardFromTurn" />
             }
         }
         else
         {
-            <MudText Typo="Typo.h4" Class="pa-4 mb-4">Waiting for players to join. (@Game.Hands.Count/4)</MudText>
+            <MudText Typo="Typo.h5" Class="pa-4 mb-4">Waiting for players to join. (@Game.Hands.Count/4)</MudText>
         }
     </MudDrawerContainer>
-
 }
 
 @code {
     [Inject]
     public CookieService CookieService { get; set; }
-    @* [CascadingParameter]
-        private IModalService ModalService { get; set; } *@
     private HubConnection hubConnection;
     private string username;
-    private IGameInterface cardTable;
-    private IGameInterface gameUI;
     private UIRoom room = null;
     private UIGame Game => room.Game;
     private UIHand Hand => Game.Hands.Single(h => h.User.Email == username);
     private UIUser Player => Hand.User;
-    private bool useCardTable = true;
+    private List<Card> currentTurn = new();
+    private bool useCardTable = false;
     bool open = false;
 
     void ToggleDrawer() => open = !open;
@@ -138,8 +134,7 @@ else
         hubConnection.On<UIHand>("AddHandToRoom", hand =>
         {
             Game.Hands.Add(hand);
-            @* TODO *@
-            @* Toast.ShowInfo($"{hand.User.Email} has joined the room"); *@
+            Snackbar.Add($"{hand.User.Email} has joined the room", Severity.Info);
             StateHasChanged();
         });
 
@@ -151,16 +146,15 @@ else
 
         hubConnection.On<UIUser>("EndGame", winner =>
         {
-            @* TODO *@
-            @* Toast.ShowInfo($"Game over! {(winner?.Email ?? "Nobody")} won this game."); *@
+            Snackbar.Add($"Game over! {(winner?.Email ?? "Nobody")} won this game.", Severity.Info);
             room = null;
             StateHasChanged();
         });
 
         hubConnection.On("NotifyTurnProcessed", () =>
         {
-            cardTable.NotifyTurnPerformed();
-            gameUI.NotifyTurnPerformed();
+            currentTurn.Clear();
+            StateHasChanged();
         });
 
         hubConnection.On<bool>("PromptCardRequest", async specific =>
@@ -194,16 +188,15 @@ else
 
         hubConnection.On<SystemMessage>("ReceiveSystemMessage", message =>
         {
-            @* var level = message.Type switch
-                {
-                MessageType.Error => ToastLevel.Error,
-                MessageType.Info => ToastLevel.Info,
-                MessageType.Success => ToastLevel.Success,
-                MessageType.Warning => ToastLevel.Warning,
+            var severity = message.Type switch
+            {
+                MessageType.Error => Severity.Error,
+                MessageType.Info => Severity.Info,
+                MessageType.Success => Severity.Success,
+                MessageType.Warning => Severity.Warning,
                 _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
-                }; *@
-            @* TODO *@
-            @* Toast.ShowToast(level, message.Text); *@
+            };
+            Snackbar.Add(message.Text, severity);
         });
 
         hubConnection.On("ReclaimPile", () =>
@@ -240,8 +233,7 @@ else
         hubConnection.On<UIHand>("RemoveHandFromRoom", hand =>
         {
             _ = Game.Hands.Remove(hand);
-            @* TODO *@
-            @* Toast.ShowInfo($"{hand.User.Email} has left the room."); *@
+            Snackbar.Add($"{hand.User.Email} has left the room.", Severity.Info);
             StateHasChanged();
         });
 
@@ -260,8 +252,7 @@ else
         hubConnection.On<bool>("UpdateGameStatus", started =>
         {
             Game.IsStarted = started;
-            @* TODO *@
-            @* if (started) Toast.ShowInfo("The game has started."); *@
+            if (started) Snackbar.Add($"The game has started", Severity.Info);
             StateHasChanged();
         });
 
@@ -279,6 +270,18 @@ else
     async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", room.InviteLink);
 
     async Task StartGame() => await hubConnection.SendAsync("StartGame", room.InviteLink);
+
+    private void AddCardToTurn(Card card)
+    {
+        currentTurn.Add(card);
+        StateHasChanged();
+    }
+
+    private void RemoveCardFromTurn(Card card)
+    {
+        currentTurn.Remove(card);
+        StateHasChanged();
+    }
 
     async Task PerformTurn(List<Card> cards)
     {

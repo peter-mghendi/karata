@@ -11,9 +11,13 @@ public interface IGameInterface
     public UIHand Hand { get; set; }
 
     [Parameter]
-    public EventCallback<List<Card>> OnPerformTurn { get; set; }
+    public List<Card> Turn { get; set; }
 
-    public void NotifyTurnPerformed();
+    [Parameter]
+    public EventCallback<Card> OnAddCardToTurn { get; set; }
+        
+    [Parameter]
+    public EventCallback<Card> OnRemoveCardFromTurn { get; set; }
 }
 
 
