@@ -38,13 +38,29 @@ else
             <MudToolBar>
                 @if (@Game.IsStarted)
                 {
-                    <MudIconButton Icon="@Icons.Rounded.ArrowCircleUp" OnClick="() => PerformTurn(new())" />
-                    <MudIconButton Icon="@Icons.Rounded.ArrowCircleDown" OnClick="() => PerformTurn(currentTurn)" />
+                    <MudTooltip Text="Pick card(s)">
+                        <MudIconButton Icon="@Icons.Rounded.ArrowCircleUp" Color="Color.Inherit" OnClick="() => PerformTurn(new())" />
+                    </MudTooltip>
+                    <MudTooltip Text="Play card(s)">
+                        <MudIconButton Icon="@Icons.Rounded.ArrowCircleDown" Color="Color.Inherit" OnClick="() => PerformTurn(currentTurn)" />
+                    </MudTooltip>
                 }
+
                 <MudSpacer />
-                <MudIconButton Icon="@Icons.Rounded.PlayArrow" OnClick="StartGame" />
-                <MudIconButton Icon="@Icons.Rounded.PersonRemove" OnClick="LeaveRoom" />
-                <MudIconButton Icon="@Icons.Outlined.Menu" Color="Color.Inherit" OnClick="@ToggleDrawer" />
+
+                @if (!@Game.IsStarted)
+                {
+                    <MudTooltip Text="Start Game">
+                        <MudIconButton Icon="@Icons.Rounded.PlayArrow" Color="Color.Inherit" OnClick="StartGame" />
+                    </MudTooltip>
+                }
+
+                <MudTooltip Text="Leave Room">
+                    <MudIconButton Icon="@Icons.Rounded.PersonRemove" Color="Color.Inherit" OnClick="LeaveRoom" />
+                </MudTooltip>
+                <MudTooltip Text="Game Details">
+                    <MudIconButton Icon="@Icons.Outlined.Menu" Color="Color.Inherit" OnClick="@ToggleDrawer" />
+                </MudTooltip>
             </MudToolBar>
         </MudPaper>
         @if (@Game.IsStarted)

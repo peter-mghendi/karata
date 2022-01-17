@@ -12,10 +12,10 @@
             }
         </MudPaper>
     </MudItem>
-    <MudItem xs="6">
+    <MudItem xs="12" sm="6">
         <MudPaper Class="pa-4">
 
-            <MudText>Player Hands</MudText>
+            <MudText>Player Hands:</MudText>
             @foreach (var hand in otherHands)
             {
                 <MudText>@(hand.User.Email) has @(hand.Cards.Count) cards.</MudText>
@@ -25,7 +25,7 @@
 </MudGrid>
 
 <MudGrid Spacing="4" Justify="Justify.Center">
-    <MudItem xs="6">
+    <MudItem xs="12" sm="6">
         <MudPaper>
             <MudText Class="pa-4">My Hand:</MudText>
             <MudList Clickable="true">
