@@ -1,6 +1,30 @@
 @page "/"
 
-<div class="container text-center">
-    <h1 class="display-6">Hello there!</h1>
-    <p class="lead">Welcome to Karata.</p>
+<div class="py-4">
+    @for (var i = 0; i < 10; i++)
+    {
+        <MudCard Class="mb-4">
+            <MudCardHeader>
+                <CardHeaderAvatar>
+                    <MudSkeleton SkeletonType="SkeletonType.Circle" Animation="Animation.Wave" Height="40px" Width="40px" />
+                </CardHeaderAvatar>
+                <CardHeaderContent>
+                    <MudSkeleton Animation="Animation.Wave" Width="40%" />
+                    <MudSkeleton Animation="Animation.Wave" Width="60%" />
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudSkeleton Animation="Animation.Wave" />
+                <MudSkeleton Animation="Animation.Wave" />
+                <MudSkeleton Animation="Animation.Wave" />
+                <MudSkeleton Animation="Animation.Wave" Width="60%" />
+            </MudCardContent>
+            <MudCardActions>
+                <MudSkeleton SkeletonType="SkeletonType.Circle" Animation="Animation.Wave" Height="30px" Width="30px"
+                Class="ml-2 mb-2" />
+                <MudSkeleton SkeletonType="SkeletonType.Circle" Animation="Animation.Wave" Height="30px" Width="30px"
+                Class="ml-3 mb-2" />
+            </MudCardActions>
+        </MudCard>
+    }
 </div>

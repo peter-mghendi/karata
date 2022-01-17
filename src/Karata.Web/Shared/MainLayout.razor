@@ -1,27 +1,33 @@
 @inherits LayoutComponentBase
 
-@using Blazored.Toast.Configuration
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
 
-<BlazoredToasts Position="ToastPosition.BottomRight"
-                ShowProgressBar="true" 
-                RemoveToastsOnNavigation="true"	
-                MaxToastCount="5" />
-
-<div class="page">
-    <div class="sidebar">
+<MudLayout Class="mud-height-full">
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Class="me-2" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Color="Color.Inherit">Karata</MudText>
+        <MudSpacer />
+        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit">
+            <MudMenuItem>Toggle Theme</MudMenuItem>
+        </MudMenu>
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="2"  Variant="@DrawerVariant.Temporary">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h5" Class="mt-1">Karata</MudText>
+        </MudDrawerHeader>
         <NavMenu />
-    </div>
-
-    <div class="main">
-        <div class="top-row px-4 auth">
-            <LoginDisplay />
-            <a href="https://github.com/sixpeteunder/karata" target="_blank">
-                <i class="bi bi-github me-2"></i> GitHub
-            </a>
-        </div>
-
-        <div class="content px-4">
+    </MudDrawer>
+    <MudMainContent Class="mud-height-full">
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="mud-height-full">
             @Body
-        </div>
-    </div>
-</div>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+
+    void DrawerToggle() => _drawerOpen = !_drawerOpen;
+}

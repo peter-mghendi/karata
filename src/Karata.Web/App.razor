@@ -3,29 +3,26 @@
 @inject CookieService CookieService
 
 <CascadingAuthenticationState>
-    <CascadingBlazoredModal>
-        <Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
-            <Found Context="routeData">
-                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-            </Found>
-            <NotFound>
-                <LayoutView Layout="@typeof(MainLayout)">
-                    <p>Sorry, there's nothing at this address.</p>
-                </LayoutView>
-            </NotFound>
-        </Router>
-    </CascadingBlazoredModal>
+    <Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p>Sorry, there's nothing at this address.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
 </CascadingAuthenticationState>
 
 @code {
-
     [Parameter]
     public string Cookie { get; set; }
 
     protected override Task OnInitializedAsync()
     {
         // Pass the Cookie parameter to the CookiesProvider service
-        // which is to be injected into the Chat component, and then
+        // which is to be injected into the Play component, and then
         // passed to the Hub via the hub connection builder
         CookieService.Cookie = Cookie;
 
