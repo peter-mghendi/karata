@@ -1,12 +1,12 @@
 #table {
-    --center-offset: 37.5%;
+    --center-offset: 43.5%;
     --edge-offset-vertical: 16px;
     --edge-offset-horizontal: 8px;
 }
 
 #table {
     width: 100%;
-    height: 100%;
+    height: 80%;
     background-color: green;
     position: relative;
 }
@@ -45,19 +45,19 @@
 
 #deck {
     position: absolute;
-    top: var(--center-offset);
-    left: 35%;
-    width: 75px;
+    top: 30%;
+    left: 40%;
+    width: 70px;
 }
 
 #pile {
     position: absolute;
-    top: var(--center-offset);
-    right: 35%;
-    width: 75px;
+    top: 30%;
+    right: 40%;
+    width: 70px;
 }
 
 #turn {
-    bottom: 23.5%;
-    right: 37.5%;
+    bottom: 27.5%;
+    right: 43.5%;
 }
