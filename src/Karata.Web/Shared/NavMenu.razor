@@ -1,24 +1,20 @@
-﻿<MudNavMenu>
+﻿@inject ISnackbar Snackbar
+
+<MudNavMenu>
     <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Rounded.Home">Home</MudNavLink>
     
     <AuthorizeView>
         <MudNavLink Href="/play" Match="NavLinkMatch.Prefix" Icon="@Icons.Rounded.Games">Play</MudNavLink>
     </AuthorizeView>
 
-    
     <MudNavLink Href="/about"  Match="NavLinkMatch.Prefix" Icon="@Icons.Rounded.Info">About</MudNavLink>
     <MudNavLink Href="/help" Match="NavLinkMatch.Prefix" Icon="@Icons.Rounded.Help">Help</MudNavLink>
-    
-    <MudNavGroup Title="Account" Expanded="true" Icon="@Icons.Rounded.AccountCircle">
-        <AuthorizeView>
-            <Authorized>
-                <MudNavLink Href="Identity/Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Rounded.ManageAccounts">Profile</MudNavLink>
-                <MudNavLink Href="" Match="NavLinkMatch.Prefix" Icon="@Icons.Rounded.Logout">Log Out</MudNavLink>
-            </Authorized>
-            <NotAuthorized>
-                <MudNavLink Href="Identity/Account/Login" Match="NavLinkMatch.Prefix" Icon="@Icons.Rounded.Login">Log In</MudNavLink>
-                <MudNavLink Href="Identity/Account/Register" Match="NavLinkMatch.Prefix" Icon="@Icons.Rounded.AppRegistration">Register</MudNavLink>
-            </NotAuthorized>
-        </AuthorizeView>
-    </MudNavGroup>
 </MudNavMenu>
+
+@code 
+{
+    private void Logout()
+    {
+        Snackbar.Add("Logging out...", Severity.Info);
+    }
+}
