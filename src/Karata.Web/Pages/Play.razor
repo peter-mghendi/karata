@@ -15,8 +15,8 @@
 
 @if (hubConnection.State != HubConnectionState.Connected)
 {
-    <p class="lead">You are not connected to a server</p>
-    <p class="text-muted">If this message persists, reload this page to establish a connection.</p>
+    <MudText Typo="Typo.h5" Class="pa-4 my-4">You are not connected to a server.</MudText>
+    <MudText Typo="Typo.h6" Class="pa-4 mb-4">If this message persists, reload this page to establish a connection.</MudText>
 }
 else if (room is null)
 {
@@ -25,16 +25,25 @@ else if (room is null)
 else
 {
     <MudDrawerContainer Class="mud-height-full">
-        <MudDrawer @bind-Open="@open" Width="400px" Elevation="1" Variant="@DrawerVariant.Temporary" Anchor="Anchor.End">
-            <MudDrawerHeader>
-                <MudText Typo="Typo.h6">Game Details</MudText>
+        <MudDrawer @bind-Open="open" Height="100%" Elevation="1" Variant="@DrawerVariant.Temporary" Anchor="Anchor.Bottom" Class="grey lighten-4">
+            <MudDrawerHeader Class="d-flex justify-space-between align-center pa-2">
+                <MudText Typo="Typo.h6" Class="px-4">Game Info</MudText>
+                <MudIconButton Icon="@Icons.Rounded.Close" Color="Color.Inherit" OnClick="() => open = false" />
             </MudDrawerHeader>
-            <MudItem class="mud-height-full pa-4">
-                <MudSwitch @bind-Checked="useCardTable" Label="Use CardTable UI" />
+            <MudContainer MaxWidth="MaxWidth.Medium">
+                <MudPaper Class="pa-4 mb-4" Elevation="0">
+                    <div class="mb-2">
+                        <MudSwitch @bind-Checked="useCardTable" Color="Color.Primary" Label="Use CardTable UI (Experimental)" />
+                    </div>
+                    <MudText Typo="Typo.caption" Class="text-grey">
+                        The CardTable UI is still under development and, as such, may contain bugs. Use GameUI for best experience.
+                    </MudText>
+                </MudPaper>
+                
                 <DetailsUI Room="room" Player="Player" OnSend="Send" />
-            </MudItem>
+            </MudContainer>
         </MudDrawer>
-        <MudPaper Elevation="1" Class="my-4">
+        <MudPaper Elevation="0" Class="my-4">
             <MudToolBar>
                 @if (@Game.IsStarted)
                 {
@@ -59,7 +68,7 @@ else
                     <MudIconButton Icon="@Icons.Rounded.PersonRemove" Color="Color.Inherit" OnClick="LeaveRoom" />
                 </MudTooltip>
                 <MudTooltip Text="Game Details">
-                    <MudIconButton Icon="@Icons.Outlined.Menu" Color="Color.Inherit" OnClick="@ToggleDrawer" />
+                    <MudIconButton Icon="@Icons.Rounded.Info" Color="Color.Inherit" OnClick="() => open = true" />
                 </MudTooltip>
             </MudToolBar>
         </MudPaper>
@@ -95,8 +104,6 @@ else
     private List<Card> currentTurn = new();
     private bool useCardTable = false;
     bool open = false;
-
-    void ToggleDrawer() => open = !open;
 
     protected override async Task OnInitializedAsync()
     {
@@ -198,6 +205,8 @@ else
         hubConnection.On<UIChat>("ReceiveChat", message =>
         {
             room.Chats.Add(message);
+            var sender = message.Sender.Email;
+            if(sender != username) Snackbar.Add($"New message from {sender}.", Severity.Info);
             StateHasChanged();
         });
 
@@ -261,10 +270,10 @@ else
         hubConnection.On<int>("UpdateTurn", turn =>
         {
             Game.CurrentTurn = turn;
-            var currentPlayerEmail = Game.Hands[turn].User.Email;
-            var myTurn = currentPlayerEmail == Player.Email;
-            var turnString = myTurn ? "your" : $"{currentPlayerEmail}'s"
-            Snackbar.Add($"It is now {turnString} turn.", Severity.Info);
+            var current = Game.Hands[turn].User.Email;
+            var turnText = current == username ? "your" : $"{current}'s";
+            var message = $"It is now {turnText} turn.";
+            Snackbar.Add(message, Severity.Info);
             StateHasChanged();
         });
 

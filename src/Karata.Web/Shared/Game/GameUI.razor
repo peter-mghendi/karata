@@ -2,7 +2,7 @@
 
 <MudGrid Spacing="4" Justify="Justify.Center">
     <MudItem xs="6">
-        <MudPaper Class="pa-4">
+        <MudPaper Class="pa-4" Elevation="0">
             <MudText>Top Card: @Game.Pile.Peek().GetName()</MudText>
             @if (Game.CurrentRequest is Card request)
             {
@@ -13,7 +13,7 @@
         </MudPaper>
     </MudItem>
     <MudItem xs="12" sm="6">
-        <MudPaper Class="pa-4">
+        <MudPaper Class="pa-4" Elevation="0">
 
             <MudText>Player Hands:</MudText>
             @foreach (var hand in otherHands)
@@ -26,8 +26,10 @@
 
 <MudGrid Spacing="4" Justify="Justify.Center">
     <MudItem xs="12" sm="6">
-        <MudPaper>
-            <MudText Class="pa-4">My Hand:</MudText>
+        <MudPaper Elevation="0">
+            <MudListSubheader>
+                My Cards (click to add to turn)
+            </MudListSubheader>
             <MudList Clickable="true">
                 @foreach (var card in currentHand)
                 {
@@ -37,12 +39,14 @@
         </MudPaper>
     </MudItem>
     <MudItem xs="6">
-        <MudPaper>
-            <MudText Class="pa-4">This turn:</MudText>
+        <MudPaper Elevation="0">
+            <MudListSubheader>
+                This turn (click to remove)
+            </MudListSubheader>
             <MudList Clickable="true">
                 @foreach (var card in Turn)
                 {
-                    <MudListItem Text="@card.GetName()" Icon="@Icons.Rounded.Add" IconColor="Color.Error" OnClick="() => RemoveCardFromTurn(card)" />
+                    <MudListItem Text="@card.GetName()" Icon="@Icons.Rounded.Remove" IconColor="Color.Error" OnClick="() => RemoveCardFromTurn(card)" />
                 }
             </MudList>
         </MudPaper>

@@ -36,10 +36,6 @@
     @* TODO Include @click handlers after all? *@
     <img id="deck" src="img/cards/Back.svg" />
     <img id="pile" src="@ImageUrl(Game.Pile.Peek())" title="@requestText" />
-
-    @* <img id="deck" src="img/cards/Back.svg" @onclick="PickCard" />
-        <img id="pile" src="@ImageUrl(Game.Pile.Peek())"
-        title="@requestText" @onclick="PerformTurn" /> *@
 </div>
 
 @code 
@@ -71,14 +67,10 @@
     };
 
     private string ImageUrl(Card card) => card is { Face: Joker }
-    ? $"img/cards/{card.Suit.ToString()}.svg"
-    : $"img/cards/{card.Face.ToString()}{card.Suit.ToString()}.svg";
+        ? $"img/cards/{card.Suit.ToString()}.svg"
+        : $"img/cards/{card.Face.ToString()}{card.Suit.ToString()}.svg";
 
     private void AddCardToTurn(Card card) => OnAddCardToTurn.InvokeAsync(card);
 
     private void RemoveCardFromTurn(Card card) => OnRemoveCardFromTurn.InvokeAsync(card);
-
-    @* private async Task PickCard() => await OnPerformTurn.InvokeAsync(new());
-
-        private async Task PerformTurn() => await OnPerformTurn.InvokeAsync(Turn); *@
 }

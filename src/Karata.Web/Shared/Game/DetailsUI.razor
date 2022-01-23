@@ -1,13 +1,34 @@
+@using TextCopy
+
 @inject ISnackbar Snackbar 
-<MudExpansionPanels DisableBorders="true" Elevation="0">
+
+<MudExpansionPanels DisableBorders="true" Elevation="0" Class="mb-4">
     <MudExpansionPanel Text="Information">
-        <MudList>
-            <MudListItem>Room ID: @Room.InviteLink</MudListItem>
-            <MudListItem>Created: @Room.CreatedAt</MudListItem>
-            <MudListItem>Creator: @Room.Creator.Email</MudListItem>
-            <MudListItem>Current: @Game.Hands[Game.CurrentTurn].User.Email</MudListItem>
-            <MudListItem>Players: @Game.Hands.Count</MudListItem>
-            <MudListItem>Started: @Game.IsStarted</MudListItem>
+        <MudList Clickable="true">
+            <MudListItem OnClick="CopyInviteLink">
+                <MudText Typo="Typo.caption">Room ID (Click to Copy)</MudText>
+                <MudText Typo="Typo.body1" Class="grey-text">@Room.InviteLink</MudText>
+            </MudListItem>
+            <MudListItem>
+                <MudText Typo="Typo.caption">Date Created</MudText>
+                <MudText Typo="Typo.body1" Class="grey-text">@Room.CreatedAt</MudText>
+            </MudListItem>
+            <MudListItem>
+                <MudText Typo="Typo.caption">Room Admin</MudText>
+                <MudText Typo="Typo.body1" Class="grey-text">@Room.Creator.Email</MudText>
+            </MudListItem>
+            <MudListItem>
+                <MudText Typo="Typo.caption">Current Turn</MudText>
+                <MudText Typo="Typo.body1" Class="grey-text">@Game.Hands[Game.CurrentTurn].User.Email</MudText>
+            </MudListItem>
+            <MudListItem>
+                <MudText Typo="Typo.caption">Players</MudText>
+                <MudText Typo="Typo.body1" Class="grey-text">@Game.Hands.Count</MudText>
+            </MudListItem>
+            <MudListItem>
+                <MudText Typo="Typo.caption" Class="grey-text">Status</MudText>
+                <MudText Typo="Typo.body1">@(Game.IsStarted ? "In Progress" : "In Lobby")</MudText>
+            </MudListItem>
         </MudList>
     </MudExpansionPanel>
     <MudExpansionPanel Text="Players">
@@ -19,23 +40,23 @@
         </MudList>
     </MudExpansionPanel>
     <MudExpansionPanel Text="Chat" MaxHeight="500">
-        <MudTextField T="string" Label="Type your message:" Variant="Variant.Filled" @bind-Value="@message" Lines="5" />
-        <MudButton OnClick="@Send" >Send Message</MudButton>
+        <MudTextField T="string" Label="Type your message:" Variant="Variant.Filled" @bind-Value="@message" Lines="5" Class="mb-2" />
+        <MudButton Variant="Variant.Text" EndIcon="@Icons.Rounded.Send" Color="Color.Primary" FullWidth="true" OnClick="@Send">Send Message</MudButton>
         <MudDivider DividerType="DividerType.Middle" Class="my-4" />
 
         <MudList>
             @foreach (var message in Room.Chats)
             {
                 <MudListItem>
-                    <div>
+                    <div class="d-flex align-center">
                         @if (message.Sender.Id == Player.Id)
                         {
                             <MudIcon Icon="@Icons.Rounded.Person" Class="me-2" />
                         }
                         <MudText>@message.Sender.Email</MudText>
                     </div>
-                    <MudText>@message.Sent</MudText>
-                    @message.Text
+                    <MudText Typo="Typo.caption" Class="grey-text mb-2">@message.Sent</MudText>
+                    <MudText>@message.Text</MudText>
                 </MudListItem>
             }
         </MudList>
@@ -53,8 +74,12 @@
     [Parameter]
     public EventCallback<string> OnSend { get; set; }
 
+    [Inject]
+    public IClipboard Clipboard { get; set; }
+
     private UIGame Game => Room.Game;
     private string message;
+
     private async Task Send()
     {
         if (string.IsNullOrWhiteSpace(message))
@@ -65,5 +90,11 @@
 
         await OnSend.InvokeAsync(message);
         message = "";
+    }
+
+    private async Task CopyInviteLink()
+    {
+        await Clipboard.SetTextAsync(Room.InviteLink ?? string.Empty);
+        Snackbar.Add("Copied to clipboard.", Severity.Info);   
     }
 }
