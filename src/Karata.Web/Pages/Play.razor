@@ -256,7 +256,7 @@ else
 
         hubConnection.On<UIHand>("RemoveHandFromRoom", hand =>
         {
-            _ = Game.Hands.Remove(hand);
+            _ = Game.Hands.RemoveAll(h => h.User.Email == hand.User.Email);
             Snackbar.Add($"{hand.User.Email} has left the room.", Severity.Info);
             StateHasChanged();
         });
