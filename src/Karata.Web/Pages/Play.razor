@@ -261,6 +261,10 @@ else
         hubConnection.On<int>("UpdateTurn", turn =>
         {
             Game.CurrentTurn = turn;
+            var currentPlayerEmail = Game.Hands[turn].User.Email;
+            var myTurn = currentPlayerEmail == Player.Email;
+            var turnString = myTurn ? "your" : $"{currentPlayerEmail}'s"
+            Snackbar.Add($"It is now {turnString} turn.", Severity.Info);
             StateHasChanged();
         });
 
