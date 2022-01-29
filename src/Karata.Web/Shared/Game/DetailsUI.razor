@@ -1,4 +1,4 @@
-@using TextCopy
+@using Karata.Web.Services
 
 @inject ISnackbar Snackbar 
 
@@ -75,7 +75,7 @@
     public EventCallback<string> OnSend { get; set; }
 
     [Inject]
-    public IClipboard Clipboard { get; set; }
+    public IClipboardService Clipboard { get; set; }
 
     private UIGame Game => Room.Game;
     private string message;
