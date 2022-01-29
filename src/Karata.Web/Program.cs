@@ -57,6 +57,7 @@ builder.Services.AddSignalR().AddHubOptions<GameHub>(options =>
 builder.Services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
 builder.Services.AddSingleton<IPasswordService, PasswordService>();
 builder.Services.AddSingleton<IEngine, KarataEngine>();
+builder.Services.AddScoped<IClipboardService, ClipboardService>();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<User>>();
 builder.Services.AddScoped<CookieService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
