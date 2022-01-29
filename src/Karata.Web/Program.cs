@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using Npgsql; 
+using TextCopy;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,12 +58,12 @@ builder.Services.AddSignalR().AddHubOptions<GameHub>(options =>
 builder.Services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
 builder.Services.AddSingleton<IPasswordService, PasswordService>();
 builder.Services.AddSingleton<IEngine, KarataEngine>();
-builder.Services.AddScoped<IClipboardService, ClipboardService>();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<User>>();
 builder.Services.AddScoped<CookieService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddMudServices();
+builder.Services.InjectClipboard();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddResponseCompression(opts =>
 {
