@@ -1,5 +1,3 @@
-@using TextCopy
-
 @inject ISnackbar Snackbar 
 
 <MudExpansionPanels DisableBorders="true" Elevation="0" Class="mb-4">
@@ -74,9 +72,6 @@
     [Parameter]
     public EventCallback<string> OnSend { get; set; }
 
-    [Inject]
-    public IClipboard Clipboard { get; set; }
-
     private UIGame Game => Room.Game;
     private string message;
 
@@ -92,9 +87,8 @@
         message = "";
     }
 
-    private async Task CopyInviteLink()
+    private void CopyInviteLink()
     {
-        await Clipboard.SetTextAsync(Room.InviteLink ?? string.Empty);
         Snackbar.Add("Copied to clipboard.", Severity.Info);   
     }
 }
