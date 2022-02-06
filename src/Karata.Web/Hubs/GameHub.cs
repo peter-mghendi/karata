@@ -225,10 +225,11 @@ public class GameHub : Hub<IGameClient>
 
         await Clients.Group(inviteLink).RemoveCardsFromDeck(1);
         game.Pile.Push(topCard);
-        await Clients.Group(inviteLink).AddCardToPile(topCard);
+        await Clients.Group(inviteLink).AddCardRangeToPile(new() { topCard });
 
         // Deal player cards
         // TODO: Explicit card movements (Deck -> Hand, Hand -> Pile, etc).
+        // Needs more thought: will have to restructure PerformTurn
         foreach (var hand in game.Hands)
         {
             var dealtCount = 4;
@@ -258,7 +259,7 @@ public class GameHub : Hub<IGameClient>
         var turn = new Turn { UserId = player.Id, Cards = cardList };
         game.Turns.Add(turn);
 
-        // Check for ukora
+        // Check for turns performed wile awaiting card requests
         if (CardRequests.ContainsKey(Context.ConnectionId) || LastCardRequests.ContainsKey(Context.ConnectionId))
         {
             var message = new SystemMessage
@@ -313,11 +314,8 @@ public class GameHub : Hub<IGameClient>
         } 
 
         // Add cards to pile
-        foreach (var card in cardList)
-        {
-            game.Pile.Push(card);
-            await Clients.Group(inviteLink).AddCardToPile(card);
-        }
+        foreach (var card in cardList) game.Pile.Push(card); 
+        await Clients.Group(inviteLink).AddCardRangeToPile(cardList);
 
         // Remove cards from player hand
         await Clients.Caller.NotifyTurnProcessed();
@@ -336,7 +334,12 @@ public class GameHub : Hub<IGameClient>
 
         if (delta.HasRequest)
         {
-            turn.Request = await this.PromptCallerAsync(CardRequests, Context.ConnectionId, "PromptCardRequest", delta.HasSpecificRequest);
+            turn.Request = await this.PromptCallerAsync(
+                CardRequests, 
+                Context.ConnectionId, 
+                nameof(IGameClient.PromptCardRequest), 
+                delta.HasSpecificRequest
+            );
             game.CurrentRequest = turn.Request;
             await Clients.Group(inviteLink).SetCurrentRequest(turn.Request);
         }
@@ -352,13 +355,10 @@ public class GameHub : Hub<IGameClient>
             {
                 if (game.Pile.Count + game.Deck.Count - 1 > game.Pick)
                 {
-                    // Remove cards from pile
+                    // Reclaim pile
                     var pileCards = game.Pile.Reclaim();
-                    await Clients.Group(inviteLink).ReclaimPile();
-
-                    // Add cards to deck
                     foreach (var pileCard in pileCards) game.Deck.Push(pileCard);
-                    await Clients.Group(inviteLink).AddCardsToDeck(pileCards.Count);
+                    await Clients.Group(inviteLink).ReclaimPile();
 
                     // Shuffle & deal
                     game.Deck.Shuffle();
@@ -407,7 +407,7 @@ public class GameHub : Hub<IGameClient>
         }
         else // TODO: Player cannot be on their last card if they have a  Ace, "Bomb", Jack or King
         {
-            turn.IsLastCard = await this.PromptCallerAsync(LastCardRequests, Context.ConnectionId, "PromptLastCardRequest");
+            turn.IsLastCard = await this.PromptCallerAsync(LastCardRequests, Context.ConnectionId, nameof(IGameClient.PromptLastCardRequest));
             if (turn.IsLastCard)    
             {
                 hand.IsLastCard = true;

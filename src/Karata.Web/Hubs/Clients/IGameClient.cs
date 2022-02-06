@@ -6,9 +6,7 @@ namespace Karata.Web.Hubs.Clients;
 
 public interface IGameClient
 {
-    Task AddCardsToDeck(int num);
     Task AddCardsToPlayerHand(UIHand hand, int num);
-    Task AddCardToPile(Card card);
     Task AddCardRangeToHand(List<Card> cards); 
     Task AddCardRangeToPile(List<Card> cards);
     Task AddHandToRoom(UIHand hand);

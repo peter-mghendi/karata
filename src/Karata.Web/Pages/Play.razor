@@ -128,18 +128,6 @@ else
         })
         .Build();
 
-        hubConnection.On<int>("AddCardsToDeck", num =>
-        {
-            Game.DeckCount += num;
-            StateHasChanged();
-        });
-
-        hubConnection.On<Card>("AddCardToPile", card =>
-        {
-            Game.Pile.Push(card);
-            StateHasChanged();
-        });
-
         hubConnection.On<UIHand, int>("AddCardsToPlayerHand", (hand, num) =>
         {
             var playerHand = Game.Hands.Single(h => h.User.Email == hand.User.Email);
@@ -225,7 +213,8 @@ else
 
         hubConnection.On("ReclaimPile", () =>
         {
-            _ = Game.Pile.Reclaim();
+            var cards = Game.Pile.Reclaim();
+            Game.DeckCount += cards.Count;
             StateHasChanged();
         });
 

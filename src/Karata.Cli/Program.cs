@@ -3,6 +3,8 @@ using System.Text.Json;
 using Karata.Cards;
 using Karata.Cards.Extensions;
 using static System.Console;
+using static Karata.Cards.Card.CardFace;
+using static Karata.Cards.Card.CardSuit;
 
 DisplayDeck(deck: Deck.StandardDeck);
 
@@ -23,6 +25,8 @@ AddToDictionary(dictionary, "key1", "value1");
 AddToDictionary(dictionary, "key2", "value2");
 WriteLine(dictionary.Count);
 
+WriteLine(nameof(I.Action));
+
 static void DisplayDeck(Deck deck)
 {
     var title = $"| {"Card",-20}| {"Rank",-5}|";
@@ -35,4 +39,9 @@ static void AddToDictionary(ConcurrentDictionary<string, string> dict, string ke
 {
     if (dict.TryAdd(key, value)) WriteLine($"Added {key} to dictionary.");
     else WriteLine($"Failed to add {key} to dictionary.");
+}
+
+interface I
+{
+    public void Action(string parameter);
 }
