@@ -163,7 +163,7 @@ else
         hubConnection.On<UIUser>("EndGame", winner =>
         {
             Snackbar.Add($"Game over! {(winner?.Email ?? "Nobody")} won this game.", Severity.Info);
-            room = null;
+            LeaveRoom(isEnding: true);
             StateHasChanged();
         });
 
@@ -284,7 +284,7 @@ else
     async Task JoinRoom((string InviteLink, string Password) room) =>
     await hubConnection.SendAsync("JoinRoom", room.InviteLink, room.Password);
 
-    async Task LeaveRoom() => await hubConnection.SendAsync("LeaveRoom", room.InviteLink);
+    async Task LeaveRoom(bool isEnding = false) => await hubConnection.SendAsync("LeaveRoom", room.InviteLink, isEnding);
 
     async Task StartGame() => await hubConnection.SendAsync("StartGame", room.InviteLink);
 

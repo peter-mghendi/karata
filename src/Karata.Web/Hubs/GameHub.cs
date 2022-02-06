@@ -143,7 +143,7 @@ public class GameHub : Hub<IGameClient>
         await _unitOfWork.CompleteAsync();
     }
 
-    public async Task LeaveRoom(string inviteLink)
+    public async Task LeaveRoom(string inviteLink, bool isEnding)
     {
         var user = await _userManager.FindByEmailAsync(Context.UserIdentifier);
         var room = await _roomService.FindByInviteLinkAsync(inviteLink);
@@ -151,7 +151,7 @@ public class GameHub : Hub<IGameClient>
         var hand = game.Hands.Single(h => h.User!.Id == user.Id);
 
         // Check game status
-        if (game.IsStarted || room.Creator!.Id == user.Id)
+        if (!isEnding && (game.IsStarted || room.Creator!.Id == user.Id))
         {
             // TODO: Handle this gracefully, as well as accidental disconnection.
             var message = new SystemMessage
@@ -303,9 +303,11 @@ public class GameHub : Hub<IGameClient>
         // Process turn
         if (!_engine.ValidateTurnCards(game, cardList))
         {
+            // TODO: Make this more informative.
+            // This needs to be done inside card engine via an out param on Validate
             var message = new SystemMessage
             {
-                Text = "That card sequence is invalid.", // TODO: Make this more informative.
+                Text = "That card sequence is invalid.",
                 Type = MessageType.Error
             };
             await Clients.Caller.ReceiveSystemMessage(message);
@@ -367,9 +369,13 @@ public class GameHub : Hub<IGameClient>
                 else
                 {
                     await Clients.Caller.NotifyTurnProcessed();
+                    var message = new SystemMessage
+                    {
+                        Text = "There aren't enough cards left to pick.",
+                        Type = MessageType.Error
+                    };
+                    await Clients.Group(inviteLink).ReceiveSystemMessage(message);
                     await Clients.Group(inviteLink).EndGame(winner: null);
-                    // TODO: Remove everyone from the game.
-                    // await Groups.RemoveFromGroupAsync(Context.ConnectionId, inviteLink);
                     return;
                 }
             };
@@ -390,8 +396,6 @@ public class GameHub : Hub<IGameClient>
                 await Clients.Caller.NotifyTurnProcessed();
                 game.Winner = player;
                 await Clients.Group(inviteLink).EndGame(winner: player.ToUI());
-                // TODO: Remove everyone from the room (store connection ids)
-                // await Groups.RemoveFromGroupAsync(Context.ConnectionId, inviteLink);
                 await _unitOfWork.CompleteAsync();
                 return;
             }
@@ -405,7 +409,7 @@ public class GameHub : Hub<IGameClient>
                 await Clients.OthersInGroup(inviteLink).ReceiveSystemMessage(message);
             }
         }
-        else // TODO: Player cannot be on their last card if they have a  Ace, "Bomb", Jack or King
+        else
         {
             turn.IsLastCard = await this.PromptCallerAsync(LastCardRequests, Context.ConnectionId, nameof(IGameClient.PromptLastCardRequest));
             if (turn.IsLastCard)    
