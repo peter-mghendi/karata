@@ -54,7 +54,6 @@
         if (string.IsNullOrWhiteSpace(inviteLink))
         {
             joining = false;
-            // TODO: Decouple
             Snackbar.Add("Invite link cannot be empty.", Severity.Error);
             return;
         }
