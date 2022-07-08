@@ -2,7 +2,6 @@
 
 using System.Collections.Concurrent;
 using System.Text;
-using System.Text.Json;
 using Karata.Web.Engines;
 using Karata.Web.Extensions;
 using Karata.Web.Hubs.Clients;
@@ -58,7 +57,8 @@ public class GameHub : Hub<IGameClient>
         foreach (var room in rooms)
         {
             _logger.LogInformation("Ending game in room {Room}.", room);
-            await Clients.Group(room).EndGame(winner: null);
+            var reason = $"{Context.UserIdentifier} disconnected. This game cannot proceed.";
+            await Clients.Group(room).EndGame(reason: reason, winner: null);
         }
     }
 
@@ -168,6 +168,8 @@ public class GameHub : Hub<IGameClient>
 
     public async Task LeaveRoom(string inviteLink, bool isEnding)
     {
+        _logger.LogInformation("User {User} is leaving room {Room}.", Context.UserIdentifier, inviteLink);
+        
         var user = await _userManager.FindByEmailAsync(Context.UserIdentifier);
         var room = await _roomService.FindByInviteLinkAsync(inviteLink);
         var game = room.Game;
@@ -398,7 +400,9 @@ public class GameHub : Hub<IGameClient>
                         Type = MessageType.Error
                     };
                     await Clients.Group(inviteLink).ReceiveSystemMessage(message);
-                    await Clients.Group(inviteLink).EndGame(winner: null);
+                    
+                    var reason = $"There aren't enough cards left to pick. (Pile: {game.Pile.Count}, Deck: {game.Deck.Count})";
+                    await Clients.Group(inviteLink).EndGame(reason: reason, winner: null);
                     return;
                 }
             }
@@ -419,7 +423,7 @@ public class GameHub : Hub<IGameClient>
             {
                 await Clients.Caller.NotifyTurnProcessed();
                 game.Winner = player;
-                await Clients.Group(inviteLink).EndGame(winner: player.ToUI());
+                await Clients.Group(inviteLink).EndGame(reason: $"{player.UserName} won.", winner: player.ToUI());
                 await _unitOfWork.CompleteAsync();
                 return;
             }

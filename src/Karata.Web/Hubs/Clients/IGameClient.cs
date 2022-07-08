@@ -11,7 +11,7 @@ public interface IGameClient
     Task AddCardRangeToPile(List<Card> cards);
     Task AddHandToRoom(UIHand hand);
     Task AddToRoom(UIRoom room);
-    Task EndGame(UIUser? winner);
+    Task EndGame(string reason, UIUser? winner);
     Task NotifyTurnProcessed();
     Task PromptCardRequest(bool specific);
     Task PromptLastCardRequest();

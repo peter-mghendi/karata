@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Text.Json;
 
 namespace Karata.Web.Services;
 
@@ -14,7 +13,6 @@ public class PresenceService
             set.Add(room);
             return set;
         });
-        Debug();
     }
     
     public void RemovePresence(string user, string room)
@@ -24,7 +22,6 @@ public class PresenceService
             set.Remove(room);
             return set;
         });
-        Debug();
     }
     
     public bool TryGetPresence(string user, out HashSet<string> rooms)
@@ -37,6 +34,4 @@ public class PresenceService
         get => _presence[key];
         set => _presence[key] = value;
     }
-
-    private void Debug() => Console.WriteLine(JsonSerializer.Serialize(_presence));
 }
