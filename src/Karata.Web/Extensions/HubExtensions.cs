@@ -7,6 +7,7 @@ public static class HubExtensions
 {
     /** 
      *  TODO: Timeouts and error handling.
+     *  TODO: .NET 7 - This will be obsolete in .NET 7. 
      *  REF: https://github.com/SignalR/SignalR/issues/1149#issuecomment-302611992
      */
     public static async Task<T> PromptCallerAsync<T>(

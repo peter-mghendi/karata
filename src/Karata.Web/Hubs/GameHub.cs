@@ -2,10 +2,10 @@
 
 using System.Collections.Concurrent;
 using System.Text;
+using System.Text.Json;
 using Karata.Web.Engines;
 using Karata.Web.Extensions;
 using Karata.Web.Hubs.Clients;
-using Karata.Web.Models.UI;
 using Karata.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -22,15 +22,17 @@ public class GameHub : Hub<IGameClient>
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordService _passwordService;
     private readonly IRoomService _roomService;
+    private readonly PresenceService _presence;
     private readonly UserManager<User> _userManager;
-    public static readonly ConcurrentDictionary<string, TaskCompletionSource<Card>> CardRequests = new();
-    public static readonly ConcurrentDictionary<string, TaskCompletionSource<bool>> LastCardRequests = new();
+    private static readonly ConcurrentDictionary<string, TaskCompletionSource<Card>> CardRequests = new();
+    private static readonly ConcurrentDictionary<string, TaskCompletionSource<bool>> LastCardRequests = new();
 
     public GameHub(
         IEngine engine,
         ILogger<GameHub> logger,
         IPasswordService passwordService,
         IUnitOfWork unitOfWork,
+        PresenceService presence,
         UserManager<User> userManager)
     {
         _engine = engine;
@@ -38,14 +40,33 @@ public class GameHub : Hub<IGameClient>
         _passwordService = passwordService;
         _unitOfWork = unitOfWork;
         _roomService = _unitOfWork.RoomService;
+        _presence = presence;
         _userManager = userManager;
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        await base.OnDisconnectedAsync(exception);
+
+        // User is not logged in - this should not happen.
+        if (Context.UserIdentifier is null) return;
+
+        var user = await _userManager.FindByEmailAsync(Context.UserIdentifier);
+        _logger.LogInformation("User {User} disconnected.", Context.UserIdentifier);
+        
+        if (!_presence.TryGetPresence(user.Id, out var rooms) || rooms is null) return;
+        foreach (var room in rooms)
+        {
+            _logger.LogInformation("Ending game in room {Room}.", room);
+            await Clients.Group(room).EndGame(winner: null);
+        }
     }
 
     public async Task SendChat(string inviteLink, string text)
     {
         var user = await _userManager.FindByEmailAsync(Context.UserIdentifier);
         var room = await _roomService.FindByInviteLinkAsync(inviteLink);
-        var message = new Chat { Text = text, Sender = user };
+        var message = new Chat {Text = text, Sender = user};
         room.Chats.Add(message);
         await Clients.Group(inviteLink).ReceiveChat(message.ToUI());
         await _unitOfWork.CompleteAsync();
@@ -60,7 +81,7 @@ public class GameHub : Hub<IGameClient>
             InviteLink = Guid.NewGuid().ToString(),
             Creator = user,
         };
-        var hand = new Hand { User = user };
+        var hand = new Hand {User = user};
 
         if (!string.IsNullOrWhiteSpace(password))
         {
@@ -72,6 +93,7 @@ public class GameHub : Hub<IGameClient>
 
         // Add creator to game
         room.Game.Hands.Add(hand);
+        _presence.AddPresence(user.Id, room.InviteLink);
         await Clients.OthersInGroup(room.InviteLink).AddHandToRoom(hand.ToUI());
         await Groups.AddToGroupAsync(Context.ConnectionId, room.InviteLink);
         await Clients.Caller.AddToRoom(room.ToUI());
@@ -83,7 +105,7 @@ public class GameHub : Hub<IGameClient>
         var user = await _userManager.FindByEmailAsync(Context.UserIdentifier);
         var room = await _roomService.FindByInviteLinkAsync(inviteLink);
         var game = room.Game;
-        var hand = new Hand { User = user };
+        var hand = new Hand {User = user};
 
         if (room.Hash is not null)
         {
@@ -137,6 +159,7 @@ public class GameHub : Hub<IGameClient>
 
         // Add player to room
         game.Hands.Add(hand);
+        _presence.AddPresence(user.Id, inviteLink);
         await Clients.OthersInGroup(inviteLink).AddHandToRoom(hand.ToUI());
         await Groups.AddToGroupAsync(Context.ConnectionId, room.InviteLink!);
         await Clients.Caller.AddToRoom(room.ToUI());
@@ -165,6 +188,7 @@ public class GameHub : Hub<IGameClient>
 
         // Remove player from room
         game.Hands.Remove(hand);
+        _presence.RemovePresence(user.Id, inviteLink);
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.InviteLink!);
         await Clients.Caller.RemoveFromRoom();
         await Clients.OthersInGroup(room.InviteLink!).RemoveHandFromRoom(hand.ToUI());
@@ -186,7 +210,7 @@ public class GameHub : Hub<IGameClient>
             };
             await Clients.Caller.ReceiveSystemMessage(message);
             return;
-        };
+        }
 
         // Check game status
         if (game.IsStarted)
@@ -198,7 +222,7 @@ public class GameHub : Hub<IGameClient>
             };
             await Clients.Caller.ReceiveSystemMessage(message);
             return;
-        };
+        }
 
         // Check player number
         if (game.Hands.Count < 2 || game.Hands.Count > 4)
@@ -210,7 +234,7 @@ public class GameHub : Hub<IGameClient>
             };
             await Clients.Caller.ReceiveSystemMessage(message);
             return;
-        };
+        }
 
         // Shuffle deck and deal starting card
         var deck = game.Deck;
@@ -220,21 +244,20 @@ public class GameHub : Hub<IGameClient>
             if (topCard is not null) deck.Push(topCard);
             deck.Shuffle();
             topCard = deck.Deal();
-        }
-        while (!IsBoring(topCard));
+        } while (!IsBoring(topCard));
 
         await Clients.Group(inviteLink).RemoveCardsFromDeck(1);
         game.Pile.Push(topCard);
-        await Clients.Group(inviteLink).AddCardRangeToPile(new() { topCard });
+        await Clients.Group(inviteLink).AddCardRangeToPile(new List<Card> {topCard});
 
         // Deal player cards
         // TODO: Explicit card movements (Deck -> Hand, Hand -> Pile, etc).
         // Needs more thought: will have to restructure PerformTurn
         foreach (var hand in game.Hands)
         {
-            var dealtCount = 4;
+            const int dealtCount = 4;
 
-            var dealt = deck.DealMany((uint)dealtCount);
+            var dealt = deck.DealMany(dealtCount);
             await Clients.Group(inviteLink).RemoveCardsFromDeck(dealtCount);
 
             hand.Cards.AddRange(dealt);
@@ -256,7 +279,7 @@ public class GameHub : Hub<IGameClient>
         var currentTurn = game.CurrentTurn;
         var player = await _userManager.FindByIdAsync(game.Hands[currentTurn].User!.Id);
         var hand = player.Hands.Single(h => h.GameId == game.Id);
-        var turn = new Turn { UserId = player.Id, Cards = cardList };
+        var turn = new Turn {UserId = player.Id, Cards = cardList};
         game.Turns.Add(turn);
 
         // Check for turns performed wile awaiting card requests
@@ -313,10 +336,10 @@ public class GameHub : Hub<IGameClient>
             await Clients.Caller.ReceiveSystemMessage(message);
             await Clients.Caller.NotifyTurnProcessed();
             return;
-        } 
+        }
 
         // Add cards to pile
-        foreach (var card in cardList) game.Pile.Push(card); 
+        foreach (var card in cardList) game.Pile.Push(card);
         await Clients.Group(inviteLink).AddCardRangeToPile(cardList);
 
         // Remove cards from player hand
@@ -324,7 +347,7 @@ public class GameHub : Hub<IGameClient>
         await Clients.Caller.RemoveCardRangeFromHand(cardList);
         await Clients.Users(GetOthers(game.Hands, hand))
             .RemoveCardsFromPlayerHand(hand.ToUI(), cardList.Count);
-        hand.Cards.RemoveAll(card => cardList.Contains(card));
+        hand.Cards.RemoveAll(cardList.Contains);
 
         // Generate delta and update game state.
         var delta = _engine.GenerateTurnDelta(game, cardList);
@@ -337,9 +360,9 @@ public class GameHub : Hub<IGameClient>
         if (delta.HasRequest)
         {
             turn.Request = await this.PromptCallerAsync(
-                CardRequests, 
-                Context.ConnectionId, 
-                nameof(IGameClient.PromptCardRequest), 
+                CardRequests,
+                Context.ConnectionId,
+                nameof(IGameClient.PromptCardRequest),
                 delta.HasSpecificRequest
             );
             game.CurrentRequest = turn.Request;
@@ -378,7 +401,8 @@ public class GameHub : Hub<IGameClient>
                     await Clients.Group(inviteLink).EndGame(winner: null);
                     return;
                 }
-            };
+            }
+
             await Clients.Group(inviteLink).RemoveCardsFromDeck(1);
 
             // Add cards to player hand and reset counter
@@ -402,7 +426,7 @@ public class GameHub : Hub<IGameClient>
             else
             {
                 var message = new SystemMessage
-                {    
+                {
                     Text = $"{player.Email} is cardless.",
                     Type = MessageType.Info
                 };
@@ -411,8 +435,9 @@ public class GameHub : Hub<IGameClient>
         }
         else
         {
-            turn.IsLastCard = await this.PromptCallerAsync(LastCardRequests, Context.ConnectionId, nameof(IGameClient.PromptLastCardRequest));
-            if (turn.IsLastCard)    
+            turn.IsLastCard = await this.PromptCallerAsync(LastCardRequests, Context.ConnectionId,
+                nameof(IGameClient.PromptLastCardRequest));
+            if (turn.IsLastCard)
             {
                 hand.IsLastCard = true;
                 var message = new SystemMessage
@@ -433,19 +458,20 @@ public class GameHub : Hub<IGameClient>
             else
                 game.CurrentTurn = currentTurn == 0 ? lastIndex : --currentTurn;
         }
+
         await Clients.Group(inviteLink).UpdateTurn(game.CurrentTurn);
         await _unitOfWork.CompleteAsync();
     }
 
-    public async Task RequestCard(Card request) => 
+    public async Task RequestCard(Card request) =>
         await this.ResolvePromptAsync(CardRequests, Context.ConnectionId, request);
 
-    public async Task SetLastCardStatus(bool lastCard) => 
+    public async Task SetLastCardStatus(bool lastCard) =>
         await this.ResolvePromptAsync(LastCardRequests, Context.ConnectionId, lastCard);
 
-    private static IEnumerable<string> GetOthers(IEnumerable<Hand> hands, Hand hand) => 
+    private static IEnumerable<string> GetOthers(IEnumerable<Hand> hands, Hand hand) =>
         hands.Where(h => h.User!.Email != hand.User!.Email).Select(h => h.User!.Email!);
 
     private static bool IsBoring(Card card) =>
-        !card.IsBomb() && !card.IsQuestion() && card is not { Face: Ace or Jack or King };
+        !card.IsBomb() && !card.IsQuestion() && card is not {Face: Ace or Jack or King};
 }

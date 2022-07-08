@@ -65,7 +65,7 @@ else
                 }
 
                 <MudTooltip Text="Leave Room">
-                    <MudIconButton Icon="@Icons.Rounded.PersonRemove" Color="Color.Inherit" OnClick="LeaveRoom" />
+                    <MudIconButton Icon="@Icons.Rounded.PersonRemove" Color="Color.Inherit" OnClick="() => LeaveRoom()" />
                 </MudTooltip>
                 <MudTooltip Text="Game Details">
                     <MudIconButton Icon="@Icons.Rounded.Info" Color="Color.Inherit" OnClick="() => open = true" />
