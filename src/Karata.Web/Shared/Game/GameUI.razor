@@ -1,3 +1,4 @@
+@using System.Text.Json
 @implements IGameInterface
 
 <MudGrid Spacing="4" Justify="Justify.Center">
@@ -16,7 +17,7 @@
         <MudPaper Class="pa-4" Elevation="0">
 
             <MudText>Player Hands:</MudText>
-            @foreach (var hand in otherHands)
+            @foreach (var hand in OtherHands)
             {
                 <MudText>@(hand.User.Email) has @(hand.Cards.Count) cards.</MudText>
             }
@@ -24,14 +25,14 @@
     </MudItem>
 </MudGrid>
 
-<MudGrid Spacing="4" Justify="Justify.Center">
+<MudGrid Spacing="4" Justify="Justify.Center" Class="mb-4">
     <MudItem xs="12" sm="6">
         <MudPaper Elevation="0">
             <MudListSubheader>
                 My Cards (click to add to turn)
             </MudListSubheader>
             <MudList Clickable="true">
-                @foreach (var card in currentHand)
+                @foreach (var card in CurrentHand)
                 {
                     <MudListItem Text="@card.GetName()" Icon="@Icons.Rounded.Add" IconColor="Color.Success" OnClick="() => AddCardToTurn(card)" />
                 }
@@ -54,6 +55,20 @@
 </MudGrid>
 
 
+<MudDropContainer T="DropItem" Items="Items" ItemsSelector="@((DropItem item, string dropzone) => item.Identifier == dropzone)" ItemDropped="ItemUpdated" Class="d-flex flex-wrap flex-grow-1 gap-4">
+    <ChildContent>
+        <MudDropZone T="DropItem" Identifier="Hand" Class="rounded pa-4 flex-grow-1" Style="background-color: white">
+            <MudText Typo="Typo.h6" Class="mb-4">My Cards</MudText>
+         </MudDropZone>
+        <MudDropZone T="DropItem" Identifier="Turn" Class="rounded pa-4 flex-grow-1" Style="background-color: white">
+            <MudText Typo="Typo.h6" Class="mb-4">Current Turn</MudText>
+        </MudDropZone>
+    </ChildContent>
+    <ItemRenderer>
+        <MudPaper Elevation="0" Class="pa-4 my-4 mud-background-gray">@context.Name</MudPaper>
+    </ItemRenderer>
+</MudDropContainer>
+
 @code
 {
     [Parameter]
@@ -71,11 +86,40 @@
     [Parameter]
     public EventCallback<Card> OnRemoveCardFromTurn { get; set; }
 
-    private List<Card> currentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToList();
+    private List<Card> CurrentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToList();
 
-    private List<UIHand> otherHands => Game.Hands.Where(h => h.User.Id != Hand.User.Id).ToList();
+    private List<UIHand> OtherHands => Game.Hands.Where(h => h.User!.Id != Hand.User!.Id).ToList();
   
     private void AddCardToTurn(Card card) => OnAddCardToTurn.InvokeAsync(card);
 
     private void RemoveCardFromTurn(Card card) => OnRemoveCardFromTurn.InvokeAsync(card);
+    
+    private void ItemUpdated(MudItemDropInfo<DropItem> dropItem)
+    {
+        var card = dropItem.Item.Card;
+        switch (dropItem.DropzoneIdentifier)
+        {
+            case "Hand":
+            {
+                if (!CurrentHand.Contains(card)) Turn.Remove(card);
+                break;
+            }
+            case "Turn":
+            {
+                if (!Turn.Contains(card)) Turn.Add(card);
+                break;
+            }
+        }
+    }
+
+    private List<DropItem> Items => CurrentHand.Select(card => new DropItem {Card = card})
+        .Concat(Turn.Select(card => new DropItem { Card = card, Identifier = "Turn"}))
+        .ToList();
+
+    public class DropItem
+    {
+        public string Identifier = "Hand";
+        public string Name => Card.GetName();
+        public Card Card { get; init; } 
+    }
 }

@@ -8,11 +8,11 @@
     width: 100%;
     height: 80%;
     background-color: green;
-    position: relative;
+    /*position: relative;*/
 }
 
 .hand-container {
-    position: absolute;
+    /*position: absolute;*/
 }
 
 ::deep #bottom .card:hover {
@@ -44,14 +44,14 @@
 }
 
 #deck {
-    position: absolute;
+    /*position: absolute;*/
     top: 30%;
     left: 40%;
     width: 70px;
 }
 
 #pile {
-    position: absolute;
+    /*position: absolute;*/
     top: 30%;
     right: 40%;
     width: 70px;
