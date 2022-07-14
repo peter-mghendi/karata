@@ -52,7 +52,7 @@ else
                         <MudIconButton Icon="@Icons.Rounded.ArrowCircleUp" Color="Color.Inherit" OnClick="() => PerformTurn(new())" />
                     </MudTooltip>
                     <MudTooltip Text="Play card(s)">
-                        <MudIconButton Icon="@Icons.Rounded.ArrowCircleDown" Color="Color.Inherit" OnClick="() => PerformTurn(_currentTurn.ToList())" />
+                        <MudIconButton Icon="@Icons.Rounded.ArrowCircleDown" Color="Color.Inherit" OnClick="() => PerformTurn(_currentTurn)" />
                     </MudTooltip>
                 }
 
@@ -77,11 +77,11 @@ else
         {
             if (_useCardTable)
             {
-                <CardTableGameInterface Game="Game" Hand="Hand" Turn="_currentTurn.ToImmutableList()" OnAddCardToTurn="AddCardToTurn" OnRemoveCardFromTurn="RemoveCardFromTurn" />
+                <CardTableGameInterface Game="Game" Hand="Hand" Turn="_currentTurn.ToImmutableList()" OnAddCardToTurn="AddCardToTurn" OnReorderCardInTurn="ReorderCardInTurn" OnRemoveCardFromTurn="RemoveCardFromTurn" />
             }
             else
             {
-                <CardListGameInterface Game="Game" Hand="Hand" Turn="_currentTurn.ToImmutableList()" OnAddCardToTurn="AddCardToTurn" OnRemoveCardFromTurn="RemoveCardFromTurn" />
+                <CardListGameInterface Game="Game" Hand="Hand" Turn="_currentTurn.ToImmutableList()" OnAddCardToTurn="AddCardToTurn" OnReorderCardInTurn="ReorderCardInTurn" OnRemoveCardFromTurn="RemoveCardFromTurn" />
             }
         }
         else
@@ -102,7 +102,7 @@ else
     private UIGame Game => _room.Game;
     private UIHand Hand => Game.Hands.Single(h => h.User!.Email == _username);
     private UIUser Player => Hand.User;
-    private readonly LinkedList<Card> _currentTurn = new();
+    private readonly List<Card> _currentTurn = new();
     private bool _useCardTable;
     bool _open;
 
@@ -297,7 +297,15 @@ else
 
     private void AddCardToTurn(Card card)
     {
-        _currentTurn.AddLast(card);
+        _currentTurn.Add(card);
+        StateHasChanged();
+    }
+
+    private void ReorderCardInTurn((Card Card, int Index) info)
+    {
+        var (card, index) = info;
+        _currentTurn.Remove(card);
+        _currentTurn.Insert(index, card);
         StateHasChanged();
     }
 

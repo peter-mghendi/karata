@@ -54,6 +54,9 @@
     public EventCallback<Card> OnAddCardToTurn { get; set; }
 
     [Parameter]
+    public EventCallback<(Card Card, int Index)> OnReorderCardInTurn { get; set; }
+    
+    [Parameter]
     public EventCallback<Card> OnRemoveCardFromTurn { get; set; }
 
     private ImmutableList<Card> CurrentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToImmutableList();
@@ -72,6 +75,8 @@
         : $"img/cards/{card.Face.ToString()}{card.Suit.ToString()}.svg";
 
     private async Task AddCardToTurn(Card card) => await OnAddCardToTurn.InvokeAsync(card);
+
+    private async Task ReorderCard(Card card, int index) => await OnReorderCardInTurn.InvokeAsync((card, index));
 
     private async Task RemoveCardFromTurn(Card card) => await OnRemoveCardFromTurn.InvokeAsync(card);
 }

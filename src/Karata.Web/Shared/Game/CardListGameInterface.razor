@@ -62,7 +62,7 @@
         <MudDropZone T="DropItem" Identifier="Hand" Class="rounded pa-4 flex-grow-1" Style="background-color: white">
             <MudText Typo="Typo.h6" Class="mb-4">My Cards</MudText>
          </MudDropZone>
-        <MudDropZone T="DropItem" Identifier="Turn" Class="rounded pa-4 flex-grow-1" Style="background-color: white">
+        <MudDropZone T="DropItem" Identifier="Turn" Class="rounded pa-4 flex-grow-1" Style="background-color: white" AllowReorder>
             <MudText Typo="Typo.h6" Class="mb-4">Current Turn</MudText>
         </MudDropZone>
     </ChildContent>
@@ -86,6 +86,9 @@
     public EventCallback<Card> OnAddCardToTurn { get; set; }
 
     [Parameter]
+    public EventCallback<(Card Card, int Index)> OnReorderCardInTurn { get; set; }
+
+    [Parameter]
     public EventCallback<Card> OnRemoveCardFromTurn { get; set; }
 
     private List<Card> CurrentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToList();
@@ -93,6 +96,8 @@
     private List<UIHand> OtherHands => Game.Hands.Where(h => h.User!.Id != Hand.User!.Id).ToList();
   
     private void AddCardToTurn(Card card) => OnAddCardToTurn.InvokeAsync(card);
+
+    private async Task ReorderCard(Card card, int index) => await OnReorderCardInTurn.InvokeAsync((card, index));
 
     private void RemoveCardFromTurn(Card card) => OnRemoveCardFromTurn.InvokeAsync(card);
 
@@ -107,37 +112,51 @@
 
     private async Task ItemUpdated(MudItemDropInfo<DropItem> dropItem)
     {
+        var index = dropItem.IndexInZone;
         var item = dropItem.Item;
+        var zone = dropItem.DropzoneIdentifier;
+        
         var card = item.Card;
-        
-        Logger.LogInformation("{Card} was dropped in {DropZone}", card.GetName(), dropItem.DropzoneIdentifier);
 
-        item.Identifier = dropItem.DropzoneIdentifier;
+        item.Identifier = zone;
         
-        switch (dropItem.DropzoneIdentifier)
+        switch (zone)
         {
             case "Hand":
             {
-                if (!CurrentHand.Contains(card)) await OnRemoveCardFromTurn.InvokeAsync(card);
+                if (!CurrentHand.Contains(card))
+                {
+                    LogOp(card, index, zone, "Remove");
+                    await OnRemoveCardFromTurn.InvokeAsync(card);
+                }
                 break;
             }
             case "Turn":
             {
-                if (!Turn.Contains(card)) await OnAddCardToTurn.InvokeAsync(card);
+                if (!Turn.Contains(card))
+                {
+                    LogOp(card, index, zone, "Add");
+                    await OnAddCardToTurn.InvokeAsync(card);
+                }
+                else
+                {
+                    LogOp(card, index, zone, "Reorder");
+                    await OnReorderCardInTurn.InvokeAsync((card, index));
+                }
                 break;
             }
         }
     }
 
-    private List<DropItem> _items = new();
+    private void LogOp(Card card, int index, string zone, string op)
+    {
+        Logger.LogInformation("Card: {Card}, Index: {Index}, Zone: {DropZone}, Op: {Op}", card.GetName(), index, zone, op);
+    }
 
-    // private List<DropItem> Items => CurrentHand.Select(card => new DropItem {Card = card})
-    //     .Concat(Turn.Select(card => new DropItem { Card = card, Identifier = "Turn"}))
-    //     .ToList();
+    private List<DropItem> _items = new();
 
     public class DropItem
     {
-        public int Order;
         public string Identifier = "Hand";
         public string Name => Card.GetName();
         public Card Card { get; init; } 

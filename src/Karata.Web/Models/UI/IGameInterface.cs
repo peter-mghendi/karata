@@ -16,7 +16,10 @@ public interface IGameInterface
 
     [Parameter]
     public EventCallback<Card> OnAddCardToTurn { get; set; }
-        
+    
+    [Parameter]
+    public EventCallback<(Card Card, int Index)> OnReorderCardInTurn { get; set; }
+
     [Parameter]
     public EventCallback<Card> OnRemoveCardFromTurn { get; set; }
 }
