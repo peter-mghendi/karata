@@ -1,9 +1,10 @@
+@using System.Collections.Immutable
 @implements IGameInterface
 
 <div id="table">
     @* Me *@
     <div id="bottom" class="hand-container">
-        <HandComponent Cards="@currentHand" FaceUp="true" OnCardSelected="AddCardToTurn" />
+        <HandComponent Cards="@CurrentHand" FaceUp="true" OnCardSelected="AddCardToTurn" />
     </div>
 
     @* Current Turn *@
@@ -13,29 +14,29 @@
 
     @* Player 2 *@
     <div id="top" class="hand-container">
-        <HandComponent Cards="@otherHands[0].Cards" FaceUp="false" />
+        <HandComponent Cards="@OtherHands[0].Cards.ToImmutableList()" FaceUp="false" />
     </div>
 
     @* Player 3 *@
-    @if (otherHands.Count > 1)
+    @if (OtherHands.Count > 1)
     {
         <div id="left" class="hand-container">
-            <HandComponent Cards="@otherHands[1].Cards" FaceUp="false" />
+            <HandComponent Cards="@OtherHands[1].Cards.ToImmutableList()" FaceUp="false" />
         </div>
     }
 
     @* Player 4 *@
-    @if (otherHands.Count > 2)
+    @if (OtherHands.Count > 2)
     {
         <div id="right" class="hand-container">
-            <HandComponent Cards="@otherHands[2].Cards" FaceUp="false" />
+            <HandComponent Cards="@OtherHands[2].Cards.ToImmutableList()" FaceUp="false" />
         </div>
     }
 
     @* Deck and Pile *@
     @* TODO Include @click handlers after all? *@
-    <img id="deck" src="img/cards/Back.svg" />
-    <img id="pile" src="@ImageUrl(Game.Pile.Peek())" title="@requestText" />
+    <img id="deck" src="img/cards/Back.svg" alt="Card back"/>
+    <img id="pile" src="@ImageUrl(Game.Pile.Peek())" title="@RequestText" alt="@Game.Pile.Peek().GetName() card"/>
 </div>
 
 @code 
@@ -47,7 +48,7 @@
     public UIHand Hand { get; set; }
 
     [Parameter]
-    public List<Card> Turn { get; set; } = new();
+    public ImmutableList<Card> Turn { get; set; } = ImmutableList<Card>.Empty;
 
     [Parameter]
     public EventCallback<Card> OnAddCardToTurn { get; set; }
@@ -55,11 +56,11 @@
     [Parameter]
     public EventCallback<Card> OnRemoveCardFromTurn { get; set; }
 
-    private List<Card> currentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToList();
+    private ImmutableList<Card> CurrentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToImmutableList();
 
-    private List<UIHand> otherHands => Game.Hands.Where(h => h.User.Id != Hand.User.Id).ToList();
+    private List<UIHand> OtherHands => Game.Hands.Where(h => h.User!.Id != Hand.User!.Id).ToList();
 
-    private string requestText => Game.CurrentRequest switch
+    private string RequestText => Game.CurrentRequest switch
     {
         null => "No card has been requested",
         { Face: None } => Game.CurrentRequest.ToString(),
@@ -70,7 +71,7 @@
         ? $"img/cards/{card.Suit.ToString()}.svg"
         : $"img/cards/{card.Face.ToString()}{card.Suit.ToString()}.svg";
 
-    private void AddCardToTurn(Card card) => OnAddCardToTurn.InvokeAsync(card);
+    private async Task AddCardToTurn(Card card) => await OnAddCardToTurn.InvokeAsync(card);
 
-    private void RemoveCardFromTurn(Card card) => OnRemoveCardFromTurn.InvokeAsync(card);
+    private async Task RemoveCardFromTurn(Card card) => await OnRemoveCardFromTurn.InvokeAsync(card);
 }

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Microsoft.AspNetCore.Components;
 
 namespace Karata.Web.Models.UI;
@@ -11,7 +12,7 @@ public interface IGameInterface
     public UIHand Hand { get; set; }
 
     [Parameter]
-    public List<Card> Turn { get; set; }
+    public ImmutableList<Card> Turn { get; set; }
 
     [Parameter]
     public EventCallback<Card> OnAddCardToTurn { get; set; }

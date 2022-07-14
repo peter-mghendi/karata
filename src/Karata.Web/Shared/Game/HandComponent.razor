@@ -1,3 +1,5 @@
+@using System.Collections.Immutable
+
 <div class="hand">
     @foreach (var card in Cards)
     {
@@ -8,7 +10,7 @@
 @code
 {
     [Parameter]
-    public List<Card> Cards { get; set; }
+    public ImmutableList<Card> Cards { get; set; }
 
     [Parameter]
     public bool FaceUp { get; set; }

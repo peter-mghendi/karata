@@ -5,6 +5,7 @@
 @using System.Text.Json.Serialization
 @using Karata.Web.Services
 @using Microsoft.AspNetCore.SignalR.Client
+@using System.Collections.Immutable
 
 @implements IAsyncDisposable
 
@@ -33,10 +34,10 @@ else
             <MudContainer MaxWidth="MaxWidth.Medium">
                 <MudPaper Class="pa-4 mb-4" Elevation="0">
                     <div class="mb-2">
-                        <MudSwitch @bind-Checked="_useCardTable" Color="Color.Primary" Label="Use CardTable UI (Experimental)" />
+                        <MudSwitch @bind-Checked="_useCardTable" Color="Color.Primary" Label="Use Card Table interface (Experimental)" />
                     </div>
                     <MudText Typo="Typo.caption" Class="text-grey">
-                        The CardTable UI is still under development and, as such, may contain bugs. Use GameUI for best experience.
+                        The Card Table interface is still under development and, as such, may contain bugs. Use the Card List interface for best experience.
                     </MudText>
                 </MudPaper>
                 
@@ -51,7 +52,7 @@ else
                         <MudIconButton Icon="@Icons.Rounded.ArrowCircleUp" Color="Color.Inherit" OnClick="() => PerformTurn(new())" />
                     </MudTooltip>
                     <MudTooltip Text="Play card(s)">
-                        <MudIconButton Icon="@Icons.Rounded.ArrowCircleDown" Color="Color.Inherit" OnClick="() => PerformTurn(_currentTurn)" />
+                        <MudIconButton Icon="@Icons.Rounded.ArrowCircleDown" Color="Color.Inherit" OnClick="() => PerformTurn(_currentTurn.ToList())" />
                     </MudTooltip>
                 }
 
@@ -76,11 +77,11 @@ else
         {
             if (_useCardTable)
             {
-                <CardTable Game="Game" Hand="Hand" Turn="_currentTurn" OnAddCardToTurn="AddCardToTurn" OnRemoveCardFromTurn="RemoveCardFromTurn" />
+                <CardTableGameInterface Game="Game" Hand="Hand" Turn="_currentTurn.ToImmutableList()" OnAddCardToTurn="AddCardToTurn" OnRemoveCardFromTurn="RemoveCardFromTurn" />
             }
             else
             {
-                <GameUI Game="Game" Hand="Hand" Turn="_currentTurn" OnAddCardToTurn="AddCardToTurn" OnRemoveCardFromTurn="RemoveCardFromTurn" />
+                <CardListGameInterface Game="Game" Hand="Hand" Turn="_currentTurn.ToImmutableList()" OnAddCardToTurn="AddCardToTurn" OnRemoveCardFromTurn="RemoveCardFromTurn" />
             }
         }
         else
@@ -101,7 +102,7 @@ else
     private UIGame Game => _room.Game;
     private UIHand Hand => Game.Hands.Single(h => h.User!.Email == _username);
     private UIUser Player => Hand.User;
-    private readonly List<Card> _currentTurn = new();
+    private readonly LinkedList<Card> _currentTurn = new();
     private bool _useCardTable;
     bool _open;
 
@@ -296,7 +297,7 @@ else
 
     private void AddCardToTurn(Card card)
     {
-        _currentTurn.Add(card);
+        _currentTurn.AddLast(card);
         StateHasChanged();
     }
 

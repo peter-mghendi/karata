@@ -1,15 +1,16 @@
 @using System.Text.Json
+@using System.Collections.Immutable
 @implements IGameInterface
-@inject ILogger<GameUI> Logger
+@inject ILogger<CardListGameInterface> Logger
 
 <MudGrid Spacing="4" Justify="Justify.Center">
     <MudItem xs="6">
         <MudPaper Class="pa-4" Elevation="0">
             <MudText>Top Card: @Game.Pile.Peek().GetName()</MudText>
-            @if (Game.CurrentRequest is Card request)
+            @if (Game.CurrentRequest is not null)
             {
                 <MudText>
-                    Current Request: @(request.Face is None ? request.Suit.ToString() : request.GetName())
+                    Current Request: @(Game.CurrentRequest.Face is None ? Game.CurrentRequest.Suit.ToString() : Game.CurrentRequest.GetName())
                 </MudText>
             }
         </MudPaper>
@@ -20,7 +21,7 @@
             <MudText>Player Hands:</MudText>
             @foreach (var hand in OtherHands)
             {
-                <MudText>@(hand.User.Email) has @(hand.Cards.Count) cards.</MudText>
+                <MudText>@(hand.User!.Email) has @(hand.Cards.Count) cards.</MudText>
             }
         </MudPaper>
     </MudItem>
@@ -79,7 +80,7 @@
     public UIHand Hand { get; set; }
 
     [Parameter]
-    public List<Card> Turn { get; set; } = new();
+    public ImmutableList<Card> Turn { get; set; } = ImmutableList<Card>.Empty;
 
     [Parameter]
     public EventCallback<Card> OnAddCardToTurn { get; set; }
@@ -104,7 +105,7 @@
         _items.AddRange(Turn.Select(card => new DropItem{ Identifier = "Turn", Card = card }));
     }
 
-    private void ItemUpdated(MudItemDropInfo<DropItem> dropItem)
+    private async Task ItemUpdated(MudItemDropInfo<DropItem> dropItem)
     {
         var item = dropItem.Item;
         var card = item.Card;
@@ -117,20 +118,15 @@
         {
             case "Hand":
             {
-                if (!CurrentHand.Contains(card)) Turn.Remove(card);
+                if (!CurrentHand.Contains(card)) await OnRemoveCardFromTurn.InvokeAsync(card);
                 break;
             }
             case "Turn":
             {
-                if (!Turn.Contains(card)) Turn.Add(card);
+                if (!Turn.Contains(card)) await OnAddCardToTurn.InvokeAsync(card);
                 break;
             }
         }
-    }
-
-    private void RebuildTurn()
-    {
-        
     }
 
     private List<DropItem> _items = new();
