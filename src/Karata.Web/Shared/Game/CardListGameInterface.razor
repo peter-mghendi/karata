@@ -83,7 +83,7 @@
     public ImmutableList<Card> Turn { get; set; } = ImmutableList<Card>.Empty;
 
     [Parameter]
-    public EventCallback<Card> OnAddCardToTurn { get; set; }
+    public EventCallback<(Card Card, int Index)> OnAddCardToTurn { get; set; }
 
     [Parameter]
     public EventCallback<(Card Card, int Index)> OnReorderCardInTurn { get; set; }
@@ -95,7 +95,7 @@
 
     private List<UIHand> OtherHands => Game.Hands.Where(h => h.User!.Id != Hand.User!.Id).ToList();
   
-    private void AddCardToTurn(Card card) => OnAddCardToTurn.InvokeAsync(card);
+    private void AddCardToTurn(Card card) => OnAddCardToTurn.InvokeAsync((card, Turn.Count));
 
     private async Task ReorderCard(Card card, int index) => await OnReorderCardInTurn.InvokeAsync((card, index));
 
@@ -112,10 +112,9 @@
 
     private async Task ItemUpdated(MudItemDropInfo<DropItem> dropItem)
     {
+        var zone = dropItem.DropzoneIdentifier;
         var index = dropItem.IndexInZone;
         var item = dropItem.Item;
-        var zone = dropItem.DropzoneIdentifier;
-        
         var card = item.Card;
 
         item.Identifier = zone;
@@ -136,7 +135,7 @@
                 if (!Turn.Contains(card))
                 {
                     LogOp(card, index, zone, "Add");
-                    await OnAddCardToTurn.InvokeAsync(card);
+                    await OnAddCardToTurn.InvokeAsync((card, index));
                 }
                 else
                 {

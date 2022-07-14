@@ -295,9 +295,10 @@ else
 
     async Task StartGame() => await _hubConnection.SendAsync("StartGame", _room.InviteLink);
 
-    private void AddCardToTurn(Card card)
+    private void AddCardToTurn((Card Card, int Index) info)
     {
-        _currentTurn.Add(card);
+        var (card, index) = info;
+        _currentTurn.Insert(index, card);
         StateHasChanged();
     }
 

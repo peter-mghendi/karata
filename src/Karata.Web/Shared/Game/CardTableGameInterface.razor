@@ -51,7 +51,7 @@
     public ImmutableList<Card> Turn { get; set; } = ImmutableList<Card>.Empty;
 
     [Parameter]
-    public EventCallback<Card> OnAddCardToTurn { get; set; }
+    public EventCallback<(Card Card, int Index)> OnAddCardToTurn { get; set; }
 
     [Parameter]
     public EventCallback<(Card Card, int Index)> OnReorderCardInTurn { get; set; }
@@ -74,7 +74,7 @@
         ? $"img/cards/{card.Suit.ToString()}.svg"
         : $"img/cards/{card.Face.ToString()}{card.Suit.ToString()}.svg";
 
-    private async Task AddCardToTurn(Card card) => await OnAddCardToTurn.InvokeAsync(card);
+    private async Task AddCardToTurn(Card card) => await OnAddCardToTurn.InvokeAsync((card, Turn.Count));
 
     private async Task ReorderCard(Card card, int index) => await OnReorderCardInTurn.InvokeAsync((card, index));
 
