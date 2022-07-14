@@ -101,10 +101,10 @@
 
     private void RemoveCardFromTurn(Card card) => OnRemoveCardFromTurn.InvokeAsync(card);
 
-    protected override void OnInitialized()
+    protected override void OnParametersSet()
     {
-        base.OnInitialized();
-        
+        base.OnParametersSet();
+
         _items.Clear();
         _items.AddRange(CurrentHand.Select(card => new DropItem{ Identifier = "Hand", Card = card }));
         _items.AddRange(Turn.Select(card => new DropItem{ Identifier = "Turn", Card = card }));
