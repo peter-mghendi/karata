@@ -1,5 +1,6 @@
 @using System.Text.Json
 @implements IGameInterface
+@inject ILogger<GameUI> Logger
 
 <MudGrid Spacing="4" Justify="Justify.Center">
     <MudItem xs="6">
@@ -55,7 +56,7 @@
 </MudGrid>
 
 
-<MudDropContainer T="DropItem" Items="Items" ItemsSelector="@((DropItem item, string dropzone) => item.Identifier == dropzone)" ItemDropped="ItemUpdated" Class="d-flex flex-wrap flex-grow-1 gap-4">
+<MudDropContainer T="DropItem" Items="_items" ItemsSelector="@((DropItem item, string dropzone) => item.Identifier == dropzone)" ItemDropped="ItemUpdated" Class="d-flex flex-wrap flex-grow-1 gap-4">
     <ChildContent>
         <MudDropZone T="DropItem" Identifier="Hand" Class="rounded pa-4 flex-grow-1" Style="background-color: white">
             <MudText Typo="Typo.h6" Class="mb-4">My Cards</MudText>
@@ -93,10 +94,25 @@
     private void AddCardToTurn(Card card) => OnAddCardToTurn.InvokeAsync(card);
 
     private void RemoveCardFromTurn(Card card) => OnRemoveCardFromTurn.InvokeAsync(card);
-    
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        
+        _items.Clear();
+        _items.AddRange(CurrentHand.Select(card => new DropItem{ Identifier = "Hand", Card = card }));
+        _items.AddRange(Turn.Select(card => new DropItem{ Identifier = "Turn", Card = card }));
+    }
+
     private void ItemUpdated(MudItemDropInfo<DropItem> dropItem)
     {
-        var card = dropItem.Item.Card;
+        var item = dropItem.Item;
+        var card = item.Card;
+        
+        Logger.LogInformation("{Card} was dropped in {DropZone}", card.GetName(), dropItem.DropzoneIdentifier);
+
+        item.Identifier = dropItem.DropzoneIdentifier;
+        
         switch (dropItem.DropzoneIdentifier)
         {
             case "Hand":
@@ -112,12 +128,20 @@
         }
     }
 
-    private List<DropItem> Items => CurrentHand.Select(card => new DropItem {Card = card})
-        .Concat(Turn.Select(card => new DropItem { Card = card, Identifier = "Turn"}))
-        .ToList();
+    private void RebuildTurn()
+    {
+        
+    }
+
+    private List<DropItem> _items = new();
+
+    // private List<DropItem> Items => CurrentHand.Select(card => new DropItem {Card = card})
+    //     .Concat(Turn.Select(card => new DropItem { Card = card, Identifier = "Turn"}))
+    //     .ToList();
 
     public class DropItem
     {
+        public int Order;
         public string Identifier = "Hand";
         public string Name => Card.GetName();
         public Card Card { get; init; } 
