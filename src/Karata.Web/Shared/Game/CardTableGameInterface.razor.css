@@ -8,15 +8,24 @@
     width: 100%;
     height: 80%;
     background-color: green;
-    /*position: relative;*/
+    position: relative;
 }
 
 .hand-container {
-    /*position: absolute;*/
+    position: absolute;
 }
 
+/*noinspection CssInvalidPseudoSelector*/
+::deep #bottom .card{
+    position: relative;
+    transition-duration: 250ms;
+}
+
+/*noinspection CssInvalidPseudoSelector*/
 ::deep #bottom .card:hover {
-    z-index: 100;
+    z-index: 10;
+    box-shadow:  2px 2px 3px grey;
+    margin-top: -10px;
 }
 
 #top {
@@ -44,14 +53,14 @@
 }
 
 #deck {
-    /*position: absolute;*/
+    position: absolute;
     top: 30%;
     left: 40%;
     width: 70px;
 }
 
 #pile {
-    /*position: absolute;*/
+    position: absolute;
     top: 30%;
     right: 40%;
     width: 70px;

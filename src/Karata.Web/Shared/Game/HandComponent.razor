@@ -1,11 +1,11 @@
 @using System.Collections.Immutable
 
-<div class="hand">
+@* <div class="hand"> *@
     @foreach (var card in Cards)
     {
         <CardComponent Card="@card" FaceUp="@FaceUp" OnClick="SelectCard" />
     }
-</div>
+@* </div> *@
 
 @code
 {
