@@ -2,4 +2,4 @@
 
 namespace Karata.Web.Models.UI;
 
-public record GameOverInfo(string Reason, UIUser? Winner);
+public record GameOverInfo(string RoomId, string Reason, UIUser? Winner);

@@ -31,9 +31,11 @@ else if (_room is null)
                     <MudSpacer></MudSpacer>
                     <MudIconButton Icon="@Icons.Rounded.Close" OnClick="@(() => _gameOverInfo = null)"></MudIconButton>
                 </div>
-                <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex flex-column flex-grow-1 justify-center align-center mb-8">
+                <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex flex-column flex-grow-1 justify-center align-self-center align-center ma-8">
                     <MudText Typo="Typo.h3" Class="mb-4">Game Over!</MudText>
                     <MudText Typo="Typo.h5">@_gameOverInfo.Reason</MudText>
+                    <MudSpacer></MudSpacer>
+                    <MudText Typo="Typo.caption">Room ID: @_gameOverInfo.RoomId</MudText>
                 </MudContainer>
             </MudPaper>
         }
@@ -180,7 +182,7 @@ else
 
         _hubConnection.On<string, UIUser>("EndGame", async (reason, winner) =>
         {
-            _gameOverInfo = new GameOverInfo(Reason: reason, Winner: winner);
+            _gameOverInfo = new GameOverInfo(RoomId: _room.InviteLink!, Reason: reason, Winner: winner);
 
             if (_gameOverInfo.Winner is not null && _gameOverInfo.Winner.Email == _username)
             {
