@@ -4,7 +4,7 @@
 
 # karata
 
-> Karata is a Swahili word that refers to both the Kenyan game of cards and the cards used to play it.
+> Karata (cards) is a Swahili word that refers to both the Kenyan game of cards and the cards used to play it.
 
 Real-time Kenyan street poker over ASP.NET Core SignalR/websockets.
 
