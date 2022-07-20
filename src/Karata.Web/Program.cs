@@ -71,6 +71,13 @@ builder.Services.AddResponseCompression(opts =>
         .Concat(new[] { "application/octet-stream" });
 });
 
+// For running in Railway
+var portString = Environment.GetEnvironmentVariable("PORT");
+if (portString is {Length: > 0} && int.TryParse(portString, out var port))
+{
+    builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(port));
+}
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment()) app.UseMigrationsEndPoint();
