@@ -3,7 +3,7 @@
 @inject ISnackbar Snackbar 
 
 <MudExpansionPanels DisableBorders="true" Elevation="0" Class="mb-4">
-    <MudExpansionPanel Text="Information">
+    <MudExpansionPanel Text="Information" @bind-IsExpanded="_expand">
         <MudList Clickable="true">
             <MudListItem OnClick="CopyInviteLink">
                 <MudText Typo="Typo.caption">Room ID (Click to Copy)</MudText>
@@ -40,7 +40,7 @@
         </MudList>
     </MudExpansionPanel>
     <MudExpansionPanel Text="Chat" MaxHeight="500">
-        <MudTextField T="string" Label="Type your message:" Variant="Variant.Filled" @bind-Value="@message" Lines="5" Class="mb-2" />
+        <MudTextField T="string" Label="Type your message:" Variant="Variant.Filled" @bind-Value="@_message" Lines="5" Class="mb-2" />
         <MudButton Variant="Variant.Text" EndIcon="@Icons.Rounded.Send" Color="Color.Primary" FullWidth="true" OnClick="@Send">Send Message</MudButton>
         <MudDivider DividerType="DividerType.Middle" Class="my-4" />
 
@@ -78,18 +78,19 @@
     public IClipboardService Clipboard { get; set; }
 
     private UIGame Game => Room.Game;
-    private string message;
+    private bool _expand = true;
+    private string _message;
 
     private async Task Send()
     {
-        if (string.IsNullOrWhiteSpace(message))
+        if (string.IsNullOrWhiteSpace(_message))
         {
             Snackbar.Add("You must enter a message to send.", Severity.Error);
             return;
         }
 
-        await OnSend.InvokeAsync(message);
-        message = "";
+        await OnSend.InvokeAsync(_message);
+        _message = "";
     }
 
     private async Task CopyInviteLink()

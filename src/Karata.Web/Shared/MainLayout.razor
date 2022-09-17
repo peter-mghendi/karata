@@ -43,14 +43,12 @@
         <NavMenu />
     </MudDrawer>
     <MudMainContent Class="mud-height-full">
-        <MudContainer MaxWidth="MaxWidth.Medium" Class="mud-height-full">
-            @Body
-        </MudContainer>
+        @Body
     </MudMainContent>
 </MudLayout>
 
 @code {
-    bool _drawerOpen = true;
+    bool _drawerOpen;
 
     void DrawerToggle() => _drawerOpen = !_drawerOpen;
 }
