@@ -27,9 +27,9 @@
                 <MudListSubheader>Player Hands:</MudListSubheader>
                 @foreach (var hand in OtherHands)
                 {
-                    <MudListItem Avatar="@Icons.Rounded.Person">
+                    <MudAlert Class="mb-4" Severity="@Severity.Normal" Icon="@Icons.Rounded.Person">
                         @(hand.User!.Email) has @(hand.Cards.Count) cards.
-                    </MudListItem>
+                    </MudAlert>
                 }
             </MudList>
         </MudItem>

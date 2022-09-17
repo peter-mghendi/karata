@@ -1,26 +1,26 @@
 @using System.Collections.Immutable
 @implements IGameInterface
 
-<div id="table">
+<div id="table" class="mud-width-full mud-height-full relative teal rounded mud-elevation-1">
     @* Me *@
-    <div id="bottom" class="hand-container">
+    <div id="bottom" class="absolute">
         <HandComponent Cards="@CurrentHand" FaceUp="true" OnCardSelected="AddCardToTurn" />
     </div>
 
     @* Current Turn *@
-    <div id="turn" class="hand-container">
+    <div id="turn" class="absolute">
         <HandComponent Cards="@Turn" FaceUp="true" OnCardSelected="RemoveCardFromTurn" />
     </div>
 
     @* Player 2 *@
-    <div id="top" class="hand-container">
+    <div id="top" class="absolute">
         <HandComponent Cards="@OtherHands[0].Cards.ToImmutableList()" FaceUp="false" />
     </div>
 
     @* Player 3 *@
     @if (OtherHands.Count > 1)
     {
-        <div id="left" class="hand-container">
+        <div id="left" class="absolute">
             <HandComponent Cards="@OtherHands[1].Cards.ToImmutableList()" FaceUp="false" />
         </div>
     }
@@ -35,8 +35,10 @@
 
     @* Deck and Pile *@
     @* TODO Include @click handlers after all? *@
-    <img id="deck" src="img/cards/Back.svg" alt="Card back"/>
-    <img id="pile" src="@ImageUrl(Game.Pile.Peek())" title="@RequestText" alt="@Game.Pile.Peek().GetName() card"/>
+    <img id="deck" class="absolute" src="img/cards/Back.svg" alt="Card back"/>
+    <MudTooltip Text="@RequestText">
+        <img id="pile" class="absolute" src="@ImageUrl(Game.Pile.Peek())" alt="@Game.Pile.Peek().GetName()"/>
+    </MudTooltip>
 </div>
 
 @code 

@@ -4,17 +4,6 @@
     --edge-offset-horizontal: 8px;
 }
 
-#table {
-    width: 100%;
-    height: 80%;
-    background-color: green;
-    position: relative;
-}
-
-.hand-container {
-    position: absolute;
-}
-
 /*noinspection CssInvalidPseudoSelector*/
 ::deep #bottom .card{
     position: relative;
@@ -53,14 +42,12 @@
 }
 
 #deck {
-    position: absolute;
     top: 30%;
     left: 40%;
     width: 70px;
 }
 
 #pile {
-    position: absolute;
     top: 30%;
     right: 40%;
     width: 70px;
