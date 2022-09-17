@@ -4,6 +4,8 @@
 
 # karata
 
+> Karata (cards) is a Swahili word that refers to both the Kenyan game of cards and the cards used to play it.
+
 Real-time Kenyan street poker over ASP.NET Core SignalR/websockets.
 
 The game is currently playable and implements all of the game logic.
@@ -32,7 +34,8 @@ There is also a custom cards library [here](https://github.com/sixpeteunder/kara
 
 None of the sources I consulted could agree on a canonical set of rules (as they should) so I implemented some sensible defaults:
 
-I'm looking into a way to make the rules configurable without complicating the codebase too much.
+> **Note**
+> I'm looking into a way to make the rules configurable without complicating the codebase too much.
 
 ### Basics
 - The game can only start and end with a non-special card (any card other than those described below).
@@ -43,6 +46,9 @@ I'm looking into a way to make the rules configurable without complicating the c
 - A card sequence that would usually cause the player to play again, e.g two Kings or "jumping" everyone, is counted as its own turn.
 
 ### Aces
+
+![Ace of Spades](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/AceSpades.svg)
+
 - Ace of Spades equals two regular Aces.
 - One Ace can be used to request a suit.
 - Two Aces (or equivalent) can be used to request a specific card.
@@ -52,6 +58,11 @@ I'm looking into a way to make the rules configurable without complicating the c
 - Two aces can request a specific Joker but one Ace can not request a Joker.
 
 ### "Bombs" - Twos, Threes and Jokers
+
+![Two of Spades](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/TwoSpades.svg)
+![Three of Spades](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/ThreeSpades.svg)
+![Black Joker](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/BlackJoker.svg)
+
 - Two, three and joker cards cause the next player to pick two, three or five cards respectively.
 - Two and three cards can be countered by jokers or "bomb" cards of the same face or suit.
 - Jokers can only be countered by jokers or blocked by a single Ace.
@@ -62,17 +73,27 @@ I'm looking into a way to make the rules configurable without complicating the c
 - Picking cannot be "jumped" or "kicked back".
 
 ### "Jumps" - Jacks
+
+![Jack of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/JackHearts.svg)
+
 - A Jack played will "jump" the next player (two Jacks played in succession will jump two players, etc).
 - A Jack must be played on top of a card of the same face(Jack) or suit.
 - Jumping cannot be blocked, e.g. by another Jack placed by a "jumped player".
 
 ### "Questions" - Queens and Eights
+
+![Queen of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/QueenHearts.svg)
+![Eight of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/EightHearts.svg)
+
 - Queen and Eight cards are "Question" cards which require an "Answer".
 - A Queen or Eight must be played on top of a card of the same face or suit.
 - Valid answer cards are any cards of the same face or suit (including other questions.
 - Everything is a valid answer card.
 
 ### "Kickbacks" - Kings
+
+![Kind of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/KingHearts.svg)
+
 - A King will cause the direction of the game to reverse.
 - A King must be played on top of a card of the same face(King) or suit.
 - An even number of Kings played at once will cause the current player to play again.
