@@ -8,12 +8,26 @@ using Xunit;
 using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
-using static Karata.Web.Models.Game;
 
 namespace Karata.Web.Tests.Engines;
 
 public class KarataEngineTest
 {
+    public static TheoryData<Game, List<Card>, bool> ValidationData => GetBaseData()
+        .Aggregate(new TheoryData<Game, List<Card>, bool>(), (aggregate, datum) =>
+        {
+            aggregate.Add(datum.Game, datum.Cards, datum.ExpectedValidity);
+            return aggregate;
+        });
+
+    public static TheoryData<Game, List<Card>, GameDelta> GenerationData => GetBaseData()
+        .Where(datum => datum.ExpectedValidity)
+        .Aggregate(new TheoryData<Game, List<Card>, GameDelta>(), (aggregate, datum) =>
+        {
+            aggregate.Add(datum.Game, datum.Cards, datum.ExpectedDelta);
+            return aggregate;
+        });
+
     [Theory]
     [MemberData(nameof(ValidationData))]
     public void ValidateTurnCardsTest(Game game, List<Card> cards, bool expectedValidity)
@@ -32,21 +46,6 @@ public class KarataEngineTest
         Assert.Equal(expectedDelta, actualDelta);
     }
 
-    public static TheoryData<Game, List<Card>, bool> ValidationData => GetBaseData()
-        .Aggregate(new TheoryData<Game, List<Card>, bool>(), (aggregate, datum) =>
-        {
-            aggregate.Add(datum.Game, datum.Cards, datum.ExpectedValidity);
-            return aggregate;
-        });
-
-    public static TheoryData<Game, List<Card>, GameDelta> GenerationData => GetBaseData()
-        .Where(datum => datum.ExpectedValidity)
-        .Aggregate(new TheoryData<Game, List<Card>, GameDelta>(), (aggregate, datum) =>
-        {
-            aggregate.Add(datum.Game, datum.Cards, datum.ExpectedDelta);
-            return aggregate;
-        });
-
     // Central pool of test data
     // There must be a better way to do this
     private static List<(Game Game, List<Card> Cards, bool ExpectedValidity, GameDelta ExpectedDelta)> GetBaseData()
@@ -54,8 +53,8 @@ public class KarataEngineTest
         var data = new List<(Game, List<Card>, bool, GameDelta)>();
 
         /*
-            * BASIC OPERATIONS
-            */
+         * BASIC OPERATIONS
+         */
 
         // #1 - No cards played - VALID
         var game1 = CreateTestGame();
@@ -87,8 +86,8 @@ public class KarataEngineTest
         data.Add((game4, cards4, true, delta4));
 
         /*
-            * JACK
-            */
+         * JACK
+         */
 
         // #5 - Single Jack of matching suit - VALID
         var game5 = CreateTestGame();
@@ -109,8 +108,8 @@ public class KarataEngineTest
         data.Add((game6, cards6, true, delta6));
 
         /*
-            * KING
-            */
+         * KING
+         */
 
         // #7 - Single King - VALID
         var game7 = CreateTestGame();
@@ -123,14 +122,14 @@ public class KarataEngineTest
         var cards8 = new List<Card>
         {
             King.Of(Spades),
-            King.Of(Hearts),
+            King.Of(Hearts)
         };
         var delta8 = new GameDelta { Skip = 0 };
         data.Add((game8, cards8, true, delta8));
 
         /*
-            * QUESTIONS
-            */
+         * QUESTIONS
+         */
 
         // #9 - Single Question Card - VALID
         var game9 = CreateTestGame();
@@ -171,8 +170,8 @@ public class KarataEngineTest
         data.Add((game12, cards12, false, delta12));
 
         /*
-            * JOKER
-            */
+         * JOKER
+         */
 
         // #13 - Joker as the only card - VALID
         var game13 = CreateTestGame();
@@ -227,8 +226,8 @@ public class KarataEngineTest
         data.Add((game19, cards19, false, delta19));
 
         /*
-            * OTHER "BOMBS"
-            */
+         * OTHER "BOMBS"
+         */
 
         // #20 - "Bomb" at the bottom - VALID
         var game20 = CreateTestGame(Three.Of(Spades), 3);
@@ -261,8 +260,8 @@ public class KarataEngineTest
         data.Add((game24, cards24, true, delta24));
 
         /*
-            * ACES
-            */
+         * ACES
+         */
 
         // #25 - Single Ace - VALID
         var game25 = CreateTestGame();
@@ -327,7 +326,7 @@ public class KarataEngineTest
         // #33 - Card request - VALID
         var game33 = CreateTestGame(Ace.Of(Diamonds), request: None.Of(Spades));
         var cards33 = new List<Card> { Ace.Of(Clubs) };
-        var delta33 = new GameDelta() { HasRequest = true };
+        var delta33 = new GameDelta { HasRequest = true };
         data.Add((game33, cards33, true, delta33));
 
         // #34 - Card request - VALID
@@ -341,7 +340,7 @@ public class KarataEngineTest
 
     private static Game CreateTestGame(Card firstCard = null, uint pick = 0, Card request = null)
     {
-        var game = new Game() { Pick = pick, CurrentRequest = request };
+        var game = new Game { Pick = pick, CurrentRequest = request };
         game.Pile.Push(firstCard ?? Nine.Of(Spades));
         return game;
     }
