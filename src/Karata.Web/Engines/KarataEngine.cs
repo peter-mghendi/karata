@@ -1,6 +1,7 @@
 #nullable enable
 
 using static Karata.Cards.Card.CardFace;
+using static Karata.Web.Models.GameRequestLevel;
 
 namespace Karata.Web.Engines;
 
@@ -47,7 +48,7 @@ public class KarataEngine : IEngine
         // Everything, everything.
         var sequence = new List<Card>(turnCards).Prepend(topCard).ToList();
 
-        for (int i = 1; i < sequence.Count; i++)
+        for (var i = 1; i < sequence.Count; i++)
         {
             var thisCard = sequence[i];
             var prevCard = sequence[i - 1];
@@ -59,36 +60,45 @@ public class KarataEngine : IEngine
                 if (thisCard is { Face: Ace or Joker }) continue;
 
                 // Anything goes on top of an ace or joker
-                if (prevCard is not { Face: Ace or Joker })
-                {
-                    if (!thisCard.FaceEquals(prevCard) && !thisCard.SuitEquals(prevCard))
-                        return false;
-                }
+                if (prevCard is { Face: Ace or Joker }) continue;
+                if (!thisCard.FaceEquals(prevCard) && !thisCard.SuitEquals(prevCard))
+                    return false;
             }
             // Subsequent cards
             else
             {
-                if (thisCard is { Face: Ace })
+                switch (thisCard)
                 {
-                    if (!prevCard.IsQuestion() && prevCard is not { Face: Ace })
-                        return false;
-                }
-                else if (thisCard is { Face: Joker })
-                {
-                    if (!prevCard.IsQuestion() && prevCard is not { Face: Joker })
-                        return false;
-                }
-                else
-                {
-                    if (prevCard.IsQuestion())
+                    case { Face: Ace }:
                     {
-                        if (!thisCard.FaceEquals(prevCard) && !thisCard.SuitEquals(prevCard))
+                        // Ace, when not the first card, can only go on top of a question or another ace.
+                        if (!prevCard.IsQuestion() && prevCard is not { Face: Ace })
                             return false;
+                        break;
                     }
-                    else
+                    case { Face: Joker }:
                     {
-                        if (!thisCard.FaceEquals(prevCard))
+                        // Joker, when not the first card, can only go on top of a question or another joker.
+                        if (!prevCard.IsQuestion() && prevCard is not { Face: Joker })
                             return false;
+                        break;
+                    }
+                    default:
+                    {
+                        // An answer is only valid if it is the same face or suit as the previous card.
+                        if (prevCard.IsQuestion())
+                        {
+                            if (!thisCard.FaceEquals(prevCard) && !thisCard.SuitEquals(prevCard))
+                                return false;
+                        }
+                        else
+                        {
+                            // If the previous card is not a question, the current card must be of fthe same face.
+                            if (!thisCard.FaceEquals(prevCard))
+                                return false;
+                        }
+
+                        break;
                     }
                 }
             }
@@ -106,7 +116,7 @@ public class KarataEngine : IEngine
         {
             delta.Pick = 1;
             if (game.CurrentRequest is not null)
-                delta.RemovesPreviousRequest = false;
+                delta.RemoveRequestLevels = 0;
 
             // If the last card played is a "bomb" card, the player has to immediately pick cards.
             if (game.Pick > 0) delta.Pick = game.Pick;
@@ -145,8 +155,7 @@ public class KarataEngine : IEngine
 
                 if (aceValueCount > 0) 
                 {
-                    delta.HasRequest = true;
-                    if (aceValueCount > 1) delta.HasSpecificRequest = true;
+                    delta.RequestLevel = aceValueCount > 1 ? CardRequest : SuitRequest;
                 }                    
             }
 
