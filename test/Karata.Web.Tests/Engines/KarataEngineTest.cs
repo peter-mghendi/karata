@@ -344,10 +344,10 @@ public class KarataEngineTest
         var delta32 = new GameDelta();
         testCases.Add((32, game32, cards32, false, delta32));
 
-        // When a card of the requested suit is played, the turn is valid
+        // When a single Ace is played on a suit request, the request is removed
         var game33 = CreateTestGame(Ace.Of(Diamonds), request: None.Of(Spades));
         var cards33 = new List<Card> { Ace.Of(Clubs) };
-        var delta33 = new GameDelta { RequestLevel = SuitRequest };
+        var delta33 = new GameDelta { RemoveRequestLevels = 1 };
         testCases.Add((33, game33, cards33, true, delta33));
 
         // When a card is requested and none is played, the player picks up a card
@@ -356,49 +356,50 @@ public class KarataEngineTest
         var delta34 = new GameDelta { RemoveRequestLevels = 0, Pick = 1 };
         testCases.Add((34, game34, cards34, true, delta34));
 
-        // // When a specific card is requested and a single Ace is played, the request is reduced to a suit request
-        // var game35 = CreateTestGame(Ace.Of(Hearts), request: Nine.Of(Spades));
-        // var cards35 = new List<Card> { Ace.Of(Diamonds) };
-        // var delta35 = new GameDelta { HasRequest = SuitRequest };
-        // data.Add((35, game35, cards35, true, delta35));
-        //
-        // // When a specific card is requested and a two Aces are played, the request is removed
-        // var game36 = CreateTestGame(Ace.Of(Hearts), request: Nine.Of(Spades));
-        // var cards36 = new List<Card>
-        // {
-        //     Ace.Of(Diamonds),
-        //     Ace.Of(Clubs)
-        // };
-        // var delta36 = new GameDelta { RemoveRequestLevels = 2 };
-        // data.Add((36, game36, cards36, true, delta36));
-        //
-        // // When a specific card is requested and an Ace of Spades is played, the request is removed
-        // var game37 = CreateTestGame(Ace.Of(Hearts), request: Nine.Of(Spades));
-        // var cards37 = new List<Card> { Ace.Of(Spades) };
-        // var delta37 = new GameDelta { RemoveRequestLevels = 2 };
-        // data.Add((37, game37, cards37, true, delta37));
-        //
-        // // When a specific card is requested and three Aces are played, the request is removed and the player can
-        // // request a suit
-        // var game38 = CreateTestGame(Ace.Of(Hearts), request: Nine.Of(Spades));
-        // var cards38 = new List<Card>
-        // {
-        //     Ace.Of(Diamonds),
-        //     Ace.Of(Spades)
-        // };
-        // var delta38 = new GameDelta { RemoveRequestLevels = 2, RequestLevel = SuitRequest };
-        // data.Add((38, game38, cards38, true, delta38));
-        //
-        // // When a specific card is requested and a four aces are played, the request is removed and the player can
-        // // request a card
-        // var game39 = CreateTestGame(Ace.Of(Hearts), request: Nine.Of(Spades));
-        // var cards39 = new List<Card>
-        // {
-        //     Ace.Of(Diamonds),
-        //     Ace.Of(Spades),
-        //     Ace.Of(Clubs)
-        // };
-        // var delta39 = new GameDelta { RemoveRequestLevels = 2, RequestLevel = CardRequest };
+        // When a specific card is requested and a single Ace is played, the request is reduced to a suit request
+        var game35 = CreateTestGame(Ace.Of(Hearts), request: Nine.Of(Spades));
+        var cards35 = new List<Card> { Ace.Of(Diamonds) };
+        var delta35 = new GameDelta { RemoveRequestLevels = 1 };
+        testCases.Add((35, game35, cards35, true, delta35));
+        
+        // When a specific card is requested and a two Aces are played, the request is removed
+        var game36 = CreateTestGame(Ace.Of(Hearts), request: Nine.Of(Spades));
+        var cards36 = new List<Card>
+        {
+            Ace.Of(Diamonds),
+            Ace.Of(Clubs)
+        };
+        var delta36 = new GameDelta { RemoveRequestLevels = 2 };
+        testCases.Add((36, game36, cards36, true, delta36));
+        
+        // When a specific card is requested and an Ace of Spades is played, the request is removed
+        var game37 = CreateTestGame(Ace.Of(Hearts), request: Nine.Of(Spades));
+        var cards37 = new List<Card> { Ace.Of(Spades) };
+        var delta37 = new GameDelta { RemoveRequestLevels = 2 };
+        testCases.Add((37, game37, cards37, true, delta37));
+        
+        // When a specific card is requested and three Aces are played, the request is removed and the player can
+        // request a suit
+        var game38 = CreateTestGame(Ace.Of(Hearts), request: Nine.Of(Spades));
+        var cards38 = new List<Card>
+        {
+            Ace.Of(Diamonds),
+            Ace.Of(Spades)
+        };
+        var delta38 = new GameDelta { RemoveRequestLevels = 2, RequestLevel = SuitRequest };
+        testCases.Add((38, game38, cards38, true, delta38));
+        
+        // When a specific card is requested and a four aces are played, the request is removed and the player can
+        // request a card
+        var game39 = CreateTestGame(Ace.Of(Hearts), request: Nine.Of(Spades));
+        var cards39 = new List<Card>
+        {
+            Ace.Of(Diamonds),
+            Ace.Of(Spades),
+            Ace.Of(Clubs)
+        };
+        var delta39 = new GameDelta { RemoveRequestLevels = 2, RequestLevel = CardRequest };
+        testCases.Add((39, game39, cards39, true, delta39));
 
         // Quick check to make sure there are no duplicate identifiers
         Assert.Equal(testCases.Count, testCases.Select(t => t.Identifier).Distinct().Count());

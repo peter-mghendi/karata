@@ -6,7 +6,7 @@ namespace Karata.Web.Models;
      */
 public enum GameRequestLevel
 {  
-    NoRequest,
-    SuitRequest,
-    CardRequest,
+    NoRequest = 0,
+    SuitRequest = 1,
+    CardRequest = 2
 }

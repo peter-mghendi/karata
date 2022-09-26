@@ -10,44 +10,34 @@ public class KarataEngine : IEngine
 {
     public bool ValidateTurnCards(Game game, List<Card> turnCards)
     {
-        // Early exit
         if (turnCards.Count == 0) return true;
 
         var topCard = game.Pile.Peek();
         var firstCard = turnCards[0];
 
-        // If a card has been requested, that card must start the turn.
+        // If a card has been requested, that card - or an Ace - must start the turn.
         if (game.CurrentRequest is not null && firstCard is not { Face: Ace })
         {
-            // TODO: Handle blocking of specific requests with two Aces
             var request = game.CurrentRequest;
-
-            // Face is not none and not the same as the requested card.
             if (request is not { Face: None } && !firstCard.FaceEquals(request)) return false;
-
-            // Suit is not the same as the requested card.
             if (!firstCard.SuitEquals(request)) return false;
         }
 
         // If the top card is a "bomb", the next card should counter or block it.
         if (topCard.IsBomb() && game.Pick > 0 && firstCard is not { Face: Ace })
         {
+            // Joker can only be countered by a joker while 2 and 3 can be countered by 2, 3 and Joker.
             if (topCard is { Face: Joker })
             {
-                // Joker can only be countered by a joker.
-                if (firstCard is not { Face: Joker })
-                    return false;
+                if (firstCard is not { Face: Joker }) return false;
             }
             else
             {
-                // 2 and 3 can be countered by 2, 3 and Joker.
                 if (!firstCard.IsBomb()) return false;
             }
         }
-
-        // Everything, everything.
+        
         var sequence = new List<Card>(turnCards).Prepend(topCard).ToList();
-
         for (var i = 1; i < sequence.Count; i++)
         {
             var thisCard = sequence[i];
@@ -93,7 +83,7 @@ public class KarataEngine : IEngine
                         }
                         else
                         {
-                            // If the previous card is not a question, the current card must be of fthe same face.
+                            // If the previous card is not a question, the current card must be of the same face.
                             if (!thisCard.FaceEquals(prevCard))
                                 return false;
                         }
@@ -104,7 +94,6 @@ public class KarataEngine : IEngine
             }
         }
 
-        // Happy path
         return true;
     }
 
@@ -114,55 +103,55 @@ public class KarataEngine : IEngine
 
         if (turnCards.Count == 0)
         {
+            // If the last card played is a "bomb" card, the player has to immediately pick the cards, otherwise they just pick one card
             delta.Pick = 1;
-            if (game.CurrentRequest is not null)
-                delta.RemoveRequestLevels = 0;
-
-            // If the last card played is a "bomb" card, the player has to immediately pick cards.
+            if (game.CurrentRequest is not null) delta.RemoveRequestLevels = 0;
             if (game.Pick > 0) delta.Pick = game.Pick;
-            
             return delta;
         }
-        else
+
+        var lastCard = turnCards[^1];
+        foreach (var card in turnCards)
         {
-            var lastCard = turnCards[^1];
-
-            foreach (var card in turnCards)
-            {
-                if (card is { Face: Jack }) ++delta.Skip;
-                if (card is { Face: King }) delta.Reverse = !delta.Reverse;
-            }
-
-            // If the last card played is a "question" card, the player has to immediately pick a card
-            if (lastCard.IsQuestion())
-            {
-                delta.Pick = 1;
-                return delta;
-            }
-
-            // If the last card played is a "bomb" card, the next player should pick some cards.
-            if (lastCard.IsBomb())
-            {
-                delta.Give = lastCard.GetPickValue();
-                return delta;
-            }
-
-            // If the last card played is an ace and nothing is being blocked, a card should be requested.
-            if (lastCard is { Face: Ace })
-            {
-                var aceValueCount = turnCards.Sum(card => card.GetAceValue());
-                if (game.Pick > 0) --aceValueCount;
-
-                if (aceValueCount > 0) 
-                {
-                    delta.RequestLevel = aceValueCount > 1 ? CardRequest : SuitRequest;
-                }                    
-            }
-
-            // For an even number of "kickbacks", the current player plays again.
-            var kingCount = turnCards.Count(card => card is { Face: King });
-            if (kingCount is > 0 && kingCount % 2 == 0) delta.Skip = 0;
+            if (card is { Face: Jack }) ++delta.Skip;
+            if (card is { Face: King }) delta.Reverse = !delta.Reverse;
         }
+
+        // If the last card played is a "question" card, the player has to immediately pick a card
+        if (lastCard.IsQuestion())
+        {
+            delta.Pick = 1;
+            return delta;
+        }
+
+        // If the last card played is a "bomb" card, the next player should pick some cards.
+        if (lastCard.IsBomb())
+        {
+            delta.Give = lastCard.GetPickValue();
+            return delta;
+        }
+
+        // If the last card played is an ace and nothing is being blocked, a card should be requested.
+        if (lastCard is { Face: Ace })
+        {
+            var totalAceValue = turnCards.Sum(card => card.GetAceValue());
+            
+            // Using aces to block any requests and setting delta.RemoveRequestLevels to the number of aces used, i.e:
+            // - If three aces are played on top of a CardRequest(=2), 2 Aces are used.
+            // - If one ace is played on top of a CardRequest(=2), 1 Ace is used.
+            var remainingAceValue = totalAceValue - (long)game.RequestLevel;
+            delta.RemoveRequestLevels = (uint)Math.Min(totalAceValue, (long)game.RequestLevel);
+
+            // Using an ace to avoid picking cards
+            if (game.Pick > 0) --remainingAceValue;
+
+            // Any remaining ace value is added to the request level.
+            if (remainingAceValue > 0) delta.RequestLevel = remainingAceValue > 1 ? CardRequest : SuitRequest;
+        }
+
+        // For an even number of "kickbacks", the current player plays again.
+        var kingCount = turnCards.Count(card => card is { Face: King });
+        if (kingCount is > 0 && kingCount % 2 == 0) delta.Skip = 0;
 
         return delta;
     }

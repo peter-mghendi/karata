@@ -24,7 +24,7 @@ public record class GameDelta
     /**
      * <summary>How many request levels are removed by this turn.</summary>
      */
-    public uint RemoveRequestLevels { get; set; } = 1;
+    public uint RemoveRequestLevels { get; set; }
     
     /**
      * <summary>
