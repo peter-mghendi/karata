@@ -353,19 +353,19 @@ public class GameHub : Hub<IGameClient>
 
         // Generate delta and update game state.
         var delta = _engine.GenerateTurnDelta(game, cardList);
-        if (delta.RemovesPreviousRequest)
+        if (delta.RemoveRequestLevels > 0)
         {
             game.CurrentRequest = null;
             await Clients.Group(inviteLink).SetCurrentRequest(null);
         }
 
-        if (delta.HasRequest)
+        if (delta.RequestLevel is not GameRequestLevel.NoRequest)
         {
             turn.Request = await this.PromptCallerAsync(
                 CardRequests,
                 Context.ConnectionId,
                 nameof(IGameClient.PromptCardRequest),
-                delta.HasSpecificRequest
+                delta.RequestLevel is GameRequestLevel.CardRequest
             );
             game.CurrentRequest = turn.Request;
             await Clients.Group(inviteLink).SetCurrentRequest(turn.Request);
