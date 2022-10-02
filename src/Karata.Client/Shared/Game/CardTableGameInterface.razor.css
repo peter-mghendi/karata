@@ -1,0 +1,59 @@
+#table {
+    --center-offset: 43.5%;
+    --edge-offset-vertical: 16px;
+    --edge-offset-horizontal: 8px;
+}
+
+/*noinspection CssInvalidPseudoSelector*/
+::deep #bottom .card{
+    position: relative;
+    transition-duration: 250ms;
+}
+
+/*noinspection CssInvalidPseudoSelector*/
+::deep #bottom .card:hover {
+    z-index: 10;
+    box-shadow:  2px 2px 3px grey;
+    margin-top: -10px;
+}
+
+#top {
+    left: var(--center-offset);
+    top: var(--edge-offset-vertical);
+    transform: rotate(180deg);
+}
+
+#bottom {
+    right: var(--center-offset);
+    bottom: var(--edge-offset-vertical);
+    transform: rotate(0);
+}
+
+#left {
+    bottom: var(--center-offset);
+    left: var(--edge-offset-horizontal);
+    transform: rotate(90deg);
+}
+
+#right {
+    top: var(--center-offset);
+    right: var(--edge-offset-horizontal);
+    transform: rotate(270deg);
+}
+
+#deck {
+    top: 30%;
+    left: 40%;
+    width: 70px;
+}
+
+#pile {
+    top: 30%;
+    right: 40%;
+    width: 70px;
+}
+
+#turn {
+    bottom: 27.5%;
+    right: 43.5%;
+}

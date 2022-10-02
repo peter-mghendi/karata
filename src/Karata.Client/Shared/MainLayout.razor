@@ -1,18 +1,48 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-    <main>
-        <div class="top-row px-4 auth">
-            <LoginDisplay />
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+<MudLayout Class="mud-height-full">
+    <MudAppBar Class="grey lighten-4" Elevation="0">
+        <MudLink Href="/" Typo="Typo.body1" Color="Color.Dark" Class="me-4" Underline="Underline.None">
+            Karata
+        </MudLink>
+        <AuthorizeView>
+            <MudLink Href="/game/join" Typo="Typo.body2" Class="me-4" Color="Color.Dark">
+                Play
+            </MudLink>
+        </AuthorizeView>
+        <MudLink Href="/about" Typo="Typo.body2" Class="me-4" Color="Color.Dark">
+            About
+        </MudLink>
+        <MudLink Href="/help" Typo="Typo.body2" Color="Color.Dark">
+            Help
+        </MudLink>
+        <MudSpacer />
+        <AuthorizeView>
+            <Authorized>
+                <MudLink Href="Identity/Account/Manage" Typo="Typo.body2" Class="me-4">
+                    Hello, @context.User.Identity!.Name
+                </MudLink>
+                <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" ButtonType="ButtonType.Submit" form="logout">
+                    Log out
+                </MudButton>
+                <form id="logout" method="post" action="Identity/Account/LogOut" class="d-none"></form>
+            </Authorized>
+            <NotAuthorized>
+                <MudLink Href="Identity/Account/Register" Typo="Typo.body2" Class="me-4" Color="Color.Dark">
+                    Register
+                </MudLink>
+                <MudLink Href="Identity/Account/Login" Typo="Typo.body2" Class="me-2" Color="Color.Dark">
+                    Log in
+                </MudLink>
+            </NotAuthorized>
+        </AuthorizeView>
+        <MudIconButton Icon="@Icons.Material.Filled.DarkMode" Color="Color.Dark"/>
+    </MudAppBar>
+    <MudMainContent Class="mud-height-full">
+        @Body
+    </MudMainContent>
+</MudLayout>

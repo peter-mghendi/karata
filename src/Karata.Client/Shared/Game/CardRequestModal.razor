@@ -1,0 +1,55 @@
+@if (Specific)
+{
+    <MudSelect Class="mb-4" @bind-Value="Face" Label="Face" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
+        @foreach (var face in Enum.GetValues<CardFace>())
+        {
+            @if (face is Joker) continue;
+            <MudSelectItem Value="@face">@face</MudSelectItem>
+        }
+    </MudSelect>
+}
+
+<MudSelect Class="mb-4" @bind-Value="Suit" Label="Suit" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
+    @foreach (var suit in Enum.GetValues<CardSuit>())
+    {
+        @if (suit is BlackJoker or RedJoker) continue;
+        <MudSelectItem Value="@suit">@suit</MudSelectItem>
+    }
+</MudSelect>
+
+<MudButton Class="mb-4" OnClick="SubmitForm">Request this card</MudButton>
+
+<MudDivider DividerType="DividerType.Middle" Class="mh-4" />
+
+@if (Specific)
+{
+    <MudGrid Class="mb-4">
+        <MudItem xs="6">
+            <MudButton Color="Color.Dark" OnClick="() => RequestJoker(Black)">Black Joker</MudButton>
+        </MudItem>
+        <MudItem xs="6">
+            <MudButton Color="Color.Error" OnClick="() => RequestJoker(Red)">Red Joker</MudButton>
+        </MudItem>
+    </MudGrid>
+}
+
+@code
+{
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public bool Specific { get; set; }
+    private CardFace Face { get; set; } = None;
+    private CardSuit Suit { get; set; } = Spades;
+
+    private void RequestJoker(CardColor color)
+    {
+        (Face, Suit) = (Joker, color is Black ? BlackJoker : RedJoker);
+        SubmitForm();
+    }
+
+    private void SubmitForm() => MudDialog.Close(Face.Of(Suit));
+
+    private void Cancel() => MudDialog.Close();
+}

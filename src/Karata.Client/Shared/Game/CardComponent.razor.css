@@ -1,0 +1,10 @@
+.card {
+    width: 70px;
+    float: left;
+    border: solid grey 1px;
+}
+
+.card:not(:first-child) {
+    margin-left: -55px;
+}
+    
