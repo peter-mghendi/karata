@@ -8,11 +8,11 @@ public class Hand
     public List<Card> Cards { get; set; } = new();
     public bool IsLastCard { get; set; } = false;
     public int GameId { get; set; }
-    public virtual User? User { get; set; }
+    public virtual User User { get; set; } = null!;
 
     public UIHand ToUI() => new()
     {
         Cards = Cards,
-        User = User?.ToUI(),
+        User = User.ToUI(),
     };
 }

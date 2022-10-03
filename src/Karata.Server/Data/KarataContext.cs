@@ -84,7 +84,7 @@ public class KarataContext : ApiAuthorizationDbContext<User>
             .Property(t => t.Cards)
             .HasConversion(
                 cards => JsonSerializer.Serialize(cards, options),
-                json => JsonSerializer.Deserialize<List<Card>>(json, options),
+                json => JsonSerializer.Deserialize<List<Card>>(json, options) ?? new(),
                 new ValueComparer<List<Card>>(
                     (s1, s2) => s1 != null && s2 != null && s1.SequenceEqual(s2),
                     s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),

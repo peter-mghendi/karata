@@ -18,7 +18,7 @@
             </MudListItem>
             <MudListItem>
                 <MudText Typo="Typo.caption">Current Turn</MudText>
-                <MudText Typo="Typo.body1" Class="grey-text">@Game.Hands[Game.CurrentTurn].User!.Email</MudText>
+                <MudText Typo="Typo.body1" Class="grey-text">@Game.Hands[Game.CurrentTurn].User.Email</MudText>
             </MudListItem>
             <MudListItem>
                 <MudText Typo="Typo.caption">Players</MudText>
@@ -34,7 +34,7 @@
         <MudList>
             @foreach (var hand in Game.Hands)
             {
-                <MudListItem Text="@hand.User!.Email"></MudListItem>
+                <MudListItem Text="@hand.User.Email"></MudListItem>
             }
         </MudList>
     </MudExpansionPanel>

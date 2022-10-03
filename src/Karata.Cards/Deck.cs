@@ -77,9 +77,9 @@ public class Deck : Stack<Card>
     }
 
     // Check deck size before attempting to deal multiple cards.
-    public bool TryDealMany(uint num, out List<Card>? dealt)
+    public bool TryDealMany(uint num, out List<Card> dealt)
     {
-        dealt = default;
+        dealt = new();
         if (Count < num)
             return false;
 

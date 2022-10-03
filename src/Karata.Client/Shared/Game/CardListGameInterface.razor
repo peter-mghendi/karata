@@ -18,7 +18,7 @@
                     </MudAlert>
                 }
                 <MudAlert Class="mb-4" Severity="@Severity.Info" Icon="@Icons.Rounded.Person">
-                    Current player: @Game.Hands[Game.CurrentTurn].User!.Email.
+                    Current player: @Game.Hands[Game.CurrentTurn].User.Email.
                 </MudAlert>
             </MudList>
         </MudItem>
@@ -28,7 +28,7 @@
                 @foreach (var hand in OtherHands)
                 {
                     <MudAlert Class="mb-4" Severity="@Severity.Normal" Icon="@Icons.Rounded.Person">
-                        @(hand.User!.Email) has @(hand.Cards.Count) cards.
+                        @(hand.User.Email) has @(hand.Cards.Count) cards.
                     </MudAlert>
                 }
             </MudList>
@@ -81,7 +81,7 @@
 
     private List<Card> CurrentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToList();
 
-    private List<UIHand> OtherHands => Game.Hands.Where(h => h.User!.Id != Hand.User!.Id).ToList();
+    private List<UIHand> OtherHands => Game.Hands.Where(h => h.User.Id != Hand.User.Id).ToList();
 
     private async Task AddCardToTurn(Card card, int index) => await OnAddCardToTurn.InvokeAsync((card, index));
 

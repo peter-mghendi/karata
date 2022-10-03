@@ -163,7 +163,7 @@ public class GameHub : Hub<IGameClient>
         if (room is null) return;
 
         var game = room.Game;
-        var hand = game.Hands.Single(h => h.User!.Id == user.Id);
+        var hand = game.Hands.Single(h => h.User.Id == user.Id);
 
         // Check game status
         if (!isEnding && (game.IsStarted || room.Creator.Id == user.Id))
@@ -255,7 +255,7 @@ public class GameHub : Hub<IGameClient>
             await Clients.Group(inviteLink).RemoveCardsFromDeck(dealtCount);
 
             hand.Cards.AddRange(dealt);
-            await Clients.User(hand.User!.Email!).AddCardRangeToHand(dealt);
+            await Clients.User(hand.User.Email!).AddCardRangeToHand(dealt);
             await Clients.Users(GetOthers(game.Hands, hand)).AddCardsToPlayerHand(hand.ToUI(), dealtCount);
         }
 
@@ -273,7 +273,7 @@ public class GameHub : Hub<IGameClient>
 
         var game = room.Game;
         var currentTurn = game.CurrentTurn;
-        var player = await _userManager.FindByIdAsync(game.Hands[currentTurn].User!.Id);
+        var player = await _userManager.FindByIdAsync(game.Hands[currentTurn].User.Id);
         if (player is null) return;
         
         var hand = player.Hands.Single(h => h.GameId == game.Id);
@@ -389,9 +389,9 @@ public class GameHub : Hub<IGameClient>
             await Clients.Group(inviteLink).RemoveCardsFromDeck(1);
 
             // Add cards to player hand and reset counter
-            hand.Cards.AddRange(cards!);
-            await Clients.Caller.AddCardRangeToHand(cards!);
-            await Clients.Users(GetOthers(game.Hands, hand)).AddCardsToPlayerHand(hand.ToUI(), cards!.Count);
+            hand.Cards.AddRange(cards);
+            await Clients.Caller.AddCardRangeToHand(cards);
+            await Clients.Users(GetOthers(game.Hands, hand)).AddCardsToPlayerHand(hand.ToUI(), cards.Count);
             game.Pick = 0;
         }
 
@@ -446,7 +446,7 @@ public class GameHub : Hub<IGameClient>
     }
 
     private static IEnumerable<string> GetOthers(IEnumerable<Hand> hands, Hand hand) =>
-        hands.Where(h => h.User!.Email != hand.User!.Email).Select(h => h.User!.Email!);
+        hands.Where(h => h.User.Email != hand.User.Email).Select(h => h.User.Email!);
 
     private static bool IsBoring(Card card) =>
         !card.IsBomb() && !card.IsQuestion() && card is not {Face: Ace or Jack or King};
