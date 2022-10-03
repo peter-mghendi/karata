@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Karata.Shared.Models;
-using Karata.Server.Services;
 using Microsoft.AspNetCore.Identity;
 using Karata.Server.Data;
 using System.Security.Claims;
@@ -12,13 +11,11 @@ using System.Security.Claims;
 public class RoomController : ControllerBase
 {
     private readonly ILogger<RoomController> _logger;
-    private readonly IRoomService _roomService;
     private readonly KarataContext _context;
 
-    public RoomController(ILogger<RoomController> logger, IRoomService roomService, KarataContext context)
+    public RoomController(ILogger<RoomController> logger, KarataContext context)
     {
         _logger = logger;
-        _roomService = roomService;
         _context = context;
     }
 
@@ -26,10 +23,11 @@ public class RoomController : ControllerBase
     public IEnumerable<UIRoom> List() => new List<UIRoom>();
 
     [HttpGet("{link}")]
-    public async Task<UIRoom> Get(string link)
+    public async Task<ActionResult<UIRoom>> Get(string id)
     {
         // TODO: Check if the room has a password, and if one is provided, check if it's correct
-        var room = await _roomService.FindByInviteLinkAsync(link);
+        var room = await _context.Rooms.FindAsync(id);
+        if (room == null) return NotFound();
         return room.ToUI();
     }
 
@@ -39,15 +37,17 @@ public class RoomController : ControllerBase
         var userId = User.Claims.First(claim => claim.Type == ClaimTypes.NameIdentifier).Value;
         var user = await userManager.FindByIdAsync(userId);
         if (user is null) return Unauthorized();
+
+        var room = new Room { Creator = user };
     
         // if (!string.IsNullOrWhiteSpace(password))
         // {
         //     room.Salt = PasswordService.GenerateSalt();
         //     room.Hash = _passwordService.HashPassword(Encoding.UTF8.GetBytes(password), room.Salt);
         // }
-
-        var room = await _roomService.CreateAsync(user);
+        
+        _ = _context.Rooms.Add(room);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { link = room.InviteLink }, room.ToUI());
+        return CreatedAtAction(nameof(Get), new { id = room.Id.ToString() }, room.ToUI());
     }
 }

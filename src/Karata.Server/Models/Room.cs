@@ -4,9 +4,8 @@ namespace Karata.Server.Models;
 
 public class Room
 {
-    public int Id { get; set; }
-    public string? InviteLink { get; set; }
-    public virtual User? Creator { get; set; } 
+    public Guid Id { get; set; }
+    public virtual User Creator { get; set; } = null!;
     public virtual Game Game { get; set; } = new ();
     public DateTime CreatedAt { get; } = DateTime.Now;
     public byte[]? Hash { get; set; } = null;
@@ -15,9 +14,8 @@ public class Room
 
     public UIRoom ToUI() => new()
     {
-        InviteLink = InviteLink,
         CreatedAt = CreatedAt,
-        Creator = Creator?.ToUI(),
+        Creator = Creator.ToUI(),
         Game = Game.ToUI(),
         Chats = Chats.Select(c => c.ToUI()).ToList()
     };

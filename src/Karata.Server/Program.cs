@@ -57,7 +57,6 @@ builder.Services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
 builder.Services.AddSingleton<IPasswordService, PasswordService>();
 builder.Services.AddSingleton<IEngine, KarataEngine>();
 builder.Services.AddSingleton<PresenceService>();
-builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddResponseCompression(opts =>
 {
     opts.MimeTypes = ResponseCompressionDefaults.MimeTypes

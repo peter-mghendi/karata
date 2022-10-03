@@ -17,7 +17,6 @@ public class GameHub : Hub<IGameClient>
     private readonly IEngine _engine;
     private readonly ILogger<GameHub> _logger;
     private readonly IPasswordService _passwordService;
-    private readonly IRoomService _roomService;
     private readonly KarataContext _context;
     private readonly PresenceService _presence;
     private readonly UserManager<User> _userManager;
@@ -26,7 +25,6 @@ public class GameHub : Hub<IGameClient>
         IEngine engine,
         ILogger<GameHub> logger,
         IPasswordService passwordService,
-        IRoomService roomService,
         KarataContext context,
         PresenceService presence,
         UserManager<User> userManager)
@@ -34,7 +32,6 @@ public class GameHub : Hub<IGameClient>
         _engine = engine;
         _logger = logger;
         _passwordService = passwordService;
-        _roomService = roomService;
         _context = context;
         _presence = presence;
         _userManager = userManager;
@@ -69,15 +66,15 @@ public class GameHub : Hub<IGameClient>
         var user = await _userManager.FindByEmailAsync(email);
         if (user is null) return;
 
-        var room = await _roomService.FindByInviteLinkAsync(inviteLink);
+        var room = await _context.Rooms.FindAsync(inviteLink);
+        if (room is null) return;
+
         var message = new Chat {Text = text, Sender = user};
         room.Chats.Add(message);
 
         await Clients.Group(inviteLink).ReceiveChat(message.ToUI());
         await _context.SaveChangesAsync();
     }
-
-    
 
     public async Task JoinRoom(string inviteLink, string? password)
     {
@@ -87,7 +84,9 @@ public class GameHub : Hub<IGameClient>
         var user = await _userManager.FindByEmailAsync(email);
         if (user is null) return;
 
-        var room = await _roomService.FindByInviteLinkAsync(inviteLink);
+        var room = await _context.Rooms.FindAsync(inviteLink);
+        if (room is null) return;
+
         var game = room.Game;
         var hand = new Hand {User = user};
 
@@ -145,7 +144,7 @@ public class GameHub : Hub<IGameClient>
         game.Hands.Add(hand);
         _presence.AddPresence(user.Id, inviteLink);
         await Clients.OthersInGroup(inviteLink).AddHandToRoom(hand.ToUI());
-        await Groups.AddToGroupAsync(Context.ConnectionId, room.InviteLink!);
+        await Groups.AddToGroupAsync(Context.ConnectionId, room.Id.ToString());
         await Clients.Caller.AddToRoom(room.ToUI());
         await _context.SaveChangesAsync();
     }
@@ -160,12 +159,14 @@ public class GameHub : Hub<IGameClient>
         var user = await _userManager.FindByEmailAsync(email);
         if (user is null) return;
 
-        var room = await _roomService.FindByInviteLinkAsync(inviteLink);
+        var room = await _context.Rooms.FindAsync(inviteLink);
+        if (room is null) return;
+
         var game = room.Game;
         var hand = game.Hands.Single(h => h.User!.Id == user.Id);
 
         // Check game status
-        if (!isEnding && (game.IsStarted || room.Creator!.Id == user.Id))
+        if (!isEnding && (game.IsStarted || room.Creator.Id == user.Id))
         {
             // TODO: Handle this gracefully, as well as accidental disconnection.
             var message = new SystemMessage
@@ -180,19 +181,21 @@ public class GameHub : Hub<IGameClient>
         // Remove player from room
         game.Hands.Remove(hand);
         _presence.RemovePresence(user.Id, inviteLink);
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.InviteLink!);
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.Id.ToString());
         await Clients.Caller.RemoveFromRoom();
-        await Clients.OthersInGroup(room.InviteLink!).RemoveHandFromRoom(hand.ToUI());
+        await Clients.OthersInGroup(room.Id.ToString()).RemoveHandFromRoom(hand.ToUI());
         await _context.SaveChangesAsync();
     }
 
     public async Task StartGame(string inviteLink)
     {
-        var room = await _roomService.FindByInviteLinkAsync(inviteLink);
+        var room = await _context.Rooms.FindAsync(inviteLink);
+        if (room is null) return;
+
         var game = room.Game;
 
         // Check caller role
-        if (room.Creator!.Email != Context.UserIdentifier)
+        if (room.Creator.Email != Context.UserIdentifier)
         {
             var message = new SystemMessage
             {
@@ -265,7 +268,9 @@ public class GameHub : Hub<IGameClient>
     public async Task PerformTurn(string inviteLink, List<Card> cardList)
     {
         // Setup
-        var room = await _roomService.FindByInviteLinkAsync(inviteLink);
+        var room = await _context.Rooms.FindAsync(inviteLink);
+        if (room is null) return;
+
         var game = room.Game;
         var currentTurn = game.CurrentTurn;
         var player = await _userManager.FindByIdAsync(game.Hands[currentTurn].User!.Id);

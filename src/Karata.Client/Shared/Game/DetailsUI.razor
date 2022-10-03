@@ -6,7 +6,7 @@
         <MudList Clickable="true">
             <MudListItem OnClick="CopyInviteLink">
                 <MudText Typo="Typo.caption">Room ID (Click to Copy)</MudText>
-                <MudText Typo="Typo.body1" Class="grey-text">@Room.InviteLink</MudText>
+                <MudText Typo="Typo.body1" Class="grey-text">@Room.Id.ToString()</MudText>
             </MudListItem>
             <MudListItem>
                 <MudText Typo="Typo.caption">Date Created</MudText>
@@ -14,7 +14,7 @@
             </MudListItem>
             <MudListItem>
                 <MudText Typo="Typo.caption">Room Admin</MudText>
-                <MudText Typo="Typo.body1" Class="grey-text">@Room.Creator!.Email</MudText>
+                <MudText Typo="Typo.body1" Class="grey-text">@Room.Creator.Email</MudText>
             </MudListItem>
             <MudListItem>
                 <MudText Typo="Typo.caption">Current Turn</MudText>
@@ -94,7 +94,7 @@
 
     private async Task CopyInviteLink()
     {
-        await Clipboard.SetTextAsync(Room.InviteLink ?? string.Empty);
+        await Clipboard.SetTextAsync(Room.Id.ToString() ?? string.Empty);
         Snackbar.Add("Copied to clipboard.", Severity.Info);   
     }
 }
