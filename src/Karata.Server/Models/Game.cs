@@ -8,6 +8,7 @@ public class Game
 {
     public int Id { get; set; }
 
+    // TODO: Refactor this into "Reversed"
     public bool IsForward { get; set; } = true;
     public bool IsStarted { get; set; }
 
@@ -23,7 +24,7 @@ public class Game
     public virtual List<Hand> Hands { get; set; } = new();
     public virtual List<Turn> Turns { get; set; } = new();
 
-    public int RoomId { get; set; }
+    public Guid RoomId { get; set; }
 
     public UIGame ToUI() => new()
     {

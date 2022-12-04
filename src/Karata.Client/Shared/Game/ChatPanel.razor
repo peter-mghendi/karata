@@ -1,0 +1,48 @@
+@inject ISnackbar Snackbar
+
+<MudTextField T="string" Label="Type your message:" Variant="Variant.Filled" @bind-Value="@_message" Lines="5" Class="mb-2" />
+<MudButton Variant="Variant.Text" EndIcon="@Icons.Rounded.Send" Color="Color.Primary" FullWidth="true" OnClick="@Send">Send Message</MudButton>
+<MudDivider DividerType="DividerType.Middle" Class="my-4" />
+
+<MudList>
+    @foreach (var message in Room.Chats)
+    {
+        <MudListItem>
+            <div class="d-flex align-center">
+                @if (message.Sender.Id == Player.Id)
+                {
+                    <MudIcon Icon="@Icons.Rounded.Person" Class="me-2" />
+                }
+                <MudText>@message.Sender.Email</MudText>
+            </div>
+            <MudText Typo="Typo.caption" Class="grey-text mb-2">@message.Sent</MudText>
+            <MudText>@message.Text</MudText>
+        </MudListItem>
+    }
+</MudList>
+
+@code
+{
+    [Parameter]
+    public UIRoom Room { get; set; } = null!;
+
+    [Parameter]
+    public UIUser Player { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<string> OnSend { get; set; }
+
+    private string _message = null!;
+
+    private async Task Send()
+    {
+        if (string.IsNullOrWhiteSpace(_message))
+        {
+            Snackbar.Add("You must enter a message to send.", Severity.Error);
+            return;
+        }
+
+        await OnSend.InvokeAsync(_message);
+        _message = "";
+    }
+}

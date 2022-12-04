@@ -21,6 +21,9 @@ public class GameHub : Hub<IGameClient>
     private readonly PresenceService _presence;
     private readonly UserManager<User> _userManager;
 
+    
+    // TODO: Move room joining/leaving/creation to the API to enable 
+    // clients that don't support SignalR e.g. Telegram
     public GameHub(
         IEngine engine,
         ILogger<GameHub> logger,
@@ -78,13 +81,16 @@ public class GameHub : Hub<IGameClient>
 
     public async Task JoinRoom(string inviteLink, string? password)
     {
-        var email = Context.UserIdentifier;
-        if (email is null) return;
+        _logger.LogInformation("User {User} is joining room {Room}.", Context.UserIdentifier, inviteLink);
 
-        var user = await _userManager.FindByEmailAsync(email);
+        if (Context.UserIdentifier is null) return;
+
+        var user = await _userManager.FindByIdAsync(Context.UserIdentifier);
         if (user is null) return;
 
-        var room = await _context.Rooms.FindAsync(inviteLink);
+        if (!Guid.TryParse(inviteLink, out var guid)) return;
+
+        var room = await _context.Rooms.FindAsync(guid);
         if (room is null) return;
 
         var game = room.Game;
@@ -141,7 +147,7 @@ public class GameHub : Hub<IGameClient>
         }
 
         // Add player to room
-        game.Hands.Add(hand);
+        if (!game.Hands.Any(h => h.User.Id == hand.User.Id)) game.Hands.Add(hand);
         _presence.AddPresence(user.Id, inviteLink);
         await Clients.OthersInGroup(inviteLink).AddHandToRoom(hand.ToUI());
         await Groups.AddToGroupAsync(Context.ConnectionId, room.Id.ToString());
@@ -265,6 +271,8 @@ public class GameHub : Hub<IGameClient>
         await _context.SaveChangesAsync();
     }
 
+    // TODO: Refactor this into a service (and add tests) so that it can be shared
+    // with the API controller, gRPC service, and/or whatever else.
     public async Task PerformTurn(string inviteLink, List<Card> cardList)
     {
         // Setup

@@ -22,11 +22,12 @@ public class RoomController : ControllerBase
     [HttpGet]
     public IEnumerable<UIRoom> List() => new List<UIRoom>();
 
-    [HttpGet("{link}")]
+    [HttpGet("{id}")]
     public async Task<ActionResult<UIRoom>> Get(string id)
     {
         // TODO: Check if the room has a password, and if one is provided, check if it's correct
-        var room = await _context.Rooms.FindAsync(id);
+        if (!Guid.TryParse(id, out var guid)) return BadRequest();
+        var room = await _context.Rooms.FindAsync(guid);
         if (room == null) return NotFound();
         return room.ToUI();
     }
@@ -39,6 +40,7 @@ public class RoomController : ControllerBase
         if (user is null) return Unauthorized();
 
         var room = new Room { Creator = user };
+        room.Game.Hands.Add(new() { User = user });
     
         // if (!string.IsNullOrWhiteSpace(password))
         // {
@@ -48,6 +50,6 @@ public class RoomController : ControllerBase
         
         _ = _context.Rooms.Add(room);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { id = room.Id.ToString() }, room.ToUI());
+        return CreatedAtAction(nameof(Get), new { id = room.Id }, room.ToUI());
     }
 }

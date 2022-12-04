@@ -8,7 +8,7 @@
     <MudText Typo="Typo.h5" Class="pa-4 my-4">Join or create a game room to play.</MudText>
 
     <MudPaper Class="pa-4 mb-4">
-        <MudTextField @bind-Value="link" Label="Invite Link" Variant="Variant.Filled" Class="mb-4"></MudTextField>
+        <MudTextField @bind-Value="link" Label="Invite Link" Variant="Variant.Filled" Adornment="Adornment.End" AdornmentIcon="Icons.Filled.QrCodeScanner" Class="mb-4"></MudTextField>
         <MudButton Disabled="@loading" OnClick="JoinRoom" Variant="Variant.Filled" Color="Color.Primary">
             @if (joining)
             {

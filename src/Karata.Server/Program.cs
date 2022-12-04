@@ -4,13 +4,14 @@ using Karata.Server.Data;
 using Npgsql;
 using Microsoft.AspNetCore.SignalR;
 using Karata.Server.Services;
-using Microsoft.AspNetCore.Components.Authorization;
 using Karata.Server.Engines;
 using Microsoft.EntityFrameworkCore;
 using Karata.Server.Hubs;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 // TODO: Standardize this. Use the URL format for development too, to avoid this check.
 string connectionString;
@@ -53,7 +54,7 @@ builder.Services.AddSignalR().AddHubOptions<GameHub>(options =>
 //     options.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
 // });
 
-builder.Services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
+// builder.Services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
 builder.Services.AddSingleton<IPasswordService, PasswordService>();
 builder.Services.AddSingleton<IEngine, KarataEngine>();
 builder.Services.AddSingleton<PresenceService>();
@@ -68,6 +69,8 @@ builder.Services.AddIdentityServer()
 
 builder.Services.AddAuthentication()
     .AddIdentityServerJwt();
+builder.Services.TryAddEnumerable(
+    ServiceDescriptor.Singleton<IPostConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>());
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
@@ -107,7 +110,7 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapControllers();
-app.MapHub<GameHub>("/game");
+app.MapHub<GameHub>("/hubs/game");
 app.MapFallbackToFile("index.html");
 
 app.Run();

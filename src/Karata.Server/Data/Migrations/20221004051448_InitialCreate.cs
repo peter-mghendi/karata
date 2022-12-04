@@ -218,9 +218,7 @@ namespace Karata.Server.Data.Migrations
                 name: "Rooms",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    InviteLink = table.Column<string>(type: "text", nullable: true),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatorId = table.Column<string>(type: "text", nullable: true),
                     Hash = table.Column<byte[]>(type: "bytea", nullable: true),
                     Salt = table.Column<byte[]>(type: "bytea", nullable: true)
@@ -243,7 +241,7 @@ namespace Karata.Server.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Text = table.Column<string>(type: "text", nullable: false),
                     SenderId = table.Column<string>(type: "text", nullable: true),
-                    RoomId = table.Column<int>(type: "integer", nullable: true)
+                    RoomId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -275,7 +273,7 @@ namespace Karata.Server.Data.Migrations
                     Deck = table.Column<string>(type: "text", nullable: false),
                     Pile = table.Column<string>(type: "text", nullable: false),
                     WinnerId = table.Column<string>(type: "text", nullable: true),
-                    RoomId = table.Column<int>(type: "integer", nullable: false)
+                    RoomId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -326,10 +324,10 @@ namespace Karata.Server.Data.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Cards = table.Column<string>(type: "text", nullable: true),
+                    Cards = table.Column<string>(type: "text", nullable: false),
                     IsLastCard = table.Column<bool>(type: "boolean", nullable: false),
                     Request = table.Column<string>(type: "text", nullable: true),
-                    UserId = table.Column<string>(type: "text", nullable: true),
+                    UserId = table.Column<string>(type: "text", nullable: false),
                     GameId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -339,7 +337,8 @@ namespace Karata.Server.Data.Migrations
                         name: "FK_Turns_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Turns_Games_GameId",
                         column: x => x.GameId,

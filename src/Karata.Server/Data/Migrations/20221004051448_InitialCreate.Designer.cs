@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Karata.Server.Data.Migrations
 {
     [DbContext(typeof(KarataContext))]
-    [Migration("20220928033051_InitialCreate")]
+    [Migration("20221004051448_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -177,8 +177,8 @@ namespace Karata.Server.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("RoomId")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("RoomId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("SenderId")
                         .HasColumnType("text");
@@ -230,8 +230,8 @@ namespace Karata.Server.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("RoomId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("WinnerId")
                         .HasColumnType("text");
@@ -278,20 +278,15 @@ namespace Karata.Server.Data.Migrations
 
             modelBuilder.Entity("Karata.Server.Models.Room", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("CreatorId")
                         .HasColumnType("text");
 
                     b.Property<byte[]>("Hash")
                         .HasColumnType("bytea");
-
-                    b.Property<string>("InviteLink")
-                        .HasColumnType("text");
 
                     b.Property<byte[]>("Salt")
                         .HasColumnType("bytea");
@@ -312,6 +307,7 @@ namespace Karata.Server.Data.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Cards")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("GameId")
@@ -324,6 +320,7 @@ namespace Karata.Server.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -597,7 +594,9 @@ namespace Karata.Server.Data.Migrations
 
                     b.HasOne("Karata.Server.Models.User", null)
                         .WithMany("Turns")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

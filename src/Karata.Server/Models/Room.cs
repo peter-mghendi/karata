@@ -14,6 +14,7 @@ public class Room
 
     public UIRoom ToUI() => new()
     {
+        Id = Id,
         CreatedAt = CreatedAt,
         Creator = Creator.ToUI(),
         Game = Game.ToUI(),

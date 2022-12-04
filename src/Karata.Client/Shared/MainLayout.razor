@@ -29,7 +29,7 @@
                 <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" ButtonType="ButtonType.Submit" form="logout">
                     Log out
                 </MudButton>
-                <form id="logout" method="post" action="Identity/Account/LogOut" class="d-none"></form>
+                <form id="logout" method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" class="d-none"></form>
             </Authorized>
             <NotAuthorized>
                 <MudLink Href="Identity/Account/Register" Typo="Typo.body2" Class="me-4" Color="Color.Dark">
