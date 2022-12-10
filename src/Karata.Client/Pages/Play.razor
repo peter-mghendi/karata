@@ -76,11 +76,11 @@ else
                 </MudPaper>
 
                 <MudExpansionPanels DisableBorders="true" Elevation="0" Class="mb-4">
-                    <MudExpansionPanel Text="Information" @bind-IsExpanded="_expand">
-                        <InformationPanel Room="_room" />
+                    <MudExpansionPanel Text="Information">
+                    <InformationPanel Room="_room" />
                     </MudExpansionPanel>
                     <MudExpansionPanel Text="Players">
-                        <PlayersPanel Room="_room" Player="_room.Game.Hands.Single(h => h.User!.Email == _username).User" />
+                        <PlayersPanel Room="_room" />
                     </MudExpansionPanel>
                     <MudExpansionPanel Text="Chat" MaxHeight="500">
                         <ChatPanel Room="_room" OnSend="Send"/>
@@ -153,9 +153,7 @@ else
         _hub.On<UIRoom>("AddToRoom", room =>
         {
             _room = room;
-            Console.WriteLine($"Hands: {string.Join(", ", _room.Game.Hands.Select(h => h.User!.Email))}");
             _hand = _room.Game.Hands.Single(h => h.User.Email == username);
-            Console.WriteLine("Hand: " + _hand);
             StateHasChanged();
         });
 
