@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Karata.Server.Data.Migrations
+namespace Karata.Server.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
