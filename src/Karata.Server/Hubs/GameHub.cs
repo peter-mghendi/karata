@@ -58,6 +58,7 @@ public class GameHub : Hub<IGameClient>
             _logger.LogInformation("Ending game in room {Room}.", roomId);
             await Clients.Group(roomId).EndGame();
             var room = await _context.Rooms.FindAsync(Guid.Parse(roomId));
+            if (room is null) continue;
             room.Game.EndReason = $"{Context.UserIdentifier} disconnected. This game cannot proceed.";
             await _context.SaveChangesAsync();
         }
