@@ -1,9 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Karata.Shared.Models;
-using Microsoft.AspNetCore.Identity;
-using Karata.Server.Data;
 using System.Security.Claims;
+using Karata.Server.Data;
+using Karata.Shared.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Karata.Server.Controllers;
 
 [Authorize]
 [ApiController]
@@ -40,7 +42,7 @@ public class RoomController : ControllerBase
         if (user is null) return Unauthorized();
 
         var room = new Room { Creator = user };
-        room.Game.Hands.Add(new() { User = user });
+        room.Game.Hands.Add(new Hand { User = user });
     
         // if (!string.IsNullOrWhiteSpace(password))
         // {

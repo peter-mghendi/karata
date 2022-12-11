@@ -25,10 +25,9 @@ public class PresenceService
         });
     }
     
-    public bool TryGetPresence(string user, out HashSet<string> rooms)
+    public bool TryGetPresence(string user, out HashSet<string>? rooms)
     {
-        // TODO: Weird null check
-        return _presence.TryGetValue(user, out rooms!);
+        return _presence.TryGetValue(user, out rooms);
     }
 
     public HashSet<string> this[string key]

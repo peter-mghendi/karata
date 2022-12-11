@@ -4,11 +4,12 @@
 
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-@using System.Text.Json.Serialization
+@using System.Collections.Immutable
+@using TextCopy
 
 @inject AuthenticationStateProvider Authenticator
-@inject HttpClient Http
 @inject IAccessTokenProvider Provider
+@inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigator
 
@@ -23,22 +24,36 @@ else
     <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mud-height-full pa-0">
         <MudGrid Class="mud-height-full px-4 pt-4">
             <MudItem xs="12" md="8" xl="9" xxl="10">
-                <MudCard Elevation="0" Class="pa-4 pt-8">
-                    <div class="d-flex flex-column justify-center align-content-center">
-                        <MudText Align="Align.Center" Typo="Typo.body1" Class="mb-2">
-                            You are in room @_room.Id
-                            <MudIconButton Size="Size.Small" Icon="@Icons.Filled.ContentCopy" Color="Color.Primary" />
-                        </MudText>
-                        <MudText Align="Align.Center" Typo="Typo.body2" Class="mb-2">
-                            @Navigator.Uri
-                            <MudIconButton Size="Size.Small" Icon="@Icons.Filled.ContentCopy" Color="Color.Primary" />
-                        </MudText>
-                        <MudGrid Spacing="2" Justify="Justify.Center">
-                            <MudItem xs="12" sm="8" md="6" lg="4" xl="3" xxl="2">
-                                <QRCode Data="@Navigator.Uri" />
-                            </MudItem>
-                        </MudGrid>
-                    </div>
+                <MudCard Elevation="0" Class="" Style="height: 88vh">
+                    @if (_room is not null && _room.Game.IsStarted)
+                    {
+                        if (_table)
+                        {
+                            <CardTableGameInterface Game="_room.Game" Hand="_hand" Turn="_turn.ToImmutableList()" OnAddCardToTurn="AddCardToTurn" OnReorderCardInTurn="ReorderCardInTurn" OnRemoveCardFromTurn="RemoveCardFromTurn"/>
+                        }
+                        else
+                        {
+                            <CardListGameInterface Game="_room.Game" Hand="_hand" Turn="_turn.ToImmutableList()" OnAddCardToTurn="AddCardToTurn" OnReorderCardInTurn="ReorderCardInTurn" OnRemoveCardFromTurn="RemoveCardFromTurn"/>
+                        }
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column justify-center align-content-center pa-4 pt-8">
+                            <MudText Align="Align.Center" Typo="Typo.body1" Class="mb-2">
+                                You are in room @_room.Id
+                                <MudIconButton Size="Size.Small" Icon="@Icons.Filled.ContentCopy" Color="Color.Primary" OnClick="CopyRoomId"/>
+                            </MudText>
+                            <MudText Align="Align.Center" Typo="Typo.body2" Class="mb-2">
+                                @Navigator.Uri
+                                <MudIconButton Size="Size.Small" Icon="@Icons.Filled.ContentCopy" Color="Color.Primary" OnClick="CopyRoomLink"/>
+                            </MudText>
+                            <MudGrid Spacing="2" Justify="Justify.Center">
+                                <MudItem xs="12" sm="8" md="6" lg="4" xl="3" xxl="2">
+                                    <QRCode Data="@Navigator.Uri"/>
+                                </MudItem>
+                            </MudGrid>
+                        </div>
+                    }
                 </MudCard>
             </MudItem>
             <MudItem Class="mud-height-full overflow-y-scroll" xs="12" md="4" xl="3" xxl="2">
@@ -77,13 +92,13 @@ else
 
                 <MudExpansionPanels DisableBorders="true" Elevation="0" Class="mb-4">
                     <MudExpansionPanel Text="Information">
-                    <InformationPanel Room="_room" />
+                        <InformationPanel Room="_room" />
                     </MudExpansionPanel>
                     <MudExpansionPanel Text="Players">
                         <PlayersPanel Room="_room" />
                     </MudExpansionPanel>
                     <MudExpansionPanel Text="Chat" MaxHeight="500">
-                        <ChatPanel Room="_room" OnSend="Send"/>
+                        <ChatPanel Room="_room" Player="_hand?.User" OnSend="Send"/>
                     </MudExpansionPanel>
                 </MudExpansionPanels>
             </MudItem>
@@ -95,8 +110,10 @@ else
 {
     [Parameter]
     public Guid Id { get; set; }
+    
+    [Inject]
+    public required IClipboard Clipboard { get; set; }
 
-    private bool _expand = true;
     private bool _table;
     private HubConnection? _hub;
     private UIHand? _hand;
@@ -120,27 +137,29 @@ else
             .AddJsonProtocol()
             .Build();
 
-        @* _hub.On<UIHand, int>("AddCardsToPlayerHand", (hand, num) =>
+        _hub.On<UIHand, int>("AddCardsToPlayerHand", (hand, num) =>
         {
-            if (Game is null) return;
-            var playerHand = Game.Hands.Single(h => h.User!.Email == hand.User!.Email);
+            Console.WriteLine($"Room {_room.Id}: {hand.User.Email} received {num} cards.");
+            if (_room is null) return;
+            var playerHand = _room.Game.Hands.Single(h => h.User!.Email == hand.User!.Email);
             for (var i = 0; i < num; i++) playerHand.Cards.Add(new Card());
             StateHasChanged();
         });
 
         _hub.On<List<Card>>("AddCardRangeToHand", cards =>
         {
-            if (Hand is null) return;
-            Hand.Cards.AddRange(cards);
+            Console.WriteLine(cards.Select(c => c.ToString()));
+            if (_hand is null) return;
+            _hand.Cards.AddRange(cards);
             StateHasChanged();
         });
 
         _hub.On<List<Card>>("AddCardRangeToPile", cards =>
         {
-            if (Game is null) return;
-            foreach (var card in cards) Game.Pile.Push(card);
+            if (_room is null) return;
+            foreach (var card in cards) _room.Game.Pile.Push(card);
             StateHasChanged();
-        }); *@
+        });
 
         _hub.On<UIHand>("AddHandToRoom", hand =>
         {
@@ -157,24 +176,24 @@ else
             StateHasChanged();
         });
 
-        @* _hub.On<string, UIUser>("EndGame", async (reason, winner) =>
-        {
-            if (_room is null) return;
-            _gameOverInfo = new GameOverInfo(_room.InviteLink!, reason, winner);
-
-            if (_gameOverInfo.Winner is not null && _gameOverInfo.Winner.Email == _username)
-            {
-                // TODO: Do something special for the winner (confetti?)
-                Snackbar.Add("You won!", Severity.Success);
-            }
-
-            await LeaveRoom(true);
-            StateHasChanged();
-        });
+        // _hub.On<string, UIUser>("EndGame", async (reason, winner) =>
+        // {
+        //     if (_room is null) return;
+        //     _gameOverInfo = new GameOverInfo(_room.InviteLink!, reason, winner);
+        //
+        //     if (_gameOverInfo.Winner is not null && _gameOverInfo.Winner.Email == _username)
+        //     {
+        //         // TODO: Do something special for the winner (confetti?)
+        //         Snackbar.Add("You won!", Severity.Success);
+        //     }
+        //
+        //     await LeaveRoom(true);
+        //     StateHasChanged();
+        // });
 
         _hub.On("NotifyTurnProcessed", () =>
         {
-            _currentTurn.Clear();
+            _turn.Clear();
             StateHasChanged();
         });
 
@@ -197,7 +216,7 @@ else
             if (_room is null) return;
             _room.Chats.Add(message);
             var sender = message.Sender.Email;
-            if (sender != _username) Snackbar.Add($"New message from {sender}.", Severity.Info);
+            if (sender != username) Snackbar.Add($"New message from {sender}.", Severity.Info);
             StateHasChanged();
         });
 
@@ -216,31 +235,31 @@ else
 
         _hub.On("ReclaimPile", () =>
         {
-            if (Game is null) return;
-            var cards = Game.Pile.Reclaim();
-            Game.DeckCount += cards.Count;
+            if (_room is null) return;
+            var cards = _room.Game.Pile.Reclaim();
+            _room.Game.DeckCount += cards.Count;
             StateHasChanged();
         });
 
         _hub.On<int>("RemoveCardsFromDeck", num =>
         {
-            if (Game is null) return;
-            Game.DeckCount -= num;
+            if (_room is null) return;
+            _room.Game.DeckCount -= num;
             StateHasChanged();
         });
 
         _hub.On<UIHand, int>("RemoveCardsFromPlayerHand", (hand, num) =>
         {
-            if (Game is null) return;
-            var playerHand = Game.Hands.Single(h => h.User!.Email == hand.User!.Email);
+            if (_room is null) return;
+            var playerHand = _room.Game.Hands.Single(h => h.User!.Email == hand.User!.Email);
             for (var i = 0; i < num; i++) playerHand.Cards.RemoveAt(0);
             StateHasChanged();
         });
 
         _hub.On<List<Card>>("RemoveCardRangeFromHand", cards =>
         {
-            if (Hand is null) return;
-            Hand.Cards.RemoveAll(cards.Contains);
+            if (_hand is null) return;
+            _hand.Cards.RemoveAll(cards.Contains);
             StateHasChanged();
         });
 
@@ -252,25 +271,25 @@ else
 
         _hub.On<UIHand>("RemoveHandFromRoom", hand =>
         {
-            if (Game is null) return;
-            _ = Game.Hands.RemoveAll(h => h.User!.Email == hand.User!.Email);
+            if (_room is null) return;
+            _ = _room.Game.Hands.RemoveAll(h => h.User!.Email == hand.User!.Email);
             Snackbar.Add($"{hand.User!.Email} has left the room.", Severity.Info);
             StateHasChanged();
         });
 
         _hub.On<Card>("SetCurrentRequest", request =>
         {
-            if (Game is null) return;
-            Game.CurrentRequest = request;
+            if (_room is null) return;
+            _room.Game.CurrentRequest = request;
             StateHasChanged();
         });
 
         _hub.On<int>("UpdateTurn", turn =>
         {
-            if (Game is null) return;
-            Game.CurrentTurn = turn;
-            var current = Game.Hands[turn].User!.Email;
-            var turnText = current == _username ? "your" : $"{current}'s";
+            if (_room is null) return;
+            _room.Game.CurrentTurn = turn;
+            var current = _room.Game.Hands[turn].User!.Email;
+            var turnText = current == username ? "your" : $"{current}'s";
             var message = $"It is now {turnText} turn.";
             Snackbar.Add(message, Severity.Info);
             StateHasChanged();
@@ -278,11 +297,11 @@ else
 
         _hub.On<bool>("UpdateGameStatus", started =>
         {
-            if (Game is null) return;
-            Game.IsStarted = started;
+            if (_room is null) return;
+            _room.Game.IsStarted = started;
             if (started) Snackbar.Add("The game has started", Severity.Info);
             StateHasChanged();
-        }); *@
+        });
 
         await _hub.StartAsync();
         await _hub.SendAsync("JoinRoom", Id, "");
@@ -302,6 +321,27 @@ else
         await _hub.SendAsync("StartGame", _room.Id);
     }
     
+    private void AddCardToTurn(ValueTuple<Card, int> info)
+    {
+        var (card, index) = info;
+        _turn.Insert(index, card);
+        StateHasChanged();
+    }
+
+    private void ReorderCardInTurn(ValueTuple<Card, int> info)
+    {
+        var (card, index) = info;
+        _turn.Remove(card);
+        _turn.Insert(index, card);
+        StateHasChanged();
+    }
+
+    private void RemoveCardFromTurn(Card card)
+    {
+        _turn.Remove(card);
+        StateHasChanged();
+    }
+
     async Task PerformTurn(List<Card> cards)
     {
         if (_hub is null || _room is null) return;
@@ -314,6 +354,18 @@ else
         if (_hub is null || _room is null) return;
         await _hub.SendAsync("SendChat", _room.Id, message);
     }
+    
+    private async Task CopyRoomId()
+    {
+        await Clipboard.SetTextAsync(Id.ToString());
+        Snackbar.Add("Copied to clipboard.", Severity.Info);   
+    }
+    
+    private async Task CopyRoomLink()
+    {
+        await Clipboard.SetTextAsync(Navigator.Uri);
+        Snackbar.Add("Copied to clipboard.", Severity.Info);   
+    }
 
     public async ValueTask DisposeAsync()
     {
@@ -322,20 +374,7 @@ else
     }
 }
 
-@*@using System.Collections.Immutable
-@using System.Net
-@using Microsoft.AspNetCore.SignalR.Client
-@using Karata.Client.Services
-@using System.Text.Json.Serialization
-
-@implements IAsyncDisposable
-
-@inject AuthenticationStateProvider Authenticator
-@inject NavigationManager Navigator
-@inject IConfiguration Config
-@inject ISnackbar Snackbar
-
-@if (_gameOverInfo is not null)
+@*  @if (_gameOverInfo is not null)
 {
     <MudPaper Class="absolute mud-width-full mud-height-full pa-4 d-flex flex-column flex-grow-1" Style="left: 0; top: 0; z-index: 1300;">
         <div class="d-flex flex-grow-0 align-center">
@@ -351,6 +390,7 @@ else
     </MudPaper>
 }
 
+TODO: Make this a component (HubConnectionGuard) that takes a hub connection and a callback to run and/or a component to render when the connection is lost.
 @if (_hubConnection is null || _hubConnection.State != HubConnectionState.Connected)
 {
     <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full">
@@ -358,252 +398,7 @@ else
         <MudText Typo="Typo.h6" Class="pa-4 mb-4">If this message persists, reload this page to establish a connection.</MudText>
     </MudContainer>
 }
-else
-{
-    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mud-height-full pa-0">
-        <MudGrid Class="mud-height-full px-4 pt-4">
-            <MudItem xs="12" md="8" xl="9" xxl="10">
-                @if (Game!.IsStarted)
-                {
-                    if (_useCardTable)
-                    {
-                        <CardTableGameInterface Game="Game" Hand="Hand" Turn="_currentTurn.ToImmutableList()" OnAddCardToTurn="AddCardToTurn" OnReorderCardInTurn="ReorderCardInTurn" OnRemoveCardFromTurn="RemoveCardFromTurn"/>
-                    }
-                    else
-                    {
-                        <CardListGameInterface Game="Game" Hand="Hand" Turn="_currentTurn.ToImmutableList()" OnAddCardToTurn="AddCardToTurn" OnReorderCardInTurn="ReorderCardInTurn" OnRemoveCardFromTurn="RemoveCardFromTurn"/>
-                    }
-                }
-                else
-                {
-                    <MudText Typo="Typo.h5" Class="pa-4 mb-4">Waiting for players to join. (@Game.Hands.Count/4)</MudText>
-                }
-            </MudItem>
-            <MudItem Class="mud-height-full overflow-y-scroll" xs="12" md="4" xl="3" xxl="2">
-                <MudPaper Elevation="0" Class="mb-4">
-                    <MudToolBar>
-                        @if (Game!.IsStarted)
-                        {
-                            <MudTooltip Text="Pick card(s)">
-                                <MudIconButton Icon="@Icons.Rounded.ArrowCircleUp" Color="Color.Inherit" OnClick="() => PerformTurn(new List<Card>())"/>
-                            </MudTooltip>
-                            <MudTooltip Text="Play card(s)">
-                                <MudIconButton Icon="@Icons.Rounded.ArrowCircleDown" Color="Color.Inherit" OnClick="() => PerformTurn(_currentTurn)"/>
-                            </MudTooltip>
-                        }
-                        else
-                        {
-                            <MudTooltip Text="@(IsCreator ? "Start Game" : "Only the creator can start the game.")">
-                                <MudIconButton Icon="@Icons.Rounded.PlayArrow" Color="Color.Inherit" OnClick="StartGame" Disabled="!IsCreator"/>
-                            </MudTooltip>
-                        }
-
-                        <MudTooltip Text="Leave Room">
-                            <MudIconButton Icon="@Icons.Rounded.PersonRemove" Color="Color.Inherit" OnClick="() => LeaveRoom()"/>
-                        </MudTooltip>
-                    </MudToolBar>
-                </MudPaper>
-
-                <MudPaper Class="pa-4 mb-4" Elevation="0">
-                    <div class="mb-2">
-                        <MudSwitch @bind-Checked="_useCardTable" Color="Color.Primary" Label="Use Card Table interface (Experimental)"/>
-                    </div>
-                    <MudText Typo="Typo.caption" Class="text-grey">
-                        The Card Table interface is still under development and, as such, may contain bugs. Use the Card List interface for best experience.
-                    </MudText>
-                </MudPaper>
-
-                <DetailsUI Room="_room" Player="Player" OnSend="Send"/>
-            </MudItem>
-        </MudGrid>
-    </MudContainer>
-}
 
 @code {
     private GameOverInfo? _gameOverInfo;
-    private UIUser? Player => Hand?.User;
-    private bool IsCreator => Player?.Email == _room?.Creator?.Email;
-    private readonly List<Card> _currentTurn = new();
-    private bool _useCardTable;
-
-    protected override async Task OnInitializedAsync()
-    {
-        _hubConnection.On<UIHand, int>("AddCardsToPlayerHand", (hand, num) =>
-        {
-            if (Game is null) return;
-            var playerHand = Game.Hands.Single(h => h.User!.Email == hand.User!.Email);
-            for (var i = 0; i < num; i++) playerHand.Cards.Add(new Card());
-            StateHasChanged();
-        });
-
-        _hubConnection.On<List<Card>>("AddCardRangeToHand", cards =>
-        {
-            if (Hand is null) return;
-            Hand.Cards.AddRange(cards);
-            StateHasChanged();
-        });
-
-        _hubConnection.On<List<Card>>("AddCardRangeToPile", cards =>
-        {
-            if (Game is null) return;
-            foreach (var card in cards) Game.Pile.Push(card);
-            StateHasChanged();
-        });
-
-        _hubConnection.On<UIHand>("AddHandToRoom", hand =>
-        {
-            if (Game is null) return;
-            Game.Hands.Add(hand);
-            Snackbar.Add($"{hand.User!.Email} has joined the room", Severity.Info);
-            StateHasChanged();
-        });
-
-        _hubConnection.On<string, UIUser>("EndGame", async (reason, winner) =>
-        {
-            if (_room is null) return;
-            _gameOverInfo = new GameOverInfo(_room.InviteLink!, reason, winner);
-
-            if (_gameOverInfo.Winner is not null && _gameOverInfo.Winner.Email == _username)
-            {
-                // TODO: Do something special for the winner (confetti?)
-                Snackbar.Add("You won!", Severity.Success);
-            }
-
-            await LeaveRoom(true);
-            StateHasChanged();
-        });
-
-        _hubConnection.On("NotifyTurnProcessed", () =>
-        {
-            _currentTurn.Clear();
-            StateHasChanged();
-        });
-
-        _hubConnection.On<bool, Task<Card?>>("PromptCardRequest", async specific =>
-        {
-            var parameters = new DialogParameters { { nameof(CardRequestModal.Specific), specific } };
-            var dialog = DialogService.Show<CardRequestModal>("Request a card", parameters);
-            var result = await dialog.Result;
-            return result.Cancelled ? null : (Card)result.Data;
-        });
-
-        _hubConnection.On<bool>("PromptLastCardRequest", async () =>
-        {
-            var dialog = DialogService.ShowMessageBox("Last Card?", "Are you on your last card?", "Yes!", "No");
-            return (await dialog) ?? false;
-        });
-
-        _hubConnection.On<UIChat>("ReceiveChat", message =>
-        {
-            if (_room is null) return;
-            _room.Chats.Add(message);
-            var sender = message.Sender.Email;
-            if (sender != _username) Snackbar.Add($"New message from {sender}.", Severity.Info);
-            StateHasChanged();
-        });
-
-        _hubConnection.On<SystemMessage>("ReceiveSystemMessage", message =>
-        {
-            var severity = message.Type switch
-            {
-                MessageType.Error => Severity.Error,
-                MessageType.Info => Severity.Info,
-                MessageType.Success => Severity.Success,
-                MessageType.Warning => Severity.Warning,
-                _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
-                };
-            Snackbar.Add(message.Text, severity);
-        });
-
-        _hubConnection.On("ReclaimPile", () =>
-        {
-            if (Game is null) return;
-            var cards = Game.Pile.Reclaim();
-            Game.DeckCount += cards.Count;
-            StateHasChanged();
-        });
-
-        _hubConnection.On<int>("RemoveCardsFromDeck", num =>
-        {
-            if (Game is null) return;
-            Game.DeckCount -= num;
-            StateHasChanged();
-        });
-
-        _hubConnection.On<UIHand, int>("RemoveCardsFromPlayerHand", (hand, num) =>
-        {
-            if (Game is null) return;
-            var playerHand = Game.Hands.Single(h => h.User!.Email == hand.User!.Email);
-            for (var i = 0; i < num; i++) playerHand.Cards.RemoveAt(0);
-            StateHasChanged();
-        });
-
-        _hubConnection.On<List<Card>>("RemoveCardRangeFromHand", cards =>
-        {
-            if (Hand is null) return;
-            Hand.Cards.RemoveAll(cards.Contains);
-            StateHasChanged();
-        });
-
-        _hubConnection.On("RemoveFromRoom", () =>
-        {
-            _room = null;
-            StateHasChanged();
-        });
-
-        _hubConnection.On<UIHand>("RemoveHandFromRoom", hand =>
-        {
-            if (Game is null) return;
-            _ = Game.Hands.RemoveAll(h => h.User!.Email == hand.User!.Email);
-            Snackbar.Add($"{hand.User!.Email} has left the room.", Severity.Info);
-            StateHasChanged();
-        });
-
-        _hubConnection.On<Card>("SetCurrentRequest", request =>
-        {
-            if (Game is null) return;
-            Game.CurrentRequest = request;
-            StateHasChanged();
-        });
-
-        _hubConnection.On<int>("UpdateTurn", turn =>
-        {
-            if (Game is null) return;
-            Game.CurrentTurn = turn;
-            var current = Game.Hands[turn].User!.Email;
-            var turnText = current == _username ? "your" : $"{current}'s";
-            var message = $"It is now {turnText} turn.";
-            Snackbar.Add(message, Severity.Info);
-            StateHasChanged();
-        });
-
-        _hubConnection.On<bool>("UpdateGameStatus", started =>
-        {
-            if (Game is null) return;
-            Game.IsStarted = started;
-            if (started) Snackbar.Add("The game has started", Severity.Info);
-            StateHasChanged();
-        });
-    }
-    
-    private void AddCardToTurn(ValueTuple<Card, int> info)
-    {
-        var (card, index) = info;
-        _currentTurn.Insert(index, card);
-        StateHasChanged();
-    }
-
-    private void ReorderCardInTurn(ValueTuple<Card, int> info)
-    {
-        var (card, index) = info;
-        _currentTurn.Remove(card);
-        _currentTurn.Insert(index, card);
-        StateHasChanged();
-    }
-
-    private void RemoveCardFromTurn(Card card)
-    {
-        _currentTurn.Remove(card);
-        StateHasChanged();
-    }
 } *@
