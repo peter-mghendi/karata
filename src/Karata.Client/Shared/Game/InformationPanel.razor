@@ -1,0 +1,47 @@
+@using TextCopy
+
+@inject ISnackbar Snackbar 
+
+<MudList Clickable="true">
+    <MudListItem OnClick="CopyInviteLink">
+        <MudText Typo="Typo.caption">Room ID (Click to Copy)</MudText>
+        <MudText Typo="Typo.body1" Class="grey-text">@Room.Id.ToString()</MudText>
+    </MudListItem>
+    <MudListItem>
+        <MudText Typo="Typo.caption">Date Created</MudText>
+        <MudText Typo="Typo.body1" Class="grey-text">@Room.CreatedAt</MudText>
+    </MudListItem>
+    <MudListItem>
+        <MudText Typo="Typo.caption">Room Admin</MudText>
+        <MudText Typo="Typo.body1" Class="grey-text">@Room.Creator.Email</MudText>
+    </MudListItem>
+    <MudListItem>
+        <MudText Typo="Typo.caption">Current Turn</MudText>
+        <MudText Typo="Typo.body1" Class="grey-text">@Game.Hands[Game.CurrentTurn].User.Email</MudText>
+    </MudListItem>
+    <MudListItem>
+        <MudText Typo="Typo.caption">Players</MudText>
+        <MudText Typo="Typo.body1" Class="grey-text">@Game.Hands.Count</MudText>
+    </MudListItem>
+    <MudListItem>
+        <MudText Typo="Typo.caption">Status</MudText>
+        <MudText Typo="Typo.body1" Class="grey-text">@(Game.IsStarted ? "In Progress" : "In Lobby")</MudText>
+    </MudListItem>
+</MudList>
+
+@code
+{
+    [Parameter]
+    public UIRoom Room { get; set; } = null!;
+
+    [Inject]
+    public IClipboard Clipboard { get; set; } = null!;
+
+    private UIGame Game => Room.Game;
+
+    private async Task CopyInviteLink()
+    {
+        await Clipboard.SetTextAsync(Room.Id.ToString() ?? string.Empty);
+        Snackbar.Add("Copied to clipboard.", Severity.Info);   
+    }
+}

@@ -45,9 +45,7 @@ public class Deck : Stack<Card>
         var i = cardArray.Length;
         while (--i > 0) {
             var j = _random.Next(i + 1);
-            var temp = cardArray[j];
-            cardArray[j] = cardArray[i];
-            cardArray[i] = temp;
+            (cardArray[i], cardArray[j]) = (cardArray[j], cardArray[i]);
         }
 
         Clear();
@@ -79,9 +77,9 @@ public class Deck : Stack<Card>
     }
 
     // Check deck size before attempting to deal multiple cards.
-    public bool TryDealMany(uint num, out List<Card>? dealt)
+    public bool TryDealMany(uint num, out List<Card> dealt)
     {
-        dealt = default;
+        dealt = new();
         if (Count < num)
             return false;
 

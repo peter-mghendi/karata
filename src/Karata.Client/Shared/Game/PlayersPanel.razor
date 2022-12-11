@@ -1,0 +1,14 @@
+<MudList>
+    @foreach (var hand in Game.Hands)
+    {
+        <MudListItem Text="@hand.User.Email"></MudListItem>
+    }
+</MudList>
+
+@code
+{
+    [Parameter]
+    public UIRoom Room { get; set; } = null!;
+
+    private UIGame Game => Room.Game;
+}

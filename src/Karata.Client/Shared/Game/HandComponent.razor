@@ -1,0 +1,20 @@
+@using System.Collections.Immutable
+
+@foreach (var card in Cards)
+{
+    <CardComponent Card="@card" FaceUp="@FaceUp" OnClick="SelectCard" />
+}
+
+@code
+{
+    [Parameter]
+    public ImmutableList<Card> Cards { get; set; } = new List<Card>().ToImmutableList();
+
+    [Parameter]
+    public bool FaceUp { get; set; }
+
+    [Parameter]
+    public EventCallback<Card> OnCardSelected { get; set; }
+
+    private async Task SelectCard(Card card) => await OnCardSelected.InvokeAsync(card);
+}

@@ -101,13 +101,13 @@ public class DeckTest
         var success = deck.TryDealMany(num, out var dealt);
 
         Assert.Equal(shouldSucceed, success);
+        Assert.NotNull(dealt);
 
         if (shouldSucceed)
         {
             Assert.Equal(StandardDeckSize - num, (uint)deck.Count);
             Assert.Equal(deck.Distinct().Count(), deck.Count);
-
-            Assert.NotNull(dealt);
+            
 
             Assert.Equal(num, (uint)dealt.Count);
             Assert.Equal(dealt.Distinct().Count(), dealt.Count);
@@ -116,8 +116,6 @@ public class DeckTest
         {
             Assert.Equal(StandardDeckSize, (uint)deck.Count);
             Assert.Equal(deck.Distinct().Count(), deck.Count);
-
-            Assert.Null(dealt);
         }   
     }
 }
