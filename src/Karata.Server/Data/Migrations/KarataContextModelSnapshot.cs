@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Karata.Server.Migrations
+namespace Karata.Server.Data.Migrations
 {
     [DbContext(typeof(KarataContext))]
     partial class KarataContextModelSnapshot : ModelSnapshot
@@ -209,6 +209,9 @@ namespace Karata.Server.Migrations
 
                     b.Property<string>("Deck")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EndReason")
                         .HasColumnType("text");
 
                     b.Property<long>("Give")

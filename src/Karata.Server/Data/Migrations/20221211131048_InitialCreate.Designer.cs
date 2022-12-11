@@ -9,10 +9,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Karata.Server.Migrations
+namespace Karata.Server.Data.Migrations
 {
     [DbContext(typeof(KarataContext))]
-    [Migration("20221204164342_InitialCreate")]
+    [Migration("20221211131048_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -212,6 +212,9 @@ namespace Karata.Server.Migrations
 
                     b.Property<string>("Deck")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EndReason")
                         .HasColumnType("text");
 
                     b.Property<long>("Give")

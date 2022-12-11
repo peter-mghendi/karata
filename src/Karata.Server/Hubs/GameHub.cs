@@ -53,11 +53,13 @@ public class GameHub : Hub<IGameClient>
         _logger.LogInformation("User {User} disconnected.", Context.UserIdentifier);
         
         if (!_presence.TryGetPresence(user.Id, out var rooms) || rooms is null) return;
-        foreach (var room in rooms)
+        foreach (var roomId in rooms)
         {
-            _logger.LogInformation("Ending game in room {Room}.", room);
-            var reason = $"{Context.UserIdentifier} disconnected. This game cannot proceed.";
-            await Clients.Group(room).EndGame(reason: reason, winner: null);
+            _logger.LogInformation("Ending game in room {Room}.", roomId);
+            await Clients.Group(roomId).EndGame();
+            var room = await _context.Rooms.FindAsync(Guid.Parse(roomId));
+            room.Game.EndReason = $"{Context.UserIdentifier} disconnected. This game cannot proceed.";
+            await _context.SaveChangesAsync();
         }
     }
 
@@ -384,6 +386,7 @@ public class GameHub : Hub<IGameClient>
                 }
                 else
                 {
+                    _logger.LogInformation("There are not enough cards to pick. Pile: {PileCount}, Deck: {DeckCount}, Pick: {PickCount}", game.Pile.Count, game.Deck.Count, game.Pick);
                     await Clients.Caller.NotifyTurnProcessed();
                     var message = new SystemMessage
                     {
@@ -392,8 +395,9 @@ public class GameHub : Hub<IGameClient>
                     };
                     await Clients.Group(roomId).ReceiveSystemMessage(message);
                     
-                    var reason = $"There aren't enough cards left to pick. (Pile: {game.Pile.Count}, Deck: {game.Deck.Count})";
-                    await Clients.Group(roomId).EndGame(reason: reason, winner: null);
+                    game.EndReason = $"There aren't enough cards left to pick.";
+                    await Clients.Group(roomId).EndGame();
+                    await _context.SaveChangesAsync();
                     return;
                 }
             }
@@ -413,8 +417,9 @@ public class GameHub : Hub<IGameClient>
             if (hand.IsLastCard && IsBoring(cardList[^1]))
             {
                 await Clients.Caller.NotifyTurnProcessed();
+                game.EndReason = $"{player.UserName} won";
                 game.Winner = player;
-                await Clients.Group(roomId).EndGame(reason: $"{player.UserName} won.", winner: player.ToUI());
+                await Clients.Group(roomId).EndGame();
                 await _context.SaveChangesAsync();
                 return;
             }

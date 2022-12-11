@@ -9,7 +9,7 @@ public interface IGameClient
     Task AddCardRangeToPile(List<Card> cards);
     Task AddHandToRoom(UIHand hand);
     Task AddToRoom(UIRoom room);
-    Task EndGame(string reason, UIUser? winner);
+    Task EndGame();
     Task NotifyTurnProcessed();
     Task<Card> PromptCardRequest(bool specific);
     Task<bool> PromptLastCardRequest();

@@ -9,4 +9,5 @@ public class UIGame
     public int DeckCount { get; set; } = Deck.StandardDeck.Count;
     public Pile Pile { get; set; } = new();
     public List<UIHand> Hands { get; set; } = new();
+    public string? EndReason { get; set; }
 }

@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Karata.Server.Migrations
+namespace Karata.Server.Data.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -272,6 +272,7 @@ namespace Karata.Server.Migrations
                     CurrentTurn = table.Column<int>(type: "integer", nullable: false),
                     Deck = table.Column<string>(type: "text", nullable: false),
                     Pile = table.Column<string>(type: "text", nullable: false),
+                    EndReason = table.Column<string>(type: "text", nullable: true),
                     WinnerId = table.Column<string>(type: "text", nullable: true),
                     RoomId = table.Column<Guid>(type: "uuid", nullable: false)
                 },

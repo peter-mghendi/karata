@@ -19,6 +19,7 @@ public class Game
 
     public Deck Deck { get; set; } = Deck.StandardDeck;
     public Pile Pile { get; set; } = new();
+    public string? EndReason { get; set; }
 
     public virtual User? Winner { get; set; }
     public virtual List<Hand> Hands { get; set; } = new();
@@ -35,6 +36,7 @@ public class Game
         DeckCount = Deck.Count,
         Pile = Pile,
         Hands = Hands.Select(h => h.ToUI()).ToList(),
+        EndReason = EndReason,
     };
 
     public GameRequestLevel RequestLevel => CurrentRequest switch

@@ -176,20 +176,13 @@ else
             StateHasChanged();
         });
 
-        // _hub.On<string, UIUser>("EndGame", async (reason, winner) =>
-        // {
-        //     if (_room is null) return;
-        //     _gameOverInfo = new GameOverInfo(_room.InviteLink!, reason, winner);
-        //
-        //     if (_gameOverInfo.Winner is not null && _gameOverInfo.Winner.Email == _username)
-        //     {
-        //         // TODO: Do something special for the winner (confetti?)
-        //         Snackbar.Add("You won!", Severity.Success);
-        //     }
-        //
-        //     await LeaveRoom(true);
-        //     StateHasChanged();
-        // });
+        _hub.On("EndGame", async () =>
+        {
+            if (_room is null) return;
+
+            await LeaveRoom(true);
+            Navigator.NavigateTo($"/game/{_room.Id.ToString()}/over");
+        });
 
         _hub.On("NotifyTurnProcessed", () =>
         {
@@ -374,31 +367,13 @@ else
     }
 }
 
-@*  @if (_gameOverInfo is not null)
-{
-    <MudPaper Class="absolute mud-width-full mud-height-full pa-4 d-flex flex-column flex-grow-1" Style="left: 0; top: 0; z-index: 1300;">
-        <div class="d-flex flex-grow-0 align-center">
-            <MudSpacer></MudSpacer>
-            <MudIconButton Icon="Icons.Rounded.Close" OnClick="() => _gameOverInfo = null"></MudIconButton>
-        </div>
-        <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex flex-column flex-grow-1 justify-center align-self-center align-center ma-8">
-            <MudText Typo="Typo.h3" Class="mb-4">Game Over!</MudText>
-            <MudText Typo="Typo.h5">@(_gameOverInfo.Reason)</MudText>
-            <MudSpacer></MudSpacer>
-            <MudText Typo="Typo.caption">Room ID: @(_gameOverInfo.RoomId)</MudText>
-        </MudContainer>
-    </MudPaper>
-}
 
-TODO: Make this a component (HubConnectionGuard) that takes a hub connection and a callback to run and/or a component to render when the connection is lost.
-@if (_hubConnection is null || _hubConnection.State != HubConnectionState.Connected)
-{
-    <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full">
-        <MudText Typo="Typo.h5" Class="pa-4 my-4">You are not connected to a server.</MudText>
-        <MudText Typo="Typo.h6" Class="pa-4 mb-4">If this message persists, reload this page to establish a connection.</MudText>
-    </MudContainer>
-}
 
-@code {
-    private GameOverInfo? _gameOverInfo;
-} *@
+@* TODO: Make this a component (HubConnectionGuard) that takes a hub connection and a callback to run and/or a component to render when the connection is lost. *@
+@* @if (_hubConnection is null || _hubConnection.State != HubConnectionState.Connected) *@
+@* { *@
+@*     <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full"> *@
+@*         <MudText Typo="Typo.h5" Class="pa-4 my-4">You are not connected to a server.</MudText> *@
+@*         <MudText Typo="Typo.h6" Class="pa-4 mb-4">If this message persists, reload this page to establish a connection.</MudText> *@
+@*     </MudContainer> *@
+@* } *@
