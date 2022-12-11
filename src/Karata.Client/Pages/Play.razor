@@ -1,11 +1,10 @@
- @page "/game/{id:guid}/play"
-
-@attribute [Authorize]
-
+@page "/game/{id:guid}/play"
+@using System.Collections.Immutable
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-@using System.Collections.Immutable
 @using TextCopy
+
+@attribute [Authorize]
 
 @inject AuthenticationStateProvider Authenticator
 @inject IAccessTokenProvider Provider
@@ -13,7 +12,17 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigator
 
-@if (_room is null)
+@* TODO: Make this a component (HubConnectionGuard) that takes a hub connection and a callback to run and/or a component to render when the connection is lost. *@
+@if (_hub is null || _hub.State != HubConnectionState.Connected)
+{
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full">
+        <MudText Typo="Typo.h5" Class="pa-4 my-4">You are not connected to a server.</MudText>
+        <MudText Typo="Typo.h6" Class="pa-4 mb-4">
+            If this message persists, check your internet connection and reload this page to establish a connection.
+        </MudText>
+    </MudContainer>
+}
+else if (_room is null)
 {
     <div class="d-flex justify-center">
         <MudText Typo="Typo.body1">Loading...</MudText>
@@ -25,7 +34,7 @@ else
         <MudGrid Class="mud-height-full px-4 pt-4">
             <MudItem xs="12" md="8" xl="9" xxl="10">
                 <MudCard Elevation="0" Class="" Style="height: 88vh">
-                    @if (_room is not null && _room.Game.IsStarted)
+                    @if (_room.Game.IsStarted)
                     {
                         if (_table)
                         {
@@ -62,7 +71,7 @@ else
                         @if (_room.Game.IsStarted)
                         {
                             <MudTooltip Text="Pick card(s)">
-                                <MudIconButton Icon="@Icons.Rounded.ArrowCircleUp" Color="Color.Inherit" OnClick="() => PerformTurn(new())"/>
+                                <MudIconButton Icon="@Icons.Rounded.ArrowCircleUp" Color="Color.Inherit" OnClick="() => PerformTurn(new List<Card>())"/>
                             </MudTooltip>
                             <MudTooltip Text="Play card(s)">
                                 <MudIconButton Icon="@Icons.Rounded.ArrowCircleDown" Color="Color.Inherit" OnClick="() => PerformTurn(_turn)"/>
@@ -92,10 +101,10 @@ else
 
                 <MudExpansionPanels DisableBorders="true" Elevation="0" Class="mb-4">
                     <MudExpansionPanel Text="Information">
-                        <InformationPanel Room="_room" />
+                        <InformationPanel Room="_room"/>
                     </MudExpansionPanel>
                     <MudExpansionPanel Text="Players">
-                        <PlayersPanel Room="_room" />
+                        <PlayersPanel Room="_room"/>
                     </MudExpansionPanel>
                     <MudExpansionPanel Text="Chat" MaxHeight="500">
                         <ChatPanel Room="_room" Player="_hand?.User" OnSend="Send"/>
@@ -110,7 +119,7 @@ else
 {
     [Parameter]
     public Guid Id { get; set; }
-    
+
     [Inject]
     public required IClipboard Clipboard { get; set; }
 
@@ -120,13 +129,15 @@ else
     private UIRoom? _room;
     private readonly List<Card> _turn = new();
     private bool IsCreator => _hand?.User.Email == _room?.Creator.Email;
+
     protected override async Task OnInitializedAsync()
-    {        
+    {
         var auth = await Authenticator.GetAuthenticationStateAsync();
         var username = auth.User.Identity!.Name!;
 
         _hub = new HubConnectionBuilder()
-            .WithUrl(Navigator.ToAbsoluteUri("/hubs/game"), options => {
+            .WithUrl(Navigator.ToAbsoluteUri("/hubs/game"), options =>
+            {
                 options.AccessTokenProvider = async () =>
                 {
                     var result = await Provider.RequestAccessToken();
@@ -139,9 +150,8 @@ else
 
         _hub.On<UIHand, int>("AddCardsToPlayerHand", (hand, num) =>
         {
-            Console.WriteLine($"Room {_room.Id}: {hand.User.Email} received {num} cards.");
             if (_room is null) return;
-            var playerHand = _room.Game.Hands.Single(h => h.User!.Email == hand.User!.Email);
+            var playerHand = _room.Game.Hands.Single(h => h.User.Email == hand.User.Email);
             for (var i = 0; i < num; i++) playerHand.Cards.Add(new Card());
             StateHasChanged();
         });
@@ -198,10 +208,10 @@ else
             return result.Cancelled ? null : (Card)result.Data;
         });
 
-        _hub.On<bool>("PromptLastCardRequest", async () =>
+        _hub.On("PromptLastCardRequest", async () =>
         {
             var dialog = DialogService.ShowMessageBox("Last Card?", "Are you on your last card?", "Yes!", "No");
-            return (await dialog) ?? false;
+            return await dialog ?? false;
         });
 
         _hub.On<UIChat>("ReceiveChat", message =>
@@ -244,7 +254,7 @@ else
         _hub.On<UIHand, int>("RemoveCardsFromPlayerHand", (hand, num) =>
         {
             if (_room is null) return;
-            var playerHand = _room.Game.Hands.Single(h => h.User!.Email == hand.User!.Email);
+            var playerHand = _room.Game.Hands.Single(h => h.User.Email == hand.User.Email);
             for (var i = 0; i < num; i++) playerHand.Cards.RemoveAt(0);
             StateHasChanged();
         });
@@ -265,8 +275,8 @@ else
         _hub.On<UIHand>("RemoveHandFromRoom", hand =>
         {
             if (_room is null) return;
-            _ = _room.Game.Hands.RemoveAll(h => h.User!.Email == hand.User!.Email);
-            Snackbar.Add($"{hand.User!.Email} has left the room.", Severity.Info);
+            _ = _room.Game.Hands.RemoveAll(h => h.User.Email == hand.User.Email);
+            Snackbar.Add($"{hand.User.Email} has left the room.", Severity.Info);
             StateHasChanged();
         });
 
@@ -281,7 +291,7 @@ else
         {
             if (_room is null) return;
             _room.Game.CurrentTurn = turn;
-            var current = _room.Game.Hands[turn].User!.Email;
+            var current = _room.Game.Hands[turn].User.Email;
             var turnText = current == username ? "your" : $"{current}'s";
             var message = $"It is now {turnText} turn.";
             Snackbar.Add(message, Severity.Info);
@@ -313,7 +323,7 @@ else
         if (_hub is null || _room is null) return;
         await _hub.SendAsync("StartGame", _room.Id);
     }
-    
+
     private void AddCardToTurn(ValueTuple<Card, int> info)
     {
         var (card, index) = info;
@@ -347,17 +357,17 @@ else
         if (_hub is null || _room is null) return;
         await _hub.SendAsync("SendChat", _room.Id, message);
     }
-    
+
     private async Task CopyRoomId()
     {
         await Clipboard.SetTextAsync(Id.ToString());
-        Snackbar.Add("Copied to clipboard.", Severity.Info);   
+        Snackbar.Add("Copied to clipboard.", Severity.Info);
     }
-    
+
     private async Task CopyRoomLink()
     {
         await Clipboard.SetTextAsync(Navigator.Uri);
-        Snackbar.Add("Copied to clipboard.", Severity.Info);   
+        Snackbar.Add("Copied to clipboard.", Severity.Info);
     }
 
     public async ValueTask DisposeAsync()
@@ -366,14 +376,3 @@ else
         await _hub.DisposeAsync();
     }
 }
-
-
-
-@* TODO: Make this a component (HubConnectionGuard) that takes a hub connection and a callback to run and/or a component to render when the connection is lost. *@
-@* @if (_hubConnection is null || _hubConnection.State != HubConnectionState.Connected) *@
-@* { *@
-@*     <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full"> *@
-@*         <MudText Typo="Typo.h5" Class="pa-4 my-4">You are not connected to a server.</MudText> *@
-@*         <MudText Typo="Typo.h6" Class="pa-4 mb-4">If this message persists, reload this page to establish a connection.</MudText> *@
-@*     </MudContainer> *@
-@* } *@
