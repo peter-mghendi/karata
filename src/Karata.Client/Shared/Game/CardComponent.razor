@@ -1,4 +1,4 @@
-<img class="card cursor-pointer" src="@( FaceUp ? ImageSrc : "img/cards/Back.svg" )" @onclick="Click" alt="@Card.GetName()"/>
+<img class="card cursor-pointer" src="@Card.GetImageSrc(faceUp: FaceUp)" @onclick="Click" alt="@Card.GetName()"/>
 
 @code {
     [Parameter]
@@ -11,8 +11,4 @@
     public EventCallback<Card> OnClick { get; set; }
 
     private async Task Click() => await OnClick.InvokeAsync(Card);
-
-    private string ImageSrc => Card is { Face: Joker} 
-        ? $"img/cards/{Card.Suit.ToString()}.svg"
-        : $"img/cards/{Card.Face.ToString()}{Card.Suit.ToString()}.svg";
 }
