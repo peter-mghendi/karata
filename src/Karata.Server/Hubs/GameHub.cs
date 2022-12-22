@@ -1,6 +1,6 @@
 using System.Text;
 using Karata.Server.Data;
-using Karata.Server.Engines;
+using Karata.Server.Engine;
 using Karata.Server.Hubs.Clients;
 using Karata.Server.Services;
 using Karata.Shared.Models;
@@ -14,7 +14,6 @@ namespace Karata.Server.Hubs;
 [Authorize]
 public class GameHub : Hub<IGameClient>
 {
-    private readonly IEngine _engine;
     private readonly ILogger<GameHub> _logger;
     private readonly IPasswordService _passwordService;
     private readonly KarataContext _context;
@@ -25,14 +24,12 @@ public class GameHub : Hub<IGameClient>
     // TODO: Move room joining/leaving/creation to the API to enable 
     // clients that don't support SignalR e.g. Telegram
     public GameHub(
-        IEngine engine,
         ILogger<GameHub> logger,
         IPasswordService passwordService,
         KarataContext context,
         PresenceService presence,
         UserManager<User> userManager)
     {
-        _engine = engine;
         _logger = logger;
         _passwordService = passwordService;
         _context = context;
@@ -325,7 +322,7 @@ public class GameHub : Hub<IGameClient>
         (game.Pick, game.Give) = (game.Give, 0);
 
         // Process turn
-        if (!_engine.ValidateTurnCards(game, cardList))
+        if (!KarataEngine.ValidateTurnCards(game, cardList))
         {
             // TODO: Make this more informative.
             // This needs to be done inside card engine via an out param on Validate
@@ -351,7 +348,7 @@ public class GameHub : Hub<IGameClient>
         hand.Cards.RemoveAll(cardList.Contains);
 
         // Generate delta and update game state.
-        var delta = _engine.GenerateTurnDelta(game, cardList);
+        var delta = KarataEngine.GenerateTurnDelta(game, cardList);
         if (delta.RemoveRequestLevels > 0)
         {
             game.CurrentRequest = null;

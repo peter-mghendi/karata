@@ -1,12 +1,12 @@
 using static Karata.Cards.Card.CardFace;
 using static Karata.Server.Models.GameRequestLevel;
 
-namespace Karata.Server.Engines;
+namespace Karata.Server.Engine;
 
 // This class should not interact with ApplicationUser or Room at all
-public class KarataEngine : IEngine
+public static class KarataEngine
 {
-    public bool ValidateTurnCards(Game game, List<Card> turnCards)
+    public static bool ValidateTurnCards(Game game, List<Card> turnCards)
     {
         if (turnCards.Count == 0) return true;
 
@@ -95,7 +95,7 @@ public class KarataEngine : IEngine
         return true;
     }
 
-    public GameDelta GenerateTurnDelta(Game game, List<Card> turnCards)
+    public static GameDelta GenerateTurnDelta(Game game, List<Card> turnCards)
     {
         var delta = new GameDelta();
 
