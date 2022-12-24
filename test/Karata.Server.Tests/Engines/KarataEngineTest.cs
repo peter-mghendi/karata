@@ -1,6 +1,7 @@
 using Karata.Cards;
 using Karata.Cards.Extensions;
 using Karata.Server.Engine;
+using Karata.Server.Engine.Exceptions;
 using Karata.Server.Models;
 using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
@@ -33,8 +34,10 @@ public class KarataEngineTest
     public void ValidateTurnCardsTest(int identifier, Game game, List<Card> cards, bool expectedValidity)
 #pragma warning restore xUnit1026
     {
-        var actualValidity = KarataEngine.ValidateTurnCards(game, cards);
-        Assert.Equal(expectedValidity, actualValidity);
+        if (!expectedValidity)
+        {
+            Assert.ThrowsAny<TurnValidationException>(() => KarataEngine.EnsureTurnIsValid(game, cards));
+        }
     }
 
     [Theory]

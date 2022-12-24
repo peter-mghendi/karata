@@ -1,6 +1,7 @@
 using System.Text;
 using Karata.Server.Data;
 using Karata.Server.Engine;
+using Karata.Server.Engine.Exceptions;
 using Karata.Server.Hubs.Clients;
 using Karata.Server.Services;
 using Karata.Shared.Models;
@@ -318,19 +319,17 @@ public class GameHub : Hub<IGameClient>
             return;
         }
 
-        // Cards from last turn
+        // game.Give from the last turn becomes Game.Pick for this turn, and game.Give is reset. 
         (game.Pick, game.Give) = (game.Give, 0);
 
         // Process turn
-        if (!KarataEngine.ValidateTurnCards(game, cardList))
+        try
         {
-            // TODO: Make this more informative.
-            // This needs to be done inside card engine via an out param on Validate
-            var message = new SystemMessage
-            {
-                Text = "That card sequence is invalid.",
-                Type = MessageType.Error
-            };
+            KarataEngine.EnsureTurnIsValid(game: game, turnCards: cardList);
+        }
+        catch (TurnValidationException exception)
+        {
+            var message = new SystemMessage { Text = exception.Message, Type = MessageType.Error };
             await Clients.Caller.ReceiveSystemMessage(message);
             await Clients.Caller.NotifyTurnProcessed();
             return;

@@ -1,14 +1,29 @@
+using Karata.Server.Engine.Exceptions;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Server.Models.GameRequestLevel;
 
 namespace Karata.Server.Engine;
 
-// This class should not interact with ApplicationUser or Room at all
+/// <summary>
+/// <see cref="KarataEngine"/> has methods to check that the turn played is valid, and generate a
+/// <see cref="GameDelta"/> for the turn.
+/// </summary>
+/// 
+/// <remarks>
+/// - This class should not interact with <see cref="User"/> or <see cref="Room"/>.
+/// </remarks>
 public static class KarataEngine
 {
-    public static bool ValidateTurnCards(Game game, List<Card> turnCards)
+    /// <summary>
+    /// <see cref="EnsureTurnIsValid"/> checks that the turn played is valid.
+    /// </summary>
+    /// 
+    /// <exception cref="TurnValidationException">
+    /// Thrown when the turn is not valid.
+    /// </exception>
+    public static void EnsureTurnIsValid(Game game, List<Card> turnCards)
     {
-        if (turnCards.Count == 0) return true;
+        if (turnCards is { Count: 0 }) return; //An empty turn is always valid.
 
         var topCard = game.Pile.Peek();
         var firstCard = turnCards[0];
@@ -17,8 +32,8 @@ public static class KarataEngine
         if (game.CurrentRequest is not null && firstCard is not { Face: Ace })
         {
             var request = game.CurrentRequest;
-            if (request is not { Face: None } && !firstCard.FaceEquals(request)) return false;
-            if (!firstCard.SuitEquals(request)) return false;
+            if (request is not { Face: None } && !firstCard.FaceEquals(request)) throw new CardRequestedException();
+            if (!firstCard.SuitEquals(request)) throw new CardRequestedException();
         }
 
         // If the top card is a "bomb", the next card should counter or block it.
@@ -27,11 +42,11 @@ public static class KarataEngine
             // Joker can only be countered by a joker while 2 and 3 can be countered by 2, 3 and Joker.
             if (topCard is { Face: Joker })
             {
-                if (firstCard is not { Face: Joker }) return false;
+                if (firstCard is not { Face: Joker }) throw new DrawCardsException();
             }
             else
             {
-                if (!firstCard.IsBomb()) return false;
+                if (!firstCard.IsBomb()) throw new DrawCardsException();
             }
         }
         
@@ -42,7 +57,7 @@ public static class KarataEngine
             var prevCard = sequence[i - 1];
 
             // First card
-            if (i == 1)
+            if (i is 1)
             {
                 // Ace and joker go on top of anything
                 if (thisCard is { Face: Ace or Joker }) continue;
@@ -50,7 +65,9 @@ public static class KarataEngine
                 // Anything goes on top of an ace or joker
                 if (prevCard is { Face: Ace or Joker }) continue;
                 if (!thisCard.FaceEquals(prevCard) && !thisCard.SuitEquals(prevCard))
-                    return false;
+                {
+                    throw new InvalidFirstCardException();
+                }
             }
             // Subsequent cards
             else
@@ -61,14 +78,18 @@ public static class KarataEngine
                     {
                         // Ace, when not the first card, can only go on top of a question or another ace.
                         if (!prevCard.IsQuestion() && prevCard is not { Face: Ace })
-                            return false;
+                        {
+                            throw new SubsequentAceOrJokerException();
+                        }
                         break;
                     }
                     case { Face: Joker }:
                     {
                         // Joker, when not the first card, can only go on top of a question or another joker.
                         if (!prevCard.IsQuestion() && prevCard is not { Face: Joker })
-                            return false;
+                        {
+                            throw new SubsequentAceOrJokerException();
+                        }
                         break;
                     }
                     default:
@@ -77,13 +98,14 @@ public static class KarataEngine
                         if (prevCard.IsQuestion())
                         {
                             if (!thisCard.FaceEquals(prevCard) && !thisCard.SuitEquals(prevCard))
-                                return false;
+                            {
+                                throw new InvalidAnswerException();
+                            }
                         }
                         else
                         {
                             // If the previous card is not a question, the current card must be of the same face.
-                            if (!thisCard.FaceEquals(prevCard))
-                                return false;
+                            if (!thisCard.FaceEquals(prevCard)) throw new InvalidCardSequenceException();
                         }
 
                         break;
@@ -91,10 +113,11 @@ public static class KarataEngine
                 }
             }
         }
-
-        return true;
     }
 
+    /// <summary>
+    /// <see cref="GenerateTurnDelta"/> Generates a <see cref="GameDelta"/> for this turn.
+    /// </summary>
     public static GameDelta GenerateTurnDelta(Game game, List<Card> turnCards)
     {
         var delta = new GameDelta();
