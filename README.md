@@ -20,7 +20,7 @@ There is also a custom cards library [here](https://github.com/sixpeteunder/kara
 - [ ] Configurable "fines" (off by default) - Trivial.
 - [ ] Player disconnection/reconnection handling - being tracked in [#8](https://github.com/sixpeteunder/karata/issues/8).
 - [ ] Resumable games - blocked by connection handling.
-- [ ] Configurable rules - technically already possible via [IEngine](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/Engines/IEngine.cs).
+- [ ] Configurable rules.
 - [ ] Game replays - no progress.
 - [ ] Friend system - no progress.
 - [ ] Tournaments/Knockouts - no progress.

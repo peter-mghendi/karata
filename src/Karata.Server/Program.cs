@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.ResponseCompression;
 using Karata.Server.Data;
+using Karata.Server.Engine;
 using Npgsql;
-using Microsoft.AspNetCore.SignalR;
 using Karata.Server.Services;
-using Karata.Server.Engines;
 using Microsoft.EntityFrameworkCore;
 using Karata.Server.Hubs;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -56,7 +55,6 @@ builder.Services.AddSignalR().AddHubOptions<GameHub>(options =>
 
 // builder.Services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
 builder.Services.AddSingleton<IPasswordService, PasswordService>();
-builder.Services.AddSingleton<IEngine, KarataEngine>();
 builder.Services.AddSingleton<PresenceService>();
 builder.Services.AddResponseCompression(opts =>
 {
