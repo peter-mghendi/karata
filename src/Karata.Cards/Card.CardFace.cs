@@ -1,6 +1,6 @@
 namespace Karata.Cards;
 
-public partial record class Card
+public partial record Card
 {
     public enum CardFace 
     {

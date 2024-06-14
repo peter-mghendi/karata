@@ -17,7 +17,9 @@
     </MudListItem>
     <MudListItem>
         <MudText Typo="Typo.caption">Current Turn</MudText>
-        <MudText Typo="Typo.body1" Class="grey-text">@Game.Hands[Game.CurrentTurn].User.Email</MudText>
+        <MudText Typo="Typo.body1" Class="grey-text">
+            @(Game.IsStarted ? Game.Hands[Game.CurrentTurn].User.Email : "---")
+        </MudText>
     </MudListItem>
     <MudListItem>
         <MudText Typo="Typo.caption">Players</MudText>
@@ -25,23 +27,25 @@
     </MudListItem>
     <MudListItem>
         <MudText Typo="Typo.caption">Status</MudText>
-        <MudText Typo="Typo.body1" Class="grey-text">@(Game.IsStarted ? "In Progress" : "In Lobby")</MudText>
+        <MudText Typo="Typo.body1" Class="grey-text">
+            @(Game.IsStarted ? "In Progress" : "In Lobby")
+        </MudText>
     </MudListItem>
 </MudList>
 
 @code
 {
     [Parameter]
-    public UIRoom Room { get; set; } = null!;
+    public RoomData Room { get; set; } = null!;
 
     [Inject]
     public IClipboard Clipboard { get; set; } = null!;
 
-    private UIGame Game => Room.Game;
+    private GameData Game => Room.Game;
 
     private async Task CopyInviteLink()
     {
-        await Clipboard.SetTextAsync(Room.Id.ToString() ?? string.Empty);
+        await Clipboard.SetTextAsync(Room.Id.ToString());
         Snackbar.Add("Copied to clipboard.", Severity.Info);   
     }
 }

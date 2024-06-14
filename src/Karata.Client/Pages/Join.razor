@@ -56,7 +56,7 @@
             return;
         }
 
-        var room = await Http.GetFromJsonAsync<UIRoom>($"api/room/{link}");
+        var room = await Http.GetFromJsonAsync<RoomData>($"api/room/{link}");
         if (room == null)
         {
             joining = false;
@@ -80,7 +80,7 @@
             return;
         }
         
-        var room = await response.Content.ReadFromJsonAsync<UIRoom>();
+        var room = await response.Content.ReadFromJsonAsync<RoomData>();
         if (room == null)
         {
             creating = false;

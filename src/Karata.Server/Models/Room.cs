@@ -4,20 +4,20 @@ namespace Karata.Server.Models;
 
 public class Room
 {
-    public Guid Id { get; set; }
-    public virtual User Creator { get; set; } = null!;
-    public virtual Game Game { get; set; } = new ();
+    public Guid Id { get; init; }
+    public required User Creator { get; init; }
+    public Game Game { get; init; } = new();
     public DateTime CreatedAt { get; } = DateTime.Now;
-    public byte[]? Hash { get; set; } = null;
-    public byte[]? Salt { get; set; } = null;
-    public virtual ICollection<Chat> Chats { get; set; } = new List<Chat>();
+    public byte[]? Hash { get; set; }
+    public byte[]? Salt { get; set; }
+    public List<Chat> Chats { get; set; } = new();
 
-    public UIRoom ToUI() => new()
+    public RoomData ToData() => new()
     {
         Id = Id,
         CreatedAt = CreatedAt,
-        Creator = Creator.ToUI(),
-        Game = Game.ToUI(),
-        Chats = Chats.Select(c => c.ToUI()).ToList()
+        Creator = Creator.ToData(),
+        Game = Game.ToData(),
+        Chats = Chats.Select(c => c.ToData()).ToList()
     };
 }

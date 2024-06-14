@@ -11,10 +11,10 @@ namespace Karata.Client.Models;
 public interface IGameInterface
 {
     [Parameter]
-    public UIGame Game { get; set; }
+    public GameData Game { get; set; }
 
     [Parameter]
-    public UIHand Hand { get; set; }
+    public HandData Hand { get; set; }
 
     [Parameter]
     public ImmutableList<Card> Turn { get; set; }

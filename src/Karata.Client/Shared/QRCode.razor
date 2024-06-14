@@ -9,12 +9,12 @@
 
     private string _src = string.Empty;
 
-    private QRCodeGenerator generator = new();
+    private QRCodeGenerator _generator = new();
 
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        var qrCodeData = generator.CreateQrCode(Data, QRCodeGenerator.ECCLevel.Q);
+        var qrCodeData = _generator.CreateQrCode(Data, QRCodeGenerator.ECCLevel.Q);
         var qrCode = new PngByteQRCode(qrCodeData);
         var bytes = qrCode.GetGraphic(20);
         _src = $"data:image/png;base64,{Convert.ToBase64String(bytes)}";

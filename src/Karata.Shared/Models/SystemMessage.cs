@@ -2,6 +2,6 @@ namespace Karata.Shared.Models;
 
 public record class SystemMessage 
 {
-    public string Text { get; init; } = string.Empty;
+    public required string Text { get; init; }
     public MessageType Type { get; init; }
 }

@@ -9,7 +9,7 @@ public class PresenceService
     
     public void AddPresence(string user, string room)
     {
-        _presence.AddOrUpdate(user, new HashSet<string> { room }, (_, set) =>
+        _presence.AddOrUpdate(user, [room], (_, set) =>
         {
             set.Add(room);
             return set;
@@ -18,7 +18,7 @@ public class PresenceService
     
     public void RemovePresence(string user, string room)
     {
-        _presence.AddOrUpdate(user, new HashSet<string> { room }, (_, set) =>
+        _presence.AddOrUpdate(user, [room], (_, set) =>
         {
             set.Remove(room);
             return set;

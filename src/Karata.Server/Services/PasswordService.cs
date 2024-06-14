@@ -17,12 +17,4 @@ public class PasswordService : IPasswordService
 
     public bool VerifyPassword(byte[] password, byte[] salt, byte[] hash) =>
         HashPassword(password, salt).SequenceEqual(hash);
-
-    public static byte[] GenerateSalt()
-    {
-        using var rng = RandomNumberGenerator.Create();
-        var buffer = new byte[32];
-        rng.GetBytes(buffer);
-        return buffer;
-    }
 }

@@ -1,14 +1,28 @@
 <MudList>
     @foreach (var hand in Game.Hands)
     {
-        <MudListItem Text="@hand.User.Email"></MudListItem>
+        <MudListItem>
+            @hand.User.Email
+            @if (hand.User == Room.Creator)
+            {
+                <MudChip Icon="@Icons.Material.Rounded.Security" Variant="Variant.Text" Color="Color.Primary">Creator</MudChip>
+            }
+            
+            @if (hand.User == Me)
+            {
+                <MudChip Icon="@Icons.Material.Rounded.AccountCircle" Variant="Variant.Text" Color="Color.Info">You</MudChip>
+            }
+        </MudListItem>
     }
 </MudList>
 
 @code
 {
     [Parameter]
-    public UIRoom Room { get; set; } = null!;
+    public UserData Me { get; set; } = null!;
+    
+    [Parameter]
+    public RoomData Room { get; set; } = null!;
 
-    private UIGame Game => Room.Game;
+    private GameData Game => Room.Game;
 }

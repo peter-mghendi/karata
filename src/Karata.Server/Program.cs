@@ -27,15 +27,14 @@ else
         Username = userInfo[0],
         Password = userInfo[1],
         Database = databaseUri.LocalPath.TrimStart('/'),
-        SslMode = SslMode.Prefer,
-        TrustServerCertificate = true
+        SslMode = SslMode.Prefer
     }.ToString();
 }
 
 builder.Services.AddDbContext<KarataContext>(options =>
 {
     options.UseNpgsql(connectionString);
-    options.UseLazyLoadingProxies();
+    // options.UseLazyLoadingProxies();
 });
 builder.Services.AddDefaultIdentity<User>(options =>
 {
@@ -46,7 +45,7 @@ builder.Services.AddDefaultIdentity<User>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddSignalR().AddHubOptions<GameHub>(options =>
 {
-    options.MaximumParallelInvocationsPerClient = 2;
+    // options.MaximumParallelInvocationsPerClient = 4;
 });
 // .AddJsonProtocol(options =>
 // {
@@ -108,7 +107,7 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapControllers();
-app.MapHub<GameHub>("/hubs/game");
+app.MapHub<GameHub>("/hubs/game", options => options.AllowStatefulReconnects = true);
 app.MapFallbackToFile("index.html");
 
 app.Run();

@@ -104,10 +104,10 @@ else
                         <InformationPanel Room="_room"/>
                     </MudExpansionPanel>
                     <MudExpansionPanel Text="Players">
-                        <PlayersPanel Room="_room"/>
+                        <PlayersPanel Me="_hand!.User" Room="_room"/>
                     </MudExpansionPanel>
                     <MudExpansionPanel Text="Chat" MaxHeight="500">
-                        <ChatPanel Room="_room" Player="_hand?.User" OnSend="Send"/>
+                        <ChatPanel Room="_room" Me="_hand?.User" OnSend="Send"/>
                     </MudExpansionPanel>
                 </MudExpansionPanels>
             </MudItem>
@@ -125,8 +125,8 @@ else
 
     private bool _table;
     private HubConnection? _hub;
-    private UIHand? _hand;
-    private UIRoom? _room;
+    private HandData? _hand;
+    private RoomData? _room;
     private readonly List<Card> _turn = new();
     private bool IsCreator => _hand?.User.Email == _room?.Creator.Email;
 
@@ -145,10 +145,11 @@ else
                     return token.Value;
                 };
             })
+            .WithStatefulReconnect()
             .AddJsonProtocol()
             .Build();
 
-        _hub.On<UIHand, int>("AddCardsToPlayerHand", (hand, num) =>
+        _hub.On<HandData, int>("AddCardsToPlayerHand", (hand, num) =>
         {
             if (_room is null) return;
             var playerHand = _room.Game.Hands.Single(h => h.User.Email == hand.User.Email);
@@ -158,7 +159,6 @@ else
 
         _hub.On<List<Card>>("AddCardRangeToHand", cards =>
         {
-            Console.WriteLine(cards.Select(c => c.ToString()));
             if (_hand is null) return;
             _hand.Cards.AddRange(cards);
             StateHasChanged();
@@ -171,7 +171,7 @@ else
             StateHasChanged();
         });
 
-        _hub.On<UIHand>("AddHandToRoom", hand =>
+        _hub.On<HandData>("AddHandToRoom", hand =>
         {
             if (_room is null) return;
             _room.Game.Hands.Add(hand);
@@ -179,7 +179,7 @@ else
             StateHasChanged();
         });
 
-        _hub.On<UIRoom>("AddToRoom", room =>
+        _hub.On<RoomData>("AddToRoom", room =>
         {
             _room = room;
             _hand = _room.Game.Hands.Single(h => h.User.Email == username);
@@ -203,9 +203,11 @@ else
         _hub.On<bool, Task<Card?>>("PromptCardRequest", async specific =>
         {
             var parameters = new DialogParameters { { nameof(CardRequestModal.Specific), specific } };
-            var dialog = DialogService.Show<CardRequestModal>("Request a card", parameters);
+            var dialog = await DialogService.ShowAsync<CardRequestModal>("Request a card", parameters);
             var result = await dialog.Result;
-            return result.Cancelled ? null : (Card)result.Data;
+            Console.WriteLine(result.Canceled);
+            Console.WriteLine(result.Data.ToString());
+            return result.Canceled ? null : (Card)result.Data;
         });
 
         _hub.On("PromptLastCardRequest", async () =>
@@ -214,7 +216,7 @@ else
             return await dialog ?? false;
         });
 
-        _hub.On<UIChat>("ReceiveChat", message =>
+        _hub.On<ChatData>("ReceiveChat", message =>
         {
             if (_room is null) return;
             _room.Chats.Add(message);
@@ -251,7 +253,7 @@ else
             StateHasChanged();
         });
 
-        _hub.On<UIHand, int>("RemoveCardsFromPlayerHand", (hand, num) =>
+        _hub.On<HandData, int>("RemoveCardsFromPlayerHand", (hand, num) =>
         {
             if (_room is null) return;
             var playerHand = _room.Game.Hands.Single(h => h.User.Email == hand.User.Email);
@@ -272,7 +274,7 @@ else
             StateHasChanged();
         });
 
-        _hub.On<UIHand>("RemoveHandFromRoom", hand =>
+        _hub.On<HandData>("RemoveHandFromRoom", hand =>
         {
             if (_room is null) return;
             _ = _room.Game.Hands.RemoveAll(h => h.User.Email == hand.User.Email);

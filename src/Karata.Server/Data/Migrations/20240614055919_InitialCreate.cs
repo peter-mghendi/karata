@@ -219,7 +219,7 @@ namespace Karata.Server.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreatorId = table.Column<string>(type: "text", nullable: true),
+                    CreatorId = table.Column<string>(type: "text", nullable: false),
                     Hash = table.Column<byte[]>(type: "bytea", nullable: true),
                     Salt = table.Column<byte[]>(type: "bytea", nullable: true)
                 },
@@ -230,7 +230,8 @@ namespace Karata.Server.Data.Migrations
                         name: "FK_Rooms_AspNetUsers_CreatorId",
                         column: x => x.CreatorId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -266,7 +267,6 @@ namespace Karata.Server.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     IsForward = table.Column<bool>(type: "boolean", nullable: false),
                     IsStarted = table.Column<bool>(type: "boolean", nullable: false),
-                    CurrentRequest = table.Column<string>(type: "text", nullable: true),
                     Give = table.Column<long>(type: "bigint", nullable: false),
                     Pick = table.Column<long>(type: "bigint", nullable: false),
                     CurrentTurn = table.Column<int>(type: "integer", nullable: false),
@@ -274,7 +274,8 @@ namespace Karata.Server.Data.Migrations
                     Pile = table.Column<string>(type: "text", nullable: false),
                     EndReason = table.Column<string>(type: "text", nullable: true),
                     WinnerId = table.Column<string>(type: "text", nullable: true),
-                    RoomId = table.Column<Guid>(type: "uuid", nullable: false)
+                    RoomId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CurrentRequest = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -298,10 +299,10 @@ namespace Karata.Server.Data.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Cards = table.Column<string>(type: "text", nullable: false),
                     IsLastCard = table.Column<bool>(type: "boolean", nullable: false),
                     GameId = table.Column<int>(type: "integer", nullable: false),
-                    UserId = table.Column<string>(type: "text", nullable: true)
+                    UserId = table.Column<string>(type: "text", nullable: true),
+                    Cards = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -325,11 +326,12 @@ namespace Karata.Server.Data.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Cards = table.Column<string>(type: "text", nullable: false),
                     IsLastCard = table.Column<bool>(type: "boolean", nullable: false),
-                    Request = table.Column<string>(type: "text", nullable: true),
                     UserId = table.Column<string>(type: "text", nullable: false),
-                    GameId = table.Column<int>(type: "integer", nullable: false)
+                    GameId = table.Column<int>(type: "integer", nullable: false),
+                    Cards = table.Column<string>(type: "jsonb", nullable: true),
+                    Delta = table.Column<string>(type: "jsonb", nullable: true),
+                    Request = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {

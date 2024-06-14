@@ -14,11 +14,11 @@ public class Deck : Stack<Card>
     {
     }
 
-    public Deck() : base()
+    public Deck()
     {
     }
 
-    public static Deck StandardDeck
+    public static Deck Standard
     {
         get
         {
@@ -41,15 +41,15 @@ public class Deck : Stack<Card>
 
     public void Shuffle()
     {
-        var cardArray = ToArray();
-        var i = cardArray.Length;
+        var cards = ToArray();
+        var i = cards.Length;
         while (--i > 0) {
             var j = _random.Next(i + 1);
-            (cardArray[i], cardArray[j]) = (cardArray[j], cardArray[i]);
+            (cards[i], cards[j]) = (cards[j], cards[i]);
         }
 
         Clear();
-        foreach(var card in cardArray) Push(card);
+        foreach(var card in cards) Push(card);
     }
 
     // Deal single card without checking deck size first.
@@ -59,7 +59,7 @@ public class Deck : Stack<Card>
     public List<Card> DealMany(uint num)
     {
         var dealt = new List<Card>();
-        for (int i = 0; i < num; i++)
+        for (var i = 0; i < num; i++)
             dealt.Add(Deal());
 
         return dealt;
@@ -79,7 +79,7 @@ public class Deck : Stack<Card>
     // Check deck size before attempting to deal multiple cards.
     public bool TryDealMany(uint num, out List<Card> dealt)
     {
-        dealt = new();
+        dealt = [];
         if (Count < num)
             return false;
 

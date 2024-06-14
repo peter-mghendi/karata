@@ -1,19 +1,24 @@
 @inject ISnackbar Snackbar
 
-<MudTextField T="string" Label="Type your message:" Variant="Variant.Filled" @bind-Value="@_message" Lines="5" Class="mb-2" />
+<MudTextField T="string" Label="Type your message:" Variant="Variant.Filled" @bind-Value="@_message" Lines="5" Class="mb-2"/>
 <MudButton Variant="Variant.Text" EndIcon="@Icons.Rounded.Send" Color="Color.Primary" FullWidth="true" OnClick="@Send">Send Message</MudButton>
-<MudDivider DividerType="DividerType.Middle" Class="my-4" />
+<MudDivider DividerType="DividerType.Middle" Class="my-4"/>
 
 <MudList>
     @foreach (var message in Room.Chats)
     {
         <MudListItem>
             <div class="d-flex align-center">
-                @if (message.Sender.Id == Player.Id)
-                {
-                    <MudIcon Icon="@Icons.Rounded.Person" Class="me-2" />
-                }
                 <MudText>@message.Sender.Email</MudText>
+                @if (message.Sender == Room.Creator)
+                {
+                    <MudChip Icon="@Icons.Material.Rounded.Security" Variant="Variant.Text" Color="Color.Primary">Creator</MudChip>
+                }
+
+                @if (message.Sender == Me)
+                {
+                    <MudChip Icon="@Icons.Material.Rounded.AccountCircle" Variant="Variant.Text" Color="Color.Info">You</MudChip>
+                }
             </div>
             <MudText Typo="Typo.caption" Class="grey-text mb-2">@message.Sent</MudText>
             <MudText>@message.Text</MudText>
@@ -23,14 +28,11 @@
 
 @code
 {
-    [Parameter]
-    public UIRoom Room { get; set; } = null!;
+    [Parameter] public UserData Me { get; set; } = null!;
+    
+    [Parameter] public RoomData Room { get; set; } = null!;
 
-    [Parameter]
-    public UIUser Player { get; set; } = null!;
-
-    [Parameter]
-    public EventCallback<string> OnSend { get; set; }
+    [Parameter] public EventCallback<string> OnSend { get; set; }
 
     private string _message = null!;
 

@@ -2,7 +2,7 @@ namespace Karata.Cards;
 
 public class Pile : Stack<Card>
 {
-    public Pile() : base()
+    public Pile()
     {
     }
 
@@ -13,11 +13,12 @@ public class Pile : Stack<Card>
     // Empty pile but keep top card
     public Stack<Card> Reclaim()
     {
-        var topCard = Pop();
-        var oldStack = new Stack<Card>(this);
+        var top = Pop();
+        var cards = new Stack<Card>(this);
         
         Clear();
-        Push(topCard);
-        return oldStack;
+        Push(top);
+        
+        return cards;
     }
 }

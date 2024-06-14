@@ -6,14 +6,14 @@ using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
 
-namespace Karata.Cards.Tests;
+namespace Karata.Cards.Tests.Extensions;
 
 public class CardExtensionsTest
 {
     [Fact]
     public void OfTest()
     {
-        var card1 = new Card{ Face = Ace, Suit = Spades };
+        var card1 = new Card { Face = Ace, Suit = Spades };
         var card2 = Ace.Of(Spades);
 
         Assert.Equal(card1, card2);
@@ -25,7 +25,7 @@ public class CardExtensionsTest
     [InlineData((CardColor)3, default(CardSuit), true)]
     public void ColoredJokerTest(CardColor color, CardSuit suit, bool throws)
     {
-        var expectedJoker = new Card{ Face = Joker, Suit = suit };
+        var expectedJoker = new Card { Face = Joker, Suit = suit };
 
         if (throws)
             Assert.Throws<ArgumentException>(() => _ = color.ColoredJoker());
@@ -41,7 +41,7 @@ public class CardExtensionsTest
     [InlineData(Joker, BlackJoker, "Black Joker")]
     public void GetNameTest(CardFace face, CardSuit suit, string name)
     {
-        var card = new Card{ Face = face, Suit = suit };
+        var card = new Card { Face = face, Suit = suit };
         Assert.Equal(name, card.GetName());
     }
 
@@ -50,12 +50,16 @@ public class CardExtensionsTest
     [InlineData((CardFace)15, Spades, default(uint), true)]
     public void GetRankTest(CardFace face, CardSuit suit, uint rank, bool throws)
     {
-        var card = new Card{ Face = face, Suit = suit };
+        var card = new Card { Face = face, Suit = suit };
 
         if (throws)
+        {
             Assert.Throws<ArgumentException>(() => _ = card.GetRank());
+        }
         else
+        {
             Assert.Equal(rank, card.GetRank());
+        }
     }
 
     [Theory]
@@ -68,7 +72,7 @@ public class CardExtensionsTest
     [InlineData(Ace, (CardSuit)7, default(CardColor), true)]
     public void GetColorTest(CardFace face, CardSuit suit, CardColor color, bool throws)
     {
-        var card = new Card{ Face = face, Suit = suit };
+        var card = new Card { Face = face, Suit = suit };
 
         if (throws)
             Assert.Throws<ArgumentException>(() => _ = card.GetColor());
@@ -82,7 +86,7 @@ public class CardExtensionsTest
     [InlineData(Ace, Spades, 2)]
     public void GetAceValueTest(CardFace face, CardSuit suit, uint value)
     {
-        var card = new Card{ Face = face, Suit = suit };
+        var card = new Card { Face = face, Suit = suit };
         var actual = card.GetAceValue();
         Assert.Equal(value, actual);
     }
@@ -94,7 +98,7 @@ public class CardExtensionsTest
     [InlineData(Joker, BlackJoker, 5)]
     public void GetPickValueTest(CardFace face, CardSuit suit, uint value)
     {
-        var card = new Card{ Face = face, Suit = suit };
+        var card = new Card { Face = face, Suit = suit };
         var actual = card.GetPickValue();
         Assert.Equal(value, actual);
     }
@@ -118,6 +122,19 @@ public class CardExtensionsTest
         var card = new Card { Face = face, Suit = suit };
         var actual = card.IsQuestion();
         Assert.Equal(isQuestion, actual);
+    }
+    
+    [Theory]
+    [InlineData(Two, Hearts, true)]    // Bomb
+    [InlineData(Eight, Diamonds, true)] // Question
+    [InlineData(Ace, Spades, true)]    // Ace
+    [InlineData(Jack, Hearts, true)]   // Jack
+    [InlineData(King, Clubs, true)]    // King
+    [InlineData(Four, Diamonds, false)] // Neither Bomb, Question, Ace, Jack, King
+    public void IsSpecialTest(CardFace face, CardSuit suit, bool isSpecial)
+    {
+        var card = new Card { Face = face, Suit = suit };
+        Assert.Equal(isSpecial, card.IsSpecial());
     }
 
     [Theory]
