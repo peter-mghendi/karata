@@ -42,8 +42,8 @@
     private string link = string.Empty;
     private string password = string.Empty;
 
-    private bool joining = false;
-    private bool creating = false;
+    private bool joining;
+    private bool creating;
     private bool loading => joining || creating;
 
     private async Task JoinRoom()
@@ -65,7 +65,7 @@
             return;
         }
 
-        Navigator.NavigateTo($"/game/{link}/play");
+        Navigator.NavigateTo($"/game/{room.Id.ToString()}/play");
     }
 
     private async Task CreateRoom()

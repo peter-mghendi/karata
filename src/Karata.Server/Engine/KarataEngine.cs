@@ -1,6 +1,8 @@
+using System.Collections.Frozen;
+using System.Collections.Immutable;
 using Karata.Server.Engine.Exceptions;
 using static Karata.Cards.Card.CardFace;
-using static Karata.Server.Models.GameRequestLevel;
+using static Karata.Server.Models.CardRequestLevel;
 
 namespace Karata.Server.Engine;
 
@@ -12,8 +14,12 @@ namespace Karata.Server.Engine;
 /// <remarks>
 /// - This class should not interact with <see cref="User"/> or <see cref="Room"/>.
 /// </remarks>
-public static class KarataEngine
+public class KarataEngine
 {
+    public required Game Game { private get; init; }
+
+    public required ImmutableArray<Card> Cards { private get; init; }
+    
     /// <summary>
     /// <see cref="EnsureTurnIsValid"/> checks that the turn played is valid.
     /// </summary>
@@ -21,26 +27,26 @@ public static class KarataEngine
     /// <exception cref="TurnValidationException">
     /// Thrown when the turn is not valid.
     /// </exception>
-    public static void EnsureTurnIsValid(Game game, List<Card> cards)
+    public void EnsureTurnIsValid()
     {
-        if (cards.Count is 0) return; //An empty turn is always valid.
+        if (Cards.Length is 0) return; //An empty turn is always valid.
 
-        var top = game.Pile.Peek();
-        var first = cards[0];
+        var top = Game.Pile.Peek();
+        var first = Cards[0];
 
         // If a card has been requested, that card - or an Ace - must start the turn.
-        if (game.CurrentRequest is not null && first.Face is not Ace)
+        if (Game.Request is not null && first.Face is not Ace)
         {
-            var request = game.CurrentRequest;
+            var request = Game.Request;
             if (request.Face is not None && !first.FaceEquals(request)) throw new CardRequestedException();
             if (!first.SuitEquals(request)) throw new CardRequestedException();
         }
 
         // If the top card is a "bomb", the next card should counter or block it.
-        if (top.IsBomb() && game.Pick > 0 && first.Face is not Ace)
+        if (top.IsBomb() && Game.Pick > 0 && first.Face is not Ace)
         {
             // Joker can only be countered by a joker while 2 and 3 can be countered by 2, 3 and Joker.
-            if (top.Face is Joker)
+            if (top.Face is not Joker)
             {
                 if (first.Face is not Joker) throw new DrawCardsException();
             }
@@ -50,8 +56,8 @@ public static class KarataEngine
             }
         }
         
-        var sequence = new List<Card>(cards).Prepend(top).ToList();
-        for (var i = 1; i < sequence.Count; i++)
+        var sequence = new List<Card>(Cards).Prepend(top).ToImmutableArray();
+        for (var i = 1; i < sequence.Length; i++)
         {
             var current = sequence[i];
             var previous = sequence[i - 1];
@@ -120,21 +126,21 @@ public static class KarataEngine
     /// <summary>
     /// <see cref="GenerateTurnDelta"/> Generates a <see cref="GameDelta"/> for this turn.
     /// </summary>
-    public static GameDelta GenerateTurnDelta(Game game, List<Card> cards)
+    public GameDelta GenerateTurnDelta()
     {
-        var delta = new GameDelta();
+        var delta = new GameDelta { Cards = Cards.ToList() };
 
-        if (cards.Count == 0)
+        if (Cards.Length == 0)
         {
             // If the last card played is a "bomb" card, the player has to immediately pick the cards, otherwise they just pick one card
             delta.Pick = 1;
-            if (game.CurrentRequest is not null) delta.RemoveRequestLevels = 0;
-            if (game.Pick > 0) delta.Pick = game.Pick;
+            if (Game.Request is not null) delta.RemoveRequestLevels = 0;
+            if (Game.Pick > 0) delta.Pick = Game.Pick;
             return delta;
         }
 
-        var last = cards[^1];
-        foreach (var card in cards)
+        var last = Cards[^1];
+        foreach (var card in Cards)
         {
             if (card.Face is Jack) ++delta.Skip;
             if (card.Face is King) delta.Reverse = !delta.Reverse;
@@ -156,23 +162,23 @@ public static class KarataEngine
         if (last.Face is Ace)
         {
             // Getting ace values, instead of actual cards of the Ace suit, compensates for Ace of Spades (value = 2).
-            var aces = cards.Sum(card => card.GetAceValue());
+            var aces = Cards.Sum(card => card.GetAceValue());
             
             // Using aces to block any requests and setting delta.RemoveRequestLevels to the number of aces used, i.e:
             // - If three aces are played on top of a CardRequest(=2), 2 Aces are used.
             // - If one ace is played on top of a CardRequest(=2), 1 Ace is used.
-            delta.RemoveRequestLevels = (uint)Math.Min(aces, (long)game.RequestLevel);
-            aces -= (long)game.RequestLevel;
+            delta.RemoveRequestLevels = (uint)Math.Min(aces, (long)Game.RequestLevel);
+            aces -= (long)Game.RequestLevel;
 
             // Using an ace to avoid picking cards
-            if (game.Pick > 0) --aces;
+            if (Game.Pick > 0) --aces;
 
             // Any remaining ace value is added to the request level.
             if (aces > 0) delta.RequestLevel = aces > 1 ? CardRequest : SuitRequest;
         }
 
         // For an even number of "kickbacks", the current player plays again.
-        var kings = cards.Count(card => card.Face is King);
+        var kings = Cards.Count(card => card.Face is King);
         if (kings > 0 && kings % 2 == 0) delta.Skip = 0;
 
         return delta;

@@ -22,12 +22,12 @@ public class RoomController : ControllerBase
     }
 
     [HttpGet]
-    public IEnumerable<RoomData> List() => new List<RoomData>();
+    public IEnumerable<RoomData> List() => []; // TODO: Before implementing, figure out how much stuff is loaded.
 
     [HttpGet("{id}")]
     public async Task<ActionResult<RoomData>> Get(string id)
     {
-        // TODO: Check if the room has a password, and if one is provided, check if it's correct
+        // TODO: Check if the room has a password (or if current user is already a member), and if one is provided, check if it's correct
         if (!Guid.TryParse(id, out var guid)) return BadRequest();
         var room = await _context.Rooms.FindAsync(guid);
         
@@ -43,7 +43,7 @@ public class RoomController : ControllerBase
         if (user is null) return Unauthorized();
 
         var room = new Room { Creator = user };
-        room.Game.Hands.Add(new Hand { User = user });
+        room.Game.Hands.Add(new Hand { Player = user });
     
         // if (!string.IsNullOrWhiteSpace(password))
         // {

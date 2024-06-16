@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Karata.Server.Data.Migrations
 {
     [DbContext(typeof(KarataContext))]
-    [Migration("20240614055919_InitialCreate")]
+    [Migration("20240615162649_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -208,16 +208,10 @@ namespace Karata.Server.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("EndReason")
-                        .HasColumnType("text");
-
                     b.Property<long>("Give")
                         .HasColumnType("bigint");
 
-                    b.Property<bool>("IsForward")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsStarted")
+                    b.Property<bool>("IsReversed")
                         .HasColumnType("boolean");
 
                     b.Property<long>("Pick")
@@ -230,17 +224,49 @@ namespace Karata.Server.Data.Migrations
                     b.Property<Guid>("RoomId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("WinnerId")
-                        .HasColumnType("text");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("RoomId")
                         .IsUnique();
 
+                    b.ToTable("Games");
+                });
+
+            modelBuilder.Entity("Karata.Server.Models.GameResult", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("GameId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ReasonType")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ResultType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("WinnerId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameId")
+                        .IsUnique();
+
                     b.HasIndex("WinnerId");
 
-                    b.ToTable("Games");
+                    b.ToTable("GameResult");
                 });
 
             modelBuilder.Entity("Karata.Server.Models.Hand", b =>
@@ -257,14 +283,14 @@ namespace Karata.Server.Data.Migrations
                     b.Property<bool>("IsLastCard")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("UserId")
+                    b.Property<string>("PlayerId")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.HasIndex("GameId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("PlayerId");
 
                     b.ToTable("Hands");
                 });
@@ -300,21 +326,15 @@ namespace Karata.Server.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("GameId")
+                    b.Property<int>("HandId")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsLastCard")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("GameId");
-
-                    b.HasIndex("UserId");
+                    b.HasIndex("HandId");
 
                     b.ToTable("Turns");
                 });
@@ -540,11 +560,7 @@ namespace Karata.Server.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Karata.Server.Models.User", "Winner")
-                        .WithMany()
-                        .HasForeignKey("WinnerId");
-
-                    b.OwnsOne("Karata.Cards.Card", "CurrentRequest", b1 =>
+                    b.OwnsOne("Karata.Cards.Card", "Request", b1 =>
                         {
                             b1.Property<int>("GameId")
                                 .HasColumnType("integer");
@@ -559,13 +575,24 @@ namespace Karata.Server.Data.Migrations
 
                             b1.ToTable("Games");
 
-                            b1.ToJson("CurrentRequest");
+                            b1.ToJson("Request");
 
                             b1.WithOwner()
                                 .HasForeignKey("GameId");
                         });
 
-                    b.Navigation("CurrentRequest");
+                    b.Navigation("Request");
+                });
+
+            modelBuilder.Entity("Karata.Server.Models.GameResult", b =>
+                {
+                    b.HasOne("Karata.Server.Models.Game", null)
+                        .WithOne("Result")
+                        .HasForeignKey("Karata.Server.Models.GameResult", "GameId");
+
+                    b.HasOne("Karata.Server.Models.User", "Winner")
+                        .WithMany()
+                        .HasForeignKey("WinnerId");
 
                     b.Navigation("Winner");
                 });
@@ -578,9 +605,9 @@ namespace Karata.Server.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Karata.Server.Models.User", "User")
+                    b.HasOne("Karata.Server.Models.User", "Player")
                         .WithMany("Hands")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("PlayerId");
 
                     b.OwnsMany("Karata.Cards.Card", "Cards", b1 =>
                         {
@@ -609,7 +636,7 @@ namespace Karata.Server.Data.Migrations
 
                     b.Navigation("Cards");
 
-                    b.Navigation("User");
+                    b.Navigation("Player");
                 });
 
             modelBuilder.Entity("Karata.Server.Models.Room", b =>
@@ -625,15 +652,9 @@ namespace Karata.Server.Data.Migrations
 
             modelBuilder.Entity("Karata.Server.Models.Turn", b =>
                 {
-                    b.HasOne("Karata.Server.Models.Game", null)
+                    b.HasOne("Karata.Server.Models.Hand", null)
                         .WithMany("Turns")
-                        .HasForeignKey("GameId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Karata.Server.Models.User", null)
-                        .WithMany("Turns")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("HandId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -718,7 +739,8 @@ namespace Karata.Server.Data.Migrations
 
                     b.Navigation("Cards");
 
-                    b.Navigation("Delta");
+                    b.Navigation("Delta")
+                        .IsRequired();
 
                     b.Navigation("Request");
                 });
@@ -778,6 +800,11 @@ namespace Karata.Server.Data.Migrations
                 {
                     b.Navigation("Hands");
 
+                    b.Navigation("Result");
+                });
+
+            modelBuilder.Entity("Karata.Server.Models.Hand", b =>
+                {
                     b.Navigation("Turns");
                 });
 
@@ -792,8 +819,6 @@ namespace Karata.Server.Data.Migrations
             modelBuilder.Entity("Karata.Server.Models.User", b =>
                 {
                     b.Navigation("Hands");
-
-                    b.Navigation("Turns");
                 });
 #pragma warning restore 612, 618
         }

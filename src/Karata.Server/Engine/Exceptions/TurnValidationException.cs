@@ -1,5 +1,3 @@
 namespace Karata.Server.Engine.Exceptions;
 
-public abstract class TurnValidationException : Exception
-{
-}
+public abstract class TurnValidationException : KarataEngineException;

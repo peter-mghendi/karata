@@ -23,35 +23,50 @@ public class KarataContext(
         base.OnModelCreating(modelBuilder);
 
         JsonSerializerOptions options = new(JsonSerializerDefaults.Web);
-        
+
         // Room
         modelBuilder.Entity<Room>().HasOne(r => r.Creator).WithMany();
-        modelBuilder.Entity<Room>().HasOne(r => r.Game).WithOne().HasForeignKey<Game>(g => g.RoomId);
+        modelBuilder.Entity<Room>()
+            .HasOne(r => r.Game)
+            .WithOne()
+            .HasForeignKey<Game>(g => g.RoomId)
+            .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Room>().HasMany(r => r.Chats).WithOne();
-        
+
         modelBuilder.Entity<Room>().Navigation(r => r.Creator).AutoInclude();
         modelBuilder.Entity<Room>().Navigation(r => r.Game).AutoInclude();
         modelBuilder.Entity<Room>().Navigation(r => r.Chats).AutoInclude();
 
         // Game
-        modelBuilder.Entity<Game>().HasOne(g => g.Winner).WithMany().IsRequired(false);
-        modelBuilder.Entity<Game>().HasMany(g => g.Hands).WithOne().HasForeignKey(h => h.GameId);
-        modelBuilder.Entity<Game>().HasMany(g => g.Turns).WithOne().HasForeignKey(t => t.GameId);
+        modelBuilder.Entity<Game>()
+            .HasOne(g => g.Result)
+            .WithOne()
+            .HasForeignKey<GameResult>(r => r.GameId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Game>()
+            .HasMany(g => g.Hands)
+            .WithOne()
+            .HasForeignKey(h => h.GameId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<Game>().OwnsOne(g => g.CurrentRequest, builder => builder.ToJson());
+        modelBuilder.Entity<Game>().OwnsOne(g => g.Request, builder => builder.ToJson());
+
+        // Stacks are not supported
         // modelBuilder.Entity<Game>().OwnsOne(g => g.Deck, builder => builder.ToJson());
         // modelBuilder.Entity<Game>().OwnsOne(g => g.Pile, builder => builder.ToJson());
-        
+
         modelBuilder.Entity<Game>()
             .Property(g => g.Deck)
             .HasConversion(
                 deck => JsonSerializer.Serialize(deck.Reverse(), options),
-                json => JsonSerializer.Deserialize<Deck>(json, options) ?? new(),
+                json => JsonSerializer.Deserialize<Deck>(json, options) ?? new Deck(),
                 new ValueComparer<Deck>(
                     (s1, s2) => s1 != null && s2 != null && s1.SequenceEqual(s2),
                     s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                     s => new Deck(s.Reverse())
-                ));
+                )
+            );
 
         modelBuilder.Entity<Game>()
             .Property(g => g.Pile)
@@ -62,19 +77,39 @@ public class KarataContext(
                     (s1, s2) => s1 != null && s2 != null && s1.SequenceEqual(s2),
                     s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                     s => new Pile(s.Reverse())
-                ));
-        
-        modelBuilder.Entity<Game>().Navigation(g => g.Winner).AutoInclude();
-        modelBuilder.Entity<Game>().Navigation(g => g.Hands).AutoInclude();
-        modelBuilder.Entity<Game>().Navigation(g => g.Turns).AutoInclude();
+                )
+            );
 
+        modelBuilder.Entity<Game>().Navigation(g => g.Result).AutoInclude();
+        modelBuilder.Entity<Game>().Navigation(g => g.Hands).AutoInclude();
+
+        // GameResult
+        modelBuilder
+            .Entity<GameResult>()
+            .HasOne(r => r.Winner)
+            .WithMany()
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<GameResult>().Navigation(r => r.Winner).AutoInclude();
+        
         // Hand
+        modelBuilder.Entity<Hand>()
+            .HasMany(h => h.Turns)
+            .WithOne()
+            .HasForeignKey(t => t.HandId)
+            .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Hand>().OwnsMany(h => h.Cards, builder => builder.ToJson());
+        modelBuilder.Entity<Hand>().Navigation(h => h.Player).AutoInclude();
+        modelBuilder.Entity<Hand>().Navigation(h => h.Turns).AutoInclude();
 
         // Turn
-        modelBuilder.Entity<Turn>().OwnsOne(t => t.Request, builder => builder.ToJson());
         modelBuilder.Entity<Turn>().OwnsMany(t => t.Cards, builder => builder.ToJson());
-        modelBuilder.Entity<Turn>().OwnsOne(t => t.Delta, builder => builder.ToJson());
+        modelBuilder.Entity<Turn>().OwnsOne(t => t.Request, builder => builder.ToJson());
+        modelBuilder.Entity<Turn>().OwnsOne(t => t.Delta, builder =>
+        {
+            builder.ToJson();
+            builder.OwnsMany<Card>(d => d.Cards);
+        });
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

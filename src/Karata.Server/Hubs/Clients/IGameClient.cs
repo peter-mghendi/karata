@@ -22,6 +22,6 @@ public interface IGameClient
     Task RemoveFromRoom();
     Task RemoveHandFromRoom(HandData hand);
     Task SetCurrentRequest(Card? request);
-    Task UpdateGameStatus(bool started);
+    Task UpdateGameStatus(GameStatus status);
     Task UpdateTurn(int turn);
 }

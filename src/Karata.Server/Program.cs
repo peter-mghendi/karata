@@ -47,18 +47,16 @@ builder.Services.AddSignalR().AddHubOptions<GameHub>(options =>
 {
     // options.MaximumParallelInvocationsPerClient = 4;
 });
-// .AddJsonProtocol(options =>
-// {
-//     options.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
-// });
 
-// builder.Services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
-builder.Services.AddSingleton<IPasswordService, PasswordService>();
+builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
 builder.Services.AddSingleton<PresenceService>();
+builder.Services.AddTransient<GameStartServiceFactory>();
+builder.Services.AddTransient<KarataEngineFactory>();
+builder.Services.AddTransient<RoomMembershipServiceFactory>();
+builder.Services.AddTransient<TurnProcessingServiceFactory>();
 builder.Services.AddResponseCompression(opts =>
 {
-    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes
-        .Concat(new[] { "application/octet-stream" });
+    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/octet-stream"]);
 });
 
 builder.Services.AddIdentityServer()

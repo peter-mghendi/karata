@@ -4,15 +4,16 @@ namespace Karata.Server.Models;
 
 public class Hand
 {
-    public int Id { get; set; }
-    public List<Card> Cards { get; set; } = new();
+    public int Id { get; init; }
+    public List<Card> Cards { get; init; } = [];
     public bool IsLastCard { get; set; }
-    public int GameId { get; set; }
-    public required User User { get; set; }
+    public int GameId { get; init; }
+    public required User Player { get; init; }
+    public List<Turn> Turns { get; init; } = [];
 
     public HandData ToData() => new()
     {
         Cards = Cards,
-        User = User.ToData(),
+        User = Player.ToData(),
     };
 }

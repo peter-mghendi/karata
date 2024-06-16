@@ -8,9 +8,9 @@ public class Room
     public required User Creator { get; init; }
     public Game Game { get; init; } = new();
     public DateTime CreatedAt { get; } = DateTime.Now;
-    public byte[]? Hash { get; set; }
-    public byte[]? Salt { get; set; }
-    public List<Chat> Chats { get; set; } = new();
+    public byte[]? Hash { get; init; }
+    public byte[]? Salt { get; init; }
+    public List<Chat> Chats { get; init; } = [];
 
     public RoomData ToData() => new()
     {

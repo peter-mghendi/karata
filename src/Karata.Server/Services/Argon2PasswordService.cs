@@ -1,9 +1,8 @@
-using System.Security.Cryptography;
 using Konscious.Security.Cryptography;
 
 namespace Karata.Server.Services;
 
-public class PasswordService : IPasswordService
+public class Argon2PasswordService : IPasswordService
 {
     public byte[] HashPassword(byte[] password, byte[] salt)
     {

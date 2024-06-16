@@ -34,7 +34,7 @@ else
         <MudGrid Class="mud-height-full px-4 pt-4">
             <MudItem xs="12" md="8" xl="9" xxl="10">
                 <MudCard Elevation="0" Class="" Style="height: 88vh">
-                    @if (_room.Game.IsStarted)
+                    @if (_room.Game.Status == GameStatus.Ongoing)
                     {
                         if (_table)
                         {
@@ -50,11 +50,11 @@ else
                         <div class="d-flex flex-column justify-center align-content-center pa-4 pt-8">
                             <MudText Align="Align.Center" Typo="Typo.body1" Class="mb-2">
                                 You are in room @_room.Id
-                                <MudIconButton Size="Size.Small" Icon="@Icons.Filled.ContentCopy" Color="Color.Primary" OnClick="CopyRoomId"/>
+                                <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary" OnClick="CopyRoomId"/>
                             </MudText>
                             <MudText Align="Align.Center" Typo="Typo.body2" Class="mb-2">
                                 @Navigator.Uri
-                                <MudIconButton Size="Size.Small" Icon="@Icons.Filled.ContentCopy" Color="Color.Primary" OnClick="CopyRoomLink"/>
+                                <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary" OnClick="CopyRoomLink"/>
                             </MudText>
                             <MudGrid Spacing="2" Justify="Justify.Center">
                                 <MudItem xs="12" sm="8" md="6" lg="4" xl="3" xxl="2">
@@ -68,31 +68,31 @@ else
             <MudItem Class="mud-height-full overflow-y-scroll" xs="12" md="4" xl="3" xxl="2">
                 <MudPaper Elevation="0" Class="mb-4">
                     <MudToolBar>
-                        @if (_room.Game.IsStarted)
+                        @if (_room.Game.Status == GameStatus.Ongoing)
                         {
                             <MudTooltip Text="Pick card(s)">
-                                <MudIconButton Icon="@Icons.Rounded.ArrowCircleUp" Color="Color.Inherit" OnClick="() => PerformTurn(new List<Card>())"/>
+                                <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleUp" Color="Color.Inherit" OnClick="() => PerformTurn(new List<Card>())"/>
                             </MudTooltip>
                             <MudTooltip Text="Play card(s)">
-                                <MudIconButton Icon="@Icons.Rounded.ArrowCircleDown" Color="Color.Inherit" OnClick="() => PerformTurn(_turn)"/>
+                                <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleDown" Color="Color.Inherit" OnClick="() => PerformTurn(_turn)"/>
                             </MudTooltip>
                         }
                         else
                         {
                             <MudTooltip Text="@(IsCreator ? "Start Game" : "Only the creator can start the game.")">
-                                <MudIconButton Icon="@Icons.Rounded.PlayArrow" Color="Color.Inherit" OnClick="StartGame" Disabled="!IsCreator"/>
+                                <MudIconButton Icon="@Icons.Material.Rounded.PlayArrow" Color="Color.Inherit" OnClick="StartGame" Disabled="!IsCreator"/>
                             </MudTooltip>
                         }
 
                         <MudTooltip Text="Leave Room">
-                            <MudIconButton Icon="@Icons.Rounded.PersonRemove" Color="Color.Inherit" OnClick="() => LeaveRoom()"/>
+                            <MudIconButton Icon="@Icons.Material.Rounded.PersonRemove" Color="Color.Inherit" OnClick="() => LeaveRoom()"/>
                         </MudTooltip>
                     </MudToolBar>
                 </MudPaper>
 
                 <MudPaper Class="pa-4 mb-4" Elevation="0">
                     <div class="mb-2">
-                        <MudSwitch @bind-Checked="_table" Color="Color.Primary" Label="Use Card Table interface (Experimental)"/>
+                        <MudSwitch @bind-Value="_table" Color="Color.Primary" Label="Use Card Table interface (Experimental)"/>
                     </div>
                     <MudText Typo="Typo.caption" Class="text-grey">
                         The Card Table interface is still under development and, as such, may contain bugs. Use the Card List interface for best experience.
@@ -142,7 +142,7 @@ else
                 {
                     var result = await Provider.RequestAccessToken();
                     result.TryGetToken(out var token);
-                    return token.Value;
+                    return token!.Value;
                 };
             })
             .WithStatefulReconnect()
@@ -190,7 +190,7 @@ else
         {
             if (_room is null) return;
 
-            await LeaveRoom(true);
+            await LeaveRoom();
             Navigator.NavigateTo($"/game/{_room.Id.ToString()}/over");
         });
 
@@ -300,11 +300,11 @@ else
             StateHasChanged();
         });
 
-        _hub.On<bool>("UpdateGameStatus", started =>
+        _hub.On<GameStatus>("UpdateGameStatus", status =>
         {
             if (_room is null) return;
-            _room.Game.IsStarted = started;
-            if (started) Snackbar.Add("The game has started", Severity.Info);
+            _room.Game.Status = status;
+            if (status == GameStatus.Ongoing) Snackbar.Add("The game has started", Severity.Info);
             StateHasChanged();
         });
 
@@ -314,10 +314,10 @@ else
 
     // TODO: Move these into services then have things like <... OnSend="ChatService.Send" ... />
 
-    async Task LeaveRoom(bool isEnding = false)
+    async Task LeaveRoom()
     {
         if (_hub is null || _room is null) return;
-        await _hub.SendAsync("LeaveRoom", _room.Id, isEnding);
+        await _hub.SendAsync("LeaveRoom", _room.Id);
     }
 
     async Task StartGame()

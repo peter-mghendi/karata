@@ -6,7 +6,7 @@ using static System.Console;
 using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
-using static Karata.Server.Models.GameRequestLevel;
+using static Karata.Server.Models.CardRequestLevel;
 
 // DisplayDeck(deck: Deck.StandardDeck);
 //
@@ -42,7 +42,7 @@ var testCases = new List<(List<Card>, Card?, int)>
 
 foreach (var (cards, currentRequest, pick) in testCases)
 {
-    var game = new Game { CurrentRequest = currentRequest, Pick = (uint)pick };
+    var game = new Game { Request = currentRequest, Pick = (uint)pick };
     var delta1 = new GameDelta();
     var delta2 = new GameDelta();
 

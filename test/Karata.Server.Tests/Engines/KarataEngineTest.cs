@@ -6,7 +6,8 @@ using Karata.Server.Models;
 using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
-using static Karata.Server.Models.GameRequestLevel;
+using static Karata.Server.Models.CardRequestLevel;
+
 using TestCase = (
     int Identifier,
     Karata.Server.Models.Game Game,
@@ -27,7 +28,8 @@ public class KarataEngineTest
     {
         if (!expectedValidity)
         {
-            Assert.ThrowsAny<TurnValidationException>(() => KarataEngine.EnsureTurnIsValid(game, cards));
+            var factory = new KarataEngineFactory();
+            Assert.ThrowsAny<TurnValidationException>(() => factory.Create(game, cards).EnsureTurnIsValid());
         }
     }
 
@@ -35,7 +37,8 @@ public class KarataEngineTest
     [MemberData(nameof(GenerationTestCases))]
     public void GenerateTurnDeltaTest(int identifier, Game game, List<Card> cards, GameDelta expectedDelta)
     {
-        var actualDelta = KarataEngine.GenerateTurnDelta(game, cards);
+        var factory = new KarataEngineFactory();
+        var actualDelta = factory.Create(game, cards).GenerateTurnDelta();
         Assert.Equal(expectedDelta, actualDelta);
     }
 
@@ -57,7 +60,7 @@ public class KarataEngineTest
         });
 
     /**
-     * <summary>Central Pool if test data</summary>
+     * <summary>Central Pool of test data</summary>
      * <remarks>
      *     Each test case is a tuple of 4 elements:
      *     - Identifier: A unique identifier for the test case
@@ -459,7 +462,7 @@ public class KarataEngineTest
 
     private static Game ProvideGame(Card? top = null, uint pick = 0, Card? request = null)
     {
-        var game = new Game { Pick = pick, CurrentRequest = request };
+        var game = new Game { Pick = pick, Request = request };
         game.Pile.Push(top ?? Nine.Of(Spades));
         return game;
     }
