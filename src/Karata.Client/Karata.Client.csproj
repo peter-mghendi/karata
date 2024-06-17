@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Karata.Pebble\Karata.Pebble.csproj" />
     <ProjectReference Include="..\Karata.Shared\Karata.Shared.csproj" />
   </ItemGroup>
 

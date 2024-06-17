@@ -10,4 +10,6 @@ public record GameData
     public Pile Pile { get; set; } = new();
     public List<HandData> Hands { get; set; } = [];
     public GameResultData? Result { get; set; }
+
+    public HandData CurrentHand => Hands[CurrentTurn];
 }

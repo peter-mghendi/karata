@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Karata.Client;
+using Karata.Client.Infrastructure.State;
 using MudBlazor.Services;
 using TextCopy;
 
@@ -14,6 +15,7 @@ builder.Services.AddHttpClient("Karata.ServerAPI", client => client.BaseAddress 
 
 // Supply HttpClient instances that include access tokens when making requests to the server project
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("Karata.ServerAPI"));
+builder.Services.AddSingleton<RoomStoreFactory>();
 
 builder.Services.AddApiAuthorization();
 builder.Services.AddMudServices();

@@ -18,7 +18,7 @@
     <MudListItem>
         <MudText Typo="Typo.caption">Current Turn</MudText>
         <MudText Typo="Typo.body1" Class="grey-text">
-            @(Game.Status == GameStatus.Ongoing ? Game.Hands[Game.CurrentTurn].User.Email : "---")
+            @(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.User.Email : "---")
         </MudText>
     </MudListItem>
     <MudListItem>
