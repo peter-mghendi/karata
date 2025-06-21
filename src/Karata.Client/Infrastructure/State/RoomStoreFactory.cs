@@ -2,7 +2,7 @@ using Karata.Shared.Models;
 
 namespace Karata.Client.Infrastructure.State;
 
-public class RoomStoreFactory
+public class RoomStoreFactory(ILoggerFactory logging)
 {
-    public RoomState Create(RoomData room, HandData hand) => new(room, hand);
+    public RoomState Create(RoomData room, string username) => new(room, username, logging);
 }

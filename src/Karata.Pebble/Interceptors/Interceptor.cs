@@ -1,7 +1,14 @@
+using Karata.Pebble.StateActions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace Karata.Pebble.Interceptors;
 
-public abstract class Interceptor<TState> : IInterceptor<TState>
+public abstract class Interceptor<TState>
 {
-    public virtual void BeforeChange(TState state) { }
-    public virtual void AfterChange(TState state) { }
+    protected static ILoggerFactory DefaultLoggerFactory => NullLoggerFactory.Instance;
+
+    public delegate TState Reducer(TState state, StateAction<TState> action);
+
+    public abstract Reducer Wrap(Reducer next);
 }

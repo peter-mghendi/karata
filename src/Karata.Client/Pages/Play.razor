@@ -13,6 +13,7 @@
 @inject AuthenticationStateProvider Authenticator
 @inject IAccessTokenProvider Provider
 @inject IDialogService DialogService
+@inject ILoggerFactory LoggerFactory
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigator
 @inject RoomStoreFactory Factory
@@ -135,6 +136,8 @@
 
     private RoomState? _store;
 
+    private void OnStoreChanged(RoomData room) => StateHasChanged();
+
     protected override async Task OnInitializedAsync()
     {
         var auth = await Authenticator.GetAuthenticationStateAsync();
@@ -168,8 +171,10 @@
 
         _hub.On<RoomData>("AddToRoom", room =>
         {
-            _store = Factory.Create(room, room.Game.Hands.Single(h => h.User.Email == username));
-            _store.Observe(_ => StateHasChanged());
+            _store = Factory.Create(room, username);
+            _store.AddInterceptor(new LoggingInterceptor<RoomData>(LoggerFactory));
+            _store.AddInterceptor(new TimingInterceptor<RoomData>(LoggerFactory));
+            _store.Observe(OnStoreChanged);
 
             StateHasChanged();
         });
@@ -233,7 +238,7 @@
 
         _hub.On("RemoveFromRoom", () =>
         {
-            _store!.Forget(_ => StateHasChanged());
+            _store!.Forget(OnStoreChanged);
             _store = null;
 
             StateHasChanged();
@@ -316,6 +321,8 @@
 
     public async ValueTask DisposeAsync()
     {
+        _store?.Forget(OnStoreChanged);
+
         if (_hub is null) return;
         await _hub.DisposeAsync();
     }
