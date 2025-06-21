@@ -17,8 +17,9 @@ public class TurnProcessingService(
     User user,
     Room room,
     string client
-) : HubAwareService(hub, room, client)
+) : HubAwareService(hub, room, user, client)
 {
+    // TODO: Clean up
     public async Task ExecuteAsync(List<Card> cards)
     {
         ValidateGameState();
@@ -52,7 +53,7 @@ public class TurnProcessingService(
         }
 
         // Check turn
-        if (Hand.Player.Id != user.Id)
+        if (Game.CurrentHand.Player.Id != CurrentPlayer.Id)
         {
             throw new NotYourTurnException();
         }
@@ -60,11 +61,11 @@ public class TurnProcessingService(
     
     private async Task NotifyClientsOfGameState()
     {
-        var turn = Hand.Turns.Last();
+        var turn = Game.CurrentHand.Turns.Last();
 
         await Me.NotifyTurnProcessed();
         await Me.RemoveCardRangeFromHand(turn.Delta.Cards);
-        await Others.RemoveCardsFromPlayerHand(Hand.ToData(), turn.Delta.Cards.Count);
+        await Others.RemoveCardsFromPlayerHand(Game.CurrentHand.Player.ToData(), turn.Delta.Cards.Count);
         await Everyone.AddCardRangeToPile(turn.Delta.Cards);
     }
 
@@ -73,8 +74,8 @@ public class TurnProcessingService(
         turn.IsLastCard = await Prompt.PromptLastCardRequest();
         if (turn.IsLastCard)
         {
-            Hand.IsLastCard = true;
-            await Others.ReceiveSystemMessage(Messages.LastCard(Hand.Player));
+            Game.CurrentHand.IsLastCard = true;
+            await Others.ReceiveSystemMessage(Messages.LastCard(Game.CurrentHand.Player));
         }
     }
 
@@ -97,8 +98,8 @@ public class TurnProcessingService(
 
     private void ApplyTurnDelta(Turn turn)
     {
-        Hand.Turns.Add(turn);
-        Hand.Cards.RemoveAll(turn.Delta.Cards.Contains);
+        Game.CurrentHand.Turns.Add(turn);
+        Game.CurrentHand.Cards.RemoveAll(turn.Delta.Cards.Contains);
         foreach (var card in turn.Delta.Cards) Game.Pile.Push(card);
 
         if (turn.Delta.Reverse) Game.IsReversed = !Game.IsReversed;
@@ -155,22 +156,22 @@ public class TurnProcessingService(
             await Everyone.RemoveCardsFromDeck(1);
 
             // Add cards to player hand and reset counter
-            Hand.Cards.AddRange(dealt);
+            Game.CurrentHand.Cards.AddRange(dealt);
             await Me.AddCardRangeToHand(dealt);
-            await Others.AddCardsToPlayerHand(Hand.ToData(), dealt.Count);
+            await Others.AddCardsToPlayerHand(Game.CurrentHand.Player.ToData(), dealt.Count);
             Game.Pick = 0;
         }
     }
 
     private async Task CheckRemainingCards()
     {
-        var turn = Hand.Turns.Last();
-        var player = Hand.Player;
+        var turn = Game.CurrentHand.Turns.Last();
+        var player = Game.CurrentHand.Player;
 
         // Check whether the game is over.
-        if (Hand.Cards.Count == 0)
+        if (Game.CurrentHand.Cards.Count == 0)
         {
-            if (Hand.IsLastCard && !turn.Delta.Cards[^1].IsSpecial())
+            if (Game.CurrentHand.IsLastCard && !turn.Delta.Cards[^1].IsSpecial())
             {
                 await EndGame(GameResult.Win(winner: player));
                 return;

@@ -12,35 +12,25 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// TODO: Standardize this. Use the URL format for development too, to avoid this check.
-string connectionString;
-if (builder.Environment.IsDevelopment())
-    connectionString = builder.Configuration["DefaultConnection"] ?? throw new Exception("DefaultConnection is empty. Have you set it in user secrets?");
-else
-{
-    var databaseUri = new Uri(builder.Configuration["DATABASE_URL"] ?? throw new Exception("DATABASE_URL is not set. Have you set it in the environment?"));
-    var userInfo = databaseUri.UserInfo.Split(':');
-    connectionString = new NpgsqlConnectionStringBuilder
-    {
-        Host = databaseUri.Host,
-        Port = databaseUri.Port,
-        Username = userInfo[0],
-        Password = userInfo[1],
-        Database = databaseUri.LocalPath.TrimStart('/'),
-        SslMode = SslMode.Prefer
-    }.ToString();
-}
-
 builder.Services.AddDbContext<KarataContext>(options =>
 {
-    options.UseNpgsql(connectionString);
-    // options.UseLazyLoadingProxies();
+    var uri = new Uri(builder.Configuration["DATABASE_URL"] ?? throw new Exception("DATABASE_URL is not set."));
+    var credentials = uri.UserInfo.Split(':');
+
+    options.UseNpgsql(new NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.Port,
+        Username = credentials.First(),
+        Password = credentials.Last(),
+        Database = uri.LocalPath.TrimStart('/'),
+        SslMode = SslMode.Prefer
+    }.ToString());
 });
-builder.Services.AddDefaultIdentity<User>(options =>
-{
-    options.SignIn.RequireConfirmedAccount = true;
-})
-.AddEntityFrameworkStores<KarataContext>();
+
+builder.Services
+    .AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddEntityFrameworkStores<KarataContext>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddSignalR().AddHubOptions<GameHub>(options =>
@@ -70,9 +60,8 @@ builder.Services.TryAddEnumerable(
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-// For running in Railway
-var portString = Environment.GetEnvironmentVariable("PORT");
-if (portString is {Length: > 0} && int.TryParse(portString, out var port))
+// Pick port from environment if it is set.
+if (int.TryParse(Environment.GetEnvironmentVariable("PORT"), out var port))
 {
     builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(port));
 }

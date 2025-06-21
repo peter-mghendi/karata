@@ -4,10 +4,10 @@ namespace Karata.Server.Hubs.Clients;
 
 public interface IGameClient
 {
-    Task AddCardsToPlayerHand(HandData hand, int num);
+    Task AddCardsToPlayerHand(UserData user, int num);
     Task AddCardRangeToHand(List<Card> cards); 
     Task AddCardRangeToPile(List<Card> cards);
-    Task AddHandToRoom(HandData hand);
+    Task AddHandToRoom(UserData user);
     Task AddToRoom(RoomData room);
     Task EndGame();
     Task NotifyTurnProcessed();
@@ -18,9 +18,9 @@ public interface IGameClient
     Task ReclaimPile();
     Task RemoveCardsFromDeck(int num);
     Task RemoveCardRangeFromHand(List<Card> cards);
-    Task RemoveCardsFromPlayerHand(HandData hand, int num);
+    Task RemoveCardsFromPlayerHand(UserData user, int num);
     Task RemoveFromRoom();
-    Task RemoveHandFromRoom(HandData hand);
+    Task RemoveHandFromRoom(UserData user);
     Task SetCurrentRequest(Card? request);
     Task UpdateGameStatus(GameStatus status);
     Task UpdateTurn(int turn);

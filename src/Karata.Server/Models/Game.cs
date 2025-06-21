@@ -50,9 +50,8 @@ public class Game
 
     [NotMapped] public Hand CurrentHand => Hands[CurrentTurn];
 
-    [NotMapped] public HashSet<Hand> OtherHands => HandsExcept(CurrentHand);
-
-    public HashSet<Hand> HandsExcept(Hand hand) => Hands.Where(h => h.Id != hand.Id).ToHashSet();
+    public HashSet<Hand> HandsExceptHand(Hand hand) => Hands.Where(h => h.Id != hand.Id).ToHashSet();
+    public HashSet<Hand> HandsExceptPlayer(User player) => Hands.Where(h => h.Player.Id != player.Id).ToHashSet();
 
     public GameData ToData() => new()
     {

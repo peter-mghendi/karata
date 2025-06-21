@@ -13,4 +13,4 @@ public partial class RoomMembershipService (
     User user,
     Room room,
     string client
-) : HubAwareService(hub, room, client);
+) : HubAwareService(hub, room, user, client);

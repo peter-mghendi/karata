@@ -2,6 +2,7 @@
 
 @using System.Collections.Immutable
 @using Karata.Client.Infrastructure.State
+@using Karata.Pebble.Interceptors
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using TextCopy
@@ -18,108 +19,116 @@
 @inject NavigationManager Navigator
 @inject RoomStoreFactory Factory
 
-<HubConnectionGuard>
-    if (_store is null)
+<HubConnectionGuard Hub="_hub">
+    @if (_store is null)
     {
-    <div class="d-flex justify-center">
-        <MudText Typo="Typo.body1">Loading...</MudText>
-    </div>
+        <div class="d-flex justify-center">
+            <MudText Typo="Typo.body1">Loading...</MudText>
+        </div>
     }
     else
     {
-    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mud-height-full pa-0">
-        <MudGrid Class="mud-height-full px-4 pt-4">
-            <MudItem xs="12" md="8" xl="9" xxl="10">
-                <MudCard Elevation="0" Class="" Style="height: 88vh">
-                    @if (_store!.State.Game.Status is GameStatus.Ongoing)
-                    {
-                        if (_table)
-                        {
-                            <CardTableGameInterface Game="_store.State.Game"
-                                                    Hand="_store.MyHand"
-                                                    Turn="_turn.ToImmutableList()"
-                                                    OnAddCardToTurn="AddCardToTurn"
-                                                    OnReorderCardInTurn="ReorderCardInTurn"
-                                                    OnRemoveCardFromTurn="RemoveCardFromTurn"/>
-                        }
-                        else
-                        {
-                            <CardListGameInterface Game="_store.State.Game"
-                                                   Hand="_store.MyHand"
-                                                   Turn="_turn.ToImmutableList()"
-                                                   OnAddCardToTurn="AddCardToTurn"
-                                                   OnReorderCardInTurn="ReorderCardInTurn"
-                                                   OnRemoveCardFromTurn="RemoveCardFromTurn"/>
-                        }
-                    }
-                    else
-                    {
-                        <div class="d-flex flex-column justify-center align-content-center pa-4 pt-8">
-                            <MudText Align="Align.Center" Typo="Typo.body1" Class="mb-2">
-                                You are in room @_store.State.Id
-                                <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary" OnClick="CopyRoomId"/>
-                            </MudText>
-                            <MudText Align="Align.Center" Typo="Typo.body2" Class="mb-2">
-                                @Navigator.Uri
-                                <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary" OnClick="CopyRoomLink"/>
-                            </MudText>
-                            <MudGrid Spacing="2" Justify="Justify.Center">
-                                <MudItem xs="12" sm="8" md="6" lg="4" xl="3" xxl="2">
-                                    <QRCode Data="@Navigator.Uri"/>
-                                </MudItem>
-                            </MudGrid>
-                        </div>
-                    }
-                </MudCard>
-            </MudItem>
-            <MudItem Class="mud-height-full overflow-y-scroll" xs="12" md="4" xl="3" xxl="2">
-                <MudPaper Elevation="0" Class="mb-4">
-                    <MudToolBar>
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mud-height-full pa-0">
+            <MudGrid Class="mud-height-full px-4 pt-4">
+                <MudItem xs="12" md="8" xl="9" xxl="10">
+                    <MudCard Elevation="0" Class="" Style="height: 88vh">
                         @if (_store!.State.Game.Status is GameStatus.Ongoing)
                         {
-                            <MudTooltip Text="Pick card(s)">
-                                <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleUp" Color="Color.Inherit" OnClick="() => PerformTurn(new List<Card>())"/>
-                            </MudTooltip>
-                            <MudTooltip Text="Play card(s)">
-                                <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleDown" Color="Color.Inherit" OnClick="() => PerformTurn(_turn)"/>
-                            </MudTooltip>
+                            if (_table)
+                            {
+                                <CardTableGameInterface Game="_store.State.Game"
+                                                        Hand="_store.MyHand"
+                                                        Turn="_turn.ToImmutableList()"
+                                                        OnAddCardToTurn="AddCardToTurn"
+                                                        OnReorderCardInTurn="ReorderCardInTurn"
+                                                        OnRemoveCardFromTurn="RemoveCardFromTurn"/>
+                            }
+                            else
+                            {
+                                <CardListGameInterface Game="_store.State.Game"
+                                                       Hand="_store.MyHand"
+                                                       Turn="_turn.ToImmutableList()"
+                                                       OnAddCardToTurn="AddCardToTurn"
+                                                       OnReorderCardInTurn="ReorderCardInTurn"
+                                                       OnRemoveCardFromTurn="RemoveCardFromTurn"/>
+                            }
                         }
                         else
                         {
-                            <MudTooltip Text="@(IsCreator ? "Start Game" : "Only the creator can start the game.")">
-                                <MudIconButton Icon="@Icons.Material.Rounded.PlayArrow" Color="Color.Inherit" OnClick="StartGame" Disabled="!IsCreator"/>
-                            </MudTooltip>
+                            <div class="d-flex flex-column justify-center align-content-center pa-4 pt-8">
+                                <MudText Align="Align.Center" Typo="Typo.body1" Class="mb-2">
+                                    You are in room @_store.State.Id
+                                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.ContentCopy"
+                                                   Color="Color.Primary" OnClick="CopyRoomId"/>
+                                </MudText>
+                                <MudText Align="Align.Center" Typo="Typo.body2" Class="mb-2">
+                                    @Navigator.Uri
+                                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.ContentCopy"
+                                                   Color="Color.Primary" OnClick="CopyRoomLink"/>
+                                </MudText>
+                                <MudGrid Spacing="2" Justify="Justify.Center">
+                                    <MudItem xs="12" sm="8" md="6" lg="4" xl="3" xxl="2">
+                                        <QRCode Data="@Navigator.Uri"/>
+                                    </MudItem>
+                                </MudGrid>
+                            </div>
                         }
+                    </MudCard>
+                </MudItem>
+                <MudItem Class="mud-height-full overflow-y-scroll" xs="12" md="4" xl="3" xxl="2">
+                    <MudPaper Elevation="0" Class="mb-4">
+                        <MudToolBar>
+                            @if (_store!.State.Game.Status is GameStatus.Ongoing)
+                            {
+                                <MudTooltip Text="Pick card(s)">
+                                    <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleUp" Color="Color.Inherit"
+                                                   OnClick="() => PerformTurn(new List<Card>())"/>
+                                </MudTooltip>
+                                <MudTooltip Text="Play card(s)">
+                                    <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleDown" Color="Color.Inherit"
+                                                   OnClick="() => PerformTurn(_turn)"/>
+                                </MudTooltip>
+                            }
+                            else
+                            {
+                                <MudTooltip Text="@(IsCreator ? "Start Game" : "Only the creator can start the game.")">
+                                    <MudIconButton Icon="@Icons.Material.Rounded.PlayArrow" Color="Color.Inherit"
+                                                   OnClick="StartGame" Disabled="!IsCreator"/>
+                                </MudTooltip>
+                            }
 
-                        <MudTooltip Text="Leave Room">
-                            <MudIconButton Icon="@Icons.Material.Rounded.PersonRemove" Color="Color.Inherit" OnClick="() => LeaveRoom()"/>
-                        </MudTooltip>
-                    </MudToolBar>
-                </MudPaper>
+                            <MudTooltip Text="Leave Room">
+                                <MudIconButton Icon="@Icons.Material.Rounded.PersonRemove" Color="Color.Inherit"
+                                               OnClick="() => LeaveRoom()"/>
+                            </MudTooltip>
+                        </MudToolBar>
+                    </MudPaper>
 
-                <MudPaper Class="pa-4 mb-4" Elevation="0">
-                    <div class="mb-2">
-                        <MudSwitch @bind-Value="_table" Color="Color.Primary" Label="Use Card Table interface (Experimental)"/>
-                    </div>
-                    <MudText Typo="Typo.caption" Class="text-grey">
-                        The Card Table interface is still under development and, as such, may contain bugs. Use the Card List interface for best experience.
-                    </MudText>
-                </MudPaper>
+                    <MudPaper Class="pa-4 mb-4" Elevation="0">
+                        <div class="mb-2">
+                            <MudSwitch @bind-Value="_table" Color="Color.Primary"
+                                       Label="Use Card Table interface (Experimental)"/>
+                        </div>
+                        <MudText Typo="Typo.caption" Class="text-grey">
+                            The Card Table interface is still under development and, as such, may contain bugs. Use the
+                            Card List interface for best experience.
+                        </MudText>
+                    </MudPaper>
 
-                <MudExpansionPanels DisableBorders="true" Elevation="0" Class="mb-4">
-                    <MudExpansionPanel Text="Information">
-                        <InformationPanel Room="_store!.State"/>
-                    </MudExpansionPanel>
-                    <MudExpansionPanel Text="Players">
-                        <PlayersPanel Me="_store!.MyHand.User" Room="_store.State"/>
-                    </MudExpansionPanel>
-                    <MudExpansionPanel Text="Chat" MaxHeight="500">
-                        <ChatPanel Room="_store!.State" Me="_store.MyHand.User" OnSend="Send"/>
-                    </MudExpansionPanel>
-                </MudExpansionPanels>
-            </MudItem>
-        </MudGrid>
-    </MudContainer>
+                    <MudExpansionPanels DisableBorders="true" Elevation="0" Class="mb-4">
+                        <MudExpansionPanel Text="Information">
+                            <InformationPanel Room="_store!.State"/>
+                        </MudExpansionPanel>
+                        <MudExpansionPanel Text="Players">
+                            <PlayersPanel Me="_store!.MyHand.User" Room="_store.State"/>
+                        </MudExpansionPanel>
+                        <MudExpansionPanel Text="Chat" MaxHeight="500">
+                            <ChatPanel Room="_store!.State" Me="_store.MyHand.User" OnSend="Send"/>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                </MudItem>
+            </MudGrid>
+        </MudContainer>
     }
 </HubConnectionGuard>
 
@@ -157,16 +166,16 @@
             .AddJsonProtocol()
             .Build();
 
-        _hub.On<HandData, int>("AddCardsToPlayerHand", (hand, num) => { _store!.Mutate(new RoomState.AddCardsToPlayerHand(hand, num)); });
+        _hub.On<UserData, int>("AddCardsToPlayerHand", (user, num) => _store!.Mutate(new RoomState.AddCardsToPlayerHand(user, num)));
 
-        _hub.On<List<Card>>("AddCardRangeToHand", cards => { _store!.Mutate(new RoomState.AddCardRangeToHand(_store!.MyHand, cards)); });
+        _hub.On<List<Card>>("AddCardRangeToHand", cards => _store!.Mutate(new RoomState.AddCardRangeToHand(_store!.MyHand.User, cards)));
 
         _hub.On<List<Card>>("AddCardRangeToPile", cards => _store!.Mutate(new RoomState.AddCardRangeToPile(cards)));
 
-        _hub.On<HandData>("AddHandToRoom", hand =>
+        _hub.On<UserData>("AddHandToRoom", user =>
         {
-            _store!.Mutate(new RoomState.AddHandToRoom(hand));
-            Snackbar.Add($"{hand.User.Email} has joined the room", Severity.Info);
+            _store!.Mutate(new RoomState.AddHandToRoom(user));
+            Snackbar.Add($"{user.Email} has joined the room", Severity.Info);
         });
 
         _hub.On<RoomData>("AddToRoom", room =>
@@ -176,7 +185,7 @@
             _store.AddInterceptor(new TimingInterceptor<RoomData>(LoggerFactory));
             _store.Observe(OnStoreChanged);
 
-            StateHasChanged();
+            OnStoreChanged(room);
         });
 
         _hub.On("EndGame", async () =>
@@ -191,7 +200,7 @@
             StateHasChanged();
         });
 
-        _hub.On<bool, Task<Card?>>("PromptCardRequest", async specific =>
+        _hub.On<bool, Card?>("PromptCardRequest", async specific =>
         {
             var parameters = new DialogParameters { { nameof(CardRequestModal.Specific), specific } };
             var dialog = await DialogService.ShowAsync<CardRequestModal>("Request a card", parameters);
@@ -232,9 +241,9 @@
 
         _hub.On<int>("RemoveCardsFromDeck", num => _store!.Mutate(new RoomState.RemoveCardsFromDeck(num)));
 
-        _hub.On<HandData, int>("RemoveCardsFromPlayerHand", (hand, num) => { _store!.Mutate(new RoomState.RemoveCardsFromPlayerHand(hand, num)); });
+        _hub.On<UserData, int>("RemoveCardsFromPlayerHand", (user, num) => _store!.Mutate(new RoomState.RemoveCardsFromPlayerHand(user, num)));
 
-        _hub.On<List<Card>>("RemoveCardRangeFromHand", cards => { _store!.Mutate(new RoomState.RemoveCardRangeFromHand(_store!.MyHand, cards)); });
+        _hub.On<List<Card>>("RemoveCardRangeFromHand", cards => _store!.Mutate(new RoomState.RemoveCardRangeFromHand(_store!.MyHand, cards)));
 
         _hub.On("RemoveFromRoom", () =>
         {
@@ -244,10 +253,10 @@
             StateHasChanged();
         });
 
-        _hub.On<HandData>("RemoveHandFromRoom", hand =>
+        _hub.On<UserData>("RemoveHandFromRoom", user =>
         {
-            _store!.Mutate(new RoomState.RemoveHandFromRoom(hand));
-            Snackbar.Add($"{hand.User.Email} has left the room.", Severity.Info);
+            _store!.Mutate(new RoomState.RemoveHandFromRoom(user));
+            Snackbar.Add($"{user.Email} has left the room.", Severity.Info);
         });
 
         _hub.On<Card>("SetCurrentRequest", request => _store!.Mutate(new RoomState.SetCurrentRequest(request)));
@@ -257,14 +266,13 @@
             _store!.Mutate(new RoomState.UpdateTurn(turn));
 
             var current = _store!.State.Game.CurrentHand.User.Email;
-            var message = $"It is now {(current == username ? "your" : $"{current}'s")} turn.";
-            Snackbar.Add(message, Severity.Info);
+            var possessive = current == username ? "your" : $"{current}'s";
+            Snackbar.Add($"It is now {possessive} turn.", Severity.Info);
         });
 
         _hub.On<GameStatus>("UpdateGameStatus", status =>
         {
             _store!.Mutate(new RoomState.UpdateGameStatus(status));
-
             if (status == GameStatus.Ongoing) Snackbar.Add("The game has started.", Severity.Info);
         });
 

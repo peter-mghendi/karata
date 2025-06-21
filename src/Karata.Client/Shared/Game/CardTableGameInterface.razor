@@ -37,10 +37,8 @@
 
     @* Deck and Pile *@
     @* TODO Include @click handlers after all? *@
-    <img id="deck" class="absolute" src="img/cards/Back.svg" alt="Card back"/>
-    <MudTooltip Text="@RequestText">
-        <img id="pile" class="absolute" src="@ImageUrl(Game.Pile.Peek())" alt="@Game.Pile.Peek().GetName()"/>
-    </MudTooltip>
+    <img id="deck" class="absolute" src="img/cards/Back.svg" alt="Card back" title="@($"{Game.DeckCount} cards in deck")"/>
+    <img id="pile" class="absolute" src="@ImageUrl(Game.Pile.Peek())" alt="@Game.Pile.Peek().GetName()" title="@RequestText"/>
 </div>
 
 @code 

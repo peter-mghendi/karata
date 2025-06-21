@@ -1,7 +1,7 @@
 @inject ISnackbar Snackbar
 
 <MudTextField T="string" Label="Type your message:" Variant="Variant.Filled" @bind-Value="@_message" Lines="5" Class="mb-2"/>
-<MudButton Variant="Variant.Text" EndIcon="@Icons.Rounded.Send" Color="Color.Primary" FullWidth="true" OnClick="@Send">Send Message</MudButton>
+<MudButton Variant="Variant.Text" EndIcon="@Icons.Material.Rounded.Send" Color="Color.Primary" FullWidth="true" OnClick="@Send">Send Message</MudButton>
 <MudDivider DividerType="DividerType.Middle" Class="my-4"/>
 
 <MudList>

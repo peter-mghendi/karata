@@ -26,23 +26,31 @@ public class GameHub(
         await base.OnDisconnectedAsync(exception);
 
         var user = await User();
-        logger.LogDebug("User {User} disconnected.", user.UserName);
+        logger.LogDebug(exception, "User {User} disconnected.", user.UserName);
 
         if (!presence.TryGetPresence(user.Id, out var rooms) || rooms is null) return;
         await foreach (var room in Rooms(rooms))
         {
-            logger.LogDebug("Ending game in room {Room}.", room.Id.ToString());
-
-            room.Game.Status = GameStatus.Over;
-            room.Game.Result = new GameResult
+            try
             {
-                ResultType = GameResultType.SystemError,
-                ReasonType = MessageType.Error,
-                Reason = $"{user.UserName} disconnected. This game cannot proceed.",
-            };
+                logger.LogDebug("Ending game in room {Room}.", room.Id.ToString());
 
-            await context.SaveChangesAsync();
-            await Clients.Group(room.Id.ToString()).EndGame();
+                room.Game.Status = GameStatus.Over;
+                room.Game.Result = new GameResult
+                {
+                    ResultType = GameResultType.SystemError,
+                    ReasonType = MessageType.Error,
+                    Reason = $"{user.UserName} disconnected. This game cannot proceed.",
+                };
+
+                await context.SaveChangesAsync();
+                await Clients.Group(room.Id.ToString()).EndGame();
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "Error while trying to end game.");
+                throw;
+            }
         }
     }
 
@@ -86,6 +94,7 @@ public class GameHub(
     {
         try
         {
+            logger.LogDebug("User {User} is starting the game in room {Room}.", Context.UserIdentifier, roomId);
             await factory.Create(await Room(roomId), await User(), Context.ConnectionId).ExecuteAsync();
         }
         catch (KarataException exception)
@@ -98,6 +107,7 @@ public class GameHub(
     {
         try
         {
+            logger.LogDebug("User {User} is performing a turn in room {Room}. Cards: {Cards}", Context.UserIdentifier, roomId, string.Join(", ", cards));
             await factory.Create(await Room(roomId), await User(), Context.ConnectionId).ExecuteAsync(cards);
         }
         catch (KarataException exception)

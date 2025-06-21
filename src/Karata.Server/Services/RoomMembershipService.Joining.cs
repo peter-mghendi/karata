@@ -10,7 +10,7 @@ public partial class RoomMembershipService
     {
         ValidateJoiningGameState(password);
 
-        var hand = new Hand { Player = user };
+        var hand = new Hand { Player = CurrentPlayer };
         AddPresence(hand);
         await NotifyPlayerJoined(hand);
         await context.SaveChangesAsync();
@@ -25,8 +25,7 @@ public partial class RoomMembershipService
                 throw new PasswordRequiredException();
             }
 
-            var bytes = Encoding.UTF8.GetBytes(password);
-            if (!passwords.VerifyPassword(bytes, Room.Salt!, Room.Hash))
+            if (!passwords.VerifyPassword(Encoding.UTF8.GetBytes(password), Room.Salt!, Room.Hash))
             {
                 throw new IncorrectPasswordException();
             }
@@ -57,8 +56,8 @@ public partial class RoomMembershipService
 
     private async Task NotifyPlayerJoined(Hand hand)
     {
-        await AddToRoom(hand);
+        await AddToRoom(Client);
         await Me.AddToRoom(Room.ToData());
-        await Others.AddHandToRoom(hand.ToData());
+        await Others.AddHandToRoom(hand.Player.ToData());
     }
 }

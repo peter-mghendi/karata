@@ -6,7 +6,7 @@ public interface IPasswordService
 {
     byte[] HashPassword(byte[] password, byte[] salt);
     bool VerifyPassword(byte[] password, byte[] salt, byte[] hash);
-    
+
     public static byte[] GenerateSalt()
     {
         using var rng = RandomNumberGenerator.Create();

@@ -9,7 +9,7 @@ public partial class RoomMembershipService
     {
         ValidateLeavingGameState();
 
-        var hand = Game.Hands.Single(h => h.Player.Id == user.Id);
+        var hand = Game.Hands.Single(h => h.Player.Id == CurrentPlayer.Id);
         RemovePresence(hand);
         await NotifyPlayerLeft(hand);
         await context.SaveChangesAsync();
@@ -20,7 +20,7 @@ public partial class RoomMembershipService
         // Room creator can not leave games in Lobby.
         // No one can leave an Ongoing game.
         // Anyone can leave if the game is Over.
-        if (Game.Status is GameStatus.Ongoing || (Room.Creator.Id == user.Id && Game.Status == GameStatus.Lobby))
+        if (Game.Status is GameStatus.Ongoing || (Room.Creator.Id == CurrentPlayer.Id && Game.Status == GameStatus.Lobby))
         {
             // TODO: Handle this gracefully, as well as accidental disconnection.
             throw new SawException();
@@ -30,13 +30,13 @@ public partial class RoomMembershipService
     private void RemovePresence(Hand hand)
     {
         Game.Hands.Remove(hand);
-        presence.RemovePresence(user.Id, Room.Id.ToString());
+        presence.RemovePresence(CurrentPlayer.Id, Room.Id.ToString());
     }
 
     private async Task NotifyPlayerLeft(Hand hand)
     {
-        await RemoveFromRoom(hand);
+        await RemoveFromRoom(Client);
         await Me.RemoveFromRoom();
-        await Others.RemoveHandFromRoom(hand.ToData());
+        await Others.RemoveHandFromRoom(hand.Player.ToData());
     }
 }

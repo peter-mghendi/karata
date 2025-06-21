@@ -16,7 +16,7 @@ public class GameStartService(
     User user,
     Room room,
     string client
-) : HubAwareService(hub, room, client)
+) : HubAwareService(hub, room, user, client)
 {
     private const int DealCount = 4;
     
@@ -33,7 +33,7 @@ public class GameStartService(
         var game = Room.Game;
         
         // Check caller role
-        if (Room.Creator.Id != user.Id)
+        if (Room.Creator.Id != CurrentPlayer.Id)
         {
             throw new UnauthorizedToStartException();
         }
@@ -77,12 +77,11 @@ public class GameStartService(
             var dealt = deck.DealMany(DealCount);
             await Everyone.RemoveCardsFromDeck(DealCount);
 
-            logger.LogDebug("Dealt {Count} cards to {User}.", DealCount, hand.Player.UserName);
-            logger.LogDebug("Cards: {Cards}.", string.Join(", ", dealt));
+            logger.LogDebug("Dealing {Count} cards to {User}. Cards: {Cards}.", DealCount, hand.Player.UserName, string.Join(", ", dealt));
 
             hand.Cards.AddRange(dealt);
-            await Me.AddCardRangeToHand(dealt);
-            await Except(hand).AddCardsToPlayerHand(hand.ToData(), DealCount);
+            await Hand(hand).AddCardRangeToHand(dealt);
+            await HandsExcept(hand).AddCardsToPlayerHand(hand.Player.ToData(), DealCount);
         }
 
         logger.LogDebug("Finished dealing cards.");
