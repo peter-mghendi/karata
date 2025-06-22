@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Karata.Cards;
 using Karata.Cards.Extensions;
 using Karata.Server.Engine;
@@ -7,7 +8,6 @@ using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
 using static Karata.Server.Models.CardRequestLevel;
-
 using TestCase = (
     int Identifier,
     Karata.Server.Models.Game Game,
@@ -24,38 +24,46 @@ public class KarataEngineTest
 
     [Theory]
     [MemberData(nameof(ValidationTestCases))]
-    public void ValidateTurnCardsTest(int identifier, Game game, List<Card> cards, bool expectedValidity)
+    public void ValidateTurnCardsTest(string identifier, Game game, List<Card> cards, bool expectedValidity)
     {
-        if (!expectedValidity)
+        var factory = new KarataEngineFactory();
+        var engine = factory.Create(game, cards);
+
+        if (expectedValidity)
         {
-            var factory = new KarataEngineFactory();
-            Assert.ThrowsAny<TurnValidationException>(() => factory.Create(game, cards).EnsureTurnIsValid());
+            engine.EnsureTurnIsValid();
+        }
+        else
+        {
+            Assert.ThrowsAny<TurnValidationException>(() => engine.EnsureTurnIsValid());
         }
     }
 
     [Theory]
     [MemberData(nameof(GenerationTestCases))]
-    public void GenerateTurnDeltaTest(int identifier, Game game, List<Card> cards, GameDelta expectedDelta)
+    public void GenerateTurnDeltaTest(string identifier, Game game, List<Card> cards, GameDelta expectedDelta)
     {
         var factory = new KarataEngineFactory();
         var actualDelta = factory.Create(game, cards).GenerateTurnDelta();
-        Assert.Equal(expectedDelta, actualDelta);
+
+        // TODO: This is a hack to get deep equality on Lists. It will make the tests run slower.
+        Assert.Equal(JsonSerializer.Serialize(expectedDelta), JsonSerializer.Serialize(actualDelta));
     }
 
 #pragma warning restore xUnit1026, xUnit1045
 
-    public static TheoryData<int, Game, List<Card>, bool> ValidationTestCases => GetTestCases()
-        .Aggregate(new TheoryData<int, Game, List<Card>, bool>(), (aggregate, datum) =>
+    public static TheoryData<string, Game, List<Card>, bool> ValidationTestCases => GetTestCases()
+        .Aggregate(new TheoryData<string, Game, List<Card>, bool>(), (aggregate, @case) =>
         {
-            aggregate.Add(datum.Identifier, datum.Game, datum.Cards, datum.ExpectedValid);
+            aggregate.Add(@case.Identifier.ToString().PadLeft(2, '0'), @case.Game, @case.Cards, @case.ExpectedValid);
             return aggregate;
         });
 
-    public static TheoryData<int, Game, List<Card>, GameDelta> GenerationTestCases => GetTestCases()
+    public static TheoryData<string, Game, List<Card>, GameDelta> GenerationTestCases => GetTestCases()
         .Where(@case => @case.ExpectedValid)
-        .Aggregate(new TheoryData<int, Game, List<Card>, GameDelta>(), (aggregate, @case) =>
+        .Aggregate(new TheoryData<string, Game, List<Card>, GameDelta>(), (aggregate, @case) =>
         {
-            aggregate.Add(@case.Identifier, @case.Game, @case.Cards, @case.ExpectedDelta);
+            aggregate.Add(@case.Identifier.ToString().PadLeft(2, '0'), @case.Game, @case.Cards, @case.ExpectedDelta);
             return aggregate;
         });
 
@@ -85,14 +93,27 @@ public class KarataEngineTest
              * BASIC OPERATIONS
              */
             // When no cards are played, the turn is valid
-            (Identifier: 1, Game: ProvideGame(), Cards: [], true, new GameDelta { Pick = 1 }),
+            (
+                Identifier: 1,
+                Game: ProvideGame(),
+                Cards: [],
+                ExpectedValid: true,
+                ExpectedDelta: new GameDelta { Pick = 1 }
+            ),
 
             // When a single card of the same suit as the top card is played, the turn is valid
-            (Identifier: 2, Game: ProvideGame(), Cards: [Ten.Of(Spades)], ExpectedValid: true, new GameDelta()),
+            (
+                Identifier: 2,
+                Game: ProvideGame(),
+                Cards: [Ten.Of(Spades)],
+                ExpectedValid: true,
+                ExpectedDelta: new GameDelta()
+            ),
 
             // When a single card of a different suit than the top card is played, the turn is invalid
             (
-                Identifier: 3, ProvideGame(),
+                Identifier: 3,
+                Game: ProvideGame(),
                 Cards: [Ten.Of(Hearts)],
                 ExpectedValid: false,
                 ExpectedDelta: new GameDelta()
@@ -353,18 +374,27 @@ public class KarataEngineTest
                 ExpectedDelta: new GameDelta { RequestLevel = CardRequest }
             ),
 
-            // When the requested card is played, the turn is valid
+            // When the requested card is played, the turn is valid and the request is removed
             (
                 Identifier: 29,
+                Game: ProvideGame(top: Ace.Of(Spades), request: None.Of(Spades)),
+                Cards: [Six.Of(Spades)],
+                ExpectedValid: true,
+                ExpectedDelta: new GameDelta { RemoveRequestLevels = 1 }
+            ),
+
+            // When the requested card is played, the turn is valid and the request is removed
+            (
+                Identifier: 30,
                 Game: ProvideGame(top: Ace.Of(Spades), request: Nine.Of(Spades)),
                 Cards: [Nine.Of(Spades)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta()
+                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2 }
             ),
 
             // When a card of a different suit from a specifically requested card is played, the turn is invalid
             (
-                Identifier: 30,
+                Identifier: 31,
                 Game: ProvideGame(top: Ace.Of(Spades), request: Nine.Of(Spades)),
                 Cards: [Nine.Of(Diamonds)],
                 ExpectedValid: false,
@@ -373,7 +403,7 @@ public class KarataEngineTest
 
             // When a card of a different face from a specifically requested card is played, the turn is invalid
             (
-                Identifier: 31,
+                Identifier: 32,
                 Game: ProvideGame(top: Ace.Of(Spades), request: Nine.Of(Spades)),
                 Cards: [Four.Of(Spades)],
                 ExpectedValid: false,
@@ -382,7 +412,7 @@ public class KarataEngineTest
 
             // When a card of a different suit from the requested suit is played, the turn is invalid
             (
-                Identifier: 32,
+                Identifier: 33,
                 Game: ProvideGame(top: Ace.Of(Diamonds), request: None.Of(Spades)),
                 Cards: [Nine.Of(Diamonds)],
                 ExpectedValid: false,
@@ -391,7 +421,7 @@ public class KarataEngineTest
 
             // When a single Ace is played on a suit request, the request is removed
             (
-                Identifier: 33,
+                Identifier: 34,
                 Game: ProvideGame(top: Ace.Of(Diamonds), request: None.Of(Spades)),
                 Cards: [Ace.Of(Clubs)],
                 ExpectedValid: true,
@@ -400,16 +430,16 @@ public class KarataEngineTest
 
             // When a card is requested and none is played, the player picks up a card
             (
-                Identifier: 34,
+                Identifier: 35,
                 Game: ProvideGame(top: Ace.Of(Diamonds), request: None.Of(Spades)),
                 Cards: [],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RemoveRequestLevels = 0, Pick = 1 }
+                ExpectedDelta: new GameDelta { Pick = 1 }
             ),
 
             // When a specific card is requested and a single Ace is played, the request is reduced to a suit request
             (
-                Identifier: 35,
+                Identifier: 36,
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Diamonds)],
                 ExpectedValid: true,
@@ -418,7 +448,7 @@ public class KarataEngineTest
 
             // When a specific card is requested and two Aces are played, the request is removed
             (
-                Identifier: 36,
+                Identifier: 37,
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Diamonds), Ace.Of(Clubs)],
                 ExpectedValid: true,
@@ -427,7 +457,7 @@ public class KarataEngineTest
 
             // When a specific card is requested and an Ace of Spades is played, the request is removed
             (
-                Identifier: 37,
+                Identifier: 38,
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Spades)],
                 ExpectedValid: true,
@@ -437,7 +467,7 @@ public class KarataEngineTest
             // When a specific card is requested and three Aces are played, the request is removed and the player can
             // request a suit
             (
-                Identifier: 38,
+                Identifier: 39,
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Diamonds), Ace.Of(Spades)],
                 ExpectedValid: true,
@@ -447,16 +477,63 @@ public class KarataEngineTest
             // When a specific card is requested and four aces are played, the request is removed and the player can
             // request a card
             (
-                Identifier: 39,
+                Identifier: 40,
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Diamonds), Ace.Of(Spades), Ace.Of(Clubs)],
                 ExpectedValid: true,
                 ExpectedDelta: new GameDelta { RemoveRequestLevels = 2, RequestLevel = CardRequest }
-            )
+            ),
+
+            // When an ace is requested is played, the request is removed and the player can request a suit.
+            (
+                Identifier: 41,
+                Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: None.Of(Hearts)),
+                Cards: [Ace.Of(Hearts)],
+                ExpectedValid: true,
+                ExpectedDelta: new GameDelta { RemoveRequestLevels = 1, RequestLevel = SuitRequest }
+            ),
+
+            // When an ace is requested is played, the request is removed and the player can request a suit.
+            (
+                Identifier: 42,
+                Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: Ace.Of(Hearts)),
+                Cards: [Ace.Of(Hearts)],
+                ExpectedValid: true,
+                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2, RequestLevel = SuitRequest }
+            ),
+
+            // When an ace is requested is played followed by additional aces, the request is removed and the player can
+            // request a card.
+            (
+                Identifier: 43,
+                Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: Ace.Of(Hearts)),
+                Cards: [Ace.Of(Hearts), Ace.Of(Clubs)],
+                ExpectedValid: true,
+                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2, RequestLevel = CardRequest }
+            ),
+
+            // When a question card is requested and is played followed by  aces, the request is removed and the
+            // player can request a card.
+            (
+                Identifier: 44,
+                Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: Queen.Of(Hearts)),
+                Cards: [Queen.Of(Hearts), Ace.Of(Hearts), Ace.Of(Clubs)],
+                ExpectedValid: true,
+                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2, RequestLevel = CardRequest }
+            ),
+
+            // When a card has been requested and no cards are played, the player picks a card.
+            (
+                Identifier: 45,
+                Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: Ace.Of(Hearts)),
+                Cards: [],
+                ExpectedValid: true,
+                ExpectedDelta: new GameDelta { Pick = 1 }
+            ),
         ];
 
         // Quick check to make sure there are no duplicate identifiers
-        Assert.Equal(cases.Count, cases.DistinctBy(@case => @case.Identifier).Count());
+        Assert.Distinct(cases.Select(@case => @case.Identifier));
         return cases;
     }
 

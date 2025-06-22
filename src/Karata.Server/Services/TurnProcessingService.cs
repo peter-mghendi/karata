@@ -1,11 +1,14 @@
+using System.Text.Json;
 using Karata.Server.Data;
 using Karata.Server.Engine;
 using Karata.Server.Hubs;
 using Karata.Server.Hubs.Clients;
 using Karata.Server.Support;
 using Karata.Server.Support.Exceptions;
-using Karata.Shared.Models;
 using Microsoft.AspNetCore.SignalR;
+using static Karata.Cards.Card.CardFace;
+using static Karata.Server.Models.CardRequestLevel;
+using static Karata.Shared.Models.GameStatus;
 
 namespace Karata.Server.Services;
 
@@ -14,22 +17,22 @@ public class TurnProcessingService(
     KarataContext context,
     KarataEngineFactory factory,
     ILogger<TurnProcessingService> logger,
-    User user,
+    User player,
     Room room,
     string client
-) : HubAwareService(hub, room, user, client)
+) : HubAwareService(hub, room, player, client)
 {
-    // TODO: Clean up
     public async Task ExecuteAsync(List<Card> cards)
     {
         ValidateGameState();
-        var engine = factory.Create(Game, cards);
+        var engine = factory.Create(Game, cards.ToList());
         
         (Game.Pick, Game.Give) = (Game.Give, 0);
         engine.EnsureTurnIsValid();
         
         var delta = engine.GenerateTurnDelta();
-        var turn = new Turn { Cards = cards, Delta = delta };
+        var turn = new Turn { Cards = cards.ToList(), Delta = delta };
+        logger.LogDebug("User {User} performed turn {Turn}.", CurrentPlayer, JsonSerializer.Serialize(turn));
 
         await DetermineCardRequest(turn);
         ApplyTurnDelta(turn);
@@ -47,7 +50,7 @@ public class TurnProcessingService(
     private void ValidateGameState()
     {
         // Check game status
-        if (Game.Status != GameStatus.Ongoing)
+        if (Game.Status is not Ongoing)
         {
             throw new GameHasNotStartedException();
         }
@@ -81,19 +84,30 @@ public class TurnProcessingService(
 
     private async Task DetermineCardRequest(Turn turn)
     {
-        if (turn.Delta.RemoveRequestLevels > 0)
+        Game.Request = Game.RequestLevel switch
         {
-            Game.Request = null;
-            await Everyone.SetCurrentRequest(null);
+            CardRequest when turn.Delta.RemoveRequestLevels is 1 => None.Of(Game.Request!.Suit), // One cancels the card request, leaves the suit
+            CardRequest when turn.Delta.RemoveRequestLevels >= 2 => null, // Anything above 1 cancels a suit request
+            SuitRequest when turn.Delta.RemoveRequestLevels >= 1 => null, // Anything above 0 cancels a card request
+            _ => Game.Request
+        };
+
+        // TODO: Do I need this broadcast or just send final state - players will not be able to act on this intermediate state anyway?
+        // Need to make sure it's handled below.
+        await Everyone.SetCurrentRequest(Game.Request);
+
+        var level = turn.Delta.RequestLevel;
+        if (level is NoRequest)
+        {
+            logger.LogDebug("No card request for level {RequestLevel} in room {Room}.", level, Room.Id);
+            return;
         }
+
+        turn.Request = await Prompt.PromptCardRequest(specific: level is CardRequest);
+        logger.LogDebug("Requested {Request} for level {RequestLevel} in room {Room}.", turn.Request, level, Room.Id);
         
-        if (turn.Delta.RequestLevel is not CardRequestLevel.NoRequest)
-        {
-            var specific = turn.Delta.RequestLevel is CardRequestLevel.CardRequest;
-            turn.Request = await Prompt.PromptCardRequest(specific);
-            Game.Request = turn.Request;
-            await Everyone.SetCurrentRequest(turn.Request);
-        }
+        Game.Request = turn.Request;
+        await Everyone.SetCurrentRequest(Game.Request);
     }
 
     private void ApplyTurnDelta(Turn turn)
@@ -117,14 +131,14 @@ public class TurnProcessingService(
             Game.Pick
         );
 
-        Game.Status = GameStatus.Over;
+        Game.Status = Over;
         Game.Result = result;
         
         await context.SaveChangesAsync();
         
         await Me.NotifyTurnProcessed();
         await Everyone.ReceiveSystemMessage(Messages.GameOver(result));
-        await Everyone.UpdateGameStatus(GameStatus.Over);
+        await Everyone.UpdateGameStatus(Over);
         await Everyone.EndGame();
     }
 
