@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Xunit;
 
@@ -10,11 +10,7 @@ public class DeckTest
     private const uint StandardDeckSize = 54;
 
     [Fact]
-    public void DeckPropertyTest()
-    {
-        var deck = new Deck();
-        Assert.Empty(deck);
-    }
+    public void EmptyDeckTest() => Assert.Empty(new Deck());
 
     [Fact]
     public void StandardDeckTest()
@@ -57,14 +53,14 @@ public class DeckTest
     public void DealManyTest(uint num, bool throws)
     {
         var deck = Deck.Standard;
-        List<Card> dealt;
 
         if (throws)
         {
             Assert.Throws<InvalidOperationException>(() => _ = deck.DealMany(num));
             return;
         }
-        else dealt = deck.DealMany(num);
+
+        var dealt = deck.DealMany(num);
 
         Assert.Equal(StandardDeckSize - num, (uint)deck.Count);
         Assert.Equal(deck.Distinct().Count(), deck.Count);
@@ -101,7 +97,6 @@ public class DeckTest
         var success = deck.TryDealMany(num, out var dealt);
 
         Assert.Equal(shouldSucceed, success);
-        Assert.NotNull(dealt);
 
         if (shouldSucceed)
         {

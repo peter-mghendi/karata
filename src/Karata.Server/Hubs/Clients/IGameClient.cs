@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Karata.Shared.Models;
 
 namespace Karata.Server.Hubs.Clients;

@@ -74,19 +74,19 @@ static void AddToDictionary(ConcurrentDictionary<string, string> dict, string ke
 static void TestBlock1(List<Card> cards, Game game, GameDelta delta)
 {
     var aces = cards.Sum(card => card.GetAceValue());
-    delta.RemoveRequestLevels = (uint)Math.Min(aces, (long)game.RequestLevel);
+    delta = delta with { RemoveRequestLevels = (uint)Math.Min(aces, (long)game.RequestLevel) };
     aces -= (long)game.RequestLevel;
     if (game.Pick > 0) --aces;
-    if (aces > 0) delta.RequestLevel = aces > 1 ? CardRequest : SuitRequest;
+    if (aces > 0) delta = delta with { RequestLevel = aces > 1 ? CardRequest : SuitRequest };
 }
 
 static void TestBlock2(List<Card> cards, Game game, GameDelta delta)
 {
     var totalAces = cards.Sum(card => card.GetAceValue());
     var remainingAces = totalAces - (long)game.RequestLevel;
-    delta.RemoveRequestLevels = (uint)Math.Min(totalAces, (long)game.RequestLevel);
+    delta = delta with { RemoveRequestLevels = (uint)Math.Min(totalAces, (long)game.RequestLevel) };
     if (game.Pick > 0) --remainingAces;
-    if (remainingAces > 0) delta.RequestLevel = remainingAces > 1 ? CardRequest : SuitRequest;
+    if (remainingAces > 0) delta = delta with { RequestLevel = remainingAces > 1 ? CardRequest : SuitRequest };
 }
 
 internal interface I

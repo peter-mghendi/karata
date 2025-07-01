@@ -1,4 +1,3 @@
-using System.Collections.Frozen;
 using System.Collections.Immutable;
 using Karata.Server.Engine.Exceptions;
 using static Karata.Cards.Card.CardFace;
@@ -32,7 +31,7 @@ public class KarataEngine
         if (Cards.Length is 0) return; //An empty turn is always valid.
 
         var top = Game.Pile.Peek();
-        var first = Cards[0];
+        var first = Cards.First();
 
         // If a card has been requested, that card - or an Ace - must start the turn.
         if (!RequestMatches(Game.Request, first) && first.Face is not Ace) throw new CardRequestedException();
@@ -137,14 +136,16 @@ public class KarataEngine
         // An Ace will still behave like an Ace if it was requested, its value will not be diminished.
         if (RequestMatches(Game.Request, Cards.First()))
         {
-            delta.RemoveRequestLevels = (uint)Game.RequestLevel;
+            delta = delta with { RemoveRequestLevels = (uint)Game.RequestLevel };
         }
 
-        foreach (var card in Cards)
+        // Handle "jumps" and "kickbacks".
+        delta = Enumerable.Aggregate(Cards, delta, (current, card) => card.Face switch
         {
-            if (card.Face is Jack) ++delta.Skip;
-            if (card.Face is King) delta.Reverse = !delta.Reverse;
-        }
+            Jack => current with { Skip = current.Skip + 1 },
+            King => current with { Reverse = !current.Reverse },
+            _ => current
+        });
 
         // If the last card played is a "question" card, the player has to immediately pick a card
         if (Cards.Last().IsQuestion()) return delta with { Pick = 1 };
@@ -164,19 +165,22 @@ public class KarataEngine
             // Using aces to block any requests and setting delta.RemoveRequestLevels to the number of aces used, i.e:
             // - If three aces are played on top of a CardRequest(=2), 2 Aces are used.
             // - If one ace is played on top of a CardRequest(=2), 1 Ace is used.
-            delta.RemoveRequestLevels += (uint)Math.Min(aces, (long)Game.RequestLevel - removed);
+            delta = delta with
+            {
+                RemoveRequestLevels = delta.RemoveRequestLevels + (uint)Math.Min(aces, (long)Game.RequestLevel - removed)
+            };
             aces -= ((long)Game.RequestLevel - removed);
 
             // Using an ace to avoid picking cards
             if (Game.Pick > 0) --aces;
 
             // Any remaining ace value is added to the request level.
-            if (aces > 0) delta.RequestLevel = aces > 1 ? CardRequest : SuitRequest;
+            if (aces > 0) delta = delta with { RequestLevel = aces > 1 ? CardRequest : SuitRequest };
         }
 
         // For an even number of "kickbacks", the current player plays again.
         var kings = Cards.Count(card => card.Face is King);
-        if (kings > 0 && kings % 2 == 0) delta.Skip = 0;
+        if (kings > 0 && kings % 2 == 0) delta = delta with { Skip = 0 };
 
         return delta;
     }

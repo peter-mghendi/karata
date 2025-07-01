@@ -46,8 +46,7 @@ public class KarataEngineTest
         var factory = new KarataEngineFactory();
         var actualDelta = factory.Create(game, cards).GenerateTurnDelta();
 
-        // TODO: This is a hack to get deep equality on Lists. It will make the tests run slower.
-        Assert.Equal(JsonSerializer.Serialize(expectedDelta), JsonSerializer.Serialize(actualDelta));
+        Assert.Equal(expectedDelta, actualDelta);
     }
 
 #pragma warning restore xUnit1026, xUnit1045
@@ -107,7 +106,7 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [Ten.Of(Spades)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta()
+                ExpectedDelta: new GameDelta { Cards = [Ten.Of(Spades)] }
             ),
 
             // When a single card of a different suit than the top card is played, the turn is invalid
@@ -125,7 +124,7 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [Nine.Of(Hearts), Nine.Of(Diamonds), Nine.Of(Clubs)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta()
+                ExpectedDelta: new GameDelta { Cards = [Nine.Of(Hearts), Nine.Of(Diamonds), Nine.Of(Clubs)] }
             ),
 
             /*
@@ -138,7 +137,7 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [Jack.Of(Spades)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Skip = 2 }
+                ExpectedDelta: new GameDelta { Skip = 2, Cards = [Jack.Of(Spades)] }
             ),
 
             // When n Jacks are played, n + 1 turns are skipped
@@ -147,7 +146,11 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [Jack.Of(Spades), Jack.Of(Hearts), Jack.Of(Diamonds), Jack.Of(Clubs)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Skip = 5 }
+                ExpectedDelta: new GameDelta
+                {
+                    Skip = 5,
+                    Cards = [Jack.Of(Spades), Jack.Of(Hearts), Jack.Of(Diamonds), Jack.Of(Clubs)]
+                }
             ),
 
             /*
@@ -160,7 +163,7 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [King.Of(Spades)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Reverse = true }
+                ExpectedDelta: new GameDelta { Reverse = true, Cards = [King.Of(Spades)] }
             ),
 
             // When an even number of Kings are played, the player plays again
@@ -169,7 +172,7 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [King.Of(Spades), King.Of(Hearts)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Skip = 0 }
+                ExpectedDelta: new GameDelta { Skip = 0, Cards = [King.Of(Spades), King.Of(Hearts)] }
             ),
 
             /*
@@ -182,7 +185,7 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [Queen.Of(Spades)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Pick = 1 }
+                ExpectedDelta: new GameDelta { Pick = 1, Cards = [Queen.Of(Spades)] }
             ),
 
             // When a single Question Card is played with an answer, the play continues
@@ -191,7 +194,7 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [Queen.Of(Spades), Four.Of(Spades)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta()
+                ExpectedDelta: new GameDelta { Cards = [Queen.Of(Spades), Four.Of(Spades)] }
             ),
 
             // When multiple Question Cards are played in valid order without an answer, the player picks up a card
@@ -200,7 +203,11 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [Queen.Of(Spades), Eight.Of(Spades), Eight.Of(Diamonds), Queen.Of(Diamonds)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Pick = 1 }
+                ExpectedDelta: new GameDelta
+                {
+                    Pick = 1,
+                    Cards = [Queen.Of(Spades), Eight.Of(Spades), Eight.Of(Diamonds), Queen.Of(Diamonds)],
+                }
             ),
 
             // When multiple Question Cards are played in invalid order, the turn is invalid
@@ -209,7 +216,7 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [Queen.Of(Spades), Eight.Of(Diamonds)],
                 ExpectedValid: false,
-                ExpectedDelta: new GameDelta { Pick = 1 }
+                ExpectedDelta: new GameDelta()
             ),
 
             /*
@@ -222,7 +229,7 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [Black.ColoredJoker()],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Give = 5 }
+                ExpectedDelta: new GameDelta { Give = 5, Cards = [Black.ColoredJoker()] }
             ),
 
             // When a Joker is played as an answer, the next player picks up 5 cards
@@ -231,7 +238,11 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [Queen.Of(Spades), Eight.Of(Spades), Black.ColoredJoker(), Red.ColoredJoker()],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Give = 5 }
+                ExpectedDelta: new GameDelta
+                {
+                    Give = 5,
+                    Cards = [Queen.Of(Spades), Eight.Of(Spades), Black.ColoredJoker(), Red.ColoredJoker()],
+                }
             ),
 
             // When a non-Joker is played on top of a Joker in the same turn, the turn is invalid
@@ -258,7 +269,7 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Black.ColoredJoker(), pick: 5),
                 Cards: [Black.ColoredJoker()],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Give = 5 }
+                ExpectedDelta: new GameDelta { Give = 5, Cards = [Black.ColoredJoker()] }
             ),
 
             // A player can "block" a Joker using an Ace
@@ -267,7 +278,7 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Black.ColoredJoker(), pick: 5),
                 Cards: [Ace.Of(Diamonds)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta()
+                ExpectedDelta: new GameDelta { Cards = [Ace.Of(Diamonds)] }
             ),
 
             // A player cannot "block" a Joker using any other card
@@ -310,7 +321,7 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Three.Of(Spades), pick: 3),
                 Cards: [Two.Of(Spades)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Give = 2 }
+                ExpectedDelta: new GameDelta { Give = 2, Cards = [Two.Of(Spades)] }
             ),
 
             // If the previous player played a "bomb", the player has to pick up the cards or play a "bomb" of the same face
@@ -320,7 +331,7 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Three.Of(Spades), pick: 3),
                 Cards: [Three.Of(Diamonds)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Give = 3 }
+                ExpectedDelta: new GameDelta { Give = 3, Cards = [Three.Of(Diamonds)]}
             ),
 
             // If the previous player played a "bomb", the player has to pick up the cards or play a "bomb" of the same face
@@ -330,7 +341,7 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Three.Of(Spades), pick: 3),
                 Cards: [Black.ColoredJoker()],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Give = 5 }
+                ExpectedDelta: new GameDelta { Give = 5, Cards = [Black.ColoredJoker()] }
             ),
 
             // If the previous player played a "bomb", the player has to pick up the cards or play a "bomb" of the same face
@@ -340,7 +351,7 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Three.Of(Spades), pick: 3),
                 Cards: [Ace.Of(Spades)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RequestLevel = SuitRequest }
+                ExpectedDelta: new GameDelta { RequestLevel = SuitRequest, Cards = [Ace.Of(Spades)] }
             ),
 
             /*
@@ -353,7 +364,7 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [Ace.Of(Diamonds)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RequestLevel = SuitRequest }
+                ExpectedDelta: new GameDelta { RequestLevel = SuitRequest, Cards = [Ace.Of(Diamonds)] }
             ),
 
             // Two aces can be played on top of any card, and the player can then request a specific card
@@ -362,7 +373,7 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [Ace.Of(Diamonds), Ace.Of(Clubs)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RequestLevel = CardRequest }
+                ExpectedDelta: new GameDelta { RequestLevel = CardRequest, Cards = [Ace.Of(Diamonds), Ace.Of(Clubs)] }
             ),
 
             // An ace of spades can be played on top of any card, and the player can then request a specific card
@@ -371,7 +382,7 @@ public class KarataEngineTest
                 Game: ProvideGame(),
                 Cards: [Ace.Of(Spades)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RequestLevel = CardRequest }
+                ExpectedDelta: new GameDelta { RequestLevel = CardRequest, Cards = [Ace.Of(Spades)] }
             ),
 
             // When the requested card is played, the turn is valid and the request is removed
@@ -380,7 +391,7 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Ace.Of(Spades), request: None.Of(Spades)),
                 Cards: [Six.Of(Spades)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RemoveRequestLevels = 1 }
+                ExpectedDelta: new GameDelta { RemoveRequestLevels = 1, Cards = [Six.Of(Spades)] }
             ),
 
             // When the requested card is played, the turn is valid and the request is removed
@@ -389,7 +400,7 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Ace.Of(Spades), request: Nine.Of(Spades)),
                 Cards: [Nine.Of(Spades)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2 }
+                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2, Cards = [Nine.Of(Spades)] }
             ),
 
             // When a card of a different suit from a specifically requested card is played, the turn is invalid
@@ -425,7 +436,7 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Ace.Of(Diamonds), request: None.Of(Spades)),
                 Cards: [Ace.Of(Clubs)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RemoveRequestLevels = 1 }
+                ExpectedDelta: new GameDelta { RemoveRequestLevels = 1, Cards = [Ace.Of(Clubs)] }
             ),
 
             // When a card is requested and none is played, the player picks up a card
@@ -443,7 +454,7 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Diamonds)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RemoveRequestLevels = 1 }
+                ExpectedDelta: new GameDelta { RemoveRequestLevels = 1, Cards = [Ace.Of(Diamonds)] }
             ),
 
             // When a specific card is requested and two Aces are played, the request is removed
@@ -452,7 +463,7 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Diamonds), Ace.Of(Clubs)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2 }
+                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2, Cards = [Ace.Of(Diamonds), Ace.Of(Clubs)] }
             ),
 
             // When a specific card is requested and an Ace of Spades is played, the request is removed
@@ -461,7 +472,7 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Spades)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2 }
+                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2, Cards = [Ace.Of(Spades)] }
             ),
 
             // When a specific card is requested and three Aces are played, the request is removed and the player can
@@ -471,7 +482,12 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Diamonds), Ace.Of(Spades)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2, RequestLevel = SuitRequest }
+                ExpectedDelta: new GameDelta
+                {
+                    RemoveRequestLevels = 2,
+                    RequestLevel = SuitRequest,
+                    Cards = [Ace.Of(Diamonds), Ace.Of(Spades)]
+                }
             ),
 
             // When a specific card is requested and four aces are played, the request is removed and the player can
@@ -481,7 +497,12 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Diamonds), Ace.Of(Spades), Ace.Of(Clubs)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2, RequestLevel = CardRequest }
+                ExpectedDelta: new GameDelta
+                {
+                    RemoveRequestLevels = 2, 
+                    RequestLevel = CardRequest,
+                    Cards = [Ace.Of(Diamonds), Ace.Of(Spades), Ace.Of(Clubs)]
+                }
             ),
 
             // When an ace is requested is played, the request is removed and the player can request a suit.
@@ -490,7 +511,12 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: None.Of(Hearts)),
                 Cards: [Ace.Of(Hearts)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RemoveRequestLevels = 1, RequestLevel = SuitRequest }
+                ExpectedDelta: new GameDelta
+                {
+                    RemoveRequestLevels = 1, 
+                    RequestLevel = SuitRequest,
+                    Cards = [Ace.Of(Hearts)]
+                }
             ),
 
             // When an ace is requested is played, the request is removed and the player can request a suit.
@@ -499,7 +525,12 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: Ace.Of(Hearts)),
                 Cards: [Ace.Of(Hearts)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2, RequestLevel = SuitRequest }
+                ExpectedDelta: new GameDelta
+                {
+                    RemoveRequestLevels = 2,
+                    RequestLevel = SuitRequest,
+                    Cards = [Ace.Of(Hearts)]
+                }
             ),
 
             // When an ace is requested is played followed by additional aces, the request is removed and the player can
@@ -509,7 +540,12 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: Ace.Of(Hearts)),
                 Cards: [Ace.Of(Hearts), Ace.Of(Clubs)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2, RequestLevel = CardRequest }
+                ExpectedDelta: new GameDelta
+                {
+                    RemoveRequestLevels = 2,
+                    RequestLevel = CardRequest,
+                    Cards = [Ace.Of(Hearts), Ace.Of(Clubs)]
+                }
             ),
 
             // When a question card is requested and is played followed by  aces, the request is removed and the
@@ -519,7 +555,12 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: Queen.Of(Hearts)),
                 Cards: [Queen.Of(Hearts), Ace.Of(Hearts), Ace.Of(Clubs)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { RemoveRequestLevels = 2, RequestLevel = CardRequest }
+                ExpectedDelta: new GameDelta
+                {
+                    RemoveRequestLevels = 2, 
+                    RequestLevel = CardRequest,
+                    Cards = [Queen.Of(Hearts), Ace.Of(Hearts), Ace.Of(Clubs)]
+                }
             ),
 
             // When a card has been requested and no cards are played, the player picks a card.

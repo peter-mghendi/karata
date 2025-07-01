@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Karata.Cards.Extensions;
 using static Karata.Cards.Card;
 using static Karata.Cards.Card.CardColor;
@@ -42,12 +43,12 @@ public class Deck : Stack<Card>
     public void Shuffle()
     {
         var cards = ToArray();
-        var i = cards.Length;
-        while (--i > 0) {
+        for (var i = cards.Length - 1; i > 0; i--)
+        {
             var j = _random.Next(i + 1);
             (cards[i], cards[j]) = (cards[j], cards[i]);
         }
-
+        
         Clear();
         foreach(var card in cards) Push(card);
     }
@@ -56,34 +57,11 @@ public class Deck : Stack<Card>
     public Card Deal() => Pop();
 
     // Deal multiple cards without checking deck size first.
-    public List<Card> DealMany(uint num)
-    {
-        var dealt = new List<Card>();
-        for (var i = 0; i < num; i++)
-            dealt.Add(Deal());
-
-        return dealt;
-    }
+    public List<Card> DealMany(uint num) => Enumerable.Range(0, checked((int)num)).Select(_ => Deal()).ToList();
 
     // Check deck size before attempting to deal single card.
-    public bool TryDeal(out Card? dealt)
-    {
-        dealt = default;
-        if (Count <= 0)
-            return false;
-
-        dealt = Deal();
-        return true;
-    }
+    public bool TryDeal(out Card? dealt) => (dealt = Count > 0 ? Deal() : null) is not null;
 
     // Check deck size before attempting to deal multiple cards.
-    public bool TryDealMany(uint num, out List<Card> dealt)
-    {
-        dealt = [];
-        if (Count < num)
-            return false;
-
-        dealt = DealMany(num);
-        return true;
-    }
+    public bool TryDealMany(uint num, out List<Card> dealt) => (dealt = Count >= num ? DealMany(num) : []).Count == num;
 }

@@ -92,14 +92,11 @@ public class TurnProcessingService(
             _ => Game.Request
         };
 
-        // TODO: Do I need this broadcast or just send final state - players will not be able to act on this intermediate state anyway?
-        // Need to make sure it's handled below.
-        await Everyone.SetCurrentRequest(Game.Request);
-
         var level = turn.Delta.RequestLevel;
         if (level is NoRequest)
         {
             logger.LogDebug("No card request for level {RequestLevel} in room {Room}.", level, Room.Id);
+            await Everyone.SetCurrentRequest(Game.Request);
             return;
         }
 
@@ -116,7 +113,7 @@ public class TurnProcessingService(
         Game.CurrentHand.Cards.RemoveAll(turn.Delta.Cards.Contains);
         foreach (var card in turn.Delta.Cards) Game.Pile.Push(card);
 
-        if (turn.Delta.Reverse) Game.IsReversed = !Game.IsReversed;
+        Game.IsReversed ^= turn.Delta.Reverse;
         (Game.Give, Game.Pick) = (turn.Delta.Give, turn.Delta.Pick);
     }
 
