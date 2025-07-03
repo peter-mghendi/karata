@@ -31,7 +31,7 @@ public class Game
         {
             var turn = CurrentHand.Turns.Last();
             var players = Hands.Count;
-            var skip = (int)turn.Delta.Skip;
+            var skip = (int)turn.Delta.Skip % players;
 
             return IsReversed
                 ? (CurrentTurn - skip + players) % players
@@ -50,8 +50,7 @@ public class Game
 
     [NotMapped] public Hand CurrentHand => Hands[CurrentTurn];
 
-    public HashSet<Hand> HandsExceptHand(Hand hand) => Hands.Where(h => h.Id != hand.Id).ToHashSet();
-    public HashSet<Hand> HandsExceptPlayer(User player) => Hands.Where(h => h.Player.Id != player.Id).ToHashSet();
+    public HashSet<Hand> HandsExceptPlayerId(string playerId) => Hands.Where(h => h.Player.Id != playerId).ToHashSet();
 
     public GameData ToData() => new()
     {
