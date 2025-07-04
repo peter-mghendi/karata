@@ -152,10 +152,9 @@ public class TurnProcessingService(
         room.Game.Pick = 0;
         room.Game.CurrentHand.Cards.AddRange(dealt);
         
-        await Everyone.RemoveCardsFromDeck(dealt.Count);
-        await Me.AddCardRangeToHand(dealt);
+        await Me.MoveCardsFromDeckToHand(dealt);
         await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-            .AddCardsToPlayerHand(room.Game.CurrentHand.Player.ToData(), dealt.Count);
+            .MoveCardCountFromDeckToHand(room.Game.CurrentHand.Player.ToData(), dealt.Count);
     }
 
     private async Task CheckRemainingCards(Room room, User player, Turn turn)
