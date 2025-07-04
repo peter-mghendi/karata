@@ -7,8 +7,8 @@
 <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full">
     <MudText Typo="Typo.h5" Class="pa-4 my-4">Join or create a game room to play.</MudText>
 
-    <MudPaper Class="pa-4 mb-4">
-        <MudTextField @bind-Value="link" Label="Invite Link" Variant="Variant.Filled" Adornment="Adornment.End" AdornmentIcon="Icons.Filled.QrCodeScanner" Class="mb-4"></MudTextField>
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
+        <MudTextField @bind-Value="link" Label="Invite Link" Variant="Variant.Filled" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.QrCodeScanner" Class="mb-4"></MudTextField>
         <MudButton Disabled="@loading" OnClick="JoinRoom" Variant="Variant.Filled" Color="Color.Primary">
             @if (joining)
             {
@@ -22,7 +22,7 @@
         </MudButton>
     </MudPaper>
 
-    <MudPaper Class="pa-4 mb-4">
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
         <MudTextField @bind-Value="password" Label="Password (Optional)" Variant="Variant.Filled" Class="mb-4"></MudTextField>
         <MudButton Disabled="@loading" OnClick="CreateRoom" Variant="Variant.Filled">
             @if (creating)
@@ -42,8 +42,8 @@
     private string link = string.Empty;
     private string password = string.Empty;
 
-    private bool joining = false;
-    private bool creating = false;
+    private bool joining;
+    private bool creating;
     private bool loading => joining || creating;
 
     private async Task JoinRoom()
@@ -56,7 +56,7 @@
             return;
         }
 
-        var room = await Http.GetFromJsonAsync<UIRoom>($"api/room/{link}");
+        var room = await Http.GetFromJsonAsync<RoomData>($"api/room/{link}");
         if (room == null)
         {
             joining = false;
@@ -65,7 +65,7 @@
             return;
         }
 
-        Navigator.NavigateTo($"/game/{link}/play");
+        Navigator.NavigateTo($"/game/{room.Id.ToString()}/play");
     }
 
     private async Task CreateRoom()
@@ -80,7 +80,7 @@
             return;
         }
         
-        var room = await response.Content.ReadFromJsonAsync<UIRoom>();
+        var room = await response.Content.ReadFromJsonAsync<RoomData>();
         if (room == null)
         {
             creating = false;

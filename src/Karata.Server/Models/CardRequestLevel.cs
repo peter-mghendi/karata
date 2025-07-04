@@ -3,7 +3,7 @@ namespace Karata.Server.Models;
 /**
  * <summary>Levels of card requests</summary>
  */
-public enum GameRequestLevel
+public enum CardRequestLevel
 {  
     NoRequest = 0,
     SuitRequest = 1,

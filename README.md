@@ -8,7 +8,7 @@
 
 Real-time Kenyan street poker over ASP.NET Core SignalR/websockets.
 
-The game is currently playable and implements all of the game logic.
+The game is currently playable and implements all game logic.
 
 There is also a custom cards library [here](https://github.com/sixpeteunder/karata/tree/main/src/Karata.Cards) (with a complete test suite).
 
@@ -28,7 +28,7 @@ There is also a custom cards library [here](https://github.com/sixpeteunder/kara
 
 ## Rules
 
-> The rules are automatically applied to games and you do not need to actively think about them (unless fines are enabled!)
+> The rules are automatically applied to games, you do not need to actively think about them (unless fines are enabled!)
 > This is mostly included for reference and troubleshooting the game's behaviour.
 > I should probably add these to an in-game "rules" page.
 
@@ -41,27 +41,27 @@ None of the sources I consulted could agree on a canonical set of rules (as they
 - The game can only start and end with a non-special card (any card other than those described below).
 - Players may choose to enable a one or two card "fine" for invalid moves.
 - Fines are off by default and enabled on a per-game basis.
-- The winner is the first player to discard all of theiir cards while on "last card" status.
-- A player cannot enter "last card" status while in possesion of an Ace, "Bomb", Jack or King.
-- A card sequence that would usually cause the player to play again, e.g two Kings or "jumping" everyone, is counted as its own turn.
+- The winner is the first player to discard all of their cards while on "last card" status.
+- A player cannot enter "last card" status while in possession of an Ace, "Bomb", Jack or King.
+- A card sequence that would usually cause the player to play again, e.g. two Kings or "jumping" everyone, is counted as its own turn.
 
 ### Aces
 
-![Ace of Spades](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/AceSpades.svg)
+![Ace of Spades](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/AceSpades.svg)
 
 - Ace of Spades equals two regular Aces.
 - One Ace can be used to request a suit.
 - Two Aces (or equivalent) can be used to request a specific card.
 - Aces can be used to block "bomb" cards.
 - Aces can play anywhere.
-- Any number of Aces is valid, but three or four aces have have no special effects.
+- Any number of Aces is valid, but three or four aces have no special effects.
 - Two aces can request a specific Joker but one Ace can not request a Joker.
 
 ### "Bombs" - Twos, Threes and Jokers
 
-![Two of Spades](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/TwoSpades.svg)
-![Three of Spades](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/ThreeSpades.svg)
-![Black Joker](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/BlackJoker.svg)
+![Two of Spades](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/TwoSpades.svg)
+![Three of Spades](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/ThreeSpades.svg)
+![Black Joker](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/BlackJoker.svg)
 
 - Two, three and joker cards cause the next player to pick two, three or five cards respectively.
 - Two and three cards can be countered by jokers or "bomb" cards of the same face or suit.
@@ -74,25 +74,25 @@ None of the sources I consulted could agree on a canonical set of rules (as they
 
 ### "Jumps" - Jacks
 
-![Jack of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/JackHearts.svg)
+![Jack of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/JackHearts.svg)
 
-- A Jack played will "jump" the next player (two Jacks played in succession will jump two players, etc).
+- A Jack played will "jump" the next player (two Jacks played in succession will jump two players, etc.).
 - A Jack must be played on top of a card of the same face(Jack) or suit.
 - Jumping cannot be blocked, e.g. by another Jack placed by a "jumped player".
 
 ### "Questions" - Queens and Eights
 
-![Queen of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/QueenHearts.svg)
-![Eight of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/EightHearts.svg)
+![Queen of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/QueenHearts.svg)
+![Eight of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/EightHearts.svg)
 
 - Queen and Eight cards are "Question" cards which require an "Answer".
 - A Queen or Eight must be played on top of a card of the same face or suit.
-- Valid answer cards are any cards of the same face or suit (including other questions.
-- Everything is a valid answer card.
+- Valid answer cards are any cards of the same face or suit (including other questions).
+- Every rank of card (Ace to King) is a valid answer card.
 
 ### "Kickbacks" - Kings
 
-![Kind of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/wwwroot/img/cards/KingHearts.svg)
+![Kind of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/KingHearts.svg)
 
 - A King will cause the direction of the game to reverse.
 - A King must be played on top of a card of the same face(King) or suit.

@@ -2,14 +2,14 @@ using System.Collections.Concurrent;
 
 namespace Karata.Server.Services;
 
-// TODO: Look into Microsoft.Extensions.Caching.Memory
+// TODO: Look into Microsoft.Extensions.Caching.Hybrid
 public class PresenceService
 {
     private readonly ConcurrentDictionary<string, HashSet<string>> _presence = new();
     
     public void AddPresence(string user, string room)
     {
-        _presence.AddOrUpdate(user, new HashSet<string> { room }, (_, set) =>
+        _presence.AddOrUpdate(user, [room], (_, set) =>
         {
             set.Add(room);
             return set;
@@ -18,7 +18,7 @@ public class PresenceService
     
     public void RemovePresence(string user, string room)
     {
-        _presence.AddOrUpdate(user, new HashSet<string> { room }, (_, set) =>
+        _presence.AddOrUpdate(user, [room], (_, set) =>
         {
             set.Remove(room);
             return set;

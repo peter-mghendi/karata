@@ -1,0 +1,21 @@
+@using Microsoft.AspNetCore.SignalR.Client
+
+@if (Hub?.State is not HubConnectionState.Connected)
+{
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full">
+        <MudText Typo="Typo.h5" Class="pa-4 my-4">You are not connected to a server.</MudText>
+        <MudText Typo="Typo.body1" Class="pa-4 mb-4">
+            If this message persists, check your internet connection and reload this page to establish a connection.
+        </MudText>
+    </MudContainer>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public HubConnection? Hub { get; set; }
+
+    [Parameter] public RenderFragment ChildContent { get; set; } = null!;
+}

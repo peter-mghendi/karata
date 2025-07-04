@@ -219,7 +219,7 @@ namespace Karata.Server.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreatorId = table.Column<string>(type: "text", nullable: true),
+                    CreatorId = table.Column<string>(type: "text", nullable: false),
                     Hash = table.Column<byte[]>(type: "bytea", nullable: true),
                     Salt = table.Column<byte[]>(type: "bytea", nullable: true)
                 },
@@ -230,7 +230,8 @@ namespace Karata.Server.Data.Migrations
                         name: "FK_Rooms_AspNetUsers_CreatorId",
                         column: x => x.CreatorId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -264,26 +265,19 @@ namespace Karata.Server.Data.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    IsForward = table.Column<bool>(type: "boolean", nullable: false),
-                    IsStarted = table.Column<bool>(type: "boolean", nullable: false),
-                    CurrentRequest = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    IsReversed = table.Column<bool>(type: "boolean", nullable: false),
                     Give = table.Column<long>(type: "bigint", nullable: false),
                     Pick = table.Column<long>(type: "bigint", nullable: false),
                     CurrentTurn = table.Column<int>(type: "integer", nullable: false),
                     Deck = table.Column<string>(type: "text", nullable: false),
                     Pile = table.Column<string>(type: "text", nullable: false),
-                    EndReason = table.Column<string>(type: "text", nullable: true),
-                    WinnerId = table.Column<string>(type: "text", nullable: true),
-                    RoomId = table.Column<Guid>(type: "uuid", nullable: false)
+                    RoomId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Request = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Games", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Games_AspNetUsers_WinnerId",
-                        column: x => x.WinnerId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Games_Rooms_RoomId",
                         column: x => x.RoomId,
@@ -293,22 +287,49 @@ namespace Karata.Server.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "GameResult",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    WinnerId = table.Column<string>(type: "text", nullable: true),
+                    Reason = table.Column<string>(type: "text", nullable: false),
+                    ReasonType = table.Column<int>(type: "integer", nullable: false),
+                    ResultType = table.Column<int>(type: "integer", nullable: false),
+                    GameId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GameResult", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_GameResult_AspNetUsers_WinnerId",
+                        column: x => x.WinnerId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_GameResult_Games_GameId",
+                        column: x => x.GameId,
+                        principalTable: "Games",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Hands",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Cards = table.Column<string>(type: "text", nullable: false),
                     IsLastCard = table.Column<bool>(type: "boolean", nullable: false),
                     GameId = table.Column<int>(type: "integer", nullable: false),
-                    UserId = table.Column<string>(type: "text", nullable: true)
+                    PlayerId = table.Column<string>(type: "text", nullable: true),
+                    Cards = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Hands", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Hands_AspNetUsers_UserId",
-                        column: x => x.UserId,
+                        name: "FK_Hands_AspNetUsers_PlayerId",
+                        column: x => x.PlayerId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
                     table.ForeignKey(
@@ -325,25 +346,19 @@ namespace Karata.Server.Data.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Cards = table.Column<string>(type: "text", nullable: false),
                     IsLastCard = table.Column<bool>(type: "boolean", nullable: false),
-                    Request = table.Column<string>(type: "text", nullable: true),
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    GameId = table.Column<int>(type: "integer", nullable: false)
+                    HandId = table.Column<int>(type: "integer", nullable: false),
+                    Cards = table.Column<string>(type: "jsonb", nullable: true),
+                    Delta = table.Column<string>(type: "jsonb", nullable: false),
+                    Request = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Turns", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Turns_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Turns_Games_GameId",
-                        column: x => x.GameId,
-                        principalTable: "Games",
+                        name: "FK_Turns_Hands_HandId",
+                        column: x => x.HandId,
+                        principalTable: "Hands",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -407,15 +422,21 @@ namespace Karata.Server.Data.Migrations
                 column: "Expiration");
 
             migrationBuilder.CreateIndex(
+                name: "IX_GameResult_GameId",
+                table: "GameResult",
+                column: "GameId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GameResult_WinnerId",
+                table: "GameResult",
+                column: "WinnerId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Games_RoomId",
                 table: "Games",
                 column: "RoomId",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Games_WinnerId",
-                table: "Games",
-                column: "WinnerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Hands_GameId",
@@ -423,9 +444,9 @@ namespace Karata.Server.Data.Migrations
                 column: "GameId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Hands_UserId",
+                name: "IX_Hands_PlayerId",
                 table: "Hands",
-                column: "UserId");
+                column: "PlayerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Keys_Use",
@@ -458,14 +479,9 @@ namespace Karata.Server.Data.Migrations
                 column: "CreatorId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Turns_GameId",
+                name: "IX_Turns_HandId",
                 table: "Turns",
-                column: "GameId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Turns_UserId",
-                table: "Turns",
-                column: "UserId");
+                column: "HandId");
         }
 
         /// <inheritdoc />
@@ -493,7 +509,7 @@ namespace Karata.Server.Data.Migrations
                 name: "DeviceCodes");
 
             migrationBuilder.DropTable(
-                name: "Hands");
+                name: "GameResult");
 
             migrationBuilder.DropTable(
                 name: "Keys");
@@ -506,6 +522,9 @@ namespace Karata.Server.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Hands");
 
             migrationBuilder.DropTable(
                 name: "Games");

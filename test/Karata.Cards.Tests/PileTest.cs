@@ -15,7 +15,7 @@ public class PileTest
     [Fact]
     public void ReclaimTest()
     {
-        var pile = new Pile(Deck.StandardDeck.ToList());
+        var pile = new Pile(Deck.Standard.ToList());
         pile.Reclaim();
 
         Assert.Single<Card>(pile);

@@ -5,14 +5,14 @@ namespace Karata.Server.Models;
 public class Chat
 {
     public int Id { get; set; }
-    public string Text { get; set; } = string.Empty;
-    public virtual User Sender { get; set; } = null!;
+    public required string Text { get; set; }
+    public required User Sender { get; set; }
     public DateTime Sent { get; } = DateTime.Now;
 
-    public UIChat ToUI() => new()
+    public ChatData ToData() => new()
     {
         Text = Text,
-        Sender = Sender.ToUI(),
+        Sender = Sender.ToData(),
         Sent = Sent
     };
 }

@@ -7,11 +7,7 @@ namespace Karata.Cards.Extensions
 {
     public static class CardExtensions
     {
-        public static Card Of(this CardFace face, CardSuit suit) => new() 
-        { 
-            Face = face,
-            Suit = suit
-        };
+        public static Card Of(this CardFace face, CardSuit suit) => new() { Face = face, Suit = suit };
 
         public static Card ColoredJoker(this CardColor color)
         {
@@ -52,6 +48,9 @@ namespace Karata.Cards.Extensions
 
         public static bool IsQuestion(this Card card)
             => card.Face is Queen or Eight;
+
+        public static bool IsSpecial(this Card card) 
+            => card.IsBomb() || card.IsQuestion() || card.Face is Ace or Jack or King;
 
         public static bool FaceEquals(this Card thisCard, Card otherCard)
             => thisCard.Face == otherCard.Face;

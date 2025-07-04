@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Xunit;
 
@@ -10,16 +10,12 @@ public class DeckTest
     private const uint StandardDeckSize = 54;
 
     [Fact]
-    public void DeckPropertyTest()
-    {
-        var deck = new Deck();
-        Assert.Empty(deck);
-    }
+    public void EmptyDeckTest() => Assert.Empty(new Deck());
 
     [Fact]
     public void StandardDeckTest()
     {
-        var deck = Deck.StandardDeck;
+        var deck = Deck.Standard;
 
         Assert.NotEmpty(deck);
         Assert.Equal(StandardDeckSize, (uint)deck.Count);
@@ -29,7 +25,7 @@ public class DeckTest
     [Fact]
     public void ShuffleTest()
     {
-        var deck = Deck.StandardDeck;
+        var deck = Deck.Standard;
 
         deck.Shuffle();
         Assert.NotEmpty(deck);
@@ -41,7 +37,7 @@ public class DeckTest
     public void DealTest()
     {
         var emptyDeck = new Deck();
-        var standardDeck = Deck.StandardDeck;
+        var standardDeck = Deck.Standard;
 
         _ = standardDeck.Deal();
 
@@ -56,15 +52,15 @@ public class DeckTest
     [InlineData(55, true)]
     public void DealManyTest(uint num, bool throws)
     {
-        var deck = Deck.StandardDeck;
-        List<Card> dealt;
+        var deck = Deck.Standard;
 
         if (throws)
         {
             Assert.Throws<InvalidOperationException>(() => _ = deck.DealMany(num));
             return;
         }
-        else dealt = deck.DealMany(num);
+
+        var dealt = deck.DealMany(num);
 
         Assert.Equal(StandardDeckSize - num, (uint)deck.Count);
         Assert.Equal(deck.Distinct().Count(), deck.Count);
@@ -76,7 +72,7 @@ public class DeckTest
     public void TryDealTest()
     {
         var emptyDeck = new Deck();
-        var standardDeck = Deck.StandardDeck;
+        var standardDeck = Deck.Standard;
 
         Assert.Empty(emptyDeck);
 
@@ -97,11 +93,10 @@ public class DeckTest
     [InlineData(55, false)]
     public void TryDealManyTest(uint num, bool shouldSucceed)
     {
-        var deck = Deck.StandardDeck;
+        var deck = Deck.Standard;
         var success = deck.TryDealMany(num, out var dealt);
 
         Assert.Equal(shouldSucceed, success);
-        Assert.NotNull(dealt);
 
         if (shouldSucceed)
         {

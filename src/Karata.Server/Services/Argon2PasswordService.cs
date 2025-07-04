@@ -1,9 +1,8 @@
-using System.Security.Cryptography;
 using Konscious.Security.Cryptography;
 
 namespace Karata.Server.Services;
 
-public class PasswordService : IPasswordService
+public class Argon2PasswordService : IPasswordService
 {
     public byte[] HashPassword(byte[] password, byte[] salt)
     {
@@ -17,12 +16,4 @@ public class PasswordService : IPasswordService
 
     public bool VerifyPassword(byte[] password, byte[] salt, byte[] hash) =>
         HashPassword(password, salt).SequenceEqual(hash);
-
-    public static byte[] GenerateSalt()
-    {
-        using var rng = RandomNumberGenerator.Create();
-        var buffer = new byte[32];
-        rng.GetBytes(buffer);
-        return buffer;
-    }
 }

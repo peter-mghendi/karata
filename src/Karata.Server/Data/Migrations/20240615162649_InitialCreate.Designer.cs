@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Karata.Server.Data.Migrations
 {
     [DbContext(typeof(KarataContext))]
-    [Migration("20221211131048_InitialCreate")]
+    [Migration("20240615162649_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -20,10 +20,7 @@ namespace Karata.Server.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.0")
-                .HasAnnotation("Proxies:ChangeTracking", false)
-                .HasAnnotation("Proxies:CheckEquality", false)
-                .HasAnnotation("Proxies:LazyLoading", true)
+                .HasAnnotation("ProductVersion", "8.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -204,9 +201,6 @@ namespace Karata.Server.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CurrentRequest")
-                        .HasColumnType("text");
-
                     b.Property<int>("CurrentTurn")
                         .HasColumnType("integer");
 
@@ -214,16 +208,10 @@ namespace Karata.Server.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("EndReason")
-                        .HasColumnType("text");
-
                     b.Property<long>("Give")
                         .HasColumnType("bigint");
 
-                    b.Property<bool>("IsForward")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsStarted")
+                    b.Property<bool>("IsReversed")
                         .HasColumnType("boolean");
 
                     b.Property<long>("Pick")
@@ -236,17 +224,49 @@ namespace Karata.Server.Data.Migrations
                     b.Property<Guid>("RoomId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("WinnerId")
-                        .HasColumnType("text");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("RoomId")
                         .IsUnique();
 
+                    b.ToTable("Games");
+                });
+
+            modelBuilder.Entity("Karata.Server.Models.GameResult", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("GameId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ReasonType")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ResultType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("WinnerId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameId")
+                        .IsUnique();
+
                     b.HasIndex("WinnerId");
 
-                    b.ToTable("Games");
+                    b.ToTable("GameResult");
                 });
 
             modelBuilder.Entity("Karata.Server.Models.Hand", b =>
@@ -257,24 +277,20 @@ namespace Karata.Server.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Cards")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<int>("GameId")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsLastCard")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("UserId")
+                    b.Property<string>("PlayerId")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.HasIndex("GameId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("PlayerId");
 
                     b.ToTable("Hands");
                 });
@@ -286,6 +302,7 @@ namespace Karata.Server.Data.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("CreatorId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<byte[]>("Hash")
@@ -309,28 +326,15 @@ namespace Karata.Server.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Cards")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("GameId")
+                    b.Property<int>("HandId")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsLastCard")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Request")
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("GameId");
-
-                    b.HasIndex("UserId");
+                    b.HasIndex("HandId");
 
                     b.ToTable("Turns");
                 });
@@ -556,6 +560,36 @@ namespace Karata.Server.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsOne("Karata.Cards.Card", "Request", b1 =>
+                        {
+                            b1.Property<int>("GameId")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Face")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Suit")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("GameId");
+
+                            b1.ToTable("Games");
+
+                            b1.ToJson("Request");
+
+                            b1.WithOwner()
+                                .HasForeignKey("GameId");
+                        });
+
+                    b.Navigation("Request");
+                });
+
+            modelBuilder.Entity("Karata.Server.Models.GameResult", b =>
+                {
+                    b.HasOne("Karata.Server.Models.Game", null)
+                        .WithOne("Result")
+                        .HasForeignKey("Karata.Server.Models.GameResult", "GameId");
+
                     b.HasOne("Karata.Server.Models.User", "Winner")
                         .WithMany()
                         .HasForeignKey("WinnerId");
@@ -571,35 +605,144 @@ namespace Karata.Server.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Karata.Server.Models.User", "User")
+                    b.HasOne("Karata.Server.Models.User", "Player")
                         .WithMany("Hands")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("PlayerId");
 
-                    b.Navigation("User");
+                    b.OwnsMany("Karata.Cards.Card", "Cards", b1 =>
+                        {
+                            b1.Property<int>("HandId")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Face")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Suit")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("HandId", "Id");
+
+                            b1.ToTable("Hands");
+
+                            b1.ToJson("Cards");
+
+                            b1.WithOwner()
+                                .HasForeignKey("HandId");
+                        });
+
+                    b.Navigation("Cards");
+
+                    b.Navigation("Player");
                 });
 
             modelBuilder.Entity("Karata.Server.Models.Room", b =>
                 {
                     b.HasOne("Karata.Server.Models.User", "Creator")
                         .WithMany()
-                        .HasForeignKey("CreatorId");
+                        .HasForeignKey("CreatorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Creator");
                 });
 
             modelBuilder.Entity("Karata.Server.Models.Turn", b =>
                 {
-                    b.HasOne("Karata.Server.Models.Game", null)
+                    b.HasOne("Karata.Server.Models.Hand", null)
                         .WithMany("Turns")
-                        .HasForeignKey("GameId")
+                        .HasForeignKey("HandId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Karata.Server.Models.User", null)
-                        .WithMany("Turns")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.OwnsOne("Karata.Server.Models.GameDelta", "Delta", b1 =>
+                        {
+                            b1.Property<int>("TurnId")
+                                .HasColumnType("integer");
+
+                            b1.Property<long>("Give")
+                                .HasColumnType("bigint");
+
+                            b1.Property<long>("Pick")
+                                .HasColumnType("bigint");
+
+                            b1.Property<long>("RemoveRequestLevels")
+                                .HasColumnType("bigint");
+
+                            b1.Property<int>("RequestLevel")
+                                .HasColumnType("integer");
+
+                            b1.Property<bool>("Reverse")
+                                .HasColumnType("boolean");
+
+                            b1.Property<long>("Skip")
+                                .HasColumnType("bigint");
+
+                            b1.HasKey("TurnId");
+
+                            b1.ToTable("Turns");
+
+                            b1.ToJson("Delta");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TurnId");
+                        });
+
+                    b.OwnsMany("Karata.Cards.Card", "Cards", b1 =>
+                        {
+                            b1.Property<int>("TurnId")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Face")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Suit")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("TurnId", "Id");
+
+                            b1.ToTable("Turns");
+
+                            b1.ToJson("Cards");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TurnId");
+                        });
+
+                    b.OwnsOne("Karata.Cards.Card", "Request", b1 =>
+                        {
+                            b1.Property<int>("TurnId")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Face")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Suit")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("TurnId");
+
+                            b1.ToTable("Turns");
+
+                            b1.ToJson("Request");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TurnId");
+                        });
+
+                    b.Navigation("Cards");
+
+                    b.Navigation("Delta")
                         .IsRequired();
+
+                    b.Navigation("Request");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -657,6 +800,11 @@ namespace Karata.Server.Data.Migrations
                 {
                     b.Navigation("Hands");
 
+                    b.Navigation("Result");
+                });
+
+            modelBuilder.Entity("Karata.Server.Models.Hand", b =>
+                {
                     b.Navigation("Turns");
                 });
 
@@ -671,8 +819,6 @@ namespace Karata.Server.Data.Migrations
             modelBuilder.Entity("Karata.Server.Models.User", b =>
                 {
                     b.Navigation("Hands");
-
-                    b.Navigation("Turns");
                 });
 #pragma warning restore 612, 618
         }

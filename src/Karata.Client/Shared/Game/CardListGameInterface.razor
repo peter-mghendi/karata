@@ -1,4 +1,5 @@
 @using System.Collections.Immutable
+@using System.Text.Json
 @using Karata.Client.Models
 
 @implements IGameInterface
@@ -17,8 +18,8 @@
                         Current request: @(Game.CurrentRequest.Face is None ? Game.CurrentRequest.Suit.ToString() : Game.CurrentRequest.GetName())
                     </MudAlert>
                 }
-                <MudAlert Class="mb-4" Severity="@Severity.Info" Icon="@Icons.Rounded.Person">
-                    Current player: @Game.Hands[Game.CurrentTurn].User.Email.
+                <MudAlert Class="mb-4" Severity="@Severity.Info" Icon="@Icons.Material.Rounded.Person">
+                    Current player: @Game.CurrentHand.User.Email.
                 </MudAlert>
             </MudList>
         </MudItem>
@@ -27,7 +28,7 @@
                 <MudListSubheader>Player Hands:</MudListSubheader>
                 @foreach (var hand in OtherHands)
                 {
-                    <MudAlert Class="mb-4" Severity="@Severity.Normal" Icon="@Icons.Rounded.Person">
+                    <MudAlert Class="mb-4" Severity="@Severity.Normal" Icon="@Icons.Material.Rounded.Person">
                         @(hand.User.Email) has @(hand.Cards.Count) cards.
                     </MudAlert>
                 }
@@ -57,10 +58,10 @@
 @code
 {
     [Parameter]
-    public UIGame Game { get; set; } = null!;
+    public GameData Game { get; set; } = null!;
 
     [Parameter]
-    public UIHand Hand { get; set; } = null!;
+    public HandData Hand { get; set; } = null!;
 
     [Parameter]
     public ImmutableList<Card> Turn { get; set; } = ImmutableList<Card>.Empty;
@@ -81,7 +82,7 @@
 
     private List<Card> CurrentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToList();
 
-    private List<UIHand> OtherHands => Game.Hands.Where(h => h.User.Id != Hand.User.Id).ToList();
+    private List<HandData> OtherHands => Game.Hands.Where(h => h.User.Id != Hand.User.Id).ToList();
 
     private async Task AddCardToTurn(Card card, int index) => await OnAddCardToTurn.InvokeAsync((card, index));
 
@@ -103,7 +104,7 @@
         var zone = dropItem.DropzoneIdentifier;
         var index = dropItem.IndexInZone;
         var item = dropItem.Item;
-        var card = item.Card;
+        var card = item!.Card;
 
         item.Identifier = zone;
 
@@ -131,7 +132,7 @@
         Hearts => Heart,
         Clubs => Club,
         Diamonds => Diamond,
-        BlackJoker or RedJoker => Icons.Rounded.TheaterComedy,
+        BlackJoker or RedJoker => Icons.Material.Rounded.TheaterComedy,
         _ => throw new ArgumentException($"Invalid suit {card.Suit}", nameof(card))
         };
 

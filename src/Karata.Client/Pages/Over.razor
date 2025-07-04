@@ -7,7 +7,7 @@
     <div class="d-flex mud-height-full">
         <div class="d-flex flex-column flex-grow-1 justify-center align-self-center align-center ma-8">
             <MudText Typo="Typo.h3" Class="mb-4">Game Over!</MudText>
-            <MudText Typo="Typo.h5">@(_room.Game.EndReason)</MudText>
+            <MudText Typo="Typo.h5">@(_room.Game.Result?.Reason)</MudText>
             <MudSpacer></MudSpacer>
             <MudText Typo="Typo.caption">Room ID: @(_room.Id)</MudText>
         </div>
@@ -18,10 +18,10 @@
     [Parameter]
     public Guid Id { get; set; }
     
-    private UIRoom? _room;
+    private RoomData? _room;
 
     protected override async Task OnInitializedAsync()
     {
-        _room = await Http.GetFromJsonAsync<UIRoom>($"api/Room/{Id}");
+        _room = await Http.GetFromJsonAsync<RoomData>($"api/Room/{Id}");
     }
 }
