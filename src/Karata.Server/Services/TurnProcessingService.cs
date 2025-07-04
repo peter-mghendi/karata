@@ -47,7 +47,7 @@ public class TurnProcessingService(
             await DetermineCardRequest(room, turn);
             ApplyTurnDelta(room, turn);
 
-            await NotifyClientsOfGameState(room, player, turn);
+            await NotifyClientsOfGameState(player, turn);
             await EnsurePendingCardsPicked(room);
             await CheckRemainingCards(room, player, turn);
 
@@ -122,12 +122,10 @@ public class TurnProcessingService(
         (room.Game.Give, room.Game.Pick) = (turn.Delta.Give, turn.Delta.Pick);
     }
     
-    private async Task NotifyClientsOfGameState(Room room, User player, Turn turn)
+    private async Task NotifyClientsOfGameState(User player, Turn turn)
     {
         await Me.NotifyTurnProcessed();
-        await Me.RemoveCardRangeFromHand(turn.Delta.Cards);
-        await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).RemoveCardsFromPlayerHand(player.ToData(), turn.Delta.Cards.Count);
-        await Everyone.AddCardRangeToPile(turn.Delta.Cards);
+        await Everyone.MoveCardsFromHandToPile(player.ToData(), turn.Delta.Cards);
     }
 
     private async Task EnsurePendingCardsPicked(Room room)

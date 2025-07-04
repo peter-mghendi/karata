@@ -165,8 +165,6 @@
             .WithStatefulReconnect()
             .AddJsonProtocol()
             .Build();
-        
-        _hub.On<List<Card>>("AddCardRangeToPile", cards => _store!.Mutate(new RoomState.AddCardRangeToPile(cards)));
 
         _hub.On<UserData>("AddHandToRoom", user =>
         {
@@ -192,6 +190,8 @@
         _hub.On<List<Card>>("MoveCardsFromDeckToHand", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToHand(_store!.MyHand.User, cards)));
 
         _hub.On<List<Card>>("MoveCardsFromDeckToPile", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToPile(cards)));
+
+        _hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (user, cards) => _store!.Mutate(new RoomState.MoveCardsFromHandToPile(user, cards, _store!.MyHand.User == user)));
         
         _hub.On("NotifyTurnProcessed", () =>
         {
@@ -237,11 +237,7 @@
         });
 
         _hub.On("ReclaimPile", () => _store!.Mutate(new RoomState.ReclaimPile()));
-
-        _hub.On<UserData, int>("RemoveCardsFromPlayerHand", (user, num) => _store!.Mutate(new RoomState.RemoveCardsFromPlayerHand(user, num)));
-
-        _hub.On<List<Card>>("RemoveCardRangeFromHand", cards => _store!.Mutate(new RoomState.RemoveCardRangeFromHand(_store!.MyHand, cards)));
-
+        
         _hub.On("RemoveFromRoom", () =>
         {
             _store!.Forget(OnStoreChanged);
