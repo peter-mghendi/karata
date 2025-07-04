@@ -19,7 +19,13 @@
                     </MudAlert>
                 }
                 <MudAlert Class="mb-4" Severity="@Severity.Info" Icon="@Icons.Material.Rounded.Person">
-                    Current player: @Game.CurrentHand.User.Email.
+                    Current player: @Game.CurrentHand.User.Email
+                    @if (Game.CurrentHand.User == Hand.User)
+                    {
+                        <MudChip Icon="@Icons.Material.Rounded.AccountCircle" Variant="Variant.Text" Color="Color.Info" Size="Size.Small">
+                            You
+                        </MudChip>
+                    }
                 </MudAlert>
             </MudList>
         </MudItem>
@@ -40,7 +46,7 @@
 <MudDropContainer T="DropItem" Items="_items" ItemsSelector="@((DropItem item, string dropzone) => item.Identifier == dropzone)" ItemDropped="ItemUpdated" Class="d-flex flex-column flex-grow-1 gap-4">
     <ChildContent>
         <div class="d-flex flex-wrap justify-space-between gap-4">
-            <MudDropZone T="DropItem" Identifier="Hand" Class="rounded pa-4 flex-grow-1 overflow-y-scroll" Style="background-color: white" AllowReorder="">
+            <MudDropZone T="DropItem" Identifier="Hand" Class="rounded pa-4 flex-grow-1 overflow-y-scroll" Style="background-color: white" AllowReorder>
                 <MudText Typo="Typo.h6" Class="mb-4">My Cards</MudText>
             </MudDropZone>
             <MudDropZone T="DropItem" Identifier="Turn" Class="rounded pa-4 flex-grow-1" Style="background-color: white" AllowReorder>
