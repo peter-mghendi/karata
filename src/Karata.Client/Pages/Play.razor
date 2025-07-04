@@ -191,6 +191,8 @@
 
         _hub.On<List<Card>>("MoveCardsFromDeckToHand", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToHand(_store!.MyHand.User, cards)));
 
+        _hub.On<List<Card>>("MoveCardsFromDeckToPile", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToPile(cards)));
+        
         _hub.On("NotifyTurnProcessed", () =>
         {
             _turn.Clear();
@@ -235,9 +237,6 @@
         });
 
         _hub.On("ReclaimPile", () => _store!.Mutate(new RoomState.ReclaimPile()));
-
-        // TODO: Remove after fixing top card 
-        _hub.On<int>("RemoveCardsFromDeck", num => _store!.Mutate(new RoomState.RemoveCardsFromDeck(num)));
 
         _hub.On<UserData, int>("RemoveCardsFromPlayerHand", (user, num) => _store!.Mutate(new RoomState.RemoveCardsFromPlayerHand(user, num)));
 

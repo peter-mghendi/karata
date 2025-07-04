@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using Karata.Cards;
 using Karata.Pebble;
 using Karata.Pebble.StateActions;
@@ -57,6 +56,20 @@ public class RoomState(RoomData data, string username, ILoggerFactory? logging =
         }
     }
 
+    public record MoveCardsFromDeckToPile(List<Card> Cards) : StateAction<RoomData>
+    {
+        public override RoomData Apply(RoomData state)
+        {
+            var pile = state.Game.Pile;
+            foreach (var card in Cards) pile.Push(card);
+
+            return state with
+            {
+                Game = state.Game with { DeckCount = state.Game.DeckCount - Cards.Count, Pile = pile }
+            };
+        }
+    }
+
     public record ReceiveChat(ChatData Chat) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state) => state with { Chats = state.Chats.Append(Chat).ToList() };
@@ -73,14 +86,6 @@ public class RoomState(RoomData data, string username, ILoggerFactory? logging =
             {
                 Game = state.Game with { Pile = pile, DeckCount = state.Game.DeckCount + cards.Count }
             };
-        }
-    }
-
-    public record RemoveCardsFromDeck(int Count) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state)
-        {
-            return state with { Game = state.Game with { DeckCount = state.Game.DeckCount - Count } };
         }
     }
 

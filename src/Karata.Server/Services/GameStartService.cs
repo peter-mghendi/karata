@@ -63,9 +63,8 @@ public class GameStartService(
         var top = deck.Deal();
         logger.LogDebug("Top card is {Card}.", top);
 
-        await Everyone.RemoveCardsFromDeck(1);
         game.Pile.Push(top);
-        await Everyone.AddCardRangeToPile([top]);
+        await Everyone.MoveCardsFromDeckToPile([top]);
 
         logger.LogDebug("Start dealing cards to {Count} players.", game.Hands.Count);
 

@@ -4,7 +4,7 @@ namespace Karata.Server.Hubs.Clients;
 
 public interface IGameClient
 {
-    Task AddCardRangeToPile(List<Card> cards);
+    [Obsolete] Task AddCardRangeToPile(List<Card> cards);
     Task AddHandToRoom(UserData user);
     Task AddToRoom(RoomData room);
     Task EndGame();
@@ -14,6 +14,9 @@ public interface IGameClient
     
     // Moves cards from deck to current player's hand.
     Task MoveCardsFromDeckToHand(List<Card> cards);
+    
+    // Moves cards from deck to the pile. 
+    Task MoveCardsFromDeckToPile(List<Card> cards);
 
     Task NotifyTurnProcessed();
     Task<Card?> PromptCardRequest(bool specific);
@@ -21,7 +24,6 @@ public interface IGameClient
     Task ReceiveChat(ChatData message);
     Task ReceiveSystemMessage(SystemMessage message);
     Task ReclaimPile();
-    [Obsolete] Task RemoveCardsFromDeck(int num);
     Task RemoveCardRangeFromHand(List<Card> cards);
     Task RemoveCardsFromPlayerHand(UserData user, int num);
     Task RemoveFromRoom();
