@@ -37,7 +37,7 @@
 
     @* Deck and Pile *@
     @* TODO Include @click handlers after all? *@
-    <img id="deck" class="absolute" src="img/cards/Back.svg" alt="Card back" title="@($"{Game.DeckCount} cards in deck")"/>
+    <img id="deck" class="absolute" src="img/cards/Back.svg" alt="Card back" title="@($"Cards to pick: {Game.Pick}")"/>
     <img id="pile" class="absolute" src="@ImageUrl(Game.Pile.Peek())" alt="@Game.Pile.Peek().GetName()" title="@RequestText"/>
 </div>
 

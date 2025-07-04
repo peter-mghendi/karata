@@ -12,6 +12,12 @@
                 <MudAlert Class="mb-4" Severity="@(Game.Pile.Peek().GetColor() == Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(Game.Pile.Peek())">
                     Top card: @Game.Pile.Peek().GetName()
                 </MudAlert>
+                @if (Game.Pick > 0)
+                {
+                    <MudAlert Class="mb-4" Severity="Severity.Warning" Icon="@Icons.Material.Rounded.PostAdd">
+                        Cards to pick: @Game.Pick
+                    </MudAlert>
+                }
                 @if (Game.CurrentRequest is not null)
                 {
                     <MudAlert Class="mb-4" Severity="@(Game.CurrentRequest.GetColor() == Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(Game.CurrentRequest)">

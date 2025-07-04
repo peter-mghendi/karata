@@ -109,6 +109,14 @@ public class RoomState(RoomData data, string username, ILoggerFactory? logging =
             state with { Game = state.Game with { CurrentRequest = Card } };
     }
 
+    public record UpdatePick(uint Pick) : StateAction<RoomData>
+    {
+        public override RoomData Apply(RoomData state) => state with
+        {
+            Game = state.Game with { Pick = Pick }
+        };
+    }
+
     public record UpdateTurn(int Turn) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state) => state with

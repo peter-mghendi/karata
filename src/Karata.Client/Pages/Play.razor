@@ -253,6 +253,8 @@
         });
 
         _hub.On<Card>("SetCurrentRequest", request => _store!.Mutate(new RoomState.SetCurrentRequest(request)));
+        
+        _hub.On<uint>("UpdatePick", num => _store!.Mutate(new RoomState.UpdatePick(num)));
 
         _hub.On<int>("UpdateTurn", turn =>
         {
