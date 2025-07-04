@@ -63,25 +63,21 @@ public class GameStartService(
         var top = deck.Deal();
         logger.LogDebug("Top card is {Card}.", top);
 
-        await Everyone.RemoveCardsFromDeck(1);
         game.Pile.Push(top);
-        await Everyone.AddCardRangeToPile([top]);
+        await Everyone.MoveCardsFromDeckToPile([top]);
 
         logger.LogDebug("Start dealing cards to {Count} players.", game.Hands.Count);
 
         // Deal player cards
-        // TODO: Explicit card movements (Deck -> Hand, Hand -> Pile, Pile -> Deck).
-        // Needs more thought: will have to restructure PerformTurn
         foreach (var hand in game.Hands)
         {
             var dealt = deck.DealMany(DealCount);
-            await Everyone.RemoveCardsFromDeck(DealCount);
 
             logger.LogDebug("Dealing {Count} cards to {User}. Cards: {Cards}.", DealCount, hand.Player.UserName, string.Join(", ", dealt));
 
             hand.Cards.AddRange(dealt);
-            await Hand(hand).AddCardRangeToHand(dealt);
-            await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).AddCardsToPlayerHand(hand.Player.ToData(), DealCount);
+            await Hand(hand).MoveCardsFromDeckToHand(dealt);
+            await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).MoveCardCountFromDeckToHand(hand.Player.ToData(), DealCount);
         }
 
         logger.LogDebug("Finished dealing cards.");

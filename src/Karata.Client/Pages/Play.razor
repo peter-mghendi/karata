@@ -166,12 +166,6 @@
             .AddJsonProtocol()
             .Build();
 
-        _hub.On<UserData, int>("AddCardsToPlayerHand", (user, num) => _store!.Mutate(new RoomState.AddCardsToPlayerHand(user, num)));
-
-        _hub.On<List<Card>>("AddCardRangeToHand", cards => _store!.Mutate(new RoomState.AddCardRangeToHand(_store!.MyHand.User, cards)));
-
-        _hub.On<List<Card>>("AddCardRangeToPile", cards => _store!.Mutate(new RoomState.AddCardRangeToPile(cards)));
-
         _hub.On<UserData>("AddHandToRoom", user =>
         {
             _store!.Mutate(new RoomState.AddHandToRoom(user));
@@ -190,7 +184,15 @@
 
         // TODO: This is an implicit client disconnect, meaning the cleanup logic is in OnDisconnectedAsync. Review this. 
         _hub.On("EndGame", () => Navigator.NavigateTo($"/game/{_store!.State.Id.ToString()}/over"));
+        
+        _hub.On<UserData, int>("MoveCardCountFromDeckToHand", (user, num) => _store!.Mutate(new RoomState.MoveCardCountFromDeckToHand(user, num)));
 
+        _hub.On<List<Card>>("MoveCardsFromDeckToHand", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToHand(_store!.MyHand.User, cards)));
+
+        _hub.On<List<Card>>("MoveCardsFromDeckToPile", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToPile(cards)));
+
+        _hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (user, cards) => _store!.Mutate(new RoomState.MoveCardsFromHandToPile(user, cards, _store!.MyHand.User == user)));
+        
         _hub.On("NotifyTurnProcessed", () =>
         {
             _turn.Clear();
@@ -235,13 +237,7 @@
         });
 
         _hub.On("ReclaimPile", () => _store!.Mutate(new RoomState.ReclaimPile()));
-
-        _hub.On<int>("RemoveCardsFromDeck", num => _store!.Mutate(new RoomState.RemoveCardsFromDeck(num)));
-
-        _hub.On<UserData, int>("RemoveCardsFromPlayerHand", (user, num) => _store!.Mutate(new RoomState.RemoveCardsFromPlayerHand(user, num)));
-
-        _hub.On<List<Card>>("RemoveCardRangeFromHand", cards => _store!.Mutate(new RoomState.RemoveCardRangeFromHand(_store!.MyHand, cards)));
-
+        
         _hub.On("RemoveFromRoom", () =>
         {
             _store!.Forget(OnStoreChanged);

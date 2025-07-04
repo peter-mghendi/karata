@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using Karata.Cards;
 using Karata.Pebble;
 using Karata.Pebble.StateActions;
@@ -10,42 +9,70 @@ public class RoomState(RoomData data, string username, ILoggerFactory? logging =
 {
     public HandData MyHand => State.Game.Hands.Single(h => h.User.Email == username);
 
-    public record AddCardsToPlayerHand(UserData User, int Count) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state)
-        {
-            var hands = state.Game.Hands.
-                Select(h => h.User == User ? h with { Cards = [..h.Cards, ..Enumerable.Repeat(new Card(), Count)] } : h);
-            return state with { Game = state.Game with { Hands = hands.ToList() } };
-        }
-    }
-
-    public record AddCardRangeToHand(UserData User, List<Card> Cards) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state)
-        {
-            var hands = state.Game.Hands.Select(h => h.User == User ? h with { Cards = [..h.Cards, ..Cards] } : h);
-            return state with { Game = state.Game with { Hands = hands.ToList() } };
-        }
-    }
-
-    public record AddCardRangeToPile(List<Card> Cards) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state)
-        {
-            var pile = state.Game.Pile;
-            foreach (var card in Cards) pile.Push(card);
-
-            return state with { Game = state.Game with { Pile = pile } };
-        }
-    }
-
     public record AddHandToRoom(UserData User) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state)
         {
             var hand = new HandData { User = User, Cards = [] };
             return state with { Game = state.Game with { Hands = [..state.Game.Hands, hand] } };
+        }
+    }
+
+    public record MoveCardCountFromDeckToHand(UserData User, int Count) : StateAction<RoomData>
+    {
+        public override RoomData Apply(RoomData state)
+        {
+            var hands = state.Game.Hands.
+                Select(h => h.User == User ? h with { Cards = [..h.Cards, ..Enumerable.Repeat(new Card(), Count)] } : h);
+            return state with
+            {
+                Game = state.Game with { Hands = hands.ToList(), DeckCount = state.Game.DeckCount - Count }
+            };
+        }
+    }
+    
+    public record MoveCardsFromDeckToHand(UserData User, List<Card> Cards) : StateAction<RoomData>
+    {
+        public override RoomData Apply(RoomData state)
+        {
+            var hands = state.Game.Hands
+                .Select(h => h.User == User ? h with { Cards = [..h.Cards, ..Cards] } : h);
+
+            return state with
+            {
+                Game = state.Game with { Hands = hands.ToList(), DeckCount = state.Game.DeckCount - Cards.Count }
+            };
+        }
+    }
+
+    public record MoveCardsFromDeckToPile(List<Card> Cards) : StateAction<RoomData>
+    {
+        public override RoomData Apply(RoomData state)
+        {
+            var pile = state.Game.Pile;
+            foreach (var card in Cards) pile.Push(card);
+
+            return state with
+            {
+                Game = state.Game with { DeckCount = state.Game.DeckCount - Cards.Count, Pile = pile }
+            };
+        }
+    }
+
+    public record MoveCardsFromHandToPile(UserData User, List<Card> Cards, bool Mine) : StateAction<RoomData>
+    {
+        public override RoomData Apply(RoomData state)
+        {
+            var hands = Mine switch
+            {
+                true => state.Game.Hands.Select(h => h.User == User ? h with { Cards = h.Cards.Except(Cards).ToList() } : h),
+                false => state.Game.Hands.Select(h => h.User == User ? h with { Cards = h.Cards[Cards.Count..] } : h)
+            };
+            
+            var pile = state.Game.Pile;
+            foreach (var card in Cards) pile.Push(card);
+
+            return state with { Game = state.Game with { Hands = hands.ToList(), Pile = pile } };
         }
     }
 
@@ -65,34 +92,6 @@ public class RoomState(RoomData data, string username, ILoggerFactory? logging =
             {
                 Game = state.Game with { Pile = pile, DeckCount = state.Game.DeckCount + cards.Count }
             };
-        }
-    }
-
-    public record RemoveCardsFromDeck(int Count) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state)
-        {
-            return state with { Game = state.Game with { DeckCount = state.Game.DeckCount - Count } };
-        }
-    }
-
-    public record RemoveCardsFromPlayerHand(UserData User, int Count) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state)
-        {
-            var hands = state.Game.Hands
-                .Select(h => h.User == User ? h with { Cards = h.Cards[Count..] } : h);
-            return state with { Game = state.Game with { Hands = hands.ToList() } };
-        }
-    }
-
-    public record RemoveCardRangeFromHand(HandData Hand, List<Card> Cards) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state)
-        {
-            var cards = Hand.Cards.Except(Cards).ToList();
-            var hands = state.Game.Hands.Select(h => h.User == Hand.User ? Hand with { Cards = cards } : h);
-            return state with { Game = state.Game with { Hands = hands.ToList() } };
         }
     }
 
