@@ -40,7 +40,7 @@
 <MudDropContainer T="DropItem" Items="_items" ItemsSelector="@((DropItem item, string dropzone) => item.Identifier == dropzone)" ItemDropped="ItemUpdated" Class="d-flex flex-column flex-grow-1 gap-4">
     <ChildContent>
         <div class="d-flex flex-wrap justify-space-between gap-4">
-            <MudDropZone T="DropItem" Identifier="Hand" Class="rounded pa-4 flex-grow-1 overflow-y-scroll" Style="background-color: white">
+            <MudDropZone T="DropItem" Identifier="Hand" Class="rounded pa-4 flex-grow-1 overflow-y-scroll" Style="background-color: white" AllowReorder="">
                 <MudText Typo="Typo.h6" Class="mb-4">My Cards</MudText>
             </MudDropZone>
             <MudDropZone T="DropItem" Identifier="Turn" Class="rounded pa-4 flex-grow-1" Style="background-color: white" AllowReorder>
