@@ -1,14 +1,14 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.ResponseCompression;
 using Karata.Server.Data;
 using Karata.Server.Engine;
-using Npgsql;
-using Karata.Server.Services;
-using Microsoft.EntityFrameworkCore;
 using Karata.Server.Hubs;
+using Karata.Server.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +26,12 @@ builder.Services.AddDbContext<KarataContext>(options =>
         Database = uri.LocalPath.TrimStart('/'),
         SslMode = SslMode.Prefer
     }.ToString());
+
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableDetailedErrors();
+        options.EnableSensitiveDataLogging();
+    }
 });
 
 builder.Services
@@ -51,11 +57,11 @@ builder.Services.AddResponseCompression(opts =>
 
 builder.Services.AddIdentityServer()
     .AddApiAuthorization<User, KarataContext>();
-
 builder.Services.AddAuthentication()
     .AddIdentityServerJwt();
 builder.Services.TryAddEnumerable(
-    ServiceDescriptor.Singleton<IPostConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>());
+    ServiceDescriptor.Singleton<IPostConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>()
+);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
@@ -90,7 +96,6 @@ app.UseRouting();
 
 app.UseIdentityServer();
 app.UseAuthorization();
-
 
 app.MapRazorPages();
 app.MapControllers();

@@ -1,16 +1,18 @@
 using Karata.Server.Data;
 using Karata.Server.Hubs;
 using Karata.Server.Hubs.Clients;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Server.Services;
 
 public partial class RoomMembershipService (
     IHubContext<GameHub, IGameClient> hub,
-    KarataContext context,
     IPasswordService passwords,
+    KarataContext context,
     PresenceService presence,
-    User user,
-    Room room,
-    string client
-) : HubAwareService(hub, room, user, client);
+    UserManager<User> users,
+    Guid room,
+    string player,
+    string connection
+) : HubAwareService(hub, room, player, connection);

@@ -1,20 +1,21 @@
 using Karata.Server.Data;
-using Karata.Server.Engine;
 using Karata.Server.Hubs;
 using Karata.Server.Hubs.Clients;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Server.Services;
 
 public class RoomMembershipServiceFactory(
     IHubContext<GameHub, IGameClient> hub,
-    KarataContext context,
     IPasswordService passwords,
-    PresenceService presence
+    KarataContext context,
+    PresenceService presence,
+    UserManager<User> users
 )
 {
-    public RoomMembershipService Create(Room room, User user, string client)
+    public RoomMembershipService Create(Guid room, string player, string connection)
     {
-        return new RoomMembershipService(hub, context, passwords, presence, user, room, client);
+        return new RoomMembershipService(hub, passwords, context, presence, users, room, player, connection);
     }
 }

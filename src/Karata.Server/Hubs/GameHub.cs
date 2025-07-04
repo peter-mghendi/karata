@@ -25,14 +25,33 @@ public class GameHub(
     {
         await base.OnDisconnectedAsync(exception);
 
-        var user = await User();
+        if (await users.FindByIdAsync(Context.UserIdentifier!) is not { } user)
+            throw new Exception("User not found.");
+        
         logger.LogDebug(exception, "User {User} disconnected.", user.UserName);
 
         if (!presence.TryGetPresence(user.Id, out var rooms) || rooms is null) return;
-        await foreach (var room in Rooms(rooms))
+        
+        var ids = rooms.Select(Parse);
+        await foreach (var room in context.Rooms.Where(r => ids.Contains(r.Id)).AsAsyncEnumerable())
         {
             try
             {
+                if (room.Game.Status is GameStatus.Over)
+                {
+                    
+                    room.Game.Hands.ForEach(hand =>
+                    {
+                        logger.LogDebug(
+                            "Removing presence {User} for concluded game in room {Room}.", 
+                            hand.Player.Id, 
+                            room.Id.ToString()
+                        );
+                        presence.RemovePresence(hand.Player.Id, room.Id.ToString());
+                    });
+                    continue;
+                }
+
                 logger.LogDebug("Ending game in room {Room}.", room.Id.ToString());
 
                 room.Game.Status = GameStatus.Over;
@@ -56,8 +75,13 @@ public class GameHub(
 
     public async Task SendChat(string roomId, string text)
     {
-        var room = await Room(roomId);
-        var chat = new Chat { Text = text, Sender = await User() };
+        if (await users.FindByIdAsync(Context.UserIdentifier!) is not { } user)
+            throw new Exception("User not found.");
+
+        if (await context.Rooms.FindAsync(Parse(roomId)) is not { } room)
+            throw new Exception("Room not found.");
+
+        var chat = new Chat { Text = text, Sender = user };
 
         room.Chats.Add(chat);
         await Clients.Group(roomId).ReceiveChat(chat.ToData());
@@ -69,7 +93,7 @@ public class GameHub(
         try
         {
             logger.LogDebug("User {User} is joining room {Room}.", Context.UserIdentifier, roomId);
-            await factory.Create(await Room(roomId), await User(), Context.ConnectionId).JoinAsync(password);
+            await factory.Create(Parse(roomId), Context.UserIdentifier!, Context.ConnectionId).JoinAsync(password);
         }
         catch (KarataException exception)
         {
@@ -82,7 +106,7 @@ public class GameHub(
         try
         {
             logger.LogDebug("User {User} is leaving room {Room}.", Context.UserIdentifier, roomId);
-            await factory.Create(await Room(roomId), await User(), Context.ConnectionId).LeaveAsync();
+            await factory.Create(Parse(roomId), Context.UserIdentifier!, Context.ConnectionId).LeaveAsync();
         }
         catch (KarataException exception)
         {
@@ -95,7 +119,7 @@ public class GameHub(
         try
         {
             logger.LogDebug("User {User} is starting the game in room {Room}.", Context.UserIdentifier, roomId);
-            await factory.Create(await Room(roomId), await User(), Context.ConnectionId).ExecuteAsync();
+            await factory.Create(Parse(roomId), Context.UserIdentifier!, Context.ConnectionId).ExecuteAsync();
         }
         catch (KarataException exception)
         {
@@ -108,7 +132,7 @@ public class GameHub(
         try
         {
             logger.LogDebug("User {User} is performing a turn in room {Room}. Cards: {Cards}", Context.UserIdentifier, roomId, string.Join(", ", cards));
-            await factory.Create(await Room(roomId), await User(), Context.ConnectionId).ExecuteAsync(cards);
+            await factory.Create(Parse(roomId), Context.UserIdentifier!, Context.ConnectionId).ExecuteAsync(cards);
         }
         catch (KarataException exception)
         {
@@ -116,25 +140,4 @@ public class GameHub(
             await Clients.Caller.NotifyTurnProcessed();
         }
     }
-
-    private async Task<User> User()
-    {
-        var user = await users.FindByIdAsync(Context.UserIdentifier!);
-        if (user is null) throw new Exception("User not found.");
-        return user;
-    }
-
-    private async Task<Room> Room(string id) => await Room(Parse(id));
-
-    private async Task<Room> Room(Guid id)
-    {
-        var room = await context.Rooms.FindAsync(id);
-        if (room is null) throw new Exception("Room not found.");
-        return room;
-    }
-
-    private IAsyncEnumerable<Room> Rooms(IEnumerable<string> ids) => Rooms(ids.Select(Parse));
-
-    private IAsyncEnumerable<Room> Rooms(IEnumerable<Guid> ids)
-        => context.Rooms.Where(r => ids.Contains(r.Id)).AsAsyncEnumerable();
 }

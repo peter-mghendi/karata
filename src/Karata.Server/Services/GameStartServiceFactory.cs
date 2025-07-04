@@ -1,5 +1,4 @@
 using Karata.Server.Data;
-using Karata.Server.Engine;
 using Karata.Server.Hubs;
 using Karata.Server.Hubs.Clients;
 using Microsoft.AspNetCore.SignalR;
@@ -8,13 +7,13 @@ namespace Karata.Server.Services;
 
 public class GameStartServiceFactory(
     IHubContext<GameHub, IGameClient> hub,
-    KarataContext context,
-    ILoggerFactory loggers
+    ILoggerFactory loggers,
+    KarataContext context
 )
 {
-    public GameStartService Create(Room room, User user, string client)
+    public GameStartService Create(Guid room, string player, string connection)
     {
         var logger = loggers.CreateLogger<GameStartService>();
-        return new GameStartService(hub, context, logger, user, room, client);
+        return new GameStartService(hub, logger, context, room, player, connection);
     }
 }

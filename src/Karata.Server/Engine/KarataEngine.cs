@@ -124,7 +124,7 @@ public class KarataEngine
     /// </summary>
     public GameDelta GenerateTurnDelta()
     {
-        var delta = new GameDelta { Cards = Cards.ToList() };
+        var delta = new GameDelta { Cards = [..Cards] };
 
         // If no cards are played,
         // - If the last card played is a "bomb" card that has not been picked, the player has to immediately pick the cards

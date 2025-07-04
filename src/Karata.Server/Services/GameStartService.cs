@@ -1,6 +1,4 @@
 using Karata.Server.Data;
-using Karata.Server.Engine;
-using Karata.Server.Engine.Exceptions;
 using Karata.Server.Hubs;
 using Karata.Server.Hubs.Clients;
 using Karata.Server.Support.Exceptions;
@@ -11,29 +9,31 @@ namespace Karata.Server.Services;
 
 public class GameStartService(
     IHubContext<GameHub, IGameClient> hub,
-    KarataContext context,
     ILogger<GameStartService> logger,
-    User user,
-    Room room,
-    string client
-) : HubAwareService(hub, room, user, client)
+    KarataContext context,
+    Guid room,
+    string player,
+    string connection
+) : HubAwareService(hub, room, player, connection)
 {
     private const int DealCount = 4;
     
     public async Task ExecuteAsync()
     {
-        ValidateGameState();
-        await DealCards();
-        await UpdateGameState();
+        var room = (await context.Rooms.FindAsync(RoomId))!;
+        
+        ValidateGameState(room);
+        await DealCards(room);
+        await UpdateGameState(room);
         await context.SaveChangesAsync();
     }
     
-    private void ValidateGameState()
+    private void ValidateGameState(Room room)
     {
-        var game = Room.Game;
+        var game = room.Game;
         
         // Check caller role
-        if (Room.Creator.Id != CurrentPlayer.Id)
+        if (room.Creator.Id != CurrentPlayerId)
         {
             throw new UnauthorizedToStartException();
         }
@@ -51,10 +51,10 @@ public class GameStartService(
         }
     }
 
-    private async Task DealCards()
+    private async Task DealCards(Room room)
     {
         // Shuffle deck and deal starting card
-        var game = Room.Game;
+        var game = room.Game;
         var deck = game.Deck;
 
         do deck.Shuffle();
@@ -81,15 +81,15 @@ public class GameStartService(
 
             hand.Cards.AddRange(dealt);
             await Hand(hand).AddCardRangeToHand(dealt);
-            await HandsExcept(hand).AddCardsToPlayerHand(hand.Player.ToData(), DealCount);
+            await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).AddCardsToPlayerHand(hand.Player.ToData(), DealCount);
         }
 
         logger.LogDebug("Finished dealing cards.");
     }
 
-    private async Task UpdateGameState()
+    private async Task UpdateGameState(Room room)
     {
-        Room.Game.Status = GameStatus.Ongoing;
-        await Everyone.UpdateGameStatus(Room.Game.Status);
+        room.Game.Status = GameStatus.Ongoing;
+        await Everyone.UpdateGameStatus(room.Game.Status);
     }
 }

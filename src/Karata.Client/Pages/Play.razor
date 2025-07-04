@@ -188,11 +188,8 @@
             OnStoreChanged(room);
         });
 
-        _hub.On("EndGame", async () =>
-        {
-            await LeaveRoom();
-            Navigator.NavigateTo($"/game/{_store!.State.Id.ToString()}/over");
-        });
+        // TODO: This is an implicit client disconnect, meaning the cleanup logic is in OnDisconnectedAsync. Review this. 
+        _hub.On("EndGame", () => Navigator.NavigateTo($"/game/{_store!.State.Id.ToString()}/over"));
 
         _hub.On("NotifyTurnProcessed", () =>
         {

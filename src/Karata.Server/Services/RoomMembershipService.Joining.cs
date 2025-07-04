@@ -8,56 +8,59 @@ public partial class RoomMembershipService
 {
     public async Task JoinAsync(string? password)
     {
-        ValidateJoiningGameState(password);
-
-        var hand = new Hand { Player = CurrentPlayer };
-        AddPresence(hand);
-        await NotifyPlayerJoined(hand);
+        var player = (await users.FindByIdAsync(CurrentPlayerId))!;
+        var room = (await context.Rooms.FindAsync(RoomId))!;
+        var hand = new Hand { Player = player };
+        
+        ValidateJoiningGameState(room, password);
+        AddPresence(room, hand);
+        
+        await NotifyPlayerJoined(room, hand);
         await context.SaveChangesAsync();
     }
 
-    private void ValidateJoiningGameState(string? password)
+    private void ValidateJoiningGameState(Room room, string? password)
     {
-        if (Room.Hash is not null)
+        if (room.Hash is not null)
         {
             if (string.IsNullOrWhiteSpace(password))
             {
                 throw new PasswordRequiredException();
             }
 
-            if (!passwords.VerifyPassword(Encoding.UTF8.GetBytes(password), Room.Salt!, Room.Hash))
+            if (!passwords.VerifyPassword(Encoding.UTF8.GetBytes(password), room.Salt!, room.Hash))
             {
                 throw new IncorrectPasswordException();
             }
         }
 
         // Check game status
-        if (Game.Status == GameStatus.Ongoing)
+        if (room.Game.Status == GameStatus.Ongoing)
         {
             throw new GameOngoingException();
         }
 
         // Check player count
-        if (Game.Hands.Count >= 4)
+        if (room.Game.Hands.Count >= 4)
         {
             throw new GameFullException();
         }
     }
 
-    private void AddPresence(Hand hand)
+    private void AddPresence(Room room, Hand hand)
     {
-        presence.AddPresence(hand.Player.Id, Room.Id.ToString());
+        presence.AddPresence(hand.Player.Id, room.Id.ToString());
 
-        if (Game.Hands.All(h => h.Player.Id != hand.Player.Id))
+        if (room.Game.Hands.All(h => h.Player.Id != hand.Player.Id))
         {
-            Game.Hands.Add(hand);
+            room.Game.Hands.Add(hand);
         }
     }
 
-    private async Task NotifyPlayerJoined(Hand hand)
+    private async Task NotifyPlayerJoined(Room room, Hand hand)
     {
-        await AddToRoom(Client);
-        await Me.AddToRoom(Room.ToData());
-        await Others.AddHandToRoom(hand.Player.ToData());
+        await AddToRoom(ConnectionId);
+        await Me.AddToRoom(room.ToData());
+        await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).AddHandToRoom(hand.Player.ToData());
     }
 }

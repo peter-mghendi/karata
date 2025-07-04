@@ -7,36 +7,39 @@ public partial class RoomMembershipService
 {
     public async Task LeaveAsync()
     {
-        ValidateLeavingGameState();
+        var player = (await users.FindByIdAsync(CurrentPlayerId))!;
+        var room = (await context.Rooms.FindAsync(RoomId))!;
+        var hand = room.Game.Hands.Single(h => h.Player.Id == player.Id);
+        
+        ValidateLeavingGameState(room);
+        RemovePresence(room, hand);
 
-        var hand = Game.Hands.Single(h => h.Player.Id == CurrentPlayer.Id);
-        RemovePresence(hand);
-        await NotifyPlayerLeft(hand);
+        await NotifyPlayerLeft(room, hand);
         await context.SaveChangesAsync();
     }
 
-    private void ValidateLeavingGameState()
+    private void ValidateLeavingGameState(Room room)
     {
         // Room creator can not leave games in Lobby.
         // No one can leave an Ongoing game.
         // Anyone can leave if the game is Over.
-        if (Game.Status is GameStatus.Ongoing || (Room.Creator.Id == CurrentPlayer.Id && Game.Status == GameStatus.Lobby))
+        if (room.Game.Status is GameStatus.Ongoing || (room.Creator.Id == CurrentPlayerId && room.Game.Status == GameStatus.Lobby))
         {
             // TODO: Handle this gracefully, as well as accidental disconnection.
             throw new SawException();
         }
     }
 
-    private void RemovePresence(Hand hand)
+    private void RemovePresence(Room room, Hand hand)
     {
-        Game.Hands.Remove(hand);
-        presence.RemovePresence(CurrentPlayer.Id, Room.Id.ToString());
+        room.Game.Hands.Remove(hand);
+        presence.RemovePresence(CurrentPlayerId, room.Id.ToString());
     }
 
-    private async Task NotifyPlayerLeft(Hand hand)
+    private async Task NotifyPlayerLeft(Room room, Hand hand)
     {
-        await RemoveFromRoom(Client);
+        await RemoveFromRoom(ConnectionId);
         await Me.RemoveFromRoom();
-        await Others.RemoveHandFromRoom(hand.Player.ToData());
+        await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).RemoveHandFromRoom(hand.Player.ToData());
     }
 }
