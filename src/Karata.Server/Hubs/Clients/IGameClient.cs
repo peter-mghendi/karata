@@ -4,8 +4,13 @@ namespace Karata.Server.Hubs.Clients;
 
 public interface IGameClient
 {
+    // Adds another user to the current room
     Task AddHandToRoom(UserData user);
+    
+    // Adds the current user to a room
     Task AddToRoom(RoomData room);
+    
+    // Ends the game
     Task EndGame();
     
     // Moves n cards from deck to another player's hand. 
@@ -20,15 +25,36 @@ public interface IGameClient
     // Moves cards from hand to the pile. 
     Task MoveCardsFromHandToPile(UserData user, List<Card> cards);
 
+    // Notifies the current user's client that the turn has been processed - so the UI can clean up and state.
     Task NotifyTurnProcessed();
+    
+    // Prompts for the user to select a card request.
     Task<Card?> PromptCardRequest(bool specific);
+    
+    // Prompts the user to declare last card status
     Task<bool> PromptLastCardRequest();
+    
+    // Receives a chat message sent by another player.
     Task ReceiveChat(ChatData message);
+    
+    // Receives a system message.
     Task ReceiveSystemMessage(SystemMessage message);
+    
+    // Reclaims the pile and adds cards to the deck
     Task ReclaimPile();
+    
+    // Removes the current player from the room
     Task RemoveFromRoom();
+    
+    // Removes another player from the room
     Task RemoveHandFromRoom(UserData user);
+    
+    // Sets the current card request
     Task SetCurrentRequest(Card? request);
+    
+    // Updates the game status
     Task UpdateGameStatus(GameStatus status);
+    
+    // Updates the current turn
     Task UpdateTurn(int turn);
 }
