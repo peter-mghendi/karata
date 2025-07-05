@@ -12,6 +12,12 @@
                 <MudAlert Class="mb-4" Severity="@(Game.Pile.Peek().GetColor() == Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(Game.Pile.Peek())">
                     Top card: @Game.Pile.Peek().GetName()
                 </MudAlert>
+                @if (Game.Pick > 0)
+                {
+                    <MudAlert Class="mb-4" Severity="Severity.Warning" Icon="@Icons.Material.Rounded.PostAdd">
+                        Cards to pick: @Game.Pick
+                    </MudAlert>
+                }
                 @if (Game.CurrentRequest is not null)
                 {
                     <MudAlert Class="mb-4" Severity="@(Game.CurrentRequest.GetColor() == Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(Game.CurrentRequest)">
@@ -19,7 +25,13 @@
                     </MudAlert>
                 }
                 <MudAlert Class="mb-4" Severity="@Severity.Info" Icon="@Icons.Material.Rounded.Person">
-                    Current player: @Game.CurrentHand.User.Email.
+                    Current player: @Game.CurrentHand.User.Email
+                    @if (Game.CurrentHand.User == Hand.User)
+                    {
+                        <MudChip Icon="@Icons.Material.Rounded.AccountCircle" Variant="Variant.Text" Color="Color.Info" Size="Size.Small">
+                            You
+                        </MudChip>
+                    }
                 </MudAlert>
             </MudList>
         </MudItem>
@@ -40,7 +52,7 @@
 <MudDropContainer T="DropItem" Items="_items" ItemsSelector="@((DropItem item, string dropzone) => item.Identifier == dropzone)" ItemDropped="ItemUpdated" Class="d-flex flex-column flex-grow-1 gap-4">
     <ChildContent>
         <div class="d-flex flex-wrap justify-space-between gap-4">
-            <MudDropZone T="DropItem" Identifier="Hand" Class="rounded pa-4 flex-grow-1 overflow-y-scroll" Style="background-color: white">
+            <MudDropZone T="DropItem" Identifier="Hand" Class="rounded pa-4 flex-grow-1 overflow-y-scroll" Style="background-color: white" AllowReorder>
                 <MudText Typo="Typo.h6" Class="mb-4">My Cards</MudText>
             </MudDropZone>
             <MudDropZone T="DropItem" Identifier="Turn" Class="rounded pa-4 flex-grow-1" Style="background-color: white" AllowReorder>

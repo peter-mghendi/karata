@@ -55,6 +55,9 @@ public interface IGameClient
     // Updates the game status
     Task UpdateGameStatus(GameStatus status);
     
+    // Updates the current pick value
+    Task UpdatePick(uint num);
+    
     // Updates the current turn
     Task UpdateTurn(int turn);
 }

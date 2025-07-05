@@ -50,13 +50,11 @@ public class TurnProcessingService(
             await NotifyClientsOfGameState(player, turn);
             await EnsurePendingCardsPicked(room);
             await CheckRemainingCards(room, player, turn);
+            
+            room.Game.CurrentTurn = room.Game.NextTurn;
 
-            if (room.Game.Status is Ongoing)
-            {
-                room.Game.CurrentTurn = room.Game.NextTurn;
-                await Everyone.UpdateTurn(room.Game.CurrentTurn);
-            }
-
+            await Everyone.UpdatePick(room.Game.Give);
+            await Everyone.UpdateTurn(room.Game.CurrentTurn);
             await context.SaveChangesAsync();
         }
         catch (EndGameException exception)

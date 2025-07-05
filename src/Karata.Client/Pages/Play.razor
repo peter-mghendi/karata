@@ -122,7 +122,7 @@
                         <MudExpansionPanel Text="Players">
                             <PlayersPanel Me="_store!.MyHand.User" Room="_store.State"/>
                         </MudExpansionPanel>
-                        <MudExpansionPanel Text="Chat" MaxHeight="500">
+                        <MudExpansionPanel Text="Chat" MaxHeight="480" Class="overflow-y-auto">
                             <ChatPanel Room="_store!.State" Me="_store.MyHand.User" OnSend="Send"/>
                         </MudExpansionPanel>
                     </MudExpansionPanels>
@@ -253,6 +253,8 @@
         });
 
         _hub.On<Card>("SetCurrentRequest", request => _store!.Mutate(new RoomState.SetCurrentRequest(request)));
+        
+        _hub.On<uint>("UpdatePick", num => _store!.Mutate(new RoomState.UpdatePick(num)));
 
         _hub.On<int>("UpdateTurn", turn =>
         {
