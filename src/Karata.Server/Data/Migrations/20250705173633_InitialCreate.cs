@@ -135,7 +135,7 @@ namespace Karata.Server.Data.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Type = table.Column<int>(type: "integer", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: false),
                     Text = table.Column<string>(type: "text", nullable: false),
                     Action = table.Column<string>(type: "text", nullable: false),
                     Link = table.Column<string>(type: "text", nullable: false),
@@ -292,7 +292,7 @@ namespace Karata.Server.Data.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
                     IsReversed = table.Column<bool>(type: "boolean", nullable: false),
                     Give = table.Column<long>(type: "bigint", nullable: false),
                     Pick = table.Column<long>(type: "bigint", nullable: false),
@@ -321,8 +321,8 @@ namespace Karata.Server.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     WinnerId = table.Column<string>(type: "text", nullable: true),
                     Reason = table.Column<string>(type: "text", nullable: false),
-                    ReasonType = table.Column<int>(type: "integer", nullable: false),
-                    ResultType = table.Column<int>(type: "integer", nullable: false),
+                    ReasonType = table.Column<string>(type: "text", nullable: false),
+                    ResultType = table.Column<string>(type: "text", nullable: false),
                     CompletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     GameId = table.Column<int>(type: "integer", nullable: false)
                 },
@@ -377,9 +377,11 @@ namespace Karata.Server.Data.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     IsLastCard = table.Column<bool>(type: "boolean", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: false),
                     HandId = table.Column<int>(type: "integer", nullable: false),
                     Cards = table.Column<string>(type: "jsonb", nullable: true),
-                    Delta = table.Column<string>(type: "jsonb", nullable: false),
+                    Delta = table.Column<string>(type: "jsonb", nullable: true),
+                    Picked = table.Column<string>(type: "jsonb", nullable: true),
                     Request = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>

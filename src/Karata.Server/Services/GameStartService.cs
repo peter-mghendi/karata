@@ -72,10 +72,13 @@ public class GameStartService(
         foreach (var hand in game.Hands)
         {
             var dealt = deck.DealMany(DealCount);
+            var turn = new Turn { Picked = dealt, Type = TurnType.Deal };
 
             logger.LogDebug("Dealing {Count} cards to {User}. Cards: {Cards}.", DealCount, hand.Player.UserName, string.Join(", ", dealt));
-
+            
+            hand.Turns.Add(turn);
             hand.Cards.AddRange(dealt);
+
             await Hand(hand).MoveCardsFromDeckToHand(dealt);
             await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).MoveCardCountFromDeckToHand(hand.Player.ToData(), DealCount);
         }
