@@ -7,7 +7,7 @@ public class Room
     public Guid Id { get; init; }
     public required User Creator { get; init; }
     public Game Game { get; init; } = new();
-    public DateTime CreatedAt { get; } = DateTime.Now;
+    public required DateTimeOffset CreatedAt { get; set; }
     public byte[]? Hash { get; init; }
     public byte[]? Salt { get; init; }
     public List<Chat> Chats { get; init; } = [];

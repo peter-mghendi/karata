@@ -12,6 +12,7 @@ public class KarataContext(
     IOptions<OperationalStoreOptions> operationalStoreOptions
 ) : ApiAuthorizationDbContext<User>(options, operationalStoreOptions)
 {
+    public DbSet<Activity> Activities => Set<Activity>();
     public DbSet<Chat> Chats => Set<Chat>();
     public DbSet<Game> Games => Set<Game>();
     public DbSet<Hand> Hands => Set<Hand>();
@@ -110,11 +111,10 @@ public class KarataContext(
             builder.ToJson();
             builder.OwnsMany<Card>(d => d.Cards);
         });
-    }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        // optionsBuilder.LogTo(Console.WriteLine);
-        // optionsBuilder.EnableSensitiveDataLogging();
+        
+        // Activity
+        modelBuilder.Entity<Activity>().HasOne(a => a.Actor).WithMany();
+        modelBuilder.Entity<Activity>().OwnsOne(t => t.Metadata, builder => builder.ToJson());
+        modelBuilder.Entity<Activity>().Navigation(a => a.Actor).AutoInclude();
     }
 }

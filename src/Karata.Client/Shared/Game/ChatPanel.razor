@@ -26,7 +26,7 @@
                     </MudChip>
                 }
             </div>
-            <MudText Typo="Typo.caption" Class="grey-text mb-2">@message.Sent</MudText>
+            <MudText Typo="Typo.caption" Class="grey-text mb-2">@message.SentAt.ToLocalTime().ToString()</MudText>
             <MudText>@message.Text</MudText>
         </MudListItem>
     }

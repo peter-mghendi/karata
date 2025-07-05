@@ -69,8 +69,9 @@ public class TurnProcessingService(
             );
             
             (room.Game.Status, room.Game.Result) = (Over, exception.Result);
-            await context.SaveChangesAsync();
+            if (exception.Result.ResultType is GameResultType.Win) context.Activities.Add(Activity.GameWon(room));
             
+            await context.SaveChangesAsync();
             await Me.NotifyTurnProcessed();
             await Everyone.ReceiveSystemMessage(Messages.GameOver(exception.Result));
             await Everyone.UpdateGameStatus(Over);

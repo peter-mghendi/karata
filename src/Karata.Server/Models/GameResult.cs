@@ -11,6 +11,7 @@ public class GameResult
     public required string Reason { get; init; }
     public required MessageType ReasonType { get; init; }
     public required GameResultType ResultType { get; init; }
+    public required DateTimeOffset CompletedAt { get; init; }
     public int GameId { get; set; }
 
     public static GameResult DeckExhaustion()
@@ -19,7 +20,8 @@ public class GameResult
         {
             Reason = "There aren't enough cards left to pick.",
             ReasonType = MessageType.Error,
-            ResultType = GameResultType.DeckExhaustion
+            ResultType = GameResultType.DeckExhaustion,
+            CompletedAt = DateTimeOffset.UtcNow
         };
     }
 
@@ -31,6 +33,7 @@ public class GameResult
             Reason = $"{winner.Email} won.",
             ReasonType = MessageType.Success,
             ResultType = GameResultType.Win,
+            CompletedAt = DateTimeOffset.UtcNow
         };
     }
 
@@ -38,6 +41,7 @@ public class GameResult
     {
         Reason = Reason,
         ReasonType = ReasonType,
-        ResultType = ResultType
+        ResultType = ResultType,
+        CompletedAt = DateTimeOffset.UtcNow
     };
 }

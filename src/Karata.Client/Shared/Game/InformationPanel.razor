@@ -8,8 +8,8 @@
         <MudText Typo="Typo.body1" Class="grey-text">@Room.Id.ToString()</MudText>
     </MudListItem>
     <MudListItem>
-        <MudText Typo="Typo.caption">Date Created</MudText>
-        <MudText Typo="Typo.body1" Class="grey-text">@Room.CreatedAt</MudText>
+        <MudText Typo="Typo.caption">Created At</MudText>
+        <MudText Typo="Typo.body1" Class="grey-text">@Room.CreatedAt.ToLocalTime().ToString()</MudText>
     </MudListItem>
     <MudListItem>
         <MudText Typo="Typo.caption">Room Admin</MudText>
