@@ -17,7 +17,7 @@ namespace Karata.Server.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.6")
+                .HasAnnotation("ProductVersion", "9.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -50,8 +50,7 @@ namespace Karata.Server.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<DateTime?>("Expiration")
-                        .IsRequired()
+                    b.Property<DateTime>("Expiration")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("SessionId")
@@ -163,6 +162,43 @@ namespace Karata.Server.Data.Migrations
                     b.ToTable("PersistedGrants", (string)null);
                 });
 
+            modelBuilder.Entity("Karata.Server.Models.Activity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ActorId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Link")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.ToTable("Activities");
+                });
+
             modelBuilder.Entity("Karata.Server.Models.Chat", b =>
                 {
                     b.Property<int>("Id")
@@ -176,6 +212,9 @@ namespace Karata.Server.Data.Migrations
 
                     b.Property<string>("SenderId")
                         .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Text")
                         .IsRequired()
@@ -240,6 +279,9 @@ namespace Karata.Server.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTimeOffset>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("GameId")
                         .HasColumnType("integer");
 
@@ -297,6 +339,9 @@ namespace Karata.Server.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatorId")
                         .IsRequired()
@@ -536,6 +581,35 @@ namespace Karata.Server.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Karata.Server.Models.Activity", b =>
+                {
+                    b.HasOne("Karata.Server.Models.User", "Actor")
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("System.Collections.Generic.Dictionary<string, object>", "Metadata", b1 =>
+                        {
+                            b1.Property<int>("ActivityId")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("ActivityId");
+
+                            b1.ToTable("Activities");
+
+                            b1.ToJson("Metadata");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ActivityId");
+                        });
+
+                    b.Navigation("Actor");
+
+                    b.Navigation("Metadata")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Karata.Server.Models.Chat", b =>
                 {
                     b.HasOne("Karata.Server.Models.Room", null)
@@ -585,11 +659,13 @@ namespace Karata.Server.Data.Migrations
                 {
                     b.HasOne("Karata.Server.Models.Game", null)
                         .WithOne("Result")
-                        .HasForeignKey("Karata.Server.Models.GameResult", "GameId");
+                        .HasForeignKey("Karata.Server.Models.GameResult", "GameId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Karata.Server.Models.User", "Winner")
                         .WithMany()
-                        .HasForeignKey("WinnerId");
+                        .HasForeignKey("WinnerId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Winner");
                 });
@@ -611,7 +687,7 @@ namespace Karata.Server.Data.Migrations
                             b1.Property<int>("HandId")
                                 .HasColumnType("integer");
 
-                            b1.Property<int>("Id")
+                            b1.Property<int>("__synthesizedOrdinal")
                                 .ValueGeneratedOnAdd()
                                 .HasColumnType("integer");
 
@@ -621,7 +697,7 @@ namespace Karata.Server.Data.Migrations
                             b1.Property<int>("Suit")
                                 .HasColumnType("integer");
 
-                            b1.HasKey("HandId", "Id");
+                            b1.HasKey("HandId", "__synthesizedOrdinal");
 
                             b1.ToTable("Hands");
 
@@ -686,6 +762,31 @@ namespace Karata.Server.Data.Migrations
 
                             b1.WithOwner()
                                 .HasForeignKey("TurnId");
+
+                            b1.OwnsMany("Karata.Cards.Card", "Cards", b2 =>
+                                {
+                                    b2.Property<int>("GameDeltaTurnId")
+                                        .HasColumnType("integer");
+
+                                    b2.Property<int>("__synthesizedOrdinal")
+                                        .ValueGeneratedOnAdd()
+                                        .HasColumnType("integer");
+
+                                    b2.Property<int>("Face")
+                                        .HasColumnType("integer");
+
+                                    b2.Property<int>("Suit")
+                                        .HasColumnType("integer");
+
+                                    b2.HasKey("GameDeltaTurnId", "__synthesizedOrdinal");
+
+                                    b2.ToTable("Turns");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("GameDeltaTurnId");
+                                });
+
+                            b1.Navigation("Cards");
                         });
 
                     b.OwnsMany("Karata.Cards.Card", "Cards", b1 =>
@@ -693,7 +794,7 @@ namespace Karata.Server.Data.Migrations
                             b1.Property<int>("TurnId")
                                 .HasColumnType("integer");
 
-                            b1.Property<int>("Id")
+                            b1.Property<int>("__synthesizedOrdinal")
                                 .ValueGeneratedOnAdd()
                                 .HasColumnType("integer");
 
@@ -703,7 +804,7 @@ namespace Karata.Server.Data.Migrations
                             b1.Property<int>("Suit")
                                 .HasColumnType("integer");
 
-                            b1.HasKey("TurnId", "Id");
+                            b1.HasKey("TurnId", "__synthesizedOrdinal");
 
                             b1.ToTable("Turns");
 

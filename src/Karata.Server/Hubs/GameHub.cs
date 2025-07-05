@@ -60,6 +60,7 @@ public class GameHub(
                     ResultType = GameResultType.SystemError,
                     ReasonType = MessageType.Error,
                     Reason = $"{user.UserName} disconnected. This game cannot proceed.",
+                    CompletedAt = DateTimeOffset.UtcNow
                 };
 
                 await context.SaveChangesAsync();
@@ -81,7 +82,7 @@ public class GameHub(
         if (await context.Rooms.FindAsync(Parse(roomId)) is not { } room)
             throw new Exception("Room not found.");
 
-        var chat = new Chat { Text = text, Sender = user };
+        var chat = new Chat { Text = text, Sender = user, SentAt = DateTimeOffset.UtcNow };
 
         room.Chats.Add(chat);
         await Clients.Group(roomId).ReceiveChat(chat.ToData());

@@ -8,4 +8,5 @@ public record GameResultData
     public required string Reason { get; init; }
     public required MessageType ReasonType { get; init; }
     public required GameResultType ResultType { get; init; }
+    public required DateTimeOffset CompletedAt { get; init; }
 }
