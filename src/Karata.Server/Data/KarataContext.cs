@@ -39,6 +39,7 @@ public class KarataContext(
         modelBuilder.Entity<Room>().Navigation(r => r.Chats).AutoInclude();
 
         // Game
+        modelBuilder.Entity<Game>().Property(g => g.Status).HasConversion<string>();
         modelBuilder.Entity<Game>()
             .HasOne(g => g.Result)
             .WithOne()
@@ -85,6 +86,8 @@ public class KarataContext(
         modelBuilder.Entity<Game>().Navigation(g => g.Hands).AutoInclude();
 
         // GameResult
+        modelBuilder.Entity<GameResult>().Property(gr => gr.ReasonType).HasConversion<string>();
+        modelBuilder.Entity<GameResult>().Property(gr => gr.ResultType).HasConversion<string>();
         modelBuilder
             .Entity<GameResult>()
             .HasOne(r => r.Winner)
@@ -104,7 +107,9 @@ public class KarataContext(
         modelBuilder.Entity<Hand>().Navigation(h => h.Turns).AutoInclude();
 
         // Turn
+        modelBuilder.Entity<Turn>().Property(t => t.Type).HasConversion<string>();
         modelBuilder.Entity<Turn>().OwnsMany(t => t.Cards, builder => builder.ToJson());
+        modelBuilder.Entity<Turn>().OwnsMany(t => t.Picked, builder => builder.ToJson());
         modelBuilder.Entity<Turn>().OwnsOne(t => t.Request, builder => builder.ToJson());
         modelBuilder.Entity<Turn>().OwnsOne(t => t.Delta, builder =>
         {
@@ -113,8 +118,9 @@ public class KarataContext(
         });
         
         // Activity
+        modelBuilder.Entity<Activity>().Property(a => a.Type).HasConversion<string>();
         modelBuilder.Entity<Activity>().HasOne(a => a.Actor).WithMany();
-        modelBuilder.Entity<Activity>().OwnsOne(t => t.Metadata, builder => builder.ToJson());
+        modelBuilder.Entity<Activity>().OwnsOne(a => a.Metadata, builder => builder.ToJson());
         modelBuilder.Entity<Activity>().Navigation(a => a.Actor).AutoInclude();
     }
 }

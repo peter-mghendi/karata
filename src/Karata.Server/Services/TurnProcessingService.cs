@@ -41,14 +41,14 @@ public class TurnProcessingService(
 
             engine.EnsureTurnIsValid();
             var delta = engine.GenerateTurnDelta();
-            var turn = new Turn { Cards = [..cards], Delta = delta };
+            var turn = new Turn { Cards = [..cards], Delta = delta, Type = TurnType.Play };
             logger.LogDebug("User {User} performed turn {Turn}.", CurrentPlayerId, JsonSerializer.Serialize(turn));
 
             await DetermineCardRequest(room, turn);
             ApplyTurnDelta(room, turn);
 
             await NotifyClientsOfGameState(player, turn);
-            await EnsurePendingCardsPicked(room);
+            await EnsurePendingCardsPicked(room, turn);
             await CheckRemainingCards(room, player, turn);
             
             room.Game.CurrentTurn = room.Game.NextTurn;
@@ -90,13 +90,13 @@ public class TurnProcessingService(
     {
         room.Game.Request = room.Game.RequestLevel switch
         {
-            CardRequest when turn.Delta.RemoveRequestLevels is 1 => None.Of(room.Game.Request!.Suit), // One cancels the card request, leaves the suit
-            CardRequest when turn.Delta.RemoveRequestLevels >= 2 => null, // Anything above 1 cancels a suit request
-            SuitRequest when turn.Delta.RemoveRequestLevels >= 1 => null, // Anything above 0 cancels a card request
+            CardRequest when turn.Delta!.RemoveRequestLevels is 1 => None.Of(room.Game.Request!.Suit), // One cancels the card request, leaves the suit
+            CardRequest when turn.Delta!.RemoveRequestLevels >= 2 => null, // Anything above 1 cancels a suit request
+            SuitRequest when turn.Delta!.RemoveRequestLevels >= 1 => null, // Anything above 0 cancels a card request
             _ => room.Game.Request
         };
 
-        var level = turn.Delta.RequestLevel;
+        var level = turn.Delta!.RequestLevel;
         if (level is NoRequest)
         {
             logger.LogDebug("No card request for level {RequestLevel} in room {Room}.", level, room.Id);
@@ -114,20 +114,20 @@ public class TurnProcessingService(
     private void ApplyTurnDelta(Room room, Turn turn)
     {
         room.Game.CurrentHand.Turns.Add(turn);
-        room.Game.CurrentHand.Cards.RemoveAll(turn.Delta.Cards.Contains);
-        turn.Delta.Cards.ForEach(room.Game.Pile.Push);
+        room.Game.CurrentHand.Cards.RemoveAll(turn.Delta!.Cards.Contains);
+        turn.Delta!.Cards.ForEach(room.Game.Pile.Push);
 
-        room.Game.IsReversed ^= turn.Delta.Reverse;
-        (room.Game.Give, room.Game.Pick) = (turn.Delta.Give, turn.Delta.Pick);
+        room.Game.IsReversed ^= turn.Delta!.Reverse;
+        (room.Game.Give, room.Game.Pick) = (turn.Delta!.Give, turn.Delta!.Pick);
     }
     
     private async Task NotifyClientsOfGameState(User player, Turn turn)
     {
         await Me.NotifyTurnProcessed();
-        await Everyone.MoveCardsFromHandToPile(player.ToData(), turn.Delta.Cards);
+        await Everyone.MoveCardsFromHandToPile(player.ToData(), turn.Delta!.Cards);
     }
 
-    private async Task EnsurePendingCardsPicked(Room room)
+    private async Task EnsurePendingCardsPicked(Room room, Turn turn)
     {
         if (room.Game.Pick <= 0) return;
 
@@ -148,7 +148,8 @@ public class TurnProcessingService(
         // Add cards to player hand and reset counter
         room.Game.Pick = 0;
         room.Game.CurrentHand.Cards.AddRange(dealt);
-        
+        turn.Picked = dealt;
+
         await Me.MoveCardsFromDeckToHand(dealt);
         await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
             .MoveCardCountFromDeckToHand(room.Game.CurrentHand.Player.ToData(), dealt.Count);
@@ -162,7 +163,7 @@ public class TurnProcessingService(
             return;
         }
 
-        if (room.Game.CurrentHand.IsLastCard && !turn.Delta.Cards.Last().IsSpecial())
+        if (room.Game.CurrentHand.IsLastCard && !turn.Delta!.Cards.Last().IsSpecial())
             throw new EndGameException(GameResult.Win(winner: player));
 
         await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).ReceiveSystemMessage(Messages.Cardless(player));

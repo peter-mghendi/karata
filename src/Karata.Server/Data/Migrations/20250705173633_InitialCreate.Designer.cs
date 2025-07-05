@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Karata.Server.Data.Migrations
 {
     [DbContext(typeof(KarataContext))]
-    [Migration("20250705145553_InitialCreate")]
+    [Migration("20250705173633_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -192,8 +192,9 @@ namespace Karata.Server.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -263,8 +264,9 @@ namespace Karata.Server.Data.Migrations
                     b.Property<Guid>("RoomId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -292,11 +294,13 @@ namespace Karata.Server.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("ReasonType")
-                        .HasColumnType("integer");
+                    b.Property<string>("ReasonType")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<int>("ResultType")
-                        .HasColumnType("integer");
+                    b.Property<string>("ResultType")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("WinnerId")
                         .HasColumnType("text");
@@ -376,6 +380,10 @@ namespace Karata.Server.Data.Migrations
 
                     b.Property<bool>("IsLastCard")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -817,6 +825,31 @@ namespace Karata.Server.Data.Migrations
                                 .HasForeignKey("TurnId");
                         });
 
+                    b.OwnsMany("Karata.Cards.Card", "Picked", b1 =>
+                        {
+                            b1.Property<int>("TurnId")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Face")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Suit")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("TurnId", "__synthesizedOrdinal");
+
+                            b1.ToTable("Turns");
+
+                            b1.ToJson("Picked");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TurnId");
+                        });
+
                     b.OwnsOne("Karata.Cards.Card", "Request", b1 =>
                         {
                             b1.Property<int>("TurnId")
@@ -840,8 +873,9 @@ namespace Karata.Server.Data.Migrations
 
                     b.Navigation("Cards");
 
-                    b.Navigation("Delta")
-                        .IsRequired();
+                    b.Navigation("Delta");
+
+                    b.Navigation("Picked");
 
                     b.Navigation("Request");
                 });
