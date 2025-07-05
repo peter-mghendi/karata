@@ -16,15 +16,15 @@ There is also a custom cards library [here](https://github.com/sixpeteunder/kara
 - [x] Real-time in-game chat.
 - [x] Real-time gameplay.
 - [x] Game logic.
+- [x] Activity Feed
 - [x] Password-protected rooms.
-- [ ] Configurable "fines" (off by default) - Trivial.
-- [ ] Player disconnection/reconnection handling - being tracked in [#8](https://github.com/sixpeteunder/karata/issues/8).
-- [ ] Resumable games - blocked by connection handling.
+- [ ] Fines for illegal moves
+- [ ] Player disconnection/reconnection handling [#8](https://github.com/sixpeteunder/karata/issues/8).
+- [ ] Resumable games.
 - [ ] Configurable rules.
-- [ ] Game replays - no progress.
-- [ ] Friend system - no progress.
-- [ ] Tournaments/Knockouts - no progress.
-- [ ] Feed - on [this page](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Web/Pages/Index.razor), maybe?
+- [ ] Game replays.
+- [ ] Friend system.
+- [ ] Tournaments/Knockouts.
 
 ## Rules
 
@@ -33,9 +33,6 @@ There is also a custom cards library [here](https://github.com/sixpeteunder/kara
 > I should probably add these to an in-game "rules" page.
 
 None of the sources I consulted could agree on a canonical set of rules (as they should) so I implemented some sensible defaults:
-
-> **Note**
-> I'm looking into a way to make the rules configurable without complicating the codebase too much.
 
 ### Basics
 - The game can only start and end with a non-special card (any card other than those described below).
