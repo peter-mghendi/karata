@@ -38,43 +38,11 @@ public class GameHub(
         {
             try
             {
-                switch (room.Game.Status)
-                {
-                    case GameStatus.Lobby:
-                        await membership.Create(room.Id, user.Id).LeaveAsync();
-                        break;
-                    case GameStatus.Ongoing:
-                        logger.LogDebug("Ending game in room {Room}.", room.Id.ToString());
-
-                        room.Game.Status = GameStatus.Over;
-                        room.Game.Result = new GameResult
-                        {
-                            ResultType = GameResultType.SystemError,
-                            ReasonType = MessageType.Error,
-                            Reason = $"{user.UserName} disconnected. This game cannot proceed.",
-                            CompletedAt = DateTimeOffset.UtcNow
-                        };
-
-                        await context.SaveChangesAsync();
-                        await Clients.Group(room.Id.ToString()).EndGame();
-                        break;
-                    case GameStatus.Over:
-                        logger.LogDebug(
-                            "Removing presence {User} for concluded game in room {Room}.", 
-                            user.Id, 
-                            room.Id.ToString()
-                        );
-                        
-                        presence.RemovePresence(user.Id, room.Id.ToString());
-                        break;
-                    default:
-                        logger.LogDebug("Room {Room} has game with unrecognized status: {Status}", room.Id, room.Game.Status);
-                        break;
-                }
+                await membership.Create(room.Id, user.Id).LeaveAsync();
             }
             catch (Exception e)
             {
-                logger.LogError(e, "Error while trying to end game in room {Room}.", room.Id);
+                logger.LogError(e, "Handling disconnect of user {User} from room {Room}.", user.Id, room.Id);
             }
         }
     }

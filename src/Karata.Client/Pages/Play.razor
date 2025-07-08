@@ -166,10 +166,10 @@
             .AddJsonProtocol()
             .Build();
 
-        _hub.On<UserData>("AddHandToRoom", user =>
+        _hub.On<UserData, HandStatus>("AddHandToRoom", (user, status) =>
         {
-            _store!.Mutate(new RoomState.AddHandToRoom(user));
-            Snackbar.Add($"{user.Email} has joined the room", Severity.Info);
+            _store!.Mutate(new RoomState.AddHandToRoom(user, status));
+            Snackbar.Add($"{user.Email} (Status: {status}) has joined the room", Severity.Info);
         });
 
         _hub.On<RoomData>("AddToRoom", room =>
@@ -182,8 +182,11 @@
             OnStoreChanged(room);
         });
 
-        // TODO: This is an implicit client disconnect, meaning the cleanup logic is in OnDisconnectedAsync. Review this. 
-        _hub.On("EndGame", () => Navigator.NavigateTo($"/game/{_store!.State.Id.ToString()}/over"));
+        _hub.On("EndGame", async () =>
+        {
+            await _hub.StopAsync();
+            Navigator.NavigateTo($"/game/{_store!.State.Id.ToString()}/over");
+        });
         
         _hub.On<UserData, int>("MoveCardCountFromDeckToHand", (user, num) => _store!.Mutate(new RoomState.MoveCardCountFromDeckToHand(user, num)));
 
@@ -238,13 +241,14 @@
 
         _hub.On("ReclaimPile", () => _store!.Mutate(new RoomState.ReclaimPile()));
         
-        // TODO: Redirect somewhere depending on game state / disconnect to clean up server-side state.
-        _hub.On("RemoveFromRoom", () =>
+        _hub.On("RemoveFromRoom", async () =>
         {
             _store!.Forget(OnStoreChanged);
             _store = null;
 
             StateHasChanged();
+
+            await _hub.StopAsync();
             Navigator.NavigateTo("/game/join");
         });
 
@@ -261,7 +265,13 @@
         _hub.On<GameStatus>("UpdateGameStatus", status =>
         {
             _store!.Mutate(new RoomState.UpdateGameStatus(status));
-            if (status == GameStatus.Ongoing) Snackbar.Add("The game has started.", Severity.Info);
+            Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info);
+        });
+
+        _hub.On<UserData, HandStatus>("UpdateHandStatus", (user, status) =>
+        {
+            _store!.Mutate(new RoomState.UpdateHandStatus(user, status));
+            Snackbar.Add($"{user.Email} has {status.ToString().ToLower()}.", Severity.Info);
         });
 
         _hub.On<uint>("UpdatePick", num => _store!.Mutate(new RoomState.UpdatePick(num)));
@@ -278,8 +288,6 @@
         await _hub.StartAsync();
         await _hub.SendAsync("JoinRoom", Id, "");
     }
-
-    // TODO: Move these into services then have things like <... OnSend="ChatService.Send" ... />
 
     async Task LeaveRoom() => await _hub!.SendAsync("LeaveRoom", _store!.State.Id);
 

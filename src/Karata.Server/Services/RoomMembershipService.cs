@@ -11,7 +11,7 @@ public partial class RoomMembershipService (
     IPasswordService passwords,
     KarataContext context,
     PresenceService presence,
+    TurnManagementService turns,
     UserManager<User> users,
     Guid room,
-    string player
-) : HubAwareService(hub, room, player);
+    string player) : HubAwareService(hub, room, player);

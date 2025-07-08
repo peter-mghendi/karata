@@ -99,9 +99,10 @@ public class KarataContext(
         modelBuilder.Entity<GameResult>().Navigation(r => r.Winner).AutoInclude();
         
         // Hand
+        modelBuilder.Entity<Hand>().Property(h => h.Status).HasConversion<string>();
         modelBuilder.Entity<Hand>()
             .HasMany(h => h.Turns)
-            .WithOne()
+            .WithOne(t => t.Hand)
             .HasForeignKey(t => t.HandId)
             .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Hand>().OwnsMany(h => h.Cards, builder => builder.ToJson());

@@ -5,6 +5,7 @@ namespace Karata.Server.Models;
 public class Hand
 {
     public int Id { get; init; }
+    public required HandStatus Status { get; set; }
     public List<Card> Cards { get; init; } = [];
     public bool IsLastCard { get; set; }
     public int GameId { get; init; }
@@ -13,6 +14,7 @@ public class Hand
 
     public HandData ToData() => new()
     {
+        Status = Status,
         Cards = Cards,
         User = Player.ToData(),
     };

@@ -3,6 +3,7 @@ using System;
 using Karata.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Karata.Server.Data.Migrations
 {
     [DbContext(typeof(KarataContext))]
-    partial class KarataContextModelSnapshot : ModelSnapshot
+    [Migration("20250708174928_AddStatusToHand")]
+    partial class AddStatusToHand
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -381,9 +384,6 @@ namespace Karata.Server.Data.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("HandId")
                         .HasColumnType("integer");
@@ -754,7 +754,7 @@ namespace Karata.Server.Data.Migrations
 
             modelBuilder.Entity("Karata.Server.Models.Turn", b =>
                 {
-                    b.HasOne("Karata.Server.Models.Hand", "Hand")
+                    b.HasOne("Karata.Server.Models.Hand", null)
                         .WithMany("Turns")
                         .HasForeignKey("HandId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -892,8 +892,6 @@ namespace Karata.Server.Data.Migrations
                     b.Navigation("Cards");
 
                     b.Navigation("Delta");
-
-                    b.Navigation("Hand");
 
                     b.Navigation("Picked");
 

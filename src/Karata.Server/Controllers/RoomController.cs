@@ -15,7 +15,8 @@ public class RoomController(KarataContext context) : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<RoomData>> Get(string id)
     {
-        // TODO: Check if the room has a password (or if current user is already a member), and if one is provided, check if it's correct
+        // TODO: Should a user need the password to GET this game or only to join it?
+        // Maybe auth can be done on visibility + membership
         if (!Guid.TryParse(id, out var guid)) return BadRequest();
         var room = await context.Rooms.FindAsync(guid);
 
@@ -31,7 +32,7 @@ public class RoomController(KarataContext context) : ControllerBase
         if (user is null) return Unauthorized();
 
         var room = new Room { Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow };
-        room.Game.Hands.Add(new Hand { Player = user });
+        room.Game.Hands.Add(new Hand { Player = user, Status = HandStatus.Disconnected});
 
         // if (!string.IsNullOrWhiteSpace(password))
         // {

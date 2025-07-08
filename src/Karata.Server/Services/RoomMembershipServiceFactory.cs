@@ -11,11 +11,12 @@ public class RoomMembershipServiceFactory(
     IPasswordService passwords,
     KarataContext context,
     PresenceService presence,
+    TurnManagementService turns,
     UserManager<User> users
 )
 {
     public RoomMembershipService Create(Guid room, string player)
     {
-        return new RoomMembershipService(hub, passwords, context, presence, users, room, player);
+        return new RoomMembershipService(hub, passwords, context, presence, turns, users, room, player);
     }
 }

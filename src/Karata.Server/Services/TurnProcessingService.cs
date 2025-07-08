@@ -6,10 +6,12 @@ using Karata.Server.Hubs;
 using Karata.Server.Hubs.Clients;
 using Karata.Server.Support;
 using Karata.Server.Support.Exceptions;
+using Karata.Shared.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Server.Models.CardRequestLevel;
+using static Karata.Server.Models.TurnType;
 using static Karata.Shared.Models.GameStatus;
 
 namespace Karata.Server.Services;
@@ -22,6 +24,7 @@ public class TurnProcessingService(
     ILogger<TurnProcessingService> logger,
     KarataContext context,
     KarataEngineFactory factory,
+    TurnManagementService turns,
     UserManager<User> users,
     Guid room,
     string player,
@@ -41,7 +44,14 @@ public class TurnProcessingService(
 
             engine.EnsureTurnIsValid();
             var delta = engine.GenerateTurnDelta();
-            var turn = new Turn { Cards = [..cards], Delta = delta, Type = TurnType.Play };
+            var turn = new Turn
+            {
+                Cards = [..cards],
+                Delta = delta,
+                Type = Play,
+                Hand = room.Game.CurrentHand,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
             logger.LogDebug("User {User} performed turn {Turn}.", CurrentPlayerId, JsonSerializer.Serialize(turn));
 
             await DetermineCardRequest(room, turn);
@@ -51,7 +61,7 @@ public class TurnProcessingService(
             await EnsurePendingCardsPicked(room, turn);
             await CheckRemainingCards(room, player, turn);
             
-            room.Game.CurrentTurn = room.Game.NextTurn;
+            turns.Advance(room.Game);
 
             await Room.UpdatePick(room.Game.Give);
             await Room.UpdateTurn(room.Game.CurrentTurn);
@@ -81,7 +91,10 @@ public class TurnProcessingService(
     
     private void ValidateGameState(Room room)
     {
-        if (room.Game.Status is not Ongoing) throw new GameHasNotStartedException();
+        if (room.Game.Status is Lobby) throw new GameNotStartedException();
+        if (room.Game.Status is Over) throw new GameOverException();
+        if (room.Game.Hands.Count(hand => hand.Status is HandStatus.Connected) < 2) 
+            throw new InsufficientPlayersException();
 
         if (room.Game.CurrentHand.Player.Id != CurrentPlayerId) throw new NotYourTurnException();
     }

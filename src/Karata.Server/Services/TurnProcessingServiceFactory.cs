@@ -12,12 +12,13 @@ public class TurnProcessingServiceFactory(
     ILoggerFactory loggers,
     KarataContext context,
     KarataEngineFactory factory,
+    TurnManagementService turns,
     UserManager<User> users
 )
 {
     public TurnProcessingService Create(Guid room, string player, string connection)
     {
         var logger = loggers.CreateLogger<TurnProcessingService>();
-        return new TurnProcessingService(hub, logger, context, factory, users, room, player, connection);
+        return new TurnProcessingService(hub, logger, context, factory, turns, users, room, player, connection);
     }
 }

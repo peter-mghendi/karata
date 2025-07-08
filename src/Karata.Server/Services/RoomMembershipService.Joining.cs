@@ -1,6 +1,7 @@
 using System.Text;
 using Karata.Server.Support.Exceptions;
 using Karata.Shared.Models;
+using static Karata.Shared.Models.HandStatus;
 
 namespace Karata.Server.Services;
 
@@ -10,16 +11,46 @@ public partial class RoomMembershipService
     {
         var player = (await users.FindByIdAsync(CurrentPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
-        var hand = new Hand { Player = player };
         
-        ValidateJoiningGameState(room, password);
-        AddPresence(room, hand);
+        ValidateJoiningGameState(room, player, password);
+        presence.AddPresence(player.Id, room.Id.ToString());
         
-        await NotifyPlayerJoined(room, hand, connection);
+        switch (room.Game.Status)
+        {
+            case GameStatus.Lobby when room.Game.Hands.SingleOrDefault(h => h.Player.Id == player.Id) is {} joined:
+                joined.Status = Connected;
+
+                await AddToRoom(connection);
+                await Me.AddToRoom(room.ToData());
+                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
+                    .UpdateHandStatus(joined.Player.ToData(), joined.Status);
+                break;
+            case GameStatus.Lobby:
+                var hand = new Hand { Player = player, Status = Connected };
+                room.Game.Hands.Add(hand);
+
+                await AddToRoom(connection);
+                await Me.AddToRoom(room.ToData());
+                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
+                    .AddHandToRoom(hand.Player.ToData(), hand.Status);
+                break;
+            case GameStatus.Ongoing:
+                var rejoined = room.Game.Hands.Single(h => h.Player.Id == player.Id);
+                rejoined.Status = Connected;
+                
+                await AddToRoom(connection);
+                await Me.AddToRoom(room.ToData());
+                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).UpdateHandStatus(rejoined.Player.ToData(), Connected);
+                break;
+            case GameStatus.Over:
+                break;
+        }
+
+
         await context.SaveChangesAsync();
     }
 
-    private void ValidateJoiningGameState(Room room, string? password)
+    private void ValidateJoiningGameState(Room room, User player, string? password)
     {
         if (room.Hash is not null)
         {
@@ -34,33 +65,14 @@ public partial class RoomMembershipService
             }
         }
 
-        // Check game status
-        if (room.Game.Status == GameStatus.Ongoing)
+        switch (room.Game.Status)
         {
-            throw new GameOngoingException();
+            case GameStatus.Lobby when room.Game.Hands.Count >= 4:
+                throw new GameFullException();
+            case GameStatus.Ongoing when room.Game.Hands.All(h => h.Player != player):
+                throw new GameOngoingException();
+            case GameStatus.Over:
+                throw new GameOverException();
         }
-
-        // Check player count
-        if (room.Game.Hands.Count >= 4)
-        {
-            throw new GameFullException();
-        }
-    }
-
-    private void AddPresence(Room room, Hand hand)
-    {
-        presence.AddPresence(hand.Player.Id, room.Id.ToString());
-
-        if (room.Game.Hands.All(h => h.Player.Id != hand.Player.Id))
-        {
-            room.Game.Hands.Add(hand);
-        }
-    }
-
-    private async Task NotifyPlayerJoined(Room room, Hand hand, string connection)
-    {
-        await AddToRoom(connection);
-        await Me.AddToRoom(room.ToData());
-        await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).AddHandToRoom(hand.Player.ToData());
     }
 }

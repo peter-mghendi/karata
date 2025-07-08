@@ -1,4 +1,5 @@
 using Karata.Shared.Models;
+using static Karata.Shared.Models.HandStatus;
 
 namespace Karata.Server.Models;
 
@@ -12,6 +13,12 @@ public class Room
     public byte[]? Hash { get; init; }
     public byte[]? Salt { get; init; }
     public List<Chat> Chats { get; init; } = [];
+
+    public User? NextEligibleAdministrator => Game.Hands
+        .Where(hand => hand.Status is Connected)
+        .OrderBy(hand => hand.Id)
+        .FirstOrDefault()?
+        .Player;
 
     public RoomData ToData() => new()
     {
