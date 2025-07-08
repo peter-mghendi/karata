@@ -6,7 +6,7 @@ namespace Karata.Server.Services;
 
 public partial class RoomMembershipService
 {
-    public async Task JoinAsync(string? password)
+    public async Task JoinAsync(string connection, string? password)
     {
         var player = (await users.FindByIdAsync(CurrentPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
@@ -15,7 +15,7 @@ public partial class RoomMembershipService
         ValidateJoiningGameState(room, password);
         AddPresence(room, hand);
         
-        await NotifyPlayerJoined(room, hand);
+        await NotifyPlayerJoined(room, hand, connection);
         await context.SaveChangesAsync();
     }
 
@@ -57,9 +57,9 @@ public partial class RoomMembershipService
         }
     }
 
-    private async Task NotifyPlayerJoined(Room room, Hand hand)
+    private async Task NotifyPlayerJoined(Room room, Hand hand, string connection)
     {
-        await AddToRoom(ConnectionId);
+        await AddToRoom(connection);
         await Me.AddToRoom(room.ToData());
         await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).AddHandToRoom(hand.Player.ToData());
     }

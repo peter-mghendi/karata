@@ -14,8 +14,8 @@ public class RoomMembershipServiceFactory(
     UserManager<User> users
 )
 {
-    public RoomMembershipService Create(Guid room, string player, string connection)
+    public RoomMembershipService Create(Guid room, string player)
     {
-        return new RoomMembershipService(hub, passwords, context, presence, users, room, player, connection);
+        return new RoomMembershipService(hub, passwords, context, presence, users, room, player);
     }
 }

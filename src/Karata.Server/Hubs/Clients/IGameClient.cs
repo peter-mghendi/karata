@@ -52,6 +52,9 @@ public interface IGameClient
     // Sets the current card request
     Task SetCurrentRequest(Card? request);
     
+    // Updates the room administrator
+    Task UpdateAdministrator(UserData administrator);
+    
     // Updates the game status
     Task UpdateGameStatus(GameStatus status);
     

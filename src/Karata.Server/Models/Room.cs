@@ -5,7 +5,8 @@ namespace Karata.Server.Models;
 public class Room
 {
     public Guid Id { get; init; }
-    public required User Creator { get; init; }
+    public required User Administrator { get; set; }
+    public required User Creator { get; set; }
     public Game Game { get; init; } = new();
     public required DateTimeOffset CreatedAt { get; set; }
     public byte[]? Hash { get; init; }
@@ -16,6 +17,7 @@ public class Room
     {
         Id = Id,
         CreatedAt = CreatedAt,
+        Administrator = Administrator.ToData(),
         Creator = Creator.ToData(),
         Game = Game.ToData(),
         Chats = Chats.Select(c => c.ToData()).ToList()

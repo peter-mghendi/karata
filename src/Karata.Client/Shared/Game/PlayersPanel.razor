@@ -3,10 +3,10 @@
     {
         <MudListItem Value="@hand.User">
             @hand.User.Email
-            @if (hand.User == Room.Creator)
+            @if (hand.User == Room.Administrator)
             {
                 <MudChip Icon="@Icons.Material.Rounded.Security" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">
-                    Creator
+                    Admin
                 </MudChip>
             }
             @if (hand.User == Me)

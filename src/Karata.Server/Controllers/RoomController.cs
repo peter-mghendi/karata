@@ -30,7 +30,7 @@ public class RoomController(KarataContext context) : ControllerBase
         var user = await userManager.FindByIdAsync(userId);
         if (user is null) return Unauthorized();
 
-        var room = new Room { Creator = user, CreatedAt = DateTimeOffset.UtcNow };
+        var room = new Room { Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow };
         room.Game.Hands.Add(new Hand { Player = user });
 
         // if (!string.IsNullOrWhiteSpace(password))

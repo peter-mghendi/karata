@@ -26,7 +26,7 @@ public class TurnProcessingService(
     Guid room,
     string player,
     string connection
-) : HubAwareService(hub, room, player, connection)
+) : HubAwareService(hub, room, player)
 {
     public async Task ExecuteAsync(List<Card> cards)
     {
@@ -53,8 +53,8 @@ public class TurnProcessingService(
             
             room.Game.CurrentTurn = room.Game.NextTurn;
 
-            await Everyone.UpdatePick(room.Game.Give);
-            await Everyone.UpdateTurn(room.Game.CurrentTurn);
+            await Room.UpdatePick(room.Game.Give);
+            await Room.UpdateTurn(room.Game.CurrentTurn);
             await context.SaveChangesAsync();
         }
         catch (EndGameException exception)
@@ -73,9 +73,9 @@ public class TurnProcessingService(
             
             await context.SaveChangesAsync();
             await Me.NotifyTurnProcessed();
-            await Everyone.ReceiveSystemMessage(Messages.GameOver(exception.Result));
-            await Everyone.UpdateGameStatus(Over);
-            await Everyone.EndGame();
+            await Room.ReceiveSystemMessage(Messages.GameOver(exception.Result));
+            await Room.UpdateGameStatus(Over);
+            await Room.EndGame();
         }
     }
     
@@ -100,15 +100,15 @@ public class TurnProcessingService(
         if (level is NoRequest)
         {
             logger.LogDebug("No card request for level {RequestLevel} in room {Room}.", level, room.Id);
-            await Everyone.SetCurrentRequest(room.Game.Request);
+            await Room.SetCurrentRequest(room.Game.Request);
             return;
         }
 
-        turn.Request = await Prompt.PromptCardRequest(specific: level is CardRequest);
+        turn.Request = await Client(connection).PromptCardRequest(specific: level is CardRequest);
         logger.LogDebug("Requested {Request} for level {RequestLevel} in room {Room}.", turn.Request, level, room.Id);
         
         room.Game.Request = turn.Request;
-        await Everyone.SetCurrentRequest(room.Game.Request);
+        await Room.SetCurrentRequest(room.Game.Request);
     }
 
     private void ApplyTurnDelta(Room room, Turn turn)
@@ -124,7 +124,7 @@ public class TurnProcessingService(
     private async Task NotifyClientsOfGameState(User player, Turn turn)
     {
         await Me.NotifyTurnProcessed();
-        await Everyone.MoveCardsFromHandToPile(player.ToData(), turn.Delta!.Cards);
+        await Room.MoveCardsFromHandToPile(player.ToData(), turn.Delta!.Cards);
     }
 
     private async Task EnsurePendingCardsPicked(Room room, Turn turn)
@@ -138,7 +138,7 @@ public class TurnProcessingService(
 
             // Reclaim pile
             room.Game.Pile.Reclaim().ToList().ForEach(room.Game.Deck.Push);
-            await Everyone.ReclaimPile();
+            await Room.ReclaimPile();
 
             // Shuffle & deal
             room.Game.Deck.Shuffle();
@@ -171,7 +171,7 @@ public class TurnProcessingService(
 
     private async Task DetermineLastCardStatus(Room room, Turn turn)
     {
-        turn.IsLastCard = await Prompt.PromptLastCardRequest();
+        turn.IsLastCard = await Client(connection).PromptLastCardRequest();
         if (turn.IsLastCard)
         {
             room.Game.CurrentHand.IsLastCard = true;

@@ -18,6 +18,7 @@ public class GameHub(
     ILogger<GameHub> logger,
     KarataContext context,
     PresenceService presence,
+    RoomMembershipServiceFactory membership,
     UserManager<User> users
 ) : Hub<IGameClient>
 {
@@ -33,43 +34,47 @@ public class GameHub(
         if (!presence.TryGetPresence(user.Id, out var rooms) || rooms is null) return;
         
         var ids = rooms.Select(Parse);
-        await foreach (var room in context.Rooms.Where(r => ids.Contains(r.Id)).AsAsyncEnumerable())
+        foreach (var room in await context.Rooms.Where(r => ids.Contains(r.Id)).ToListAsync())
         {
             try
             {
-                if (room.Game.Status is GameStatus.Over)
+                switch (room.Game.Status)
                 {
-                    
-                    room.Game.Hands.ForEach(hand =>
-                    {
+                    case GameStatus.Lobby:
+                        await membership.Create(room.Id, user.Id).LeaveAsync();
+                        break;
+                    case GameStatus.Ongoing:
+                        logger.LogDebug("Ending game in room {Room}.", room.Id.ToString());
+
+                        room.Game.Status = GameStatus.Over;
+                        room.Game.Result = new GameResult
+                        {
+                            ResultType = GameResultType.SystemError,
+                            ReasonType = MessageType.Error,
+                            Reason = $"{user.UserName} disconnected. This game cannot proceed.",
+                            CompletedAt = DateTimeOffset.UtcNow
+                        };
+
+                        await context.SaveChangesAsync();
+                        await Clients.Group(room.Id.ToString()).EndGame();
+                        break;
+                    case GameStatus.Over:
                         logger.LogDebug(
                             "Removing presence {User} for concluded game in room {Room}.", 
-                            hand.Player.Id, 
+                            user.Id, 
                             room.Id.ToString()
                         );
-                        presence.RemovePresence(hand.Player.Id, room.Id.ToString());
-                    });
-                    continue;
+                        
+                        presence.RemovePresence(user.Id, room.Id.ToString());
+                        break;
+                    default:
+                        logger.LogDebug("Room {Room} has game with unrecognized status: {Status}", room.Id, room.Game.Status);
+                        break;
                 }
-
-                logger.LogDebug("Ending game in room {Room}.", room.Id.ToString());
-
-                room.Game.Status = GameStatus.Over;
-                room.Game.Result = new GameResult
-                {
-                    ResultType = GameResultType.SystemError,
-                    ReasonType = MessageType.Error,
-                    Reason = $"{user.UserName} disconnected. This game cannot proceed.",
-                    CompletedAt = DateTimeOffset.UtcNow
-                };
-
-                await context.SaveChangesAsync();
-                await Clients.Group(room.Id.ToString()).EndGame();
             }
             catch (Exception e)
             {
-                logger.LogError(e, "Error while trying to end game.");
-                throw;
+                logger.LogError(e, "Error while trying to end game in room {Room}.", room.Id);
             }
         }
     }
@@ -94,7 +99,7 @@ public class GameHub(
         try
         {
             logger.LogDebug("User {User} is joining room {Room}.", Context.UserIdentifier, roomId);
-            await factory.Create(Parse(roomId), Context.UserIdentifier!, Context.ConnectionId).JoinAsync(password);
+            await factory.Create(Parse(roomId), Context.UserIdentifier!).JoinAsync(Context.ConnectionId, password);
         }
         catch (KarataException exception)
         {
@@ -107,7 +112,7 @@ public class GameHub(
         try
         {
             logger.LogDebug("User {User} is leaving room {Room}.", Context.UserIdentifier, roomId);
-            await factory.Create(Parse(roomId), Context.UserIdentifier!, Context.ConnectionId).LeaveAsync();
+            await factory.Create(Parse(roomId), Context.UserIdentifier!).LeaveAsync();
         }
         catch (KarataException exception)
         {
@@ -120,7 +125,7 @@ public class GameHub(
         try
         {
             logger.LogDebug("User {User} is starting the game in room {Room}.", Context.UserIdentifier, roomId);
-            await factory.Create(Parse(roomId), Context.UserIdentifier!, Context.ConnectionId).ExecuteAsync();
+            await factory.Create(Parse(roomId), Context.UserIdentifier!).ExecuteAsync();
         }
         catch (KarataException exception)
         {

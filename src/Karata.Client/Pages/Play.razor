@@ -91,9 +91,9 @@
                             }
                             else
                             {
-                                <MudTooltip Text="@(IsCreator ? "Start Game" : "Only the creator can start the game.")">
+                                <MudTooltip Text="@(IsAdministrator ? "Start Game" : "Only the admin can start the game.")">
                                     <MudIconButton Icon="@Icons.Material.Rounded.PlayArrow" Color="Color.Inherit"
-                                                   OnClick="StartGame" Disabled="!IsCreator"/>
+                                                   OnClick="StartGame" Disabled="!IsAdministrator"/>
                                 </MudTooltip>
                             }
 
@@ -141,7 +141,7 @@
     private bool _table;
     private HubConnection? _hub;
     private readonly List<Card> _turn = [];
-    private bool IsCreator => _store?.MyHand.User == _store?.State.Creator;
+    private bool IsAdministrator => _store?.MyHand.User == _store?.State.Administrator;
 
     private RoomState? _store;
 
@@ -238,12 +238,14 @@
 
         _hub.On("ReclaimPile", () => _store!.Mutate(new RoomState.ReclaimPile()));
         
+        // TODO: Redirect somewhere depending on game state / disconnect to clean up server-side state.
         _hub.On("RemoveFromRoom", () =>
         {
             _store!.Forget(OnStoreChanged);
             _store = null;
 
             StateHasChanged();
+            Navigator.NavigateTo("/game/join");
         });
 
         _hub.On<UserData>("RemoveHandFromRoom", user =>
@@ -254,6 +256,14 @@
 
         _hub.On<Card>("SetCurrentRequest", request => _store!.Mutate(new RoomState.SetCurrentRequest(request)));
         
+        _hub.On<UserData>("UpdateAdministrator", administrator => _store!.Mutate(new RoomState.UpdateAdministrator(administrator)));
+
+        _hub.On<GameStatus>("UpdateGameStatus", status =>
+        {
+            _store!.Mutate(new RoomState.UpdateGameStatus(status));
+            if (status == GameStatus.Ongoing) Snackbar.Add("The game has started.", Severity.Info);
+        });
+
         _hub.On<uint>("UpdatePick", num => _store!.Mutate(new RoomState.UpdatePick(num)));
 
         _hub.On<int>("UpdateTurn", turn =>
@@ -263,12 +273,6 @@
             var current = _store!.State.Game.CurrentHand.User.Email;
             var possessive = current == username ? "your" : $"{current}'s";
             Snackbar.Add($"It is now {possessive} turn.", Severity.Info);
-        });
-
-        _hub.On<GameStatus>("UpdateGameStatus", status =>
-        {
-            _store!.Mutate(new RoomState.UpdateGameStatus(status));
-            if (status == GameStatus.Ongoing) Snackbar.Add("The game has started.", Severity.Info);
         });
 
         await _hub.StartAsync();

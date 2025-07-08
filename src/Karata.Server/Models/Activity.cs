@@ -16,10 +16,10 @@ public class Activity
     public static Activity GameCreated(Room room) => new()
     {
         Type = ActivityType.GameCreated,
-        Text = $"{room.Creator} has started a game.",
+        Text = $"{room.Creator.UserName} has started a game.",
         Action = "Join",
         Link = $"/game/{room.Id.ToString()}/play",
-        Metadata = new Dictionary<string, object>(),
+        Metadata = new Dictionary<string, object> { ["room"] = room.Id },
         CreatedAt = room.CreatedAt,
         Actor = room.Creator
     };
@@ -27,12 +27,12 @@ public class Activity
     public static Activity GameWon(Room room) => new()
     {
         Type = ActivityType.GameWon,
-        Text = $"{room.Creator} has just won a game.",
+        Text = $"{room.Game.Result!.Winner!.UserName} has just won a game.",
         Action = "See results",
         Link = $"/game/{room.Id.ToString()}/over",
-        Metadata = new Dictionary<string, object>(),
+        Metadata = new Dictionary<string, object> { ["room"] = room.Id },
         CreatedAt = room.Game.Result!.CompletedAt,
-        Actor = room.Creator
+        Actor = room.Game.Result!.Winner!
     };
 
     public ActivityData ToData() => new()

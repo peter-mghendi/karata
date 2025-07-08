@@ -26,6 +26,7 @@ public class KarataContext(
         JsonSerializerOptions options = new(JsonSerializerDefaults.Web);
 
         // Room
+        modelBuilder.Entity<Room>().HasOne(r => r.Administrator).WithMany();
         modelBuilder.Entity<Room>().HasOne(r => r.Creator).WithMany();
         modelBuilder.Entity<Room>()
             .HasOne(r => r.Game)
@@ -34,6 +35,7 @@ public class KarataContext(
             .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Room>().HasMany(r => r.Chats).WithOne();
 
+        modelBuilder.Entity<Room>().Navigation(r => r.Administrator).AutoInclude();
         modelBuilder.Entity<Room>().Navigation(r => r.Creator).AutoInclude();
         modelBuilder.Entity<Room>().Navigation(r => r.Game).AutoInclude();
         modelBuilder.Entity<Room>().Navigation(r => r.Chats).AutoInclude();

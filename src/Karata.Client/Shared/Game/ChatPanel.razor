@@ -10,11 +10,11 @@
         <MudListItem>
             <div class="d-flex align-center">
                 <MudText>@message.Sender.Email</MudText>
-                @if (message.Sender == Room.Creator)
+                @if (message.Sender == Room.Administrator)
                 {
                     <MudChip Icon="@Icons.Material.Rounded.Security" Variant="Variant.Text" Color="Color.Primary"
                              Size="Size.Small">
-                        Creator
+                        Admin
                     </MudChip>
                 }
 
