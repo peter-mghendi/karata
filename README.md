@@ -1,7 +1,5 @@
 [![Build + Test](https://github.com/sixpeteunder/karata/actions/workflows/dotnet.yml/badge.svg)](https://github.com/sixpeteunder/karata/actions/workflows/dotnet.yml)
 
-> STATUS: Currently making [connection handling](https://github.com/sixpeteunder/karata/issues/8) more robust.
-
 # karata
 
 > Karata (cards) is a Swahili word that refers to both the Kenyan game of cards and the cards used to play it.
@@ -18,13 +16,13 @@ There is also a custom cards library [here](https://github.com/sixpeteunder/kara
 - [x] Game logic.
 - [x] Activity Feed
 - [x] Password-protected rooms.
-- [ ] Fines for illegal moves
-- [ ] Player disconnection/reconnection handling [#8](https://github.com/sixpeteunder/karata/issues/8).
-- [ ] Resumable games.
+- [x] Player disconnection/reconnection handling.
+- [x] Resumable games.
 - [ ] Configurable rules.
 - [ ] Game replays.
 - [ ] Friend system.
 - [ ] Tournaments/Knockouts.
+- [ ] Fines for illegal moves.
 
 ## Rules
 
