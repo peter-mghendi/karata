@@ -14,8 +14,17 @@ public partial class RoomMembershipService
         switch (room.Game.Status)
         {
             case GameStatus.Lobby:
-                room.Game.Hands.Remove(hand);
-                await RedelegateAdministration(room,  hand);
+
+                if (room.Game.Hands.Count > 1)
+                {
+                    await RedelegateAdministration(room, hand);
+                    room.Game.Hands.Remove(hand);
+                }
+                else
+                {
+                    room.Game.Hands.Single(h => h.Player.Id == player.Id).Status = Disconnected;
+                }
+                
                 presence.RemovePresence(CurrentPlayerId, room.Id.ToString());
                 
                 await Me.RemoveFromRoom();

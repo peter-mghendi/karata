@@ -2,36 +2,36 @@
 
 @inject ISnackbar Snackbar 
 
-<MudList Clickable="true">
-    <MudListItem OnClick="CopyInviteLink">
+<MudList T="string">
+    <MudListItem Value="@Room.Id.ToString()" OnClick="CopyInviteLink">
         <MudText Typo="Typo.caption">Room ID (Click to Copy)</MudText>
-        <MudText Typo="Typo.body1" Class="grey-text">@Room.Id.ToString()</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Room.Id.ToString()</MudText>
     </MudListItem>
-    <MudListItem>
+    <MudListItem Value="@Room.CreatedAt.ToLocalTime().ToString()">
         <MudText Typo="Typo.caption">Created At</MudText>
-        <MudText Typo="Typo.body1" Class="grey-text">@Room.CreatedAt.ToLocalTime().ToString()</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Room.CreatedAt.ToLocalTime().ToString()</MudText>
     </MudListItem>
-    <MudListItem>
+    <MudListItem Value="@Room.Administrator.Email">
         <MudText Typo="Typo.caption">Room Admin</MudText>
-        <MudText Typo="Typo.body1" Class="grey-text">@Room.Administrator.Email</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Room.Administrator.Email</MudText>
     </MudListItem>
-    <MudListItem>
+    <MudListItem Value="@Room.Creator.Email">
         <MudText Typo="Typo.caption">Room Creator</MudText>
-        <MudText Typo="Typo.body1" Class="grey-text">@Room.Creator.Email</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Room.Creator.Email</MudText>
     </MudListItem>
-    <MudListItem>
+    <MudListItem Value="@(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.User.Email : "---")">
         <MudText Typo="Typo.caption">Current Turn</MudText>
-        <MudText Typo="Typo.body1" Class="grey-text">
+        <MudText Typo="Typo.body1" Class="gray-text">
             @(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.User.Email : "---")
         </MudText>
     </MudListItem>
-    <MudListItem>
+    <MudListItem Value="@Game.Hands.Count.ToString()">
         <MudText Typo="Typo.caption">Players</MudText>
-        <MudText Typo="Typo.body1" Class="grey-text">@Game.Hands.Count</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Game.Hands.Count</MudText>
     </MudListItem>
-    <MudListItem>
+    <MudListItem Value="@Game.Status.ToString()">
         <MudText Typo="Typo.caption">Status</MudText>
-        <MudText Typo="Typo.body1" Class="grey-text">@Game.Status</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Game.Status</MudText>
     </MudListItem>
 </MudList>
 

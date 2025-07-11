@@ -6,24 +6,24 @@
 <div id="table" class="mud-width-full mud-height-full relative teal rounded mud-elevation-1">
     @* Me *@
     <div id="bottom" class="absolute">
-        <HandComponent Cards="@CurrentHand" FaceUp="true" OnCardSelected="AddCardToTurn" />
+        <HandComponent FaceUp Cards="@CurrentHand" OnCardSelected="AddCardToTurn" />
     </div>
 
     @* Current Turn *@
     <div id="turn" class="absolute">
-        <HandComponent Cards="@Turn" FaceUp="true" OnCardSelected="RemoveCardFromTurn" />
+        <HandComponent FaceUp Cards="@Turn" OnCardSelected="RemoveCardFromTurn" />
     </div>
 
     @* Player 2 *@
     <div id="top" class="absolute">
-        <HandComponent Cards="@OtherHands[0].Cards.ToImmutableList()" FaceUp="false" />
+        <HandComponent Cards="@OtherHands[0].Cards.ToImmutableList()" />
     </div>
 
     @* Player 3 *@
     @if (OtherHands.Count > 1)
     {
         <div id="left" class="absolute">
-            <HandComponent Cards="@OtherHands[1].Cards.ToImmutableList()" FaceUp="false" />
+            <HandComponent Cards="@OtherHands[1].Cards.ToImmutableList()" />
         </div>
     }
 
@@ -31,7 +31,7 @@
     @if (OtherHands.Count > 2)
     {
         <div id="right" class="hand-container">
-            <HandComponent Cards="@OtherHands[2].Cards.ToImmutableList()" FaceUp="false" />
+            <HandComponent Cards="@OtherHands[2].Cards.ToImmutableList()" />
         </div>
     }
 

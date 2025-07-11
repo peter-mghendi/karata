@@ -4,15 +4,15 @@
               Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.Send" AdornmentColor="Color.Primary"
               OnAdornmentClick="@Send"/>
 
-<MudList>
+<MudList T="string" ReadOnly>
     @foreach (var message in Room.Chats)
     {
-        <MudListItem>
+        <MudListItem Value="@message.Text">
             <div class="d-flex align-center">
                 <MudText>@message.Sender.Email</MudText>
                 @if (message.Sender == Room.Administrator)
                 {
-                    <MudChip Icon="@Icons.Material.Rounded.Security" Variant="Variant.Text" Color="Color.Primary"
+                    <MudChip Value="@("Admin")" Icon="@Icons.Material.Rounded.Security" Variant="Variant.Text" Color="Color.Primary"
                              Size="Size.Small">
                         Admin
                     </MudChip>
@@ -20,13 +20,13 @@
 
                 @if (message.Sender == Me)
                 {
-                    <MudChip Icon="@Icons.Material.Rounded.AccountCircle" Variant="Variant.Text" Color="Color.Info"
+                    <MudChip Value="@("You")" Icon="@Icons.Material.Rounded.AccountCircle" Variant="Variant.Text" Color="Color.Info"
                              Size="Size.Small">
                         You
                     </MudChip>
                 }
             </div>
-            <MudText Typo="Typo.caption" Class="grey-text mb-2">@message.SentAt.ToLocalTime().ToString()</MudText>
+            <MudText Typo="Typo.caption" Class="gray-text mb-2">@message.SentAt.ToLocalTime().ToString()</MudText>
             <MudText>@message.Text</MudText>
         </MudListItem>
     }

@@ -1,4 +1,4 @@
-<MudList SelectedValue="@Game.CurrentHand.User">
+<MudList ReadOnly SelectedValue="@Game.CurrentHand.User">
     @foreach (var hand in Game.Hands)
     {
         <MudListItem Value="@hand.User" IconColor="@ConnectionInformation(hand).Color"
