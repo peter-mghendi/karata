@@ -45,12 +45,12 @@ public class Game
 
     public GameData ToData() => new()
     {
-        IsForward = IsReversed, // TODO: WTF? Was I on drugs
+        IsReversed = IsReversed,
         Status = Status,
-        CurrentRequest = Request, // TODO: Clean this up as well
+        Request = Request,
         Pick = Pick,
         CurrentTurn = CurrentTurn,
-        DeckCount = Deck.Count, // TODO: And consider a real deck (Ace of Spades * Deck.Count)
+        DeckCount = Deck.Count,
         Pile = Pile,
         Hands = Hands.Select(h => h.ToData()).ToList(),
         Result = Result?.ToData(),

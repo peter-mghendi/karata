@@ -1,6 +1,6 @@
+using System.Reactive.Disposables;
 using Karata.Pebble.Interceptors;
 using Karata.Pebble.StateActions;
-using Karata.Pebble.Support;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -55,7 +55,7 @@ public class Store<TState>(TState initial, ILoggerFactory? factory = null) where
     public IDisposable Observe(Action<TState> listener)
     {
         _listeners.Add(listener);
-        return DisposableHelper.Create(() => Forget(listener));
+        return Disposable.Create(() => Forget(listener));
     }
 
     /// <summary>Unregisters a previously registered listener.</summary>

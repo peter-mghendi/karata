@@ -36,7 +36,6 @@
     }
 
     @* Deck and Pile *@
-    @* TODO Include @click handlers after all? *@
     <img id="deck" class="absolute" src="img/cards/Back.svg" alt="Card back" title="@($"Cards to pick: {Game.Pick}")"/>
     <img id="pile" class="absolute" src="@ImageUrl(Game.Pile.Peek())" alt="@Game.Pile.Peek().GetName()" title="@RequestText"/>
 </div>
@@ -65,11 +64,11 @@
 
     private List<HandData> OtherHands => Game.Hands.Where(h => h.User.Id != Hand.User.Id).ToList();
 
-    private string RequestText => Game.CurrentRequest switch
+    private string RequestText => Game.Request switch
     {
         null => "No card has been requested",
-        { Face: None } => Game.CurrentRequest.ToString(),
-        _ => Game.CurrentRequest.GetName()
+        { Face: None } => Game.Request.ToString(),
+        _ => Game.Request.GetName()
     };
 
     private string ImageUrl(Card card) => card is { Face: Joker }

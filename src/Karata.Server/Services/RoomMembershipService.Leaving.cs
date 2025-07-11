@@ -43,8 +43,7 @@ public partial class RoomMembershipService
         await context.SaveChangesAsync();
     }
 
-    // TODO: Find some way to be more forgiving with the current player's connection.
-    // Maybe put this on a timer & cancel when the user rejoins.
+    // TODO: Find some way to be more forgiving with the current player's connection. Maybe start a timer & cancel?
     private async Task RecomputeTurn(Room room, User player)
     {
         if (room.Game.CurrentHand.Player.Id != player.Id) return;

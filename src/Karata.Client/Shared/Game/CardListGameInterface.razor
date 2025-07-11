@@ -18,10 +18,10 @@
                         Cards to pick: @Game.Pick
                     </MudAlert>
                 }
-                @if (Game.CurrentRequest is not null)
+                @if (Game.Request is not null)
                 {
-                    <MudAlert Class="mb-4" Severity="@(Game.CurrentRequest.GetColor() == Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(Game.CurrentRequest)">
-                        Current request: @(Game.CurrentRequest.Face is None ? Game.CurrentRequest.Suit.ToString() : Game.CurrentRequest.GetName())
+                    <MudAlert Class="mb-4" Severity="@(Game.Request.GetColor() == Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(Game.Request)">
+                        Current request: @(Game.Request.Face is None ? Game.Request.Suit.ToString() : Game.Request.GetName())
                     </MudAlert>
                 }
                 <MudAlert Class="mb-4" Severity="@Severity.Info" Icon="@Icons.Material.Rounded.Person">
@@ -135,9 +135,7 @@
             }
         }
     }
-
-    // TODO: Proper icons for these
-    // HACK: currently using bootstrap SVG icons for suits
+    
     private string GetIcon(Card card) => card.Suit switch
     {
         Spades => Spade,
@@ -146,9 +144,9 @@
         Diamonds => Diamond,
         BlackJoker or RedJoker => Icons.Material.Rounded.TheaterComedy,
         _ => throw new ArgumentException($"Invalid suit {card.Suit}", nameof(card))
-        };
+    };
 
-    private List<DropItem> _items = new();
+    private List<DropItem> _items = [];
 
     public class DropItem
     {
