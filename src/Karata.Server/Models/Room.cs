@@ -10,11 +10,12 @@ public class Room
     public required User Creator { get; set; }
     public Game Game { get; init; } = new();
     public required DateTimeOffset CreatedAt { get; set; }
-    public byte[]? Hash { get; init; }
-    public byte[]? Salt { get; init; }
+    public byte[]? Hash { get; set; }
+    public byte[]? Salt { get; set; }
     public List<Chat> Chats { get; init; } = [];
 
     public User? NextEligibleAdministrator => Game.Hands
+        .Where(hand => hand.Player.Id != Administrator.Id)
         .Where(hand => hand.Status is Connected)
         .OrderBy(hand => hand.Id)
         .FirstOrDefault()?

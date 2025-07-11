@@ -34,6 +34,9 @@ public interface IGameClient
     // Prompts the user to declare last card status
     Task<bool> PromptLastCardRequest();
     
+    // Prompts the user to declare last card status
+    Task<string?> PromptPasscode();
+    
     // Receives a chat message sent by another player.
     Task ReceiveChat(ChatData message);
     

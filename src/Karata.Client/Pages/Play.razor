@@ -20,15 +20,10 @@
 @inject RoomStoreFactory Factory
 
 <HubConnectionGuard Hub="_hub">
-    @if (_store is null)
-    {
-        <div class="d-flex justify-center">
-            <MudText Typo="Typo.body1">Loading...</MudText>
-        </div>
-    }
-    else
-    {
+    <MudLoading Loading="@(_store is null)" Text="Please wait..." Class="mud-height-full pa-0">
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mud-height-full pa-0">
+        @if (_store is not null)
+        {
             <MudGrid Class="mud-height-full px-4 pt-4">
                 <MudItem xs="12" md="8" xl="9" xxl="10">
                     <MudCard Elevation="0" Class="" Style="height: 88vh">
@@ -109,13 +104,13 @@
                             <MudSwitch @bind-Value="_table" Color="Color.Primary"
                                        Label="Use Card Table interface (Experimental)"/>
                         </div>
-                        <MudText Typo="Typo.caption" Class="text-grey">
+                        <MudText Typo="Typo.caption" Class="text-gray">
                             The Card Table interface is still under development and, as such, may contain bugs. Use the
                             Card List interface for best experience.
                         </MudText>
                     </MudPaper>
 
-                    <MudExpansionPanels DisableBorders="true" Elevation="0" Class="mb-4">
+                    <MudExpansionPanels Outlined="false" Elevation="0" Class="mb-4">
                         <MudExpansionPanel Text="Information">
                             <InformationPanel Room="_store!.State"/>
                         </MudExpansionPanel>
@@ -128,8 +123,9 @@
                     </MudExpansionPanels>
                 </MudItem>
             </MudGrid>
+        }
         </MudContainer>
-    }
+    </MudLoading>
 </HubConnectionGuard>
 
 @code
@@ -208,13 +204,32 @@
             var dialog = await DialogService.ShowAsync<CardRequestModal>("Request a card", parameters);
             var result = await dialog.Result;
 
-            return result.Canceled ? null : (Card)result.Data;
+            return result?.Data as Card;
         });
 
         _hub.On("PromptLastCardRequest", async () =>
         {
             var dialog = DialogService.ShowMessageBox("Last Card?", "Are you on your last card?", "Yes!", "No");
             return await dialog ?? false;
+        });
+
+        
+        _hub.On("PromptPasscode", async () =>
+        {
+            bool repeat;
+            do
+            {
+                var dialog = await DialogService.ShowAsync<PasswordRequestModal>("Enter password");
+                var result = await dialog.Result;
+
+                if (result?.Data is string passcode) return passcode;
+                
+                var back = DialogService.ShowMessageBox("Go back?", "Exit to 'Join Game' screen?", "Exit", "Try again");
+                repeat = await back is false;
+            } while (repeat);
+            
+            Navigator.NavigateTo("/game/join");
+            return null;
         });
 
         _hub.On<ChatData>("ReceiveChat", message =>
@@ -286,7 +301,7 @@
         });
 
         await _hub.StartAsync();
-        await _hub.SendAsync("JoinRoom", Id, "");
+        await _hub.SendAsync("JoinRoom", Id);
     }
 
     async Task LeaveRoom() => await _hub!.SendAsync("LeaveRoom", _store!.State.Id);

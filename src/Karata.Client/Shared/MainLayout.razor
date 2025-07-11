@@ -1,11 +1,12 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<MudThemeProvider/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
 
 <MudLayout Class="mud-height-full">
-    <MudAppBar Class="grey lighten-4" Elevation="0">
+    <MudAppBar Class="gray lighten-4" Elevation="0">
         <MudLink Href="/" Typo="Typo.body1" Color="Color.Dark" Class="me-4" Underline="Underline.None">
             Karata
         </MudLink>
@@ -42,7 +43,7 @@
         </AuthorizeView>
         <MudIconButton Icon="@Icons.Material.Filled.DarkMode" Color="Color.Dark"/>
     </MudAppBar>
-    <MudMainContent Class="mud-height-full">
+    <MudMainContent Class="mud-height-full" Style="position: relative">
         @Body
     </MudMainContent>
 </MudLayout>

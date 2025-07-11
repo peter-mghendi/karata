@@ -10,8 +10,7 @@
     [Parameter]
     public ImmutableList<Card> Cards { get; set; } = new List<Card>().ToImmutableList();
 
-    [Parameter]
-    public bool FaceUp { get; set; }
+    [Parameter] public bool FaceUp { get; set; }
 
     [Parameter]
     public EventCallback<Card> OnCardSelected { get; set; }

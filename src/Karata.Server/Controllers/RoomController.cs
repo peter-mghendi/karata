@@ -1,5 +1,7 @@
 using System.Security.Claims;
+using System.Text;
 using Karata.Server.Data;
+using Karata.Server.Services;
 using Karata.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -21,9 +23,15 @@ public class RoomController(KarataContext context) : ControllerBase
         if (room == null) return NotFound();
         return room.ToData();
     }
+    
+    
 
     [HttpPost]
-    public async Task<ActionResult<RoomData>> Post([FromServices] UserManager<User> userManager)
+    public async Task<ActionResult<RoomData>> Post(
+        [FromServices] IPasswordService passwordService,
+        [FromServices] UserManager<User> userManager,
+        [FromBody] RoomRequest request
+    )
     {
         var userId = User.Claims.First(claim => claim.Type == ClaimTypes.NameIdentifier).Value;
         var user = await userManager.FindByIdAsync(userId);
@@ -32,11 +40,11 @@ public class RoomController(KarataContext context) : ControllerBase
         var room = new Room { Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow };
         room.Game.Hands.Add(new Hand { Player = user, Status = HandStatus.Disconnected});
 
-        // if (!string.IsNullOrWhiteSpace(password))
-        // {
-        //     room.Salt = IPasswordService.GenerateSalt();
-        //     room.Hash = _passwordService.HashPassword(Encoding.UTF8.GetBytes(password), room.Salt);
-        // }
+        if (!string.IsNullOrWhiteSpace(request.Password))
+        {
+            room.Salt = IPasswordService.GenerateSalt();
+            room.Hash = passwordService.HashPassword(Encoding.UTF8.GetBytes(request.Password), room.Salt!);
+        }
 
         context.Rooms.Add(room);
         context.Activities.Add(Activity.GameCreated(room));
@@ -45,3 +53,4 @@ public class RoomController(KarataContext context) : ControllerBase
         return CreatedAtAction(nameof(Get), new { id = room.Id }, room.ToData());
     }
 }
+

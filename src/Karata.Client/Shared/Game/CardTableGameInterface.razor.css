@@ -13,7 +13,7 @@
 /*noinspection CssInvalidPseudoSelector*/
 ::deep #bottom .card:hover {
     z-index: 10;
-    box-shadow:  2px 2px 3px grey;
+    box-shadow:  2px 2px 3px gray;
     margin-top: -10px;
 }
 

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Karata.Client;
 using Karata.Client.Infrastructure.State;
 using MudBlazor.Services;
+using MudExtensions.Services;
 using TextCopy;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -19,6 +20,7 @@ builder.Services.AddSingleton<RoomStoreFactory>();
 
 builder.Services.AddApiAuthorization();
 builder.Services.AddMudServices();
+builder.Services.AddMudExtensions();
 builder.Services.InjectClipboard();
 
 await builder.Build().RunAsync();

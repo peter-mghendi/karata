@@ -7,7 +7,7 @@
 <MudPaper Class="pa-4 mb-4" Elevation="0">
     <MudGrid Spacing="4" Justify="Justify.Center">
         <MudItem xs="6">
-            <MudList Clickable Color="Color.Info">
+            <MudList T="string" Color="Color.Info">
                 <MudListSubheader>Game Info:</MudListSubheader>
                 <MudAlert Class="mb-4" Severity="@(Game.Pile.Peek().GetColor() == Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(Game.Pile.Peek())">
                     Top card: @Game.Pile.Peek().GetName()
@@ -28,7 +28,7 @@
                     Current player: @Game.CurrentHand.User.Email
                     @if (Game.CurrentHand.User == Hand.User)
                     {
-                        <MudChip Icon="@Icons.Material.Rounded.AccountCircle" Variant="Variant.Text" Color="Color.Info" Size="Size.Small">
+                        <MudChip Value="@("You")" Icon="@Icons.Material.Rounded.AccountCircle" Variant="Variant.Text" Color="Color.Info" Size="Size.Small">
                             You
                         </MudChip>
                     }
@@ -36,7 +36,7 @@
             </MudList>
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudList Clickable Color="Color.Info">
+            <MudList T="string" Color="Color.Info">
                 <MudListSubheader>Player Hands:</MudListSubheader>
                 @foreach (var hand in OtherHands)
                 {

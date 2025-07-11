@@ -62,12 +62,12 @@ public class GameHub(
         await context.SaveChangesAsync();
     }
 
-    public async Task JoinRoom([FromServices] RoomMembershipServiceFactory factory, string roomId, string? password)
+    public async Task JoinRoom([FromServices] RoomMembershipServiceFactory factory, string roomId)
     {
         try
         {
             logger.LogDebug("User {User} is joining room {Room}.", Context.UserIdentifier, roomId);
-            await factory.Create(Parse(roomId), Context.UserIdentifier!).JoinAsync(Context.ConnectionId, password);
+            await factory.Create(Parse(roomId), Context.UserIdentifier!).JoinAsync(Context.ConnectionId);
         }
         catch (KarataException exception)
         {

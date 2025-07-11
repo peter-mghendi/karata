@@ -8,11 +8,11 @@
     <MudText Typo="Typo.h5" Class="pa-4 my-4">Join or create a game room to play.</MudText>
 
     <MudPaper Class="pa-4 mb-4" Elevation="0">
-        <MudTextField @bind-Value="link" Label="Invite Link" Variant="Variant.Filled" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.QrCodeScanner" Class="mb-4"></MudTextField>
-        <MudButton Disabled="@loading" OnClick="JoinRoom" Variant="Variant.Filled" Color="Color.Primary">
-            @if (joining)
+        <MudTextField @bind-Value="_link" Label="Invite Link" Variant="Variant.Filled" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.QrCodeScanner" Class="mb-4"></MudTextField>
+        <MudButton Disabled="@Loading" OnClick="JoinRoom" Variant="Variant.Filled" Color="Color.Primary">
+            @if (_joining)
             {
-                <MudProgressCircular Class="ms-n1" Color="Color.Primary" Size="Size.Small" Indeterminate="true"/>
+                <MudProgressCircular Indeterminate Class="ms-n1" Color="Color.Primary" Size="Size.Small" />
                 <MudText Class="ms-2">Joining Room</MudText>
             }
             else
@@ -23,11 +23,11 @@
     </MudPaper>
 
     <MudPaper Class="pa-4 mb-4" Elevation="0">
-        <MudTextField @bind-Value="password" Label="Password (Optional)" Variant="Variant.Filled" Class="mb-4"></MudTextField>
-        <MudButton Disabled="@loading" OnClick="CreateRoom" Variant="Variant.Filled">
-            @if (creating)
+        <MudTextField @bind-Value="_password" Label="Password (Optional)" Variant="Variant.Filled" Class="mb-4"></MudTextField>
+        <MudButton Disabled="@Loading" OnClick="CreateRoom" Variant="Variant.Filled">
+            @if (_creating)
             {
-                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                <MudProgressCircular Indeterminate Class="ms-n1" Size="Size.Small" />
                 <MudText Class="ms-2">Creating Room</MudText>
             }
             else
@@ -39,27 +39,28 @@
 </MudContainer>
 
 @code {
-    private string link = string.Empty;
-    private string password = string.Empty;
+    private string _link = string.Empty;
+    private string _password = string.Empty;
 
-    private bool joining;
-    private bool creating;
-    private bool loading => joining || creating;
+    private bool _joining;
+    private bool _creating;
+    
+    private bool Loading => _joining || _creating;
 
     private async Task JoinRoom()
     {
-        joining = true;
-        if (string.IsNullOrWhiteSpace(link))
+        _joining = true;
+        if (string.IsNullOrWhiteSpace(_link))
         {
-            joining = false;
+            _joining = false;
             Snackbar.Add("Invite link cannot be empty.", Severity.Error);
             return;
         }
 
-        var room = await Http.GetFromJsonAsync<RoomData>($"api/room/{link}");
+        var room = await Http.GetFromJsonAsync<RoomData>($"api/room/{_link}");
         if (room == null)
         {
-            joining = false;
+            _joining = false;
             Snackbar.Add("Failed to join room. Please try again later.", Severity.Error);
             StateHasChanged();
             return;
@@ -70,11 +71,11 @@
 
     private async Task CreateRoom()
     {
-        creating = true;
-        var response = await Http.PostAsync("api/room", null);
+        _creating = true;
+        var response = await Http.PostAsJsonAsync("api/room", new RoomRequest { Password = _password });
         if (!response.IsSuccessStatusCode)
         {
-            creating = false;
+            _creating = false;
             Snackbar.Add("Failed to create room. Please try again later.", Severity.Error);
             StateHasChanged();
             return;
@@ -83,7 +84,7 @@
         var room = await response.Content.ReadFromJsonAsync<RoomData>();
         if (room == null)
         {
-            creating = false;
+            _creating = false;
             Snackbar.Add("Failed to create room. Please try again later.", Severity.Error);
             StateHasChanged();
             return;
