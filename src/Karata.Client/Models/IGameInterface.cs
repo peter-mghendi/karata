@@ -1,5 +1,4 @@
 #pragma warning disable BL0007
-// TODO: Why do I need this?
 
 using System.Collections.Immutable;
 using Microsoft.AspNetCore.Components;

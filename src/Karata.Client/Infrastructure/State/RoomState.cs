@@ -106,7 +106,7 @@ public class RoomState(RoomData data, string username, ILoggerFactory? logging =
     public record SetCurrentRequest(Card Card) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state) =>
-            state with { Game = state.Game with { CurrentRequest = Card } };
+            state with { Game = state.Game with { Request = Card } };
     }
 
     public record UpdateAdministrator(UserData Administrator) : StateAction<RoomData>

@@ -15,8 +15,6 @@ public class RoomController(KarataContext context) : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<RoomData>> Get(string id)
     {
-        // TODO: Should a user need the password to GET this game or only to join it?
-        // Maybe auth can be done on visibility + membership
         if (!Guid.TryParse(id, out var guid)) return BadRequest();
         var room = await context.Rooms.FindAsync(guid);
 
