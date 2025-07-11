@@ -3,6 +3,7 @@ using System;
 using Karata.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Karata.Server.Data.Migrations
 {
     [DbContext(typeof(KarataContext))]
-    partial class KarataContextModelSnapshot : ModelSnapshot
+    [Migration("20250709130241_AddCreatedAtToTurn")]
+    partial class AddCreatedAtToTurn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

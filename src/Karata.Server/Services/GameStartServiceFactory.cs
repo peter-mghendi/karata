@@ -11,9 +11,9 @@ public class GameStartServiceFactory(
     KarataContext context
 )
 {
-    public GameStartService Create(Guid room, string player, string connection)
+    public GameStartService Create(Guid room, string player)
     {
         var logger = loggers.CreateLogger<GameStartService>();
-        return new GameStartService(hub, logger, context, room, player, connection);
+        return new GameStartService(hub, logger, context, room, player);
     }
 }

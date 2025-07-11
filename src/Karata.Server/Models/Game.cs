@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Karata.Shared.Models;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Server.Models.CardRequestLevel;
+using static Karata.Shared.Models.HandStatus;
 
 namespace Karata.Server.Models;
 
@@ -25,19 +26,9 @@ public class Game
     public uint Pick { get; set; }
     public int CurrentTurn { get; set; }
 
-    public int NextTurn
-    {
-        get
-        {
-            var turn = CurrentHand.Turns.Last();
-            var players = Hands.Count;
-            var skip = (int)turn.Delta.Skip % players;
-
-            return IsReversed
-                ? (CurrentTurn - skip + players) % players
-                : (CurrentTurn + skip) % players;
-        }
-    }
+    public int NextTurn => IsReversed
+        ? (CurrentTurn - 1 + Hands.Count) % Hands.Count
+        : (CurrentTurn + 1) % Hands.Count;
 
     public Deck Deck { get; init; } = Deck.Standard;
     public Pile Pile { get; init; } = new();

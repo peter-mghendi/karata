@@ -1,5 +1,5 @@
-using Karata.Server.Support.Exceptions;
 using Karata.Shared.Models;
+using static Karata.Shared.Models.HandStatus;
 
 namespace Karata.Server.Services;
 
@@ -10,36 +10,56 @@ public partial class RoomMembershipService
         var player = (await users.FindByIdAsync(CurrentPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
         var hand = room.Game.Hands.Single(h => h.Player.Id == player.Id);
-        
-        ValidateLeavingGameState(room);
-        RemovePresence(room, hand);
 
-        await NotifyPlayerLeft(room, hand);
+        switch (room.Game.Status)
+        {
+            case GameStatus.Lobby:
+                room.Game.Hands.Remove(hand);
+                await RedelegateAdministration(room,  hand);
+                presence.RemovePresence(CurrentPlayerId, room.Id.ToString());
+                
+                await Me.RemoveFromRoom();
+                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).RemoveHandFromRoom(hand.Player.ToData());
+                break;
+            case GameStatus.Ongoing:
+                hand.Status = Disconnected;
+                await RedelegateAdministration(room,  hand);
+                await RecomputeTurn(room, player);
+                presence.RemovePresence(CurrentPlayerId, room.Id.ToString());
+
+
+                await Me.RemoveFromRoom();
+                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).UpdateHandStatus(hand.Player.ToData(), Disconnected);
+                break;
+            case GameStatus.Over:
+                hand.Status = Disconnected;
+                presence.RemovePresence(CurrentPlayerId, room.Id.ToString());
+                
+                await Me.RemoveFromRoom();
+                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).UpdateHandStatus(hand.Player.ToData(), Disconnected);
+                break;
+        }
+        
         await context.SaveChangesAsync();
     }
 
-    private void ValidateLeavingGameState(Room room)
+    // TODO: Find some way to be more forgiving with the current player's connection.
+    // Maybe put this on a timer & cancel when the user rejoins.
+    private async Task RecomputeTurn(Room room, User player)
     {
-        // Room creator can not leave games in Lobby.
-        // No one can leave an Ongoing game.
-        // Anyone can leave if the game is Over.
-        if (room.Game.Status is GameStatus.Ongoing || (room.Creator.Id == CurrentPlayerId && room.Game.Status == GameStatus.Lobby))
-        {
-            // TODO: Handle this gracefully, as well as accidental disconnection.
-            throw new SawException();
-        }
+        if (room.Game.CurrentHand.Player.Id != player.Id) return;
+        if (room.Game.Hands.Count(hand => hand.Status is Connected) <= 1) return;
+        
+        turns.Advance(room.Game);
+        await Room.UpdateTurn(room.Game.CurrentTurn);
     }
 
-    private void RemovePresence(Room room, Hand hand)
+    private async Task RedelegateAdministration(Room room, Hand hand)
     {
-        room.Game.Hands.Remove(hand);
-        presence.RemovePresence(CurrentPlayerId, room.Id.ToString());
-    }
-
-    private async Task NotifyPlayerLeft(Room room, Hand hand)
-    {
-        await RemoveFromRoom(ConnectionId);
-        await Me.RemoveFromRoom();
-        await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).RemoveHandFromRoom(hand.Player.ToData());
+        if (room.Administrator.Id != hand.Player.Id) return;
+        if (room.NextEligibleAdministrator is not {} administrator) return;
+        
+        room.Administrator = administrator;
+        await Room.UpdateAdministrator(room.Administrator.ToData());
     }
 }

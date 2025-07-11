@@ -48,6 +48,7 @@ builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
 builder.Services.AddSingleton<PresenceService>();
 builder.Services.AddTransient<GameStartServiceFactory>();
 builder.Services.AddTransient<KarataEngineFactory>();
+builder.Services.AddTransient<TurnManagementService>();
 builder.Services.AddTransient<RoomMembershipServiceFactory>();
 builder.Services.AddTransient<TurnProcessingServiceFactory>();
 builder.Services.AddResponseCompression(opts =>

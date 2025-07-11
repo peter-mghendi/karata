@@ -9,11 +9,11 @@ public class RoomState(RoomData data, string username, ILoggerFactory? logging =
 {
     public HandData MyHand => State.Game.Hands.Single(h => h.User.Email == username);
 
-    public record AddHandToRoom(UserData User) : StateAction<RoomData>
+    public record AddHandToRoom(UserData User, HandStatus Status) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state)
         {
-            var hand = new HandData { User = User, Cards = [] };
+            var hand = new HandData { User = User, Cards = [], Status = Status };
             return state with { Game = state.Game with { Hands = [..state.Game.Hands, hand] } };
         }
     }
@@ -109,6 +109,29 @@ public class RoomState(RoomData data, string username, ILoggerFactory? logging =
             state with { Game = state.Game with { CurrentRequest = Card } };
     }
 
+    public record UpdateAdministrator(UserData Administrator) : StateAction<RoomData>
+    {
+        public override RoomData Apply(RoomData state) => state with { Administrator = Administrator };
+    }
+
+    public record UpdateGameStatus(GameStatus Status) : StateAction<RoomData>
+    {
+        public override RoomData Apply(RoomData state) => state with { Game = state.Game with { Status = Status } };
+    }
+
+    public record UpdateHandStatus(UserData User, HandStatus Status) : StateAction<RoomData>
+    {
+        public override RoomData Apply(RoomData state)
+        {
+            return state with
+            {
+                Game = state.Game with { 
+                    Hands = [..state.Game.Hands.Select(h => h.User == User ? h with { Status = Status } : h)]
+                }
+            };
+        }
+    }
+
     public record UpdatePick(uint Pick) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state) => state with
@@ -123,10 +146,5 @@ public class RoomState(RoomData data, string username, ILoggerFactory? logging =
         {
             Game = state.Game with { CurrentTurn = Turn }
         };
-    }
-
-    public record UpdateGameStatus(GameStatus Status) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state) => state with { Game = state.Game with { Status = Status } };
     }
 }

@@ -12,9 +12,8 @@ public class GameStartService(
     ILogger<GameStartService> logger,
     KarataContext context,
     Guid room,
-    string player,
-    string connection
-) : HubAwareService(hub, room, player, connection)
+    string player
+) : HubAwareService(hub, room, player)
 {
     private const int DealCount = 4;
     
@@ -33,7 +32,7 @@ public class GameStartService(
         var game = room.Game;
         
         // Check caller role
-        if (room.Creator.Id != CurrentPlayerId)
+        if (room.Administrator.Id != CurrentPlayerId)
         {
             throw new UnauthorizedToStartException();
         }
@@ -64,7 +63,7 @@ public class GameStartService(
         logger.LogDebug("Top card is {Card}.", top);
 
         game.Pile.Push(top);
-        await Everyone.MoveCardsFromDeckToPile([top]);
+        await Room.MoveCardsFromDeckToPile([top]);
 
         logger.LogDebug("Start dealing cards to {Count} players.", game.Hands.Count);
 
@@ -72,7 +71,7 @@ public class GameStartService(
         foreach (var hand in game.Hands)
         {
             var dealt = deck.DealMany(DealCount);
-            var turn = new Turn { Picked = dealt, Type = TurnType.Deal };
+            var turn = new Turn { Picked = dealt, Type = TurnType.Deal, Hand = hand, CreatedAt = DateTimeOffset.UtcNow };
 
             logger.LogDebug("Dealing {Count} cards to {User}. Cards: {Cards}.", DealCount, hand.Player.UserName, string.Join(", ", dealt));
             
@@ -89,6 +88,6 @@ public class GameStartService(
     private async Task UpdateGameState(Room room)
     {
         room.Game.Status = GameStatus.Ongoing;
-        await Everyone.UpdateGameStatus(room.Game.Status);
+        await Room.UpdateGameStatus(room.Game.Status);
     }
 }

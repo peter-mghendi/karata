@@ -5,7 +5,7 @@ namespace Karata.Server.Hubs.Clients;
 public interface IGameClient
 {
     // Adds another user to the current room
-    Task AddHandToRoom(UserData user);
+    Task AddHandToRoom(UserData user, HandStatus status);
     
     // Adds the current user to a room
     Task AddToRoom(RoomData room);
@@ -52,8 +52,14 @@ public interface IGameClient
     // Sets the current card request
     Task SetCurrentRequest(Card? request);
     
+    // Updates the room administrator
+    Task UpdateAdministrator(UserData administrator);
+    
     // Updates the game status
     Task UpdateGameStatus(GameStatus status);
+    
+    // Removes another player from the room
+    Task UpdateHandStatus(UserData user, HandStatus status);
     
     // Updates the current pick value
     Task UpdatePick(uint num);
