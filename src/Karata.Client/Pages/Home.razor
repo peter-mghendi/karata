@@ -1,7 +1,5 @@
 @page "/"
 
-@inject HttpClient Http
-
 <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full py-4">
     @if (_activities is [_, ..])
     {
@@ -62,6 +60,9 @@
 
 @code
 {
+    [Inject(Key = "Karata.Server.Public")] 
+    public HttpClient Http { get; set; } = null!;
+    
     private List<ActivityData> _activities = [];
 
     protected override async Task OnInitializedAsync()
