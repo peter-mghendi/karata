@@ -209,7 +209,8 @@
 
         _hub.On("PromptLastCardRequest", async () =>
         {
-            var dialog = DialogService.ShowMessageBox("Last Card?", "Are you on your last card?", "Yes!", "No");
+            const string blurb = "Declare <b>last card</b> if you have a card or cards that you can legally finish the game with in the next turn."; 
+            var dialog = DialogService.ShowMessageBox("Last Card?", new MarkupString(blurb), "Yes!", "No");
             return await dialog ?? false;
         });
 

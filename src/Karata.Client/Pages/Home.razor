@@ -7,7 +7,7 @@
     {
         @foreach (var activity in _activities)
         {
-            <MudCard Class="mb-4">
+            <MudCard Elevation="0" Class="mb-4 pa-2 rounded-xl">
                 <MudCardHeader>
                     <CardHeaderAvatar>
                         <MudAvatar Color="Color.Secondary">@activity.Actor.Email.First()</MudAvatar>

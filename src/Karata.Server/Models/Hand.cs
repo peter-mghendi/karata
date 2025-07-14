@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Karata.Shared.Models;
 
 namespace Karata.Server.Models;
@@ -10,6 +11,8 @@ public class Hand
     public bool IsLastCard { get; set; }
     public int GameId { get; init; }
     public required User Player { get; init; }
+    
+    [JsonIgnore]
     public List<Turn> Turns { get; init; } = [];
 
     public HandData ToData() => new()
