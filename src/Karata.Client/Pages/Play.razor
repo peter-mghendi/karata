@@ -26,7 +26,8 @@
         {
             <MudGrid Class="mud-height-full px-4 pt-4">
                 <MudItem xs="12" md="8" xl="9" xxl="10">
-                    <MudCard Elevation="0" Class="" Style="height: 88vh">
+                    @* TODO: What is this 88vh? *@
+                    <MudCard Elevation="0" Style="background-color: transparent; height: 88vh">
                         @if (_store!.State.Game.Status is GameStatus.Ongoing)
                         {
                             if (_table)
