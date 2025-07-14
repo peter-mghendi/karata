@@ -11,18 +11,18 @@
         <MudText Typo="Typo.caption">Created At</MudText>
         <MudText Typo="Typo.body1" Class="gray-text">@Room.CreatedAt.ToLocalTime().ToString()</MudText>
     </MudListItem>
-    <MudListItem Value="@Room.Administrator.Email">
+    <MudListItem Value="@Room.Administrator.Username">
         <MudText Typo="Typo.caption">Room Admin</MudText>
-        <MudText Typo="Typo.body1" Class="gray-text">@Room.Administrator.Email</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Room.Administrator.Username</MudText>
     </MudListItem>
-    <MudListItem Value="@Room.Creator.Email">
+    <MudListItem Value="@Room.Creator.Username">
         <MudText Typo="Typo.caption">Room Creator</MudText>
-        <MudText Typo="Typo.body1" Class="gray-text">@Room.Creator.Email</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Room.Creator.Username</MudText>
     </MudListItem>
-    <MudListItem Value="@(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.User.Email : "---")">
+    <MudListItem Value="@(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.User.Username : "---")">
         <MudText Typo="Typo.caption">Current Turn</MudText>
         <MudText Typo="Typo.body1" Class="gray-text">
-            @(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.User.Email : "---")
+            @(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.User.Username : "---")
         </MudText>
     </MudListItem>
     <MudListItem Value="@Game.Hands.Count.ToString()">

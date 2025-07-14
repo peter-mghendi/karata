@@ -15,5 +15,5 @@ public static class Messages
         new() { Text = result.Reason, Type = result.ReasonType };
     
     public static SystemMessage LastCard(User player) => 
-        new() { Text = $"{player.Email} is on their last card.", Type = MessageType.Warning };
+        new() { Text = $"{player.UserName} is on their last card.", Type = MessageType.Warning };
 }

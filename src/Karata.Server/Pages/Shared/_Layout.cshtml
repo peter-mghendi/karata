@@ -3,7 +3,7 @@
 @inject IWebHostEnvironment Environment
 @inject ICompositeViewEngine Engine
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -21,9 +21,9 @@
         <link rel="stylesheet" href="~/Identity/css/site.css" asp-append-version="true" />
     </environment>
 </head>
-<body>
+<body class="d-flex flex-column" style="min-height: 100vh;">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white box-shadow mb-3">
             <div class="container">
                 <a class="navbar-brand" href="~/">Karata</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
@@ -49,22 +49,27 @@
         </nav>
     </header>
 
-    <div class="container">
-        <partial name="_CookieConsentPartial" optional />
-        <main role="main" class="pb-1">
-            @RenderBody()
-        </main>
-    </div>
-    <footer class="footer border-top pl-3 text-muted">
+    <div class="flex-shrink-0">
         <div class="container">
-        &copy; 2025 - Karata
-            @{
-                var foundPrivacy = Url.Page("/Privacy", new { area = "" });
-            }
-            @if (foundPrivacy != null)
-            {
-                <a asp-area="" asp-page="/Privacy">Privacy</a>
-            }
+            <partial name="_CookieConsentPartial" optional />
+            <main role="main" class="pb-1">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+    
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">
+                &copy; 2025 - Karata
+                @{
+                    var foundPrivacy = Url.Page("/Privacy", new { area = "" });
+                }
+                @if (foundPrivacy != null)
+                {
+                    <a asp-area="" asp-page="/Privacy">Privacy</a>
+                }
+            </span>
         </div>
     </footer>
 

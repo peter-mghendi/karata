@@ -3,7 +3,7 @@
     {
         <MudListItem Value="@hand.User" IconColor="@ConnectionInformation(hand).Color"
                      Icon="@ConnectionInformation(hand).Icon">
-            @hand.User.Email
+            @hand.User.Username
             @if (hand.User == Room.Administrator)
             {
                 <MudChip Icon="@Icons.Material.Rounded.Security" Variant="Variant.Text" Color="Color.Primary"

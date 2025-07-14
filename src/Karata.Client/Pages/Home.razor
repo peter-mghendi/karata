@@ -10,10 +10,10 @@
             <MudCard Elevation="0" Class="mb-4 pa-2 rounded-xl">
                 <MudCardHeader>
                     <CardHeaderAvatar>
-                        <MudAvatar Color="Color.Secondary">@activity.Actor.Email.First()</MudAvatar>
+                        <MudAvatar Color="Color.Secondary">@activity.Actor.Username.ToUpper().First()</MudAvatar>
                     </CardHeaderAvatar>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.body1">@activity.Actor.Email</MudText>
+                        <MudText Typo="Typo.body1">@activity.Actor.Username</MudText>
                         <MudText Typo="Typo.body2">@activity.CreatedAt.ToLocalTime().ToString()</MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
@@ -32,7 +32,7 @@
     {
         @for (var i = 0; i < 10; i++)
         {
-            <MudCard Class="mb-4">
+            <MudCard Elevation="0" Class="mb-4 pa-2 rounded-xl">
                 <MudCardHeader>
                     <CardHeaderAvatar>
                         <MudSkeleton SkeletonType="SkeletonType.Circle" Animation="Animation.Wave" Height="40px" Width="40px"/>
