@@ -33,29 +33,11 @@ builder.Services.AddDbContext<KarataContext>(options =>
         options.EnableSensitiveDataLogging();
     }
 });
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services
     .AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<KarataContext>();
-
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-builder.Services.AddSignalR().AddHubOptions<GameHub>(options =>
-{
-    // options.MaximumParallelInvocationsPerClient = 4;
-});
-
-builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
-builder.Services.AddSingleton<PresenceService>();
-builder.Services.AddTransient<GameStartServiceFactory>();
-builder.Services.AddTransient<KarataEngineFactory>();
-builder.Services.AddTransient<TurnManagementService>();
-builder.Services.AddTransient<RoomMembershipServiceFactory>();
-builder.Services.AddTransient<TurnProcessingServiceFactory>();
-builder.Services.AddResponseCompression(opts =>
-{
-    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/octet-stream"]);
-});
-
 builder.Services.AddIdentityServer()
     .AddApiAuthorization<User, KarataContext>();
 builder.Services.AddAuthentication()
@@ -63,6 +45,18 @@ builder.Services.AddAuthentication()
 builder.Services.TryAddEnumerable(
     ServiceDescriptor.Singleton<IPostConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>()
 );
+
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
+builder.Services.AddSingleton<PresenceService>();
+builder.Services.AddTransient<GameStartServiceFactory>();
+builder.Services.AddTransient<TurnManager>();
+builder.Services.AddTransient<RoomMembershipServiceFactory>();
+builder.Services.AddTransient<TurnProcessingServiceFactory>();
+builder.Services.AddResponseCompression(compression =>
+{
+    compression.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/octet-stream"]);
+});
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();

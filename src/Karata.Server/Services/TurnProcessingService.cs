@@ -23,8 +23,7 @@ public class TurnProcessingService(
     IHubContext<GameHub, IGameClient> hub,
     ILogger<TurnProcessingService> logger,
     KarataContext context,
-    KarataEngineFactory factory,
-    TurnManagementService turns,
+    TurnManager turns,
     UserManager<User> users,
     Guid room,
     string player,
@@ -35,7 +34,7 @@ public class TurnProcessingService(
     {
         var player = (await users.FindByIdAsync(CurrentPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
-        var engine = factory.Create(room.Game, cards);
+        var engine = new KarataEngine { Game = room.Game, Cards = [..cards] };
         
         try
         {

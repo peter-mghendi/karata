@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Karata.Cards;
 using Karata.Cards.Extensions;
 using Karata.Server.Engine;
@@ -26,8 +25,7 @@ public class KarataEngineTest
     [MemberData(nameof(ValidationTestCases))]
     public void ValidateTurnCardsTest(string identifier, Game game, List<Card> cards, bool expectedValidity)
     {
-        var factory = new KarataEngineFactory();
-        var engine = factory.Create(game, cards);
+        var engine = new KarataEngine { Game = game, Cards = [..cards] };
 
         if (expectedValidity)
         {
@@ -43,8 +41,8 @@ public class KarataEngineTest
     [MemberData(nameof(GenerationTestCases))]
     public void GenerateTurnDeltaTest(string identifier, Game game, List<Card> cards, GameDelta expectedDelta)
     {
-        var factory = new KarataEngineFactory();
-        var actualDelta = factory.Create(game, cards).GenerateTurnDelta();
+        var engine = new KarataEngine { Game = game, Cards = [..cards] };
+        var actualDelta = engine.GenerateTurnDelta();
 
         Assert.Equal(expectedDelta, actualDelta);
     }
