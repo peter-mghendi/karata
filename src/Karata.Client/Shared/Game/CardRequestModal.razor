@@ -1,4 +1,10 @@
-<div class="px-6 py-4">
+<div class="px-6 pt-2 pb-4">
+    <MudText Class="mb-2">
+        You may now request the @(Specific ? "exact card" : "suit") that will continue.
+        Players must either match this request, or block @(Specific ? "all or part of it" : "it") using
+        @(Specific ? "one or more aces" : "an ace").
+    </MudText>
+
     @if (Specific)
     {
         <MudSelect Class="mb-4" @bind-Value="Face" Label="Face" Variant="Variant.Filled"
@@ -19,18 +25,26 @@
         }
     </MudSelect>
 
-    <MudButton Class="mb-4" OnClick="SubmitForm">Request this card</MudButton>
-
-    <MudDivider DividerType="DividerType.Middle" Class="mh-4"/>
+    <MudButton OnClick="SubmitForm">Request this card</MudButton>
 
     @if (Specific)
     {
-        <MudGrid Class="mb-4">
+        <MudStack Row>
+            <MudDivider DividerType="DividerType.Middle" Class="th-4"/>
+            <MudText Typo="Typo.body2">OR</MudText>
+            <MudDivider DividerType="DividerType.Middle" Class="th-4"/>
+        </MudStack>
+
+        <MudGrid Class="mb-4" Spacing="4">
             <MudItem xs="6">
-                <MudButton Color="Color.Dark" OnClick="() => RequestJoker(Black)">Black Joker</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Dark" OnClick="() => RequestJoker(Black)">
+                    Black Joker
+                </MudButton>
             </MudItem>
             <MudItem xs="6">
-                <MudButton Color="Color.Error" OnClick="() => RequestJoker(Red)">Red Joker</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => RequestJoker(Red)">
+                    Red Joker
+                </MudButton>
             </MudItem>
         </MudGrid>
     }

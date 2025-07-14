@@ -25,7 +25,7 @@
                     </MudAlert>
                 }
                 <MudAlert Class="mb-4" Severity="@Severity.Info" Icon="@Icons.Material.Rounded.Person">
-                    Current player: @Game.CurrentHand.User.Email
+                    Current player: @Game.CurrentHand.User.Username
                     @if (Game.CurrentHand.User == Hand.User)
                     {
                         <MudChip Value="@("You")" Icon="@Icons.Material.Rounded.AccountCircle" Variant="Variant.Text" Color="Color.Info" Size="Size.Small">
@@ -41,7 +41,7 @@
                 @foreach (var hand in OtherHands)
                 {
                     <MudAlert Class="mb-4" Severity="@Severity.Normal" Icon="@Icons.Material.Rounded.Person">
-                        @(hand.User.Email) has @(hand.Cards.Count) cards.
+                        @(hand.User.Username) has @(hand.Cards.Count) cards.
                     </MudAlert>
                 }
             </MudList>

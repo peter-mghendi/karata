@@ -165,7 +165,7 @@
         _hub.On<UserData, HandStatus>("AddHandToRoom", (user, status) =>
         {
             _store!.Mutate(new RoomState.AddHandToRoom(user, status));
-            Snackbar.Add($"{user.Email} (Status: {status}) has joined the room", Severity.Info);
+            Snackbar.Add($"{user.Username} (Status: {status}) has joined the room", Severity.Info);
         });
 
         _hub.On<RoomData>("AddToRoom", room =>
@@ -209,7 +209,8 @@
 
         _hub.On("PromptLastCardRequest", async () =>
         {
-            var dialog = DialogService.ShowMessageBox("Last Card?", "Are you on your last card?", "Yes!", "No");
+            const string blurb = "Declare <b>last card</b> if you have a card or cards that you can legally finish the game with in the next turn."; 
+            var dialog = DialogService.ShowMessageBox("Last Card?", new MarkupString(blurb), "Yes!", "No");
             return await dialog ?? false;
         });
 
@@ -236,7 +237,7 @@
         {
             _store!.Mutate(new RoomState.ReceiveChat(message));
 
-            var sender = message.Sender.Email;
+            var sender = message.Sender.Username;
             if (sender != username) Snackbar.Add($"New message from {sender}.", Severity.Info);
             StateHasChanged();
         });
@@ -270,7 +271,7 @@
         _hub.On<UserData>("RemoveHandFromRoom", user =>
         {
             _store!.Mutate(new RoomState.RemoveHandFromRoom(user));
-            Snackbar.Add($"{user.Email} has left the room.", Severity.Info);
+            Snackbar.Add($"{user.Username} has left the room.", Severity.Info);
         });
 
         _hub.On<Card>("SetCurrentRequest", request => _store!.Mutate(new RoomState.SetCurrentRequest(request)));
@@ -286,7 +287,7 @@
         _hub.On<UserData, HandStatus>("UpdateHandStatus", (user, status) =>
         {
             _store!.Mutate(new RoomState.UpdateHandStatus(user, status));
-            Snackbar.Add($"{user.Email} has {status.ToString().ToLower()}.", Severity.Info);
+            Snackbar.Add($"{user.Username} has {status.ToString().ToLower()}.", Severity.Info);
         });
 
         _hub.On<uint>("UpdatePick", num => _store!.Mutate(new RoomState.UpdatePick(num)));
@@ -295,7 +296,7 @@
         {
             _store!.Mutate(new RoomState.UpdateTurn(turn));
 
-            var current = _store!.State.Game.CurrentHand.User.Email;
+            var current = _store!.State.Game.CurrentHand.User.Username;
             var possessive = current == username ? "your" : $"{current}'s";
             Snackbar.Add($"It is now {possessive} turn.", Severity.Info);
         });

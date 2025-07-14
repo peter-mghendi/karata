@@ -30,7 +30,7 @@ public class GameResult
         return new GameResult
         {
             Winner = winner,
-            Reason = $"{winner.Email} won.",
+            Reason = $"{winner.UserName} won.",
             ReasonType = MessageType.Success,
             ResultType = GameResultType.Win,
             CompletedAt = DateTimeOffset.UtcNow

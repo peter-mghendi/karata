@@ -11,7 +11,7 @@ public class RoomMembershipServiceFactory(
     IPasswordService passwords,
     KarataContext context,
     PresenceService presence,
-    TurnManagementService turns,
+    TurnManager turns,
     UserManager<User> users
 )
 {

@@ -2,14 +2,14 @@ using static Karata.Shared.Models.HandStatus;
 
 namespace Karata.Server.Services;
 
-/// <summary>
-///  Encapsulates logic to determine the next playable turn in a game.
-/// </summary>
-/// <remarks>
-///  Does not validate against games with insufficient playable turns.
-/// </remarks>
-public class TurnManagementService
+public class TurnManager
 {
+    /// <summary>
+    ///  Encapsulates logic to determine the next playable turn in a game.
+    /// </summary>
+    /// <remarks>
+    ///  Does not validate against games with insufficient playable turns.
+    /// </remarks>
     public void Advance(Game game)
     {
         var skip = (int)(game.CurrentHand.Turns.LastOrDefault()?.Delta?.Skip ?? 1);

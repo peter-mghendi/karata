@@ -9,7 +9,7 @@
     {
         <MudListItem Value="@message.Text">
             <div class="d-flex align-center">
-                <MudText>@message.Sender.Email</MudText>
+                <MudText>@message.Sender.Username</MudText>
                 @if (message.Sender == Room.Administrator)
                 {
                     <MudChip Value="@("Admin")" Icon="@Icons.Material.Rounded.Security" Variant="Variant.Text" Color="Color.Primary"

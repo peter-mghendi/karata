@@ -7,7 +7,7 @@ namespace Karata.Client.Infrastructure.State;
 
 public class RoomState(RoomData data, string username, ILoggerFactory? logging = null) : Store<RoomData>(data, logging)
 {
-    public HandData MyHand => State.Game.Hands.Single(h => h.User.Email == username);
+    public HandData MyHand => State.Game.Hands.Single(h => h.User.Username == username);
 
     public record AddHandToRoom(UserData User, HandStatus Status) : StateAction<RoomData>
     {

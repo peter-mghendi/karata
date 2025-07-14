@@ -8,6 +8,13 @@
         "dotnet-ef"
       ],
       "rollForward": false
+    },
+    "dotnet-aspnet-codegenerator": {
+      "version": "9.0.0",
+      "commands": [
+        "dotnet-aspnet-codegenerator"
+      ],
+      "rollForward": true
     }
   }
 }
