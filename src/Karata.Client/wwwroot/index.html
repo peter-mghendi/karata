@@ -16,13 +16,14 @@
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
 </head>
 
-<body class="mud-height-full gray lighten-4">
+<body class="mud-height-full" style="background-color: var(--mud-palette-background-gray);">
     <div id="app" class="mud-height-full">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="d-flex mud-height-full mud-width-full" style="background-color: rgba(39,39,47,1);">
+            <div class="d-flex flex-column mx-auto my-auto">
+                <span class="loading mb-12 mx-auto"></span>
+                <span class="loading-text">Loading</span>
+            </div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">

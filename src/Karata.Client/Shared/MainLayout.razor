@@ -1,24 +1,27 @@
-﻿@inherits LayoutComponentBase
+﻿@using Blazored.LocalStorage
+@inherits LayoutComponentBase
 
-<MudThemeProvider/>
+@inject ILocalStorageService LocalStorage
+
+<MudThemeProvider @ref="_themer" @bind-IsDarkMode="@_dark" Theme="_theme"/>
 <MudPopoverProvider/>
 <MudDialogProvider/>
 <MudSnackbarProvider/>
 
 <MudLayout Class="mud-height-full">
-    <MudAppBar Class="gray lighten-4" Elevation="0">
-        <MudLink Href="/" Typo="Typo.body1" Color="Color.Dark" Class="me-4" Underline="Underline.None">
+    <MudAppBar Elevation="0" Style="background-color: var(--mud-palette-background-gray);">
+        <MudLink Href="/" Typo="Typo.body1" Color="Color.Default" Class="me-4" Underline="Underline.None">
             Karata
         </MudLink>
         <AuthorizeView>
-            <MudLink Href="/game/join" Typo="Typo.body2" Class="me-4" Color="Color.Dark">
+            <MudLink Href="/game/join" Typo="Typo.body2" Class="me-4" Color="Color.Default">
                 Play
             </MudLink>
         </AuthorizeView>
-        <MudLink Href="/about" Typo="Typo.body2" Class="me-4" Color="Color.Dark">
+        <MudLink Href="/about" Typo="Typo.body2" Class="me-4" Color="Color.Default">
             About
         </MudLink>
-        <MudLink Href="/help" Typo="Typo.body2" Color="Color.Dark">
+        <MudLink Href="/help" Typo="Typo.body2" Color="Color.Default">
             Help
         </MudLink>
         <MudSpacer />
@@ -33,17 +36,47 @@
                 <form id="logout" method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" class="d-none"></form>
             </Authorized>
             <NotAuthorized>
-                <MudLink Href="Identity/Account/Register" Typo="Typo.body2" Class="me-4" Color="Color.Dark">
+                <MudLink Href="Identity/Account/Register" Typo="Typo.body2" Class="me-4" Color="Color.Default">
                     Register
                 </MudLink>
-                <MudLink Href="Identity/Account/Login" Typo="Typo.body2" Class="me-2" Color="Color.Dark">
+                <MudLink Href="Identity/Account/Login" Typo="Typo.body2" Class="me-2" Color="Color.Primary">
                     Log in
                 </MudLink>
             </NotAuthorized>
         </AuthorizeView>
-        <MudIconButton Icon="@Icons.Material.Filled.DarkMode" Color="Color.Dark"/>
+        <MudIconButton Icon="@ThemeToggleIcon" Color="@Color.Default" OnClick="OnToggleThemeAsync"/>
     </MudAppBar>
     <MudMainContent Class="mud-height-full" Style="position: relative">
         @Body
     </MudMainContent>
 </MudLayout>
+
+@code
+{
+    private bool _dark;
+    private readonly MudTheme _theme = new();
+    private MudThemeProvider _themer = null!;
+
+    private string ThemeToggleIcon => _dark switch
+    {
+        true => Icons.Material.Filled.LightMode,
+        false => Icons.Material.Filled.DarkMode,
+    };
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dark = await LocalStorage.GetItemAsync<bool?>("karata:settings:dark") ?? await _themer.GetSystemDarkModeAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnToggleThemeAsync()
+    {
+        await LocalStorage.SetItemAsync("karata:settings:dark", !_dark);
+        _dark = !_dark;
+
+        StateHasChanged();
+    }
+}

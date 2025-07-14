@@ -4,7 +4,7 @@
 
 @implements IGameInterface
 
-<MudPaper Class="pa-4 mb-4" Elevation="0">
+<div Class="pa-4 mb-4">
     <MudGrid Spacing="4" Justify="Justify.Center">
         <MudItem xs="6">
             <MudList T="string" Color="Color.Info">
@@ -24,7 +24,7 @@
                         Current request: @(Game.Request.Face is None ? Game.Request.Suit.ToString() : Game.Request.GetName())
                     </MudAlert>
                 }
-                <MudAlert Class="mb-4" Severity="@Severity.Info" Icon="@Icons.Material.Rounded.Person">
+                <MudAlert Severity="@Severity.Info" Icon="@Icons.Material.Rounded.Person">
                     Current player: @Game.CurrentHand.User.Username
                     @if (Game.CurrentHand.User == Hand.User)
                     {
@@ -47,15 +47,17 @@
             </MudList>
         </MudItem>
     </MudGrid>
-</MudPaper>
+</div>
 
-<MudDropContainer T="DropItem" Items="_items" ItemsSelector="@((DropItem item, string dropzone) => item.Identifier == dropzone)" ItemDropped="ItemUpdated" Class="d-flex flex-column flex-grow-1 gap-4">
+@* TODO: What is this 88vh? *@
+<MudDropContainer T="DropItem" Items="_items" ItemsSelector="@((DropItem item, string dropzone) => item.Identifier == dropzone)" 
+                  ItemDropped="ItemUpdated" Class="d-flex flex-column flex-grow-1 gap-4" Style="height: 70%;">
     <ChildContent>
-        <div class="d-flex flex-wrap justify-space-between gap-4">
-            <MudDropZone T="DropItem" Identifier="Hand" Class="rounded pa-4 flex-grow-1 overflow-y-scroll" Style="background-color: white" AllowReorder>
+        <div class="d-flex flex-wrap justify-space-between gap-4 mud-height-full">
+            <MudDropZone T="DropItem" Identifier="Hand" Class="rounded pa-4 flex-grow-1 overflow-y-scroll mud-height-full" AllowReorder>
                 <MudText Typo="Typo.h6" Class="mb-4">My Cards</MudText>
             </MudDropZone>
-            <MudDropZone T="DropItem" Identifier="Turn" Class="rounded pa-4 flex-grow-1" Style="background-color: white" AllowReorder>
+            <MudDropZone T="DropItem" Identifier="Turn" Class="rounded pa-4 flex-grow-1" AllowReorder>
                 <MudText Typo="Typo.h6" Class="mb-4">Current Turn</MudText>
             </MudDropZone>
         </div>
@@ -120,20 +122,13 @@
 
         item.Identifier = zone;
 
-        switch (zone)
+        await (zone switch
         {
-            case "Hand":
-            {
-                if (!CurrentHand.Contains(card)) await RemoveCardFromTurn(card);
-                break;
-            }
-            case "Turn":
-            {
-                if (!Turn.Contains(card)) await AddCardToTurn(card, index);
-                else await ReorderCardInTurn(card, index);
-                break;
-            }
-        }
+            "Turn" when CurrentHand.Contains(card) => AddCardToTurn(card, index),
+            "Turn" when Turn.Contains(card) => ReorderCardInTurn(card, index),
+            "Hand" when Turn.Contains(card) => RemoveCardFromTurn(card),
+            _ => Task.CompletedTask     
+        });
     }
     
     private string GetIcon(Card card) => card.Suit switch
