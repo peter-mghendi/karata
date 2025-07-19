@@ -1,0 +1,38 @@
+<MudListItem Value="@Hand.User" Icon="@ConnectionIndicator(Hand).Icon" IconColor="@ConnectionIndicator(Hand).Color">
+    @Hand.User.Username
+    @if (IsAdministrator)
+    {
+        <MudChip T="string" Icon="@Icons.Material.Rounded.Security" Variant="Variant.Text" Color="Color.Primary"
+                 Size="Size.Small">
+            Admin
+        </MudChip>
+    }
+    @if (IsMe)
+    {
+        <MudChip T="string" Icon="@Icons.Material.Rounded.AccountCircle" Variant="Variant.Text" Color="Color.Info"
+                 Size="Size.Small">
+            You
+        </MudChip>
+    }
+</MudListItem>
+
+@code {
+    [Parameter] public bool IsAdministrator { get; set; }
+    
+    [Parameter] public bool IsMe { get; set; }
+
+    [Parameter] public HandData Hand { get; set; } = null!;
+    
+    private static (string Icon, Color Color) ConnectionIndicator(HandData hand)
+    {
+        var connected = (Icon: Icons.Material.Rounded.Link, Color: Color.Success);
+        var disconnected = (Icon: Icons.Material.Rounded.LinkOff, Color: Color.Error);
+
+        return hand.User switch
+        {
+            // Alternatively, use the SignalR Hub's ConnectionState to determine our owm connection status.
+            // var user when user == Me => Hub?.State is HubConnectionState.Connected ? connected : disconnected,
+            _ => hand.Status is HandStatus.Connected ? connected : disconnected
+        };
+    }
+}

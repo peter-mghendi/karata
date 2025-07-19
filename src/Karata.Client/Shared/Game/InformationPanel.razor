@@ -1,15 +1,21 @@
+@using Karata.Server.Models
 @using TextCopy
 
 @inject ISnackbar Snackbar 
 
 <MudList T="string">
+    @if (Subheader)
+    {
+        <MudListSubheader>Game Details</MudListSubheader>
+    }
+
     <MudListItem Value="@Room.Id.ToString()" OnClick="CopyInviteLink">
         <MudText Typo="Typo.caption">Room ID (Click to Copy)</MudText>
-        <MudText Typo="Typo.body1" Class="gray-text">@Room.Id.ToString()</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Room.Id</MudText>
     </MudListItem>
     <MudListItem Value="@Room.CreatedAt.ToLocalTime().ToString()">
         <MudText Typo="Typo.caption">Created At</MudText>
-        <MudText Typo="Typo.body1" Class="gray-text">@Room.CreatedAt.ToLocalTime().ToString()</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Room.CreatedAt.ToLocalTime()</MudText>
     </MudListItem>
     <MudListItem Value="@Room.Administrator.Username">
         <MudText Typo="Typo.caption">Room Admin</MudText>
@@ -33,13 +39,23 @@
         <MudText Typo="Typo.caption">Status</MudText>
         <MudText Typo="Typo.body1" Class="gray-text">@Game.Status</MudText>
     </MudListItem>
+    @if (Room.Game.Status is GameStatus.Over && Room.Game.Result!.ResultType is GameResultType.Win)
+    {
+        <MudListItem Value="@Room.CreatedAt.ToLocalTime().ToString()">
+            <MudText Typo="Typo.caption">Winner</MudText>
+            <MudText Typo="Typo.body1" Class="gray-text">@Room.Game.Result!.Winner!.Username</MudText>
+        </MudListItem>
+    }
 </MudList>
 
 @code
 {
     [Parameter]
-    public RoomData Room { get; set; } = null!;
+    public bool Subheader { get; set; }
 
+    [Parameter]
+    public RoomData Room { get; set; } = null!;
+    
     [Inject]
     public IClipboard Clipboard { get; set; } = null!;
 

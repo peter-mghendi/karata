@@ -17,8 +17,8 @@ public class Activity
     {
         Type = ActivityType.GameCreated,
         Text = $"{room.Creator.UserName} has started a game.",
-        Action = "Join",
-        Link = $"/game/{room.Id.ToString()}/play",
+        Action = "Check it out!",
+        Link = $"/game/{room.Id}",
         Metadata = new Dictionary<string, object> { ["room"] = room.Id },
         CreatedAt = room.CreatedAt,
         Actor = room.Creator
@@ -29,7 +29,7 @@ public class Activity
         Type = ActivityType.GameWon,
         Text = $"{room.Game.Result!.Winner!.UserName} has just won a game.",
         Action = "See results",
-        Link = $"/game/{room.Id.ToString()}/over",
+        Link = $"/game/{room.Id}/over",
         Metadata = new Dictionary<string, object> { ["room"] = room.Id },
         CreatedAt = room.Game.Result!.CompletedAt,
         Actor = room.Game.Result!.Winner!

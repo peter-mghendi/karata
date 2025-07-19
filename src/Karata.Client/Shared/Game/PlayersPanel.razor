@@ -1,47 +1,23 @@
 <MudList ReadOnly SelectedValue="@Game.CurrentHand.User">
+    @if (Subheader)
+    {
+        <MudListSubheader>Players</MudListSubheader>    
+    }
+    
     @foreach (var hand in Game.Hands)
     {
-        <MudListItem Value="@hand.User" IconColor="@ConnectionInformation(hand).Color"
-                     Icon="@ConnectionInformation(hand).Icon">
-            @hand.User.Username
-            @if (hand.User == Room.Administrator)
-            {
-                <MudChip Icon="@Icons.Material.Rounded.Security" Variant="Variant.Text" Color="Color.Primary"
-                         Size="Size.Small">
-                    Admin
-                </MudChip>
-            }
-            @if (hand.User == Me)
-            {
-                <MudChip Icon="@Icons.Material.Rounded.AccountCircle" Variant="Variant.Text" Color="Color.Info"
-                         Size="Size.Small">
-                    You
-                </MudChip>
-            }
-        </MudListItem>
+        <HandDisplay Hand="hand" IsAdministrator="@(hand.User == Room.Administrator)" IsMe="@(hand.User == Me)"/>
     }
 </MudList>
 
 @code
 {
-    // [CascadingParameter] protected HubConnection? Hub { get; set; }
-
-    [Parameter] public UserData Me { get; set; } = null!;
+    [Parameter]
+    public bool Subheader { get; set; }
 
     [Parameter] public RoomData Room { get; set; } = null!;
+    
+    [Parameter] public UserData? Me { get; set; }
 
     private GameData Game => Room.Game;
-
-    private (string Icon, Color Color) ConnectionInformation(HandData hand)
-    {
-        var connected = (Icon: Icons.Material.Rounded.Link, Color: Color.Success);
-        var disconnected = (Icon: Icons.Material.Rounded.LinkOff, Color: Color.Error);
-
-        return hand.User switch
-        {
-            // Alternatively, use the SignalR Hub's ConnectionState to determine our owm connection status.
-            // var user when user == Me => Hub?.State is HubConnectionState.Connected ? connected : disconnected,
-            _ => hand.Status is HandStatus.Connected ? connected : disconnected
-        };
-    }
 }
