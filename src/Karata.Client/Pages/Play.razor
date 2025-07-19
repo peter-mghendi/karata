@@ -150,7 +150,7 @@
         var username = auth.User.Identity!.Name!;
 
         _hub = new HubConnectionBuilder()
-            .WithUrl(Navigator.ToAbsoluteUri("/hubs/game"), options =>
+            .WithUrl(Navigator.ToAbsoluteUri("/hubs/game/play"), options =>
             {
                 options.AccessTokenProvider = async () =>
                 {

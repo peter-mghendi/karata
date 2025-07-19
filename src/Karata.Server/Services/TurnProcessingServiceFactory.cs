@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 namespace Karata.Server.Services;
 
 public class TurnProcessingServiceFactory(
-    IHubContext<GameHub, IGameClient> hub,
+    IHubContext<PlayGameHub, IPlayGameClient> hub,
     ILoggerFactory loggers,
     KarataContext context,
     TurnManager turns,

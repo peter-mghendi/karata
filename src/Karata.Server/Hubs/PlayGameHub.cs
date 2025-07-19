@@ -14,13 +14,13 @@ using static System.Guid;
 namespace Karata.Server.Hubs;
 
 [Authorize]
-public class GameHub(
-    ILogger<GameHub> logger,
+public class PlayGameHub(
+    ILogger<PlayGameHub> logger,
     KarataContext context,
     PresenceService presence,
     RoomMembershipServiceFactory membership,
     UserManager<User> users
-) : Hub<IGameClient>
+) : Hub<IPlayGameClient>
 {
     public override async Task OnDisconnectedAsync(Exception? exception)
     {

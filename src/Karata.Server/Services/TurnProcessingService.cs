@@ -20,7 +20,7 @@ namespace Karata.Server.Services;
 /// Orchestrates turn processing: validation, delta generation, state mutation, notifications, and persistence.
 /// </summary>
 public class TurnProcessingService(
-    IHubContext<GameHub, IGameClient> hub,
+    IHubContext<PlayGameHub, IPlayGameClient> hub,
     ILogger<TurnProcessingService> logger,
     KarataContext context,
     TurnManager turns,

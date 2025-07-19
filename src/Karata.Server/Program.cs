@@ -94,7 +94,8 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapControllers();
-app.MapHub<GameHub>("/hubs/game", options => options.AllowStatefulReconnects = true);
+app.MapHub<PlayGameHub>("/hubs/game/play", options => options.AllowStatefulReconnects = true);
+app.MapHub<SpectateGameHub>("/hubs/game/spectate", options => options.AllowStatefulReconnects = true);
 app.MapFallbackToFile("index.html");
 
 app.Run();

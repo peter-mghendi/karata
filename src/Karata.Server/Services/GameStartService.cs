@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.SignalR;
 namespace Karata.Server.Services;
 
 public class GameStartService(
-    IHubContext<GameHub, IGameClient> hub,
+    IHubContext<PlayGameHub, IPlayGameClient> hub,
     ILogger<GameStartService> logger,
     KarataContext context,
     Guid room,

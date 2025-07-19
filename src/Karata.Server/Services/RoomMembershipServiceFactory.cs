@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 namespace Karata.Server.Services;
 
 public class RoomMembershipServiceFactory(
-    IHubContext<GameHub, IGameClient> hub,
+    IHubContext<PlayGameHub, IPlayGameClient> hub,
     IPasswordService passwords,
     KarataContext context,
     PresenceService presence,
