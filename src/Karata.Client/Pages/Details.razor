@@ -15,6 +15,9 @@
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/game/{_room.Id}/play")">
                     Join
                 </MudButton>
+                <MudButton Variant="Variant.Outlined" Href="@($"/game/{_room.Id}/spectate")" Class="ml-2">
+                    Spectate
+                </MudButton>
             </MudPaper>
         }
     </MudContainer>

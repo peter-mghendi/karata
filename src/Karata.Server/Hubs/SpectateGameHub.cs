@@ -25,7 +25,7 @@ public class SpectateGameHub(ILogger<SpectateGameHub> logger, KarataContext cont
         try
         {
             logger.LogDebug("Spectator {Connection} is joining room {Room}.", Context.ConnectionId, roomId);
-            if (await context.Rooms.FindAsync(roomId) is not { } room) return;
+            if (await context.Rooms.FindAsync(Guid.Parse(roomId)) is not { } room) return;
             
             var counts = room.Game.Hands.ToDictionary(h => h.Player.Id, h => h.Cards.Count);
 

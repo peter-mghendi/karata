@@ -1,0 +1,56 @@
+@page "/game/{id:guid}/spectate"
+
+@using Microsoft.AspNetCore.SignalR.Client
+@using TextCopy
+
+@implements IAsyncDisposable
+
+@inject NavigationManager Navigator
+
+<MudLoading Loading="@(_room is null)" Text="Please wait..." Class="mud-height-full pa-0">
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mud-height-full pa-0 d-flex justify-center">
+        @if (_room is not null)
+        {
+            <MudText>Room @_room.Id.ToString()</MudText>
+        }
+    </MudContainer>
+</MudLoading>
+
+@code
+{
+    [Parameter] public Guid Id { get; set; }
+
+    [Inject] public required IClipboard Clipboard { get; set; }
+    
+    private HubConnection? _hub;
+    private RoomData? _room;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hub = new HubConnectionBuilder()
+            .WithUrl(Navigator.ToAbsoluteUri("/hubs/game/spectate"))
+            .WithStatefulReconnect()
+            .AddJsonProtocol()
+            .Build();
+        
+        _hub.On<RoomData, Dictionary<string, int>>("AddToRoom", (room, counts) =>
+        {
+            var hands = room.Game.Hands.Select(h => h with
+            {
+                Cards = [..Enumerable.Repeat(new Card(), counts[h.User.Id])]
+            });
+            
+            _room = room with { Game = room.Game with { Hands = [..hands] } };
+            StateHasChanged();
+        });
+        
+        await _hub.StartAsync();
+        await _hub.SendAsync("JoinRoom", Id);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hub is null) return;
+        await _hub.DisposeAsync();
+    }
+}
