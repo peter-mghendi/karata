@@ -20,33 +20,34 @@ public partial class RoomMembershipService
         ValidateJoiningGameState(room, player);
         presence.AddPresence(player.Id, room.Id.ToString());
 
+        var counts = room.Game.Hands
+            .Where(h => h.Player.Id != player.Id)
+            .ToDictionary(h => h.Player.Id, h => h.Cards.Count);
+        
         switch (room.Game.Status)
         {
             case GameStatus.Lobby when room.Game.Hands.SingleOrDefault(h => h.Player.Id == player.Id) is { } joined:
                 joined.Status = Connected;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(room.ToData());
-                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-                    .UpdateHandStatus(joined.Player.ToData(), joined.Status);
+                await Me.AddToRoom(room.ToData(), counts, joined.Cards);
+                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).UpdateHandStatus(joined.Player.ToData(), joined.Status);
                 break;
             case GameStatus.Lobby:
                 var hand = new Hand { Player = player, Status = Connected };
                 room.Game.Hands.Add(hand);
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(room.ToData());
-                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-                    .AddHandToRoom(hand.Player.ToData(), hand.Status);
+                await Me.AddToRoom(room.ToData(), counts, hand.Cards);
+                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).AddHandToRoom(hand.Player.ToData(), hand.Status);
                 break;
             case GameStatus.Ongoing:
                 var rejoined = room.Game.Hands.Single(h => h.Player.Id == player.Id);
                 rejoined.Status = Connected;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(room.ToData());
-                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-                    .UpdateHandStatus(rejoined.Player.ToData(), Connected);
+                await Me.AddToRoom(room.ToData(), counts, rejoined.Cards);
+                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).UpdateHandStatus(rejoined.Player.ToData(), Connected);
                 break;
             case GameStatus.Over:
                 break;

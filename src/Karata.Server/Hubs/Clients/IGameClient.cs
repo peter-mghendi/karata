@@ -8,7 +8,7 @@ public interface IGameClient
     Task AddHandToRoom(UserData user, HandStatus status);
     
     // Adds the current user to a room
-    Task AddToRoom(RoomData room);
+    Task AddToRoom(RoomData room, Dictionary<string, int> counts, List<Card> cards);
     
     // Ends the game
     Task EndGame();

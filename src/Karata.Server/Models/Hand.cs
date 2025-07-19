@@ -18,7 +18,7 @@ public class Hand
     public HandData ToData() => new()
     {
         Status = Status,
-        Cards = Cards,
+        Cards = [],
         User = Player.ToData(),
     };
 }

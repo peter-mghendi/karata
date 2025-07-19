@@ -169,9 +169,9 @@
             Snackbar.Add($"{user.Username} (Status: {status}) has joined the room", Severity.Info);
         });
 
-        _hub.On<RoomData>("AddToRoom", room =>
+        _hub.On<RoomData, Dictionary<string, int>, List<Card>>("AddToRoom", (room, counts, cards) =>
         {
-            _store = Factory.Create(room, username);
+            _store = Factory.Create(room, counts, cards, username);
             _store.AddInterceptor(new LoggingInterceptor<RoomData>(LoggerFactory));
             _store.AddInterceptor(new TimingInterceptor<RoomData>(LoggerFactory));
             _store.Observe(OnStoreChanged);
