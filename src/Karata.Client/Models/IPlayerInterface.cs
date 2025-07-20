@@ -7,7 +7,7 @@ using Karata.Cards;
 
 namespace Karata.Client.Models;
 
-public interface IGameInterface
+public interface IPlayerInterface
 {
     [Parameter]
     public GameData Game { get; set; }

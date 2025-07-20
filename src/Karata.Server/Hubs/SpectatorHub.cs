@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Server.Hubs;
 
-// IMPORTANT! The SpectateGameHub can be accessed by unauthenticated users.
+// IMPORTANT! The SpectatorHub can be accessed by unauthenticated users.
 // Do not depend on Context.UserIdentifier being present.
-public class SpectateGameHub(ILogger<SpectateGameHub> logger, KarataContext context) : Hub<ISpectateGameClient>
+public class SpectatorHub(ILogger<SpectatorHub> logger, KarataContext context) : Hub<ISpectatorClient>
 {
     private static readonly HashSet<string> ConnectedSpectators = [];
 

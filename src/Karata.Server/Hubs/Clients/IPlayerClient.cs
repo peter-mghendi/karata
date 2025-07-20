@@ -2,7 +2,7 @@ using Karata.Shared.Models;
 
 namespace Karata.Server.Hubs.Clients;
 
-public interface IPlayGameClient
+public interface IPlayerClient
 {
     // Adds another user to the current room
     Task AddHandToRoom(UserData user, HandStatus status);
