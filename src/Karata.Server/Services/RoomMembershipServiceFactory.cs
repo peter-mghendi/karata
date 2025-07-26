@@ -7,16 +7,14 @@ using Microsoft.AspNetCore.SignalR;
 namespace Karata.Server.Services;
 
 public class RoomMembershipServiceFactory(
-    IHubContext<PlayerHub, IPlayerClient> hub,
+    IHubContext<PlayerHub, IPlayerClient> players,
+    IHubContext<SpectatorHub, ISpectatorClient> spectators,
     IPasswordService passwords,
     KarataContext context,
     PresenceService presence,
-    TurnManager turns,
     UserManager<User> users
 )
 {
-    public RoomMembershipService Create(Guid room, string player)
-    {
-        return new RoomMembershipService(hub, passwords, context, presence, turns, users, room, player);
-    }
+    public RoomMembershipService Create(Guid room, string player) => 
+        new(players, spectators, passwords, context, presence, users, room, player);
 }

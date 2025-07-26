@@ -8,21 +8,28 @@ namespace Karata.Server.Services;
 /// Base for services that need SignalR context and room/user identification.
 /// Provides helper methods to broadcast to specific subsets of clients.
 /// </summary>
-public abstract class HubAwareService(IHubContext<PlayerHub, IPlayerClient> hub, Guid room, string player)
+public abstract class HubAwareService(
+    IHubContext<PlayerHub, IPlayerClient> players,
+    IHubContext<SpectatorHub, ISpectatorClient> spectators,
+    Guid room,
+    string player
+)
 {
     protected readonly Guid RoomId = room;
     protected readonly string CurrentPlayerId = player;
-    // protected readonly string ConnectionId = connection;
 
-    protected IPlayerClient Me => hub.Clients.User(CurrentPlayerId);
-    protected IPlayerClient Room => hub.Clients.Group(RoomId.ToString());
-    protected IPlayerClient Client(string connection) => hub.Clients.Client(connection);
-    protected IPlayerClient Hand(Hand hand) => hub.Clients.User(hand.Player.Id);
-    protected IPlayerClient Hands(HashSet<Hand> hands) => hub.Clients.Users(hands.Select(h => h.Player.Id).ToList());
+    protected IPlayerClient Me => players.Clients.User(CurrentPlayerId);
+    protected IPlayerClient RoomPlayers => players.Clients.Group(RoomId.ToString());
+    protected ISpectatorClient RoomSpectators => spectators.Clients.Group(RoomId.ToString());
+
+    protected IPlayerClient Hand(Hand hand) => players.Clients.User(hand.Player.Id);
+    protected IPlayerClient Hands(HashSet<Hand> hands) => players.Clients.Users([..hands.Select(h => h.Player.Id)]);
+    protected IPlayerClient PlayerConnection(string connection) => players.Clients.Client(connection);
+    protected ISpectatorClient SpectatorConnection(string connection) => spectators.Clients.Client(connection);
 
     protected async Task AddToRoom(string connection) =>
-        await hub.Groups.AddToGroupAsync(connection, RoomId.ToString());
+        await players.Groups.AddToGroupAsync(connection, RoomId.ToString());
 
     protected async Task RemoveFromRoom(string connection) =>
-        await hub.Groups.RemoveFromGroupAsync(connection, RoomId.ToString());
+        await players.Groups.RemoveFromGroupAsync(connection, RoomId.ToString());
 }

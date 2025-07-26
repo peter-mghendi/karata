@@ -1,7 +1,6 @@
-using System.Collections.Immutable;
-using static Karata.Server.Models.CardRequestLevel;
+using static Karata.Shared.Models.CardRequestLevel;
 
-namespace Karata.Server.Models;
+namespace Karata.Shared.Models;
 
 public record GameDelta
 {

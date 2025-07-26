@@ -9,9 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Karata.Server.Controllers;
 
-[Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/rooms")]
 public class RoomController(KarataContext context) : ControllerBase
 {
     [HttpGet("{id}")]
@@ -23,9 +22,8 @@ public class RoomController(KarataContext context) : ControllerBase
         if (room == null) return NotFound();
         return room.ToData();
     }
-    
-    
 
+    [Authorize]
     [HttpPost]
     public async Task<ActionResult<RoomData>> Post(
         [FromServices] IPasswordService passwordService,

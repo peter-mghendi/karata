@@ -32,6 +32,7 @@ public partial class RoomMembershipService
                 await AddToRoom(connection);
                 await Me.AddToRoom(room.ToData(), counts, joined.Cards);
                 await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).UpdateHandStatus(joined.Player.ToData(), joined.Status);
+                await RoomSpectators.UpdateHandStatus(joined.Player.ToData(), joined.Status);
                 break;
             case GameStatus.Lobby:
                 var hand = new Hand { Player = player, Status = Connected };
@@ -40,6 +41,7 @@ public partial class RoomMembershipService
                 await AddToRoom(connection);
                 await Me.AddToRoom(room.ToData(), counts, hand.Cards);
                 await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).AddHandToRoom(hand.Player.ToData(), hand.Status);
+                await RoomSpectators.AddHandToRoom(hand.Player.ToData(), hand.Status);
                 break;
             case GameStatus.Ongoing:
                 var rejoined = room.Game.Hands.Single(h => h.Player.Id == player.Id);
@@ -47,7 +49,8 @@ public partial class RoomMembershipService
 
                 await AddToRoom(connection);
                 await Me.AddToRoom(room.ToData(), counts, rejoined.Cards);
-                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).UpdateHandStatus(rejoined.Player.ToData(), Connected);
+                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).UpdateHandStatus(rejoined.Player.ToData(), rejoined.Status);
+                await RoomSpectators.UpdateHandStatus(rejoined.Player.ToData(), rejoined.Status);
                 break;
             case GameStatus.Over:
                 break;
@@ -63,7 +66,7 @@ public partial class RoomMembershipService
             if (room.Hash is null) return true;
             if (room.Game.Hands.Any(h => h.Player.Id == player.Id)) return true;
 
-            if (await Client(connection).PromptPasscode() is not [_, ..] password)
+            if (await PlayerConnection(connection).PromptPasscode() is not [_, ..] password)
                 throw new PasswordRequiredException();
             if (!passwords.VerifyPassword(Encoding.UTF8.GetBytes(password), room.Salt!, room.Hash))
                 throw new IncorrectPasswordException();
@@ -72,12 +75,12 @@ public partial class RoomMembershipService
         }
         catch (PasswordException exception)
         {
-            await Client(connection).ReceiveSystemMessage(Messages.Exception(exception));
+            await Me.ReceiveSystemMessage(Messages.Exception(exception));
             return false;
         }
     }
 
-    private void ValidateJoiningGameState(Room room, User player)
+    private static void ValidateJoiningGameState(Room room, User player)
     {
         switch (room.Game.Status)
         {

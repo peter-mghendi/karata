@@ -33,6 +33,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _room = await Http.GetFromJsonAsync<RoomData>($"api/room/{Id}");
+        _room = await Http.GetFromJsonAsync<RoomData>($"api/rooms/{Id}");
     }
 }
