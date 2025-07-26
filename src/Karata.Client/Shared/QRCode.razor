@@ -1,6 +1,6 @@
 @using QRCoder
 
-<img src="@_src" alt="QR Code" class="mud-width-full" />
+<img src="@_src" alt="@Data" class="mud-width-full" />
 
 @code
 {
@@ -9,7 +9,7 @@
 
     private string _src = string.Empty;
 
-    private QRCodeGenerator _generator = new();
+    private readonly QRCodeGenerator _generator = new();
 
     protected override void OnParametersSet()
     {

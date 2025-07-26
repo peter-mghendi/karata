@@ -52,12 +52,27 @@
                         else
                         {
                             <div class="d-flex flex-column justify-center align-content-center pa-4 pt-8">
+                                <MudText Align="Align.Center" Typo="Typo.h5" Class="gray-text mb-2">
+                                    Waiting for players...
+                                </MudText>
+                                <MudText Align="Align.Center" Typo="Typo.h3" Class="mb-4">
+                                    <span style="@(_store.State.Game.Hands.Count is > 2 and < 4 ? "color: var(--mud-palette-success)" : "color: var(--mud-palette-error)")">
+                                        @_store.State.Game.Hands.Count    
+                                    </span>
+                                    of 4
+                                </MudText>
+                                <MudText Align="Align.Center" Typo="Typo.body2" Class="gray-text">
+                                    Room ID
+                                </MudText>
                                 <MudText Align="Align.Center" Typo="Typo.body1" Class="mb-2">
-                                    You are in room @_store.State.Id
+                                    @_store.State.Id
                                     <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.ContentCopy"
                                                    Color="Color.Primary" OnClick="CopyRoomId"/>
                                 </MudText>
-                                <MudText Align="Align.Center" Typo="Typo.body2" Class="mb-2">
+                                <MudText Align="Align.Center" Typo="Typo.body2" Class="gray-text">
+                                    Room link
+                                </MudText>
+                                <MudText Align="Align.Center" Typo="Typo.body2" Class="mb-8">
                                     @Navigator.Uri
                                     <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.ContentCopy"
                                                    Color="Color.Primary" OnClick="CopyRoomLink"/>
