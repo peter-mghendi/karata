@@ -18,7 +18,7 @@ public class Hand
     public HandData ToData() => new()
     {
         Status = Status,
-        Cards = [],
+        Cards = [..Enumerable.Repeat(new Card(), Cards.Count)],
         User = Player.ToData(),
     };
 }

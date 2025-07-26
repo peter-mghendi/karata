@@ -8,7 +8,7 @@ public interface IPlayerClient
     Task AddHandToRoom(UserData user, HandStatus status);
     
     // Adds the current user to a room
-    Task AddToRoom(RoomData room, Dictionary<string, List<Card>> cards);
+    Task AddToRoom(RoomData room);
     
     // Ends the game
     Task EndGame();

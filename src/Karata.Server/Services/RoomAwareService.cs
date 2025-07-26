@@ -1,5 +1,6 @@
 using Karata.Server.Hubs;
 using Karata.Server.Hubs.Clients;
+using Karata.Shared.Models;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Server.Services;
@@ -32,10 +33,12 @@ public abstract class RoomAwareService(
 
     protected async Task RemoveFromRoom(string connection) =>
         await players.Groups.RemoveFromGroupAsync(connection, RoomId.ToString());
-    
-    protected static Dictionary<string, List<Card>> BuildCardMap(Room room, User me) => room.Game.Hands
-        .ToDictionary(
-            h => h.Player.Id,
-            h => h.Player.Id == me.Id ? h.Cards : [..Enumerable.Repeat(new Card(), h.Cards.Count)]
-        );
+
+    protected static RoomData EnrichRoomDataForUser(RoomData room, User me) => room with
+    {
+        Game = room.Game with
+        {
+            Hands = [..room.Game.Hands.Select(h => h.User.Id == me.Id ? h with { Cards = h.Cards } : h)]
+        }
+    };
 }

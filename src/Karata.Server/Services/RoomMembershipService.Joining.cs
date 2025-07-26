@@ -20,7 +20,7 @@ public partial class RoomMembershipService
         ValidateJoiningGameState(room, player);
         presence.AddPresence(player.Id, room.Id.ToString());
 
-        var cards = BuildCardMap(room, player);
+        // var cards = BuildCardMap(room, player);
         
         switch (room.Game.Status)
         {
@@ -28,7 +28,7 @@ public partial class RoomMembershipService
                 joined.Status = Connected;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(room.ToData(), cards);
+                await Me.AddToRoom(EnrichRoomDataForUser(room.ToData(), player));
                 await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
                     .UpdateHandStatus(joined.Player.ToData(), joined.Status);
                 await RoomSpectators.UpdateHandStatus(joined.Player.ToData(), joined.Status);
@@ -38,7 +38,7 @@ public partial class RoomMembershipService
                 room.Game.Hands.Add(hand);
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(room.ToData(), cards);
+                await Me.AddToRoom(EnrichRoomDataForUser(room.ToData(), player));
                 await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
                     .AddHandToRoom(hand.Player.ToData(), hand.Status);
                 await RoomSpectators.AddHandToRoom(hand.Player.ToData(), hand.Status);
@@ -48,7 +48,7 @@ public partial class RoomMembershipService
                 rejoined.Status = Connected;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(room.ToData(), cards);
+                await Me.AddToRoom(EnrichRoomDataForUser(room.ToData(), player));
                 await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
                     .UpdateHandStatus(rejoined.Player.ToData(), rejoined.Status);
                 await RoomSpectators.UpdateHandStatus(rejoined.Player.ToData(), rejoined.Status);
