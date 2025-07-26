@@ -8,7 +8,7 @@ namespace Karata.Server.Services;
 /// Base for services that need SignalR context and room/user identification.
 /// Provides helper methods to broadcast to specific subsets of clients.
 /// </summary>
-public abstract class HubAwareService(
+public abstract class RoomAwareService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     Guid room,
@@ -32,4 +32,10 @@ public abstract class HubAwareService(
 
     protected async Task RemoveFromRoom(string connection) =>
         await players.Groups.RemoveFromGroupAsync(connection, RoomId.ToString());
+    
+    protected static Dictionary<string, List<Card>> BuildCardMap(Room room, User me) => room.Game.Hands
+        .ToDictionary(
+            h => h.Player.Id,
+            h => h.Player.Id == me.Id ? h.Cards : [..Enumerable.Repeat(new Card(), h.Cards.Count)]
+        );
 }

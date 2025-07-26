@@ -11,27 +11,23 @@ public class RoomState : Store<RoomData>
 
     public RoomState(
         RoomData data,
-        Dictionary<string, int> counts,
-        List<Card> cards,
+        Dictionary<string, List<Card>> cards,
         string username,
         ILoggerFactory? logging = null
     ) : base(data, logging)
     {
         _username = username;
-        Mutate(new InitializeHands(counts, cards, _username));
+        Mutate(new InitializeHands(cards));
     }
 
     public HandData MyHand => State.Game.Hands.Single(h => h.User.Username == _username);
 
-    private record InitializeHands(Dictionary<string, int> Counts, List<Card> Cards, string Username)
+    private record InitializeHands(Dictionary<string, List<Card>> Cards)
         : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state)
         {
-            var hands = state.Game.Hands.Select(h => h with
-            {
-                Cards = [..h.User.Username == Username ? Cards : Enumerable.Repeat(new Card(), Counts[h.User.Id])]
-            });
+            var hands = state.Game.Hands.Select(h => h with { Cards = Cards[h.User.Id] });
 
             return state with { Game = state.Game with { Hands = [..hands] } };
         }

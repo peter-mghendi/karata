@@ -14,4 +14,4 @@ public partial class RoomMembershipService (
     PresenceService presence,
     UserManager<User> users,
     Guid room,
-    string player) : HubAwareService(players, spectators, room, player);
+    string player) : RoomAwareService(players, spectators, room, player);

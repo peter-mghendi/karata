@@ -28,7 +28,7 @@ public class TurnProcessingService(
     Guid room,
     string player,
     string connection
-) : HubAwareService(players, spectators, room, player)
+) : RoomAwareService(players, spectators, room, player)
 {
     public async Task ExecuteAsync(List<Card> cards)
     {

@@ -27,10 +27,11 @@ public class SpectatorHub(ILogger<SpectatorHub> logger, KarataContext context) :
             logger.LogDebug("Spectator {Connection} is joining room {Room}.", Context.ConnectionId, roomId);
             if (await context.Rooms.FindAsync(Guid.Parse(roomId)) is not { } room) return;
             
-            var counts = room.Game.Hands.ToDictionary(h => h.Player.Id, h => h.Cards.Count);
+            var cards = room.Game.Hands
+                .ToDictionary(hand => hand.Player.Id, hand => Enumerable.Repeat(new Card(), hand.Cards.Count).ToList());
 
             await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-            await Clients.Client(Context.ConnectionId).AddToRoom(room.ToData(), counts);
+            await Clients.Client(Context.ConnectionId).AddToRoom(room.ToData(), cards);
             ConnectedSpectators.Add(Context.ConnectionId);
         }
         catch (KarataException exception)

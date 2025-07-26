@@ -14,7 +14,7 @@ public class GameStartService(
     KarataContext context,
     Guid room,
     string player
-) : HubAwareService(players, spectators, room, player)
+) : RoomAwareService(players, spectators, room, player)
 {
     private const int DealCount = 4;
     
