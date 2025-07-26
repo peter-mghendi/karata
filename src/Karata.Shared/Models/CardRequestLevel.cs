@@ -1,4 +1,4 @@
-namespace Karata.Server.Models;
+namespace Karata.Shared.Models;
 
 /**
  * <summary>Levels of card requests</summary>

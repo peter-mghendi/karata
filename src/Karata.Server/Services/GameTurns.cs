@@ -1,8 +1,9 @@
+using Karata.Shared.Models;
 using static Karata.Shared.Models.HandStatus;
 
 namespace Karata.Server.Services;
 
-public class TurnManager
+public static class GameTurns
 {
     /// <summary>
     ///  Encapsulates logic to determine the next playable turn in a game.
@@ -10,9 +11,9 @@ public class TurnManager
     /// <remarks>
     ///  Does not validate against games with insufficient playable turns.
     /// </remarks>
-    public void Advance(Game game)
+    public static void Advance(Game game)
     {
-        var skip = (int)(game.CurrentHand.Turns.LastOrDefault()?.Delta?.Skip ?? 1);
+        var skip = game.CurrentHand.Turns.LastOrDefault()?.Delta?.Skip ?? 1;
 
         // process skip turns, counting only connected hands.
         while (skip > 0)

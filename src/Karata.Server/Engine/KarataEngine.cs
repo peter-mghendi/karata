@@ -1,7 +1,8 @@
 using System.Collections.Immutable;
 using Karata.Server.Engine.Exceptions;
+using Karata.Shared.Models;
 using static Karata.Cards.Card.CardFace;
-using static Karata.Server.Models.CardRequestLevel;
+using static Karata.Shared.Models.CardRequestLevel;
 
 namespace Karata.Server.Engine;
 

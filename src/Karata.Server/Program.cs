@@ -50,7 +50,6 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
 builder.Services.AddSingleton<PresenceService>();
 builder.Services.AddTransient<GameStartServiceFactory>();
-builder.Services.AddTransient<TurnManager>();
 builder.Services.AddTransient<RoomMembershipServiceFactory>();
 builder.Services.AddTransient<TurnProcessingServiceFactory>();
 builder.Services.AddResponseCompression(compression =>
@@ -94,7 +93,8 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapControllers();
-app.MapHub<GameHub>("/hubs/game", options => options.AllowStatefulReconnects = true);
+app.MapHub<PlayerHub>("/hubs/game/play", options => options.AllowStatefulReconnects = true);
+app.MapHub<SpectatorHub>("/hubs/game/spectate", options => options.AllowStatefulReconnects = true);
 app.MapFallbackToFile("index.html");
 
 app.Run();

@@ -7,11 +7,11 @@ using Microsoft.AspNetCore.SignalR;
 namespace Karata.Server.Services;
 
 public partial class RoomMembershipService (
-    IHubContext<GameHub, IGameClient> hub,
+    IHubContext<PlayerHub, IPlayerClient> players,
+    IHubContext<SpectatorHub, ISpectatorClient> spectators,
     IPasswordService passwords,
     KarataContext context,
     PresenceService presence,
-    TurnManager turns,
     UserManager<User> users,
     Guid room,
-    string player) : HubAwareService(hub, room, player);
+    string player) : HubAwareService(players, spectators, room, player);

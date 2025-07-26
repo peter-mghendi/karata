@@ -17,6 +17,8 @@
 </CascadingValue>
 
 @code {
+    // [CascadingParameter] protected HubConnection? Hub { get; set; }
+    
     [Parameter] public HubConnection? Hub { get; set; }
 
     [Parameter] public RenderFragment ChildContent { get; set; } = null!;

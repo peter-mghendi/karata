@@ -1,8 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Karata.Shared.Models;
 using static Karata.Cards.Card.CardFace;
-using static Karata.Server.Models.CardRequestLevel;
-using static Karata.Shared.Models.HandStatus;
+using static Karata.Shared.Models.CardRequestLevel;
 
 namespace Karata.Server.Models;
 
@@ -19,16 +18,14 @@ public class Game
     {
         null => NoRequest,
         { Face: None } => SuitRequest,
-        _ => CardRequest
+        { Face: not None } => CardRequest
     };
 
     public uint Give { get; set; }
     public uint Pick { get; set; }
     public int CurrentTurn { get; set; }
 
-    public int NextTurn => IsReversed
-        ? (CurrentTurn - 1 + Hands.Count) % Hands.Count
-        : (CurrentTurn + 1) % Hands.Count;
+    public int NextTurn => IsReversed ? (CurrentTurn - 1 + Hands.Count) % Hands.Count : (CurrentTurn + 1) % Hands.Count;
 
     public Deck Deck { get; init; } = Deck.Standard;
     public Pile Pile { get; init; } = new();

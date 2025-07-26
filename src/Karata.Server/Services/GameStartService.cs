@@ -8,12 +8,13 @@ using Microsoft.AspNetCore.SignalR;
 namespace Karata.Server.Services;
 
 public class GameStartService(
-    IHubContext<GameHub, IGameClient> hub,
+    IHubContext<PlayerHub, IPlayerClient> players,
+    IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILogger<GameStartService> logger,
     KarataContext context,
     Guid room,
     string player
-) : HubAwareService(hub, room, player)
+) : HubAwareService(players, spectators, room, player)
 {
     private const int DealCount = 4;
     
@@ -63,7 +64,8 @@ public class GameStartService(
         logger.LogDebug("Top card is {Card}.", top);
 
         game.Pile.Push(top);
-        await Room.MoveCardsFromDeckToPile([top]);
+        await RoomPlayers.MoveCardsFromDeckToPile([top]);
+        await RoomSpectators.MoveCardsFromDeckToPile([top]);
 
         logger.LogDebug("Start dealing cards to {Count} players.", game.Hands.Count);
 
@@ -80,6 +82,7 @@ public class GameStartService(
 
             await Hand(hand).MoveCardsFromDeckToHand(dealt);
             await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).MoveCardCountFromDeckToHand(hand.Player.ToData(), DealCount);
+            await RoomSpectators.MoveCardCountFromDeckToHand(hand.Player.ToData(), DealCount);
         }
 
         logger.LogDebug("Finished dealing cards.");
@@ -88,6 +91,6 @@ public class GameStartService(
     private async Task UpdateGameState(Room room)
     {
         room.Game.Status = GameStatus.Ongoing;
-        await Room.UpdateGameStatus(room.Game.Status);
+        await RoomPlayers.UpdateGameStatus(room.Game.Status);
     }
 }

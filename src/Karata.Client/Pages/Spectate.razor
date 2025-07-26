@@ -1,0 +1,225 @@
+@page "/game/{id:guid}/spectate"
+
+@using Karata.Client.Infrastructure.State
+@using Karata.Client.Support
+@using Karata.Pebble.Interceptors
+@using Microsoft.AspNetCore.SignalR.Client
+@using TextCopy
+
+@implements IAsyncDisposable
+
+@inject HttpClient Http
+@inject ILoggerFactory LoggerFactory
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigator
+@inject RoomStoreFactory Factory
+
+<HubConnectionGuard Hub="_hub">
+    <MudLoading Loading="@(_store is null)" Text="Please wait..." Class="mud-height-full pa-0">
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full pa-0">
+            @if (_store is not null)
+            {
+                <MudGrid Spacing="4" Justify="Justify.Center" Class="mb-4">
+                    <MudItem xs="6">
+                        <MudList T="string" Color="Color.Info">
+                            <MudListSubheader>Game info</MudListSubheader>
+                            @if (_store.State.Game.Pile.Any())
+                            {
+                                <MudListItem Icon="@GetIcon(_store.State.Game.Pile.Peek())"
+                                             IconColor="@(_store.State.Game.Pile.Peek().GetColor() == Red ? Color.Error : Color.Default)">
+                                    Top card: @_store.State.Game.Pile.Peek().GetName()
+                                </MudListItem>
+                            }
+                            @if (_store.State.Game.Pick > 0)
+                            {
+                                <MudListItem IconColor="Color.Warning" Icon="@Icons.Material.Rounded.PostAdd">
+                                    Cards to pick: @_store.State.Game.Pick
+                                </MudListItem>
+                            }
+                            @if (_store.State.Game.Request is not null)
+                            {
+                                <MudListItem Icon="@GetIcon(_store.State.Game.Request)"
+                                             IconColor="@(_store.State.Game.Request.GetColor() == Red ? Color.Error : Color.Default)">
+                                    Current
+                                    request: @(_store.State.Game.Request.Face is None ? _store.State.Game.Request.Suit.ToString() : _store.State.Game.Request.GetName())
+                                </MudListItem>
+                            }
+                            <MudListItem IconColor="@Color.Info" Icon="@Icons.Material.Rounded.Person">
+                                Current player: @_store.State.Game.CurrentHand.User.Username
+                            </MudListItem>
+                        </MudList>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudList Color="Color.Info" SelectedValue="@_store.State.Game.CurrentHand.User">
+                            <MudListSubheader>Players</MudListSubheader>
+                            @foreach (var hand in _store.State.Game.Hands)
+                            {
+                                <HandDisplay Hand="hand" IsAdministrator="@(hand.User == _store.State.Administrator)"/>
+                            }
+                        </MudList>
+                    </MudItem>
+                </MudGrid>
+            }
+
+            @if (_turns is not null)
+            {
+                <MudList T="string">
+                    <MudListSubheader Class="pb-4">Turns</MudListSubheader>
+
+                    @foreach (var turn in _turns)
+                    {
+                        <MudListItem Value="@turn">
+                            <MudText Typo="Typo.caption">@turn.Hand.User.Username</MudText>
+                            <MudText Typo="Typo.body1" Class="gray-text">@GetDescription(turn)</MudText>
+                        </MudListItem>
+                    }
+                </MudList>
+            }
+        </MudContainer>
+    </MudLoading>
+</HubConnectionGuard>
+
+@code
+{
+    [Parameter] public Guid Id { get; set; }
+
+    [Inject] public required IClipboard Clipboard { get; set; }
+
+    private HubConnection? _hub;
+    private RoomState? _store;
+    private List<TurnData>? _turns;
+
+    private void OnStoreChanged(RoomData room) => StateHasChanged();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _turns = await Http.GetFromJsonAsync<List<TurnData>>($"api/rooms/{Id}/turns");
+        _hub = new HubConnectionBuilder()
+            .WithUrl(Navigator.ToAbsoluteUri("/hubs/game/spectate"))
+            .WithStatefulReconnect()
+            .AddJsonProtocol()
+            .Build();
+
+        _hub.On<UserData, HandStatus>("AddHandToRoom", (user, status) =>
+        {
+            _store!.Mutate(new RoomState.AddHandToRoom(user, status));
+            Snackbar.Add($"{user.Username} (Status: {status}) has joined the room", Severity.Info);
+        });
+
+        _hub.On<RoomData, Dictionary<string, int>>("AddToRoom", (room, counts) =>
+        {
+            _store = Factory.Create(room, counts, [], string.Empty);
+            _store.AddInterceptor(new LoggingInterceptor<RoomData>(LoggerFactory));
+            _store.AddInterceptor(new TimingInterceptor<RoomData>(LoggerFactory));
+            _store.Observe(OnStoreChanged);
+
+            OnStoreChanged(room);
+        });
+
+        _hub.On<UserData, int>("MoveCardCountFromDeckToHand", (user, num) => _store!.Mutate(new RoomState.MoveCardCountFromDeckToHand(user, num)));
+
+        _hub.On<List<Card>>("MoveCardsFromDeckToPile", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToPile(cards)));
+
+        _hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (user, cards) => _store!.Mutate(new RoomState.MoveCardsFromHandToPile(user, cards, _store!.MyHand.User == user)));
+
+        _hub.On<SystemMessage>("ReceiveSystemMessage", message =>
+        {
+            var severity = message.Type switch
+            {
+                MessageType.Error => Severity.Error,
+                MessageType.Info => Severity.Info,
+                MessageType.Success => Severity.Success,
+                MessageType.Warning => Severity.Warning,
+                _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
+            };
+            Snackbar.Add(message.Text, severity);
+        });
+
+        _hub.On("ReclaimPile", () => _store!.Mutate(new RoomState.ReclaimPile()));
+
+        _hub.On("RemoveFromRoom", async () =>
+        {
+            _store!.Forget(OnStoreChanged);
+            _store = null;
+
+            StateHasChanged();
+
+            await _hub.StopAsync();
+            Navigator.NavigateTo("/game/join");
+        });
+
+        _hub.On<UserData>("RemoveHandFromRoom", user =>
+        {
+            _store!.Mutate(new RoomState.RemoveHandFromRoom(user));
+            Snackbar.Add($"{user.Username} has left the room.", Severity.Info);
+        });
+
+        _hub.On<Card>("SetCurrentRequest", request => _store!.Mutate(new RoomState.SetCurrentRequest(request)));
+
+        _hub.On<UserData>("UpdateAdministrator", administrator => _store!.Mutate(new RoomState.UpdateAdministrator(administrator)));
+
+        _hub.On<GameStatus>("UpdateGameStatus", status =>
+        {
+            _store!.Mutate(new RoomState.UpdateGameStatus(status));
+            Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info);
+        });
+
+        _hub.On<UserData, HandStatus>("UpdateHandStatus", (user, status) =>
+        {
+            _store!.Mutate(new RoomState.UpdateHandStatus(user, status));
+            Snackbar.Add($"{user.Username} has {status.ToString().ToLower()}.", Severity.Info);
+        });
+
+        _hub.On<uint>("UpdatePick", num => _store!.Mutate(new RoomState.UpdatePick(num)));
+
+        _hub.On<int>("UpdateTurn", turn =>
+        {
+            _store!.Mutate(new RoomState.UpdateTurn(turn));
+
+            Snackbar.Add($"It is now {_store!.State.Game.CurrentHand.User.Username}'s turn.", Severity.Info);
+        });
+
+        await _hub.StartAsync();
+        await _hub.SendAsync("JoinRoom", Id);
+    }
+
+    private static string GetIcon(Card card) => card.Suit switch
+    {
+        Spades => CardIcons.Spade,
+        Hearts => CardIcons.Heart,
+        Clubs => CardIcons.Club,
+        Diamonds => CardIcons.Diamond,
+        BlackJoker or RedJoker => Icons.Material.Rounded.TheaterComedy,
+        _ => throw new ArgumentException($"Invalid suit {card.Suit}", nameof(card))
+    };
+
+    private static string GetDescription(TurnData turn)
+    {
+        return turn.Type switch
+        {
+            TurnType.Skip => "Was skipped.",
+            TurnType.Void => "was skipped (disconnected).",
+            TurnType.Deal => $"Was dealt {CardCount(turn.Picked.Count)}.",
+            TurnType.Play => new[]
+                {
+                    turn.Cards.Count > 0
+                        ? $"Played {CardCount(turn.Cards.Count)}"
+                        : null,
+                    turn.Picked.Count > 0
+                        ? $"Picked {CardCount(turn.Picked.Count)}"
+                        : null
+                }.Where(x => x != null)
+                .DefaultIfEmpty("Took no action")
+                .Aggregate((a, b) => a + " and " + b?.ToLower()) + ".",
+            _ => $"{turn.Hand.User.Username} performed an unknown action."
+        };
+
+        string CardCount(int num) => $"{num} {(num == 1 ? "card" : "cards")}";
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hub is null) return;
+        await _hub.DisposeAsync();
+    }
+}

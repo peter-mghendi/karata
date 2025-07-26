@@ -2,11 +2,12 @@
 using Karata.Cards;
 using Karata.Cards.Extensions;
 using Karata.Server.Models;
+using Karata.Shared.Models;
 using static System.Console;
 using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
-using static Karata.Server.Models.CardRequestLevel;
+using static Karata.Shared.Models.CardRequestLevel;
 
 // DisplayDeck(deck: Deck.StandardDeck);
 //

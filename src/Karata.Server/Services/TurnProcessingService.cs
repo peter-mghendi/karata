@@ -10,8 +10,8 @@ using Karata.Shared.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using static Karata.Cards.Card.CardFace;
-using static Karata.Server.Models.CardRequestLevel;
-using static Karata.Server.Models.TurnType;
+using static Karata.Shared.Models.CardRequestLevel;
+using static Karata.Shared.Models.TurnType;
 using static Karata.Shared.Models.GameStatus;
 
 namespace Karata.Server.Services;
@@ -20,15 +20,15 @@ namespace Karata.Server.Services;
 /// Orchestrates turn processing: validation, delta generation, state mutation, notifications, and persistence.
 /// </summary>
 public class TurnProcessingService(
-    IHubContext<GameHub, IGameClient> hub,
+    IHubContext<PlayerHub, IPlayerClient> players,
+    IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILogger<TurnProcessingService> logger,
     KarataContext context,
-    TurnManager turns,
     UserManager<User> users,
     Guid room,
     string player,
     string connection
-) : HubAwareService(hub, room, player)
+) : HubAwareService(players, spectators, room, player)
 {
     public async Task ExecuteAsync(List<Card> cards)
     {
@@ -60,10 +60,13 @@ public class TurnProcessingService(
             await EnsurePendingCardsPicked(room, turn);
             await CheckRemainingCards(room, player, turn);
             
-            turns.Advance(room.Game);
+            GameTurns.Advance(room.Game);
 
-            await Room.UpdatePick(room.Game.Give);
-            await Room.UpdateTurn(room.Game.CurrentTurn);
+            await RoomPlayers.UpdatePick(room.Game.Give);
+            await RoomSpectators.UpdatePick(room.Game.Give);
+            await RoomPlayers.UpdateTurn(room.Game.CurrentTurn);
+            await RoomSpectators.UpdateTurn(room.Game.CurrentTurn);
+
             await context.SaveChangesAsync();
         }
         catch (EndGameException exception)
@@ -81,10 +84,13 @@ public class TurnProcessingService(
             if (exception.Result.ResultType is GameResultType.Win) context.Activities.Add(Activity.GameWon(room));
             
             await context.SaveChangesAsync();
+
             await Me.NotifyTurnProcessed();
-            await Room.ReceiveSystemMessage(Messages.GameOver(exception.Result));
-            await Room.UpdateGameStatus(Over);
-            await Room.EndGame();
+            await RoomPlayers.ReceiveSystemMessage(Messages.GameOver(exception.Result));
+            await RoomSpectators.ReceiveSystemMessage(Messages.GameOver(exception.Result));
+            await RoomPlayers.UpdateGameStatus(room.Game.Status);
+            await RoomSpectators.UpdateGameStatus(room.Game.Status);
+            await RoomPlayers.EndGame();
         }
     }
     
@@ -112,15 +118,17 @@ public class TurnProcessingService(
         if (level is NoRequest)
         {
             logger.LogDebug("No card request for level {RequestLevel} in room {Room}.", level, room.Id);
-            await Room.SetCurrentRequest(room.Game.Request);
+            await RoomPlayers.SetCurrentRequest(room.Game.Request);
+            await RoomSpectators.SetCurrentRequest(room.Game.Request);
             return;
         }
 
-        turn.Request = await Client(connection).PromptCardRequest(specific: level is CardRequest);
+        turn.Request = await PlayerConnection(connection).PromptCardRequest(specific: level is CardRequest);
         logger.LogDebug("Requested {Request} for level {RequestLevel} in room {Room}.", turn.Request, level, room.Id);
         
         room.Game.Request = turn.Request;
-        await Room.SetCurrentRequest(room.Game.Request);
+        await RoomPlayers.SetCurrentRequest(room.Game.Request);
+        await RoomSpectators.SetCurrentRequest(room.Game.Request);
     }
 
     private void ApplyTurnDelta(Room room, Turn turn)
@@ -136,7 +144,8 @@ public class TurnProcessingService(
     private async Task NotifyClientsOfGameState(User player, Turn turn)
     {
         await Me.NotifyTurnProcessed();
-        await Room.MoveCardsFromHandToPile(player.ToData(), turn.Delta!.Cards);
+        await RoomPlayers.MoveCardsFromHandToPile(player.ToData(), turn.Delta!.Cards);
+        await RoomSpectators.MoveCardsFromHandToPile(player.ToData(), turn.Delta!.Cards);
     }
 
     private async Task EnsurePendingCardsPicked(Room room, Turn turn)
@@ -150,7 +159,8 @@ public class TurnProcessingService(
 
             // Reclaim pile
             room.Game.Pile.Reclaim().ToList().ForEach(room.Game.Deck.Push);
-            await Room.ReclaimPile();
+            await RoomPlayers.ReclaimPile();
+            await RoomSpectators.ReclaimPile();
 
             // Shuffle & deal
             room.Game.Deck.Shuffle();
@@ -165,6 +175,7 @@ public class TurnProcessingService(
         await Me.MoveCardsFromDeckToHand(dealt);
         await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
             .MoveCardCountFromDeckToHand(room.Game.CurrentHand.Player.ToData(), dealt.Count);
+        await RoomSpectators.MoveCardCountFromDeckToHand(room.Game.CurrentHand.Player.ToData(), dealt.Count);
     }
 
     private async Task CheckRemainingCards(Room room, User player, Turn turn)
@@ -179,15 +190,17 @@ public class TurnProcessingService(
             throw new EndGameException(GameResult.Win(winner: player));
 
         await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).ReceiveSystemMessage(Messages.Cardless(player));
+        await RoomSpectators.ReceiveSystemMessage(Messages.Cardless(player));
     }
 
     private async Task DetermineLastCardStatus(Room room, Turn turn)
     {
-        turn.IsLastCard = await Client(connection).PromptLastCardRequest();
+        turn.IsLastCard = await PlayerConnection(connection).PromptLastCardRequest();
         if (turn.IsLastCard)
         {
             room.Game.CurrentHand.IsLastCard = true;
             await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).ReceiveSystemMessage(Messages.LastCard(room.Game.CurrentHand.Player));
+            await RoomSpectators.ReceiveSystemMessage(Messages.LastCard(room.Game.CurrentHand.Player));
         }
     }
 }

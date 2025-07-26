@@ -7,16 +7,21 @@ using Microsoft.AspNetCore.SignalR;
 namespace Karata.Server.Services;
 
 public class TurnProcessingServiceFactory(
-    IHubContext<GameHub, IGameClient> hub,
+    IHubContext<PlayerHub, IPlayerClient> players,
+    IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILoggerFactory loggers,
     KarataContext context,
-    TurnManager turns,
     UserManager<User> users
 )
 {
-    public TurnProcessingService Create(Guid room, string player, string connection)
-    {
-        var logger = loggers.CreateLogger<TurnProcessingService>();
-        return new TurnProcessingService(hub, logger, context, turns, users, room, player, connection);
-    }
+    public TurnProcessingService Create(Guid room, string player, string connection) =>
+        new TurnProcessingService(players,
+            spectators,
+            loggers.CreateLogger<TurnProcessingService>(),
+            context,
+            users,
+            room,
+            player,
+            connection
+        );
 }

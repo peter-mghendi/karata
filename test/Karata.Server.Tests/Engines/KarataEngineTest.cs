@@ -3,17 +3,18 @@ using Karata.Cards.Extensions;
 using Karata.Server.Engine;
 using Karata.Server.Engine.Exceptions;
 using Karata.Server.Models;
+using Karata.Shared.Models;
 using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
-using static Karata.Server.Models.CardRequestLevel;
+using static Karata.Shared.Models.CardRequestLevel;
 using TestCase = (
     int Identifier,
     Karata.Server.Models.Game Game,
     System.Collections.Generic.List<Karata.Cards.Card> Cards,
     bool ExpectedValid,
-    Karata.Server.Models.GameDelta ExpectedDelta
-    );
+    Karata.Shared.Models.GameDelta ExpectedDelta
+);
 
 namespace Karata.Server.Tests.Engines;
 
@@ -329,7 +330,7 @@ public class KarataEngineTest
                 Game: ProvideGame(top: Three.Of(Spades), pick: 3),
                 Cards: [Three.Of(Diamonds)],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Give = 3, Cards = [Three.Of(Diamonds)]}
+                ExpectedDelta: new GameDelta { Give = 3, Cards = [Three.Of(Diamonds)] }
             ),
 
             // If the previous player played a "bomb", the player has to pick up the cards or play a "bomb" of the same face
@@ -497,7 +498,7 @@ public class KarataEngineTest
                 ExpectedValid: true,
                 ExpectedDelta: new GameDelta
                 {
-                    RemoveRequestLevels = 2, 
+                    RemoveRequestLevels = 2,
                     RequestLevel = CardRequest,
                     Cards = [Ace.Of(Diamonds), Ace.Of(Spades), Ace.Of(Clubs)]
                 }
@@ -511,7 +512,7 @@ public class KarataEngineTest
                 ExpectedValid: true,
                 ExpectedDelta: new GameDelta
                 {
-                    RemoveRequestLevels = 1, 
+                    RemoveRequestLevels = 1,
                     RequestLevel = SuitRequest,
                     Cards = [Ace.Of(Hearts)]
                 }
@@ -555,7 +556,7 @@ public class KarataEngineTest
                 ExpectedValid: true,
                 ExpectedDelta: new GameDelta
                 {
-                    RemoveRequestLevels = 2, 
+                    RemoveRequestLevels = 2,
                     RequestLevel = CardRequest,
                     Cards = [Queen.Of(Hearts), Ace.Of(Hearts), Ace.Of(Clubs)]
                 }
