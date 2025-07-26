@@ -33,7 +33,7 @@
                             if (_table)
                             {
                                 <CardTableGameInterface Game="_store.State.Game"
-                                                        Hand="_store.MyHand"
+                                                        Hand="MyHand"
                                                         Turn="_turn.ToImmutableList()"
                                                         OnAddCardToTurn="AddCardToTurn"
                                                         OnReorderCardInTurn="ReorderCardInTurn"
@@ -42,7 +42,7 @@
                             else
                             {
                                 <CardListGameInterface Game="_store.State.Game"
-                                                       Hand="_store.MyHand"
+                                                       Hand="MyHand"
                                                        Turn="_turn.ToImmutableList()"
                                                        OnAddCardToTurn="AddCardToTurn"
                                                        OnReorderCardInTurn="ReorderCardInTurn"
@@ -131,10 +131,10 @@
                             <InformationPanel Room="_store!.State"/>
                         </MudExpansionPanel>
                         <MudExpansionPanel Text="Players">
-                            <PlayersPanel Me="_store!.MyHand.User" Room="_store.State"/>
+                            <PlayersPanel Me="MyHand.User" Room="_store.State"/>
                         </MudExpansionPanel>
                         <MudExpansionPanel Text="Chat" MaxHeight="480" Class="overflow-y-auto">
-                            <ChatPanel Room="_store!.State" Me="_store.MyHand.User" OnSend="Send"/>
+                            <ChatPanel Room="_store!.State" Me="MyHand.User" OnSend="Send"/>
                         </MudExpansionPanel>
                     </MudExpansionPanels>
                 </MudItem>
@@ -153,16 +153,18 @@
     private bool _table;
     private HubConnection? _hub;
     private readonly List<Card> _turn = [];
-    private bool IsAdministrator => _store?.MyHand.User == _store?.State.Administrator;
-
     private RoomState? _store;
-
+    private string? _username;
+    
+    private HandData MyHand => _store!.State.Game.Hands.Single(h => h.User.Username == _username);
+    private bool IsAdministrator => MyHand.User == _store?.State.Administrator;
+    
     private void OnStoreChanged(RoomData room) => StateHasChanged();
 
     protected override async Task OnInitializedAsync()
     {
         var auth = await Authenticator.GetAuthenticationStateAsync();
-        var username = auth.User.Identity!.Name!;
+        _username = auth.User.Identity!.Name!;
 
         _hub = new HubConnectionBuilder()
             .WithUrl(Navigator.ToAbsoluteUri("/hubs/game/play"), options =>
@@ -186,7 +188,7 @@
 
         _hub.On<RoomData, Dictionary<string, List<Card>>>("AddToRoom", (room, cards) =>
         {
-            _store = Factory.Create(room, cards, username);
+            _store = Factory.Create(room, cards);
             _store.AddInterceptor(new LoggingInterceptor<RoomData>(LoggerFactory));
             _store.AddInterceptor(new TimingInterceptor<RoomData>(LoggerFactory));
             _store.Observe(OnStoreChanged);
@@ -202,11 +204,11 @@
         
         _hub.On<UserData, int>("MoveCardCountFromDeckToHand", (user, num) => _store!.Mutate(new RoomState.MoveCardCountFromDeckToHand(user, num)));
 
-        _hub.On<List<Card>>("MoveCardsFromDeckToHand", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToHand(_store!.MyHand.User, cards)));
+        _hub.On<List<Card>>("MoveCardsFromDeckToHand", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToHand(MyHand.User, cards)));
 
         _hub.On<List<Card>>("MoveCardsFromDeckToPile", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToPile(cards)));
 
-        _hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (user, cards) => _store!.Mutate(new RoomState.MoveCardsFromHandToPile(user, cards, _store!.MyHand.User == user)));
+        _hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (user, cards) => _store!.Mutate(new RoomState.MoveCardsFromHandToPile(user, cards, MyHand.User == user)));
         
         _hub.On("NotifyTurnProcessed", () =>
         {
@@ -254,7 +256,7 @@
             _store!.Mutate(new RoomState.ReceiveChat(message));
 
             var sender = message.Sender.Username;
-            if (sender != username) Snackbar.Add($"New message from {sender}.", Severity.Info);
+            if (sender != _username) Snackbar.Add($"New message from {sender}.", Severity.Info);
             StateHasChanged();
         });
 
@@ -313,7 +315,7 @@
             _store!.Mutate(new RoomState.UpdateTurn(turn));
 
             var current = _store!.State.Game.CurrentHand.User.Username;
-            var possessive = current == username ? "your" : $"{current}'s";
+            var possessive = current == _username ? "your" : $"{current}'s";
             Snackbar.Add($"It is now {possessive} turn.", Severity.Info);
         });
 
