@@ -8,14 +8,16 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "icon-512.png",
+      "src": "/web-app-manifest-192x192.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "192x192",
+      "purpose": "maskable any"
     },
     {
-      "src": "icon-192.png",
+      "src": "/web-app-manifest-512x512.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "512x512",
+      "purpose": "maskable any"
     }
   ]
 }
