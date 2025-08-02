@@ -46,16 +46,47 @@
                 <MudText>Create room</MudText>
             }
         </MudButton>
-    </MudPaper>   
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
+        <MudList T="string">
+            <MudListSubheader>Available Games</MudListSubheader>
+
+            @if (_rooms is [..])
+            {
+                @foreach (var room in _rooms)
+                {
+                    <MudListItem Text="@room.Id.ToString()" SecondaryText="@($"Created at {room.CreatedAt.ToLocalTime()}")" Href="@($"/game/{room.Id}")"/>
+                }
+            }
+            else
+            {
+                @foreach (var _ in Enumerable.Range(0, 5))
+                {
+                    <MudListItem>
+                        <MudSkeleton Animation="Animation.Wave" Width="40%"/>
+                        <MudSkeleton Animation="Animation.Wave" Width="30%"/>       
+                    </MudListItem>
+                }
+            }
+        </MudList>
+    </MudPaper>
 </MudContainer>
 
 @code {
     private bool _loading;
+    private List<RoomData>? _rooms;
     private string _link = string.Empty;
     private string _password = string.Empty;
 
+
     private string JoinLink => $"/game/{_link}/play";
     private string SpectateLink => $"/game/{_link}/spectate";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _rooms = await Http.GetFromJsonAsync<List<RoomData>>($"api/rooms");
+    }
 
     private async Task CreateRoom()
     {

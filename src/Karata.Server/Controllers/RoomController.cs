@@ -6,6 +6,8 @@ using Karata.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using static Karata.Shared.Models.GameStatus;
 
 namespace Karata.Server.Controllers;
 
@@ -13,6 +15,20 @@ namespace Karata.Server.Controllers;
 [Route("api/rooms")]
 public class RoomController(KarataContext context) : ControllerBase
 {
+    [Authorize]
+    [HttpGet]
+    public async Task<ActionResult<List<RoomData>>> Get()
+    {
+        // TODO: Hardcoding these conditions in for now because this endpoint is only used to find joinable games.
+        return await context.Rooms
+            .Where(room => room.Game.Status == Lobby)
+            .Where(room => room.Game.Hands.Count < 4)
+            .OrderByDescending(room => room.CreatedAt)
+            .Take(5)
+            .Select(room => room.ToData())
+            .ToListAsync();
+    }
+    
     [HttpGet("{id}")]
     public async Task<ActionResult<RoomData>> Get(string id)
     {
