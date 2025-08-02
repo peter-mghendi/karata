@@ -1,5 +1,6 @@
 using Karata.Server.Hubs;
 using Karata.Server.Hubs.Clients;
+using Karata.Shared.Models;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Server.Services;
@@ -8,7 +9,7 @@ namespace Karata.Server.Services;
 /// Base for services that need SignalR context and room/user identification.
 /// Provides helper methods to broadcast to specific subsets of clients.
 /// </summary>
-public abstract class HubAwareService(
+public abstract class RoomAwareService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     Guid room,
@@ -32,4 +33,12 @@ public abstract class HubAwareService(
 
     protected async Task RemoveFromRoom(string connection) =>
         await players.Groups.RemoveFromGroupAsync(connection, RoomId.ToString());
+
+    protected static RoomData EnrichRoomDataForUser(RoomData room, User me) => room with
+    {
+        Game = room.Game with
+        {
+            Hands = [..room.Game.Hands.Select(h => h.User.Id == me.Id ? h with { Cards = h.Cards } : h)]
+        }
+    };
 }

@@ -1,4 +1,4 @@
-namespace Karata.Server.Engine.Exceptions;
+namespace Karata.Shared.Engine.Exceptions;
 
 public class DrawCardsException : TurnValidationException
 {

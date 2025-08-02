@@ -5,39 +5,8 @@ using Karata.Shared.Models;
 
 namespace Karata.Client.Infrastructure.State;
 
-public class RoomState : Store<RoomData>
+public class RoomState(RoomData data, ILoggerFactory? logging = null) : Store<RoomData>(data, logging)
 {
-    private readonly string _username;
-
-    public RoomState(
-        RoomData data,
-        Dictionary<string, int> counts,
-        List<Card> cards,
-        string username,
-        ILoggerFactory? logging = null
-    ) : base(data, logging)
-    {
-        _username = username;
-        Mutate(new InitializeHands(counts, cards, _username));
-    }
-
-    public HandData MyHand => State.Game.Hands.Single(h => h.User.Username == _username);
-
-    private record InitializeHands(Dictionary<string, int> Counts, List<Card> Cards, string Username)
-        : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state)
-        {
-            var hands = state.Game.Hands.Select(h => h with
-            {
-                Cards = [..h.User.Username == Username ? Cards : Enumerable.Repeat(new Card(), Counts[h.User.Id])]
-            });
-
-            return state with { Game = state.Game with { Hands = [..hands] } };
-        }
-    }
-
-
     public record AddHandToRoom(UserData User, HandStatus Status) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state)

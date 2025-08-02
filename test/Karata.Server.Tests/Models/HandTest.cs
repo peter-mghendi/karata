@@ -1,3 +1,4 @@
+using Karata.Cards;
 using Karata.Cards.Extensions;
 using Karata.Server.Models;
 using Karata.Shared.Models;
@@ -9,16 +10,21 @@ namespace Karata.Server.Tests.Models;
 public class HandTest
 {
 
-    [Fact]
-    public void TestHandDataAlwaysHasEmptyCards()
+    [Theory]
+    [InlineData(1)]
+    [InlineData(5)]
+    [InlineData(50)]
+    public void TestHandDataAlwaysHasDefaultCards(int count)
     {
         var hand = new Hand
         {
             Status = HandStatus.Connected,
             Player = new User(),
-            Cards = [Queen.Of(Hearts)]
+            Cards = [..Enumerable.Range(0, count).Select(_ => Queen.Of(Hearts))]
         };
         
-        Assert.Empty(hand.ToData().Cards);
+        Assert.Equal(hand.Cards.Count, count);
+        Assert.Single(hand.Cards.Distinct());
+        Assert.DoesNotContain(hand.ToData().Cards, card => card != new Card());
     }
 }

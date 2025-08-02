@@ -1,3 +1,3 @@
-namespace Karata.Server.Exceptions;
+namespace Karata.Shared.Exceptions;
 
 public class KarataException : Exception;

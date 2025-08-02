@@ -1,3 +1,6 @@
+using static Karata.Cards.Card.CardFace;
+using static Karata.Shared.Models.CardRequestLevel;
+
 namespace Karata.Shared.Models;
 
 public record GameData
@@ -13,4 +16,11 @@ public record GameData
     public GameResultData? Result { get; set; }
 
     public HandData CurrentHand => Hands[CurrentTurn];
+
+    public CardRequestLevel RequestLevel => Request switch
+    {
+        null => NoRequest,
+        { Face: None } => SuitRequest,
+        { Face: not None } => CardRequest
+    };
 }

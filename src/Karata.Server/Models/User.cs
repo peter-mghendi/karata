@@ -13,4 +13,6 @@ public class User : IdentityUser
         Id = Id,
         Username = UserName!,
     };
+
+    public static implicit operator UserData(User user) => user.ToData();
 }

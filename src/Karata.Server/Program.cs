@@ -1,7 +1,7 @@
 using Karata.Server.Data;
-using Karata.Server.Engine;
 using Karata.Server.Hubs;
 using Karata.Server.Services;
+using Karata.Shared.Engine;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -47,8 +47,9 @@ builder.Services.TryAddEnumerable(
 );
 
 builder.Services.AddSignalR();
-builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
+builder.Services.AddSingleton<KarataEngine>();
 builder.Services.AddSingleton<PresenceService>();
+builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
 builder.Services.AddTransient<GameStartServiceFactory>();
 builder.Services.AddTransient<RoomMembershipServiceFactory>();
 builder.Services.AddTransient<TurnProcessingServiceFactory>();

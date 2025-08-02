@@ -106,9 +106,9 @@
             Snackbar.Add($"{user.Username} (Status: {status}) has joined the room", Severity.Info);
         });
 
-        _hub.On<RoomData, Dictionary<string, int>>("AddToRoom", (room, counts) =>
+        _hub.On<RoomData>("AddToRoom", room =>
         {
-            _store = Factory.Create(room, counts, [], string.Empty);
+            _store = Factory.Create(room);
             _store.AddInterceptor(new LoggingInterceptor<RoomData>(LoggerFactory));
             _store.AddInterceptor(new TimingInterceptor<RoomData>(LoggerFactory));
             _store.Observe(OnStoreChanged);
@@ -120,7 +120,7 @@
 
         _hub.On<List<Card>>("MoveCardsFromDeckToPile", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToPile(cards)));
 
-        _hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (user, cards) => _store!.Mutate(new RoomState.MoveCardsFromHandToPile(user, cards, _store!.MyHand.User == user)));
+        _hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (user, cards) => _store!.Mutate(new RoomState.MoveCardsFromHandToPile(user, cards, false)));
 
         _hub.On<SystemMessage>("ReceiveSystemMessage", message =>
         {

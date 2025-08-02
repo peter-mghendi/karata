@@ -1,4 +1,4 @@
-namespace Karata.Server.Models;
+namespace Karata.Shared.Models;
 
 public enum GameResultType
 {

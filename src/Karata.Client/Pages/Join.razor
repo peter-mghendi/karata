@@ -9,8 +9,8 @@
 
     <MudPaper Class="pa-4 mb-4" Elevation="0">
         <MudTextField @bind-Value="_link" Label="Invite Link" Variant="Variant.Filled" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.QrCodeScanner" Class="mb-4"></MudTextField>
-        <MudButton Disabled="@Loading" OnClick="JoinRoom" Variant="Variant.Filled" Color="Color.Primary">
-            @if (_joining)
+        <MudButton Disabled="@_loading" Href="@JoinLink" Variant="Variant.Filled" Color="Color.Primary">
+            @if (_loading)
             {
                 <MudProgressCircular Indeterminate Class="ms-n1" Color="Color.Primary" Size="Size.Small" />
                 <MudText Class="ms-2">Joining room</MudText>
@@ -20,8 +20,8 @@
                 <MudText>Join room</MudText>
             }
         </MudButton>
-        <MudButton Disabled="@Loading" OnClick="SpectateRoom" Variant="Variant.Outlined" Class="ml-2">
-            @if (_joining)
+        <MudButton Disabled="@_loading" Href="@SpectateLink" Variant="Variant.Outlined" Class="ml-2">
+            @if (_loading)
             {
                 <MudProgressCircular Indeterminate Class="ms-n1" Color="Color.Primary" Size="Size.Small" />
                 <MudText Class="ms-2">Joining as spectator</MudText>
@@ -35,8 +35,8 @@
 
     <MudPaper Class="pa-4 mb-4" Elevation="0">
         <MudTextField @bind-Value="_password" Label="Password (Optional)" Variant="Variant.Filled" Class="mb-4"></MudTextField>
-        <MudButton Disabled="@Loading" OnClick="CreateRoom" Variant="Variant.Filled">
-            @if (_creating)
+        <MudButton Disabled="@_loading" OnClick="CreateRoom" Variant="Variant.Filled">
+            @if (_loading)
             {
                 <MudProgressCircular Indeterminate Class="ms-n1" Size="Size.Small" />
                 <MudText Class="ms-2">Creating room</MudText>
@@ -46,69 +46,55 @@
                 <MudText>Create room</MudText>
             }
         </MudButton>
-    </MudPaper>   
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
+        <MudList T="string">
+            <MudListSubheader>Available Games</MudListSubheader>
+
+            @if (_rooms is [..])
+            {
+                @foreach (var room in _rooms)
+                {
+                    <MudListItem Text="@room.Id.ToString()" SecondaryText="@($"Created at {room.CreatedAt.ToLocalTime()}")" Href="@($"/game/{room.Id}")"/>
+                }
+            }
+            else
+            {
+                @foreach (var _ in Enumerable.Range(0, 5))
+                {
+                    <MudListItem>
+                        <MudSkeleton Animation="Animation.Wave" Width="40%"/>
+                        <MudSkeleton Animation="Animation.Wave" Width="30%"/>       
+                    </MudListItem>
+                }
+            }
+        </MudList>
+    </MudPaper>
 </MudContainer>
 
 @code {
+    private bool _loading;
+    private List<RoomData>? _rooms;
     private string _link = string.Empty;
     private string _password = string.Empty;
 
-    private bool _joining;
-    private bool _creating;
-    
-    private bool Loading => _joining || _creating;
 
-    private async Task JoinRoom()
+    private string JoinLink => $"/game/{_link}/play";
+    private string SpectateLink => $"/game/{_link}/spectate";
+
+    protected override async Task OnInitializedAsync()
     {
-        _joining = true;
-        if (string.IsNullOrWhiteSpace(_link))
-        {
-            _joining = false;
-            Snackbar.Add("Invite link cannot be empty.", Severity.Error);
-            return;
-        }
-
-        var room = await Http.GetFromJsonAsync<RoomData>($"api/rooms/{_link}");
-        if (room == null)
-        {
-            _joining = false;
-            Snackbar.Add("Failed to join room. Please try again later.", Severity.Error);
-            StateHasChanged();
-            return;
-        }
-
-        Navigator.NavigateTo($"/game/{room.Id}/play");
-    }
-
-    private async Task SpectateRoom()
-    {
-        _joining = true;
-        if (string.IsNullOrWhiteSpace(_link))
-        {
-            _joining = false;
-            Snackbar.Add("Invite link cannot be empty.", Severity.Error);
-            return;
-        }
-
-        var room = await Http.GetFromJsonAsync<RoomData>($"api/rooms/{_link}");
-        if (room == null)
-        {
-            _joining = false;
-            Snackbar.Add("Failed to join room. Please try again later.", Severity.Error);
-            StateHasChanged();
-            return;
-        }
-
-        Navigator.NavigateTo($"/game/{room.Id}/spectate");
+        _rooms = await Http.GetFromJsonAsync<List<RoomData>>($"api/rooms");
     }
 
     private async Task CreateRoom()
     {
-        _creating = true;
+        _loading = true;
         var response = await Http.PostAsJsonAsync("api/rooms", new RoomRequest { Password = _password });
         if (!response.IsSuccessStatusCode)
         {
-            _creating = false;
+            _loading = false;
             Snackbar.Add("Failed to create room. Please try again later.", Severity.Error);
             StateHasChanged();
             return;
@@ -117,7 +103,7 @@
         var room = await response.Content.ReadFromJsonAsync<RoomData>();
         if (room == null)
         {
-            _creating = false;
+            _loading = false;
             Snackbar.Add("Failed to create room. Please try again later.", Severity.Error);
             StateHasChanged();
             return;
