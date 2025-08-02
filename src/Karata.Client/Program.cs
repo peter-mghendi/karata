@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Karata.Client;
-using Karata.Client.Infrastructure.State;
 using MudBlazor.Services;
 using MudExtensions.Services;
 using TextCopy;
@@ -25,8 +24,6 @@ builder.Services.AddKeyedScoped<HttpClient>(
     "Karata.Server.Public", 
     (sp, _) => sp.GetRequiredService<IHttpClientFactory>().CreateClient("Karata.Server.Public")
 );
-
-builder.Services.AddSingleton<RoomStoreFactory>();
 
 builder.Services.AddApiAuthorization();
 builder.Services.AddBlazoredLocalStorage();

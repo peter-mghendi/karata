@@ -1,8 +1,8 @@
-using System.Reactive.Disposables;
+using System.Collections.Immutable;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using Karata.Pebble.Interceptors;
 using Karata.Pebble.StateActions;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Karata.Pebble;
 
@@ -11,15 +11,19 @@ namespace Karata.Pebble;
 /// runs interceptors before and after each change, and notifies subscribers of state updates.
 /// </summary>
 /// <typeparam name="TState">The type of state to manage; must be a reference type.</typeparam>
-public class Store<TState>(TState initial, ILoggerFactory? factory = null) where TState : class
+public class Store<TState>(TState initial, ImmutableArray<Interceptor<TState>> interceptors) : IDisposable where TState : class
 {
     private readonly Lock _lock = new();
-    private readonly List<Action<TState>> _listeners = [];
-    private readonly List<Interceptor<TState>> _interceptors = [];
-    private readonly ILogger _logger = (factory ?? NullLoggerFactory.Instance).CreateLogger<Store<TState>>();
+    private readonly BehaviorSubject<TState> _subject = new(initial);
+    private readonly Interceptor<TState>.Reducer _pipeline = BuildPipeline(interceptors);
 
     /// <summary>Gets the current state of the store.</summary>
     public TState State { get; private set; } = initial;
+    
+    /// <summary>
+    /// Exposes state changes as an observable sequence. Subscribers will immediately receive the current state.
+    /// </summary>
+    public IObservable<TState> Changes => _subject.AsObservable();
 
     /// <summary>Applies the specified mutator function to the state as an anonymous action.</summary>
     /// <param name="mutator">The function that produces a new state from the old state.</param>
@@ -31,59 +35,22 @@ public class Store<TState>(TState initial, ILoggerFactory? factory = null) where
     {
         lock (_lock)
         {
-            // Build pipeline
-            Interceptor<TState>.Reducer core = Reduce;
-            var pipeline = _interceptors
-                .AsEnumerable()
-                .Reverse()
-                .Aggregate(core, (next, ic) => ic.Wrap(next));
-
-            // Execute pipeline
-            var updated = pipeline(State, action);
+            var updated = _pipeline(State, action);
             if (ReferenceEquals(updated, State)) return;
             
             State = updated;
-            
-            // Notify listeners
-            NotifyListeners();
+            _subject.OnNext(State);
         }
     }
-
-    /// <summary>Registers a listener that will be invoked when the state changes.</summary>
-    /// <param name="listener">An action to invoke with the new state.</param>
-    /// <returns>An <see cref="IDisposable"/> token to remove the listener.</returns>
-    public IDisposable Observe(Action<TState> listener)
-    {
-        _listeners.Add(listener);
-        return Disposable.Create(() => Forget(listener));
-    }
-
-    /// <summary>Unregisters a previously registered listener.</summary>
-    /// <param name="listener">The listener to remove.</param>
-    public void Forget(Action<TState> listener) => _listeners.Remove(listener);
-
-    /// <summary>Adds an interceptor that will run before and after each state change.</summary>
-    /// <param name="interceptor">The interceptor to add.</param>
-    public void AddInterceptor(Interceptor<TState> interceptor) => _interceptors.Add(interceptor);
 
     /// <summary>Applies the given action to the state to produce a new state.</summary>
     /// <param name="state">The current state.</param>
     /// <param name="action">The action to apply.</param>
     /// <returns>The new state.</returns>
-    protected virtual TState Reduce(TState state, StateAction<TState> action) => action.Apply(state);
+    private static TState Reduce(TState state, StateAction<TState> action) => action.Apply(state);
+    
+    private static Interceptor<TState>.Reducer BuildPipeline(IEnumerable<Interceptor<TState>> interceptors) => 
+        interceptors.Reverse().Aggregate((Interceptor<TState>.Reducer)Reduce, (next, ic) => ic.Wrap(next));
 
-    private void NotifyListeners()
-    {
-        foreach (var listener in _listeners)
-        {
-            try
-            {
-                listener.Invoke(State);
-            }
-            catch (Exception e)
-            {
-                _logger.LogDebug(e, "Failed to call listener.");
-            }
-        }
-    }
+    public void Dispose() => _subject.Dispose();
 }

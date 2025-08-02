@@ -17,7 +17,6 @@
 @inject ILoggerFactory LoggerFactory
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigator
-@inject RoomStoreFactory Factory
 
 <HubConnectionGuard Hub="_hub">
     <MudLoading Loading="@(_store is null)" Text="Please wait..." Class="mud-height-full pa-0">
@@ -188,10 +187,9 @@
 
         _hub.On<RoomData>("AddToRoom", room =>
         {
-            _store = Factory.Create(room);
-            _store.AddInterceptor(new LoggingInterceptor<RoomData>(LoggerFactory));
-            _store.AddInterceptor(new TimingInterceptor<RoomData>(LoggerFactory));
-            _store.Observe(OnStoreChanged);
+            
+            _store = new RoomState(room, [new LoggingInterceptor<RoomData>(LoggerFactory), new TimingInterceptor<RoomData>(LoggerFactory)]);
+            _store.Changes.Subscribe(OnStoreChanged);
 
             OnStoreChanged(room);
         });
@@ -277,7 +275,7 @@
         
         _hub.On("RemoveFromRoom", async () =>
         {
-            _store!.Forget(OnStoreChanged);
+            _store!.Dispose();
             _store = null;
 
             StateHasChanged();
@@ -370,7 +368,7 @@
 
     public async ValueTask DisposeAsync()
     {
-        _store?.Forget(OnStoreChanged);
+        _store?.Dispose();
 
         if (_hub is null) return;
         await _hub.DisposeAsync();
