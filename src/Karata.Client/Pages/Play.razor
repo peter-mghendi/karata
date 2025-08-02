@@ -1,6 +1,7 @@
 @page "/game/{id:guid}/play"
 
 @using System.Collections.Immutable
+@using System.Reactive.Linq
 @using Karata.Pebble.Interceptors
 @using Karata.Shared.State
 @using Microsoft.AspNetCore.SignalR.Client
@@ -33,19 +34,19 @@
                             {
                                 <CardTableGameInterface Game="_store.State.Game"
                                                         Hand="MyHand"
-                                                        Turn="_turn.ToImmutableList()"
-                                                        OnAddCardToTurn="AddCardToTurn"
-                                                        OnReorderCardInTurn="ReorderCardInTurn"
-                                                        OnRemoveCardFromTurn="RemoveCardFromTurn"/>
+                                                        Turn="_turn.State"
+                                                        OnAddCardToTurn="info => _turn.Mutate(new TurnState.Add(info))"
+                                                        OnReorderCardInTurn="info => _turn.Mutate(new TurnState.Reorder(info))"
+                                                        OnRemoveCardFromTurn="card => _turn.Mutate(new TurnState.Remove(card))"/>
                             }
                             else
                             {
                                 <CardListGameInterface Game="_store.State.Game"
                                                        Hand="MyHand"
-                                                       Turn="_turn.ToImmutableList()"
-                                                       OnAddCardToTurn="AddCardToTurn"
-                                                       OnReorderCardInTurn="ReorderCardInTurn"
-                                                       OnRemoveCardFromTurn="RemoveCardFromTurn"/>
+                                                       Turn="_turn.State"
+                                                       OnAddCardToTurn="info => _turn.Mutate(new TurnState.Add(info))"
+                                                       OnReorderCardInTurn="info => _turn.Mutate(new TurnState.Reorder(info))"
+                                                       OnRemoveCardFromTurn="card => _turn.Mutate(new TurnState.Remove(card))"/>
                             }
                         }
                         else
@@ -92,11 +93,11 @@
                             {
                                 <MudTooltip Text="Pick card(s)">
                                     <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleUp" Color="Color.Inherit"
-                                                   OnClick="() => PerformTurn(new List<Card>())"/>
+                                                   OnClick="() => PerformTurn([])"/>
                                 </MudTooltip>
                                 <MudTooltip Text="Play card(s)">
                                     <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleDown" Color="Color.Inherit"
-                                                   OnClick="() => PerformTurn(_turn)"/>
+                                                   OnClick="() => PerformTurn([.._turn.State])"/>
                                 </MudTooltip>
                             }
                             else
@@ -151,14 +152,14 @@
 
     private bool _table;
     private HubConnection? _hub;
-    private readonly List<Card> _turn = [];
     private RoomState? _store;
+    private TurnState _turn = new([], []);
     private string? _username;
     
     private HandData MyHand => _store!.State.Game.Hands.Single(h => h.User.Username == _username);
     private bool IsAdministrator => MyHand.User == _store?.State.Administrator;
     
-    private void OnStoreChanged(RoomData room) => StateHasChanged();
+    private void OnStoreChanged<T>(T data) where T : class => StateHasChanged();
 
     protected override async Task OnInitializedAsync()
     {
@@ -187,11 +188,21 @@
 
         _hub.On<RoomData>("AddToRoom", room =>
         {
-            
-            _store = new RoomState(room, [new LoggingInterceptor<RoomData>(LoggerFactory), new TimingInterceptor<RoomData>(LoggerFactory)]);
-            _store.Changes.Subscribe(OnStoreChanged);
+            _store = new RoomState(room, [
+                new LoggingInterceptor<RoomData>(LoggerFactory),
+                new TimingInterceptor<RoomData>(LoggerFactory)
+            ]);
+            _turn = new TurnState([], [
+                new LoggingInterceptor<ImmutableList<Card>>(LoggerFactory),
+                new TimingInterceptor<ImmutableList<Card>>(LoggerFactory)
+            ]);
 
-            OnStoreChanged(room);
+            _store.Changes
+                .Merge<object>(_turn.Changes)
+                .Throttle(TimeSpan.FromMilliseconds(500))
+                .Subscribe(OnStoreChanged);
+
+            StateHasChanged();
         });
 
         _hub.On("EndGame", async () =>
@@ -210,7 +221,7 @@
         
         _hub.On("NotifyTurnProcessed", () =>
         {
-            _turn.Clear();
+            _turn.Mutate(new TurnState.Clear());
             StateHasChanged();
         });
 
@@ -275,13 +286,15 @@
         
         _hub.On("RemoveFromRoom", async () =>
         {
+            var uri = $"/game/{_store!.State.Id}"; 
+
             _store!.Dispose();
-            _store = null;
+            _turn.Dispose();
 
             StateHasChanged();
 
             await _hub.StopAsync();
-            Navigator.NavigateTo("/game/join");
+            Navigator.NavigateTo(uri);
         });
 
         _hub.On<UserData>("RemoveHandFromRoom", user =>
@@ -325,27 +338,6 @@
 
     async Task StartGame() => await _hub!.SendAsync("StartGame", _store!.State.Id);
 
-    private void AddCardToTurn(ValueTuple<Card, int> info)
-    {
-        var (card, index) = info;
-        _turn.Insert(index, card);
-        StateHasChanged();
-    }
-
-    private void ReorderCardInTurn(ValueTuple<Card, int> info)
-    {
-        var (card, index) = info;
-        _turn.Remove(card);
-        _turn.Insert(index, card);
-        StateHasChanged();
-    }
-
-    private void RemoveCardFromTurn(Card card)
-    {
-        _turn.Remove(card);
-        StateHasChanged();
-    }
-
     async Task PerformTurn(List<Card> cards)
     {
         await _hub!.SendAsync("PerformTurn", _store!.State.Id, cards);
@@ -369,6 +361,7 @@
     public async ValueTask DisposeAsync()
     {
         _store?.Dispose();
+        _turn.Dispose();
 
         if (_hub is null) return;
         await _hub.DisposeAsync();
