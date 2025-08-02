@@ -53,4 +53,4 @@ public class Store<TState>(TState initial, ImmutableArray<Interceptor<TState>> i
         interceptors.Reverse().Aggregate((Interceptor<TState>.Reducer)Reduce, (next, ic) => ic.Wrap(next));
 
     public void Dispose() => _subject.Dispose();
-}
+}   

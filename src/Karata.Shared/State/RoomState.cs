@@ -1,13 +1,13 @@
 using System.Collections.Immutable;
-using Karata.Cards;
 using Karata.Pebble;
 using Karata.Pebble.Interceptors;
 using Karata.Pebble.StateActions;
 using Karata.Shared.Models;
 
-namespace Karata.Client.Infrastructure.State;
+namespace Karata.Shared.State;
 
-public class RoomState(RoomData data, ImmutableList<Interceptor<RoomData>> interceptors) : Store<RoomData>(data, interceptors)
+public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> interceptors)
+    : Store<RoomData>(data, interceptors)
 {
     public record AddHandToRoom(UserData User, HandStatus Status) : StateAction<RoomData>
     {
