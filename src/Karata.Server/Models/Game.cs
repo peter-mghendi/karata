@@ -40,7 +40,7 @@ public class Game
 
     public HashSet<Hand> HandsExceptPlayerId(string playerId) => Hands.Where(h => h.Player.Id != playerId).ToHashSet();
 
-    public GameData ToData() => new()
+    private GameData ToData() => new()
     {
         IsReversed = IsReversed,
         Status = Status,
@@ -52,4 +52,6 @@ public class Game
         Hands = Hands.Select(h => h.ToData()).ToList(),
         Result = Result?.ToData(),
     };
+    
+    public static implicit operator GameData(Game game) => game.ToData();
 }

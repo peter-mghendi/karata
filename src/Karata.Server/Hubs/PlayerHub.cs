@@ -1,8 +1,8 @@
 using Karata.Server.Data;
-using Karata.Server.Exceptions;
 using Karata.Server.Hubs.Clients;
 using Karata.Server.Support;
 using Karata.Server.Services;
+using Karata.Shared.Exceptions;
 using Karata.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -48,7 +48,7 @@ public class PlayerHub(
         var chat = new Chat { Text = text, Sender = user, SentAt = DateTimeOffset.UtcNow };
 
         room.Chats.Add(chat);
-        await Clients.Group(roomId).ReceiveChat(chat.ToData());
+        await Clients.Group(roomId).ReceiveChat(chat);
         await context.SaveChangesAsync();
     }
 

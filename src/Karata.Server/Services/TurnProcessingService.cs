@@ -1,11 +1,11 @@
 using System.Text.Json;
 using Karata.Server.Data;
-using Karata.Server.Engine;
-using Karata.Server.Engine.Exceptions;
 using Karata.Server.Hubs;
 using Karata.Server.Hubs.Clients;
 using Karata.Server.Support;
 using Karata.Server.Support.Exceptions;
+using Karata.Shared.Engine;
+using Karata.Shared.Engine.Exceptions;
 using Karata.Shared.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
@@ -24,6 +24,7 @@ public class TurnProcessingService(
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILogger<TurnProcessingService> logger,
     KarataContext context,
+    KarataEngine engine,
     UserManager<User> users,
     Guid room,
     string player,
@@ -34,15 +35,13 @@ public class TurnProcessingService(
     {
         var player = (await users.FindByIdAsync(CurrentPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
-        var engine = new KarataEngine { Game = room.Game, Cards = [..cards] };
         
         try
         {
             ValidateGameState(room);
             (room.Game.Pick, room.Game.Give) = (room.Game.Give, 0);
 
-            engine.EnsureTurnIsValid();
-            var delta = engine.GenerateTurnDelta();
+            var delta = engine.EvaluateTurn(game: room.Game, cards: [..cards]);
             var turn = new Turn
             {
                 Cards = [..cards],
@@ -79,8 +78,18 @@ public class TurnProcessingService(
                 room.Game.Deck.Count,
                 room.Game.Pick
             );
+
+            var winner = exception.Result.Winner is null ? null : await users.FindByIdAsync(exception.Result.Winner!.Id)!;
+            var result = new GameResult
+            {
+                Reason = exception.Result.Reason,
+                ReasonType = exception.Result.ReasonType,
+                ResultType = exception.Result.ResultType,
+                CompletedAt = exception.Result.CompletedAt,
+                Winner = winner,
+            };
             
-            (room.Game.Status, room.Game.Result) = (Over, exception.Result);
+            (room.Game.Status, room.Game.Result) = (Over, result);
             if (exception.Result.ResultType is GameResultType.Win) context.Activities.Add(Activity.GameWon(room));
             
             await context.SaveChangesAsync();
@@ -144,8 +153,8 @@ public class TurnProcessingService(
     private async Task NotifyClientsOfGameState(User player, Turn turn)
     {
         await Me.NotifyTurnProcessed();
-        await RoomPlayers.MoveCardsFromHandToPile(player.ToData(), turn.Delta!.Cards);
-        await RoomSpectators.MoveCardsFromHandToPile(player.ToData(), turn.Delta!.Cards);
+        await RoomPlayers.MoveCardsFromHandToPile(player, turn.Delta!.Cards);
+        await RoomSpectators.MoveCardsFromHandToPile(player, turn.Delta!.Cards);
     }
 
     private async Task EnsurePendingCardsPicked(Room room, Turn turn)
@@ -155,7 +164,7 @@ public class TurnProcessingService(
         if (!room.Game.Deck.TryDealMany(room.Game.Pick, out var dealt))
         {
             if (room.Game.Pick > room.Game.Pile.Count + room.Game.Deck.Count - 1)
-                throw new EndGameException(GameResult.DeckExhaustion());
+                throw new EndGameException(GameResultData.DeckExhaustion());
 
             // Reclaim pile
             room.Game.Pile.Reclaim().ToList().ForEach(room.Game.Deck.Push);
@@ -187,7 +196,7 @@ public class TurnProcessingService(
         }
 
         if (room.Game.CurrentHand.IsLastCard && !turn.Delta!.Cards.Last().IsSpecial())
-            throw new EndGameException(GameResult.Win(winner: player));
+            throw new EndGameException(GameResultData.Win(winner: player));
 
         await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).ReceiveSystemMessage(Messages.Cardless(player));
         await RoomSpectators.ReceiveSystemMessage(Messages.Cardless(player));

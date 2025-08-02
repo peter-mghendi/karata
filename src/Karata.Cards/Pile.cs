@@ -21,4 +21,6 @@ public class Pile : Stack<Card>
         
         return cards;
     }
+    
+    public void Add(Card card) => Push(card);
 }

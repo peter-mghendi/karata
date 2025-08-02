@@ -25,9 +25,9 @@ public class Room
     {
         Id = Id,
         CreatedAt = CreatedAt,
-        Administrator = Administrator.ToData(),
-        Creator = Creator.ToData(),
-        Game = Game.ToData(),
+        Administrator = Administrator,
+        Creator = Creator,
+        Game = Game,
         Chats = Chats.Select(c => c.ToData()).ToList()
     };
 }

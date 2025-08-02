@@ -1,6 +1,7 @@
 using Karata.Server.Data;
 using Karata.Server.Hubs;
 using Karata.Server.Hubs.Clients;
+using Karata.Shared.Engine;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 
@@ -11,14 +12,17 @@ public class TurnProcessingServiceFactory(
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILoggerFactory loggers,
     KarataContext context,
+    KarataEngine engine,
     UserManager<User> users
 )
 {
     public TurnProcessingService Create(Guid room, string player, string connection) =>
-        new TurnProcessingService(players,
+        new(
+            players,
             spectators,
             loggers.CreateLogger<TurnProcessingService>(),
             context,
+            engine,
             users,
             room,
             player,

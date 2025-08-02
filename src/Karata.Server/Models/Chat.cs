@@ -15,4 +15,6 @@ public class Chat
         Sender = Sender.ToData(),
         SentAt = SentAt
     };
+    
+    public static implicit operator ChatData(Chat chat) => chat.ToData();
 }

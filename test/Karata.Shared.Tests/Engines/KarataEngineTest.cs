@@ -1,67 +1,53 @@
 using Karata.Cards;
 using Karata.Cards.Extensions;
-using Karata.Server.Engine;
-using Karata.Server.Engine.Exceptions;
-using Karata.Server.Models;
+using Karata.Shared.Engine;
 using Karata.Shared.Models;
+using Karata.Shared.Engine.Exceptions;
+using Microsoft.Extensions.Logging.Abstractions;
 using static Karata.Cards.Card.CardColor;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
 using static Karata.Shared.Models.CardRequestLevel;
 using TestCase = (
     int Identifier,
-    Karata.Server.Models.Game Game,
+    Karata.Shared.Models.GameData Game,
     System.Collections.Generic.List<Karata.Cards.Card> Cards,
     bool ExpectedValid,
     Karata.Shared.Models.GameDelta ExpectedDelta
 );
 
-namespace Karata.Server.Tests.Engines;
+namespace Karata.Shared.Tests.Engines;
 
 public class KarataEngineTest
 {
 #pragma warning disable xUnit1026, xUnit1045
 
     [Theory]
-    [MemberData(nameof(ValidationTestCases))]
-    public void ValidateTurnCardsTest(string identifier, Game game, List<Card> cards, bool expectedValidity)
+    [MemberData(nameof(TestCases))]
+    public void ValidateTurnCardsTest(string identifier, GameData game, List<Card> cards, bool expectedValidity,
+        GameDelta expectedDelta)
     {
-        var engine = new KarataEngine { Game = game, Cards = [..cards] };
+        var engine = new KarataEngine(NullLogger<KarataEngine>.Instance);
 
         if (expectedValidity)
         {
-            engine.EnsureTurnIsValid();
+            var actualDelta = engine.EvaluateTurn(game, [..cards]);
+
+            Assert.Equal(expectedDelta, actualDelta);
         }
         else
         {
-            Assert.ThrowsAny<TurnValidationException>(() => engine.EnsureTurnIsValid());
+            Assert.ThrowsAny<TurnValidationException>(() => engine.EvaluateTurn(game, [..cards]));
         }
-    }
-
-    [Theory]
-    [MemberData(nameof(GenerationTestCases))]
-    public void GenerateTurnDeltaTest(string identifier, Game game, List<Card> cards, GameDelta expectedDelta)
-    {
-        var engine = new KarataEngine { Game = game, Cards = [..cards] };
-        var actualDelta = engine.GenerateTurnDelta();
-
-        Assert.Equal(expectedDelta, actualDelta);
     }
 
 #pragma warning restore xUnit1026, xUnit1045
 
-    public static TheoryData<string, Game, List<Card>, bool> ValidationTestCases => GetTestCases()
-        .Aggregate(new TheoryData<string, Game, List<Card>, bool>(), (aggregate, @case) =>
+    public static TheoryData<string, GameData, List<Card>, bool, GameDelta> TestCases => GetTestCases()
+        .Aggregate(new TheoryData<string, GameData, List<Card>, bool, GameDelta>(), (aggregate, @case) =>
         {
-            aggregate.Add(@case.Identifier.ToString().PadLeft(2, '0'), @case.Game, @case.Cards, @case.ExpectedValid);
-            return aggregate;
-        });
-
-    public static TheoryData<string, Game, List<Card>, GameDelta> GenerationTestCases => GetTestCases()
-        .Where(@case => @case.ExpectedValid)
-        .Aggregate(new TheoryData<string, Game, List<Card>, GameDelta>(), (aggregate, @case) =>
-        {
-            aggregate.Add(@case.Identifier.ToString().PadLeft(2, '0'), @case.Game, @case.Cards, @case.ExpectedDelta);
+            var (identifier, game, cards, expectedValid, expectedDelta) = @case;
+            aggregate.Add(identifier.ToString().PadLeft(2, '0'), game, cards, expectedValid, expectedDelta);
             return aggregate;
         });
 
@@ -577,10 +563,6 @@ public class KarataEngineTest
         return cases;
     }
 
-    private static Game ProvideGame(Card? top = null, uint pick = 0, Card? request = null)
-    {
-        var game = new Game { Pick = pick, Request = request };
-        game.Pile.Push(top ?? Nine.Of(Spades));
-        return game;
-    }
+    private static GameData ProvideGame(Card? top = null, uint pick = 0, Card? request = null) =>
+        new() { Pick = pick, Request = request, Pile = [top ?? Nine.Of(Spades)] };
 }
