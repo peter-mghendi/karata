@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics.Contracts;
 using Karata.Cards.Extensions;
 using Karata.Shared.Engine.Exceptions;
 using Karata.Shared.Models;
@@ -25,6 +26,7 @@ public class KarataEngine(ILogger<KarataEngine> logger)
     /// <param name="game">THe current game state.</param>
     /// <param name="cards">The proposed cards.</param>
     /// <returns>A <see cref="GameDelta"/> representing the turn's effect on the game.</returns>
+    [Pure]
     public GameDelta EvaluateTurn(GameData game, ImmutableArray<Card> cards)
     {
         EnsureTurnIsValid(game, cards);
@@ -137,6 +139,7 @@ public class KarataEngine(ILogger<KarataEngine> logger)
     /// <summary>
     /// <see cref="GenerateTurnDelta"/> Generates a <see cref="GameDelta"/> for this turn.
     /// </summary>
+    [Pure]
     private static GameDelta GenerateTurnDelta(GameData game, ImmutableArray<Card> cards)
     {
         var delta = new GameDelta { Cards = [..cards] };

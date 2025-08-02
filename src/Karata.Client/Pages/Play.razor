@@ -117,16 +117,29 @@
 
                     <MudPaper Class="pa-4 mb-4" Elevation="0">
                         <div class="mb-2">
-                            <MudSwitch @bind-Value="_table" Color="Color.Primary"
-                                       Label="Use Card Table interface (Experimental)"/>
+                            <MudSwitch @bind-Value="_table" Color="Color.Primary" Label="Table interface (Experimental)"
+                                       Disabled="@(_store!.State.Game.Status is not GameStatus.Ongoing)"/>
                         </div>
                         <MudText Typo="Typo.caption" Class="text-gray">
-                            The Card Table interface is still under development and, as such, may contain bugs. Use the
-                            Card List interface for best experience.
+                            The table interface is still under development and, as such, may contain bugs.
                         </MudText>
                     </MudPaper>
 
+                    <MudPaper Class="pa-4 mb-4" Elevation="0">
+                        <div class="mb-2">
+                            <MudSwitch @bind-Value="_learner" Color="Color.Primary" Label="Learner mode (Experimental)"
+                                Disabled="@(_store!.State.Game.Status is not GameStatus.Ongoing)"/>
+                        </div>
+                        <MudText Typo="Typo.caption" Class="text-gray">Shows hints.</MudText>
+                    </MudPaper>
+
                     <MudExpansionPanels Outlined="false" Elevation="0" Class="mb-4">
+                        @if (_learner && _store!.State.Game.Status is GameStatus.Ongoing)
+                        {
+                            <MudExpansionPanel Text="Learner mode">
+                                <TurnEffects Game="_store!.State.Game" Cards="@([.._turn.State])"/>
+                            </MudExpansionPanel>
+                        }
                         <MudExpansionPanel Text="Information">
                             <InformationPanel Room="_store!.State"/>
                         </MudExpansionPanel>
@@ -150,6 +163,7 @@
 
     [Inject] public required IClipboard Clipboard { get; set; }
 
+    private bool _learner;
     private bool _table;
     private HubConnection? _hub;
     private RoomState? _store;
