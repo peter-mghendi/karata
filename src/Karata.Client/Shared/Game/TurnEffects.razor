@@ -1,0 +1,59 @@
+@using System.Collections.Immutable
+@using Karata.Shared.Engine
+@using Karata.Shared.Engine.Exceptions
+
+@inject KarataEngine Engine
+
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+}
+else if (_delta is not null)
+{
+    <MudList T="string" Dense="true">
+        @foreach (var effect in DescribeEffects(_delta))
+        {
+            <MudListItem Value="@effect">You @effect.</MudListItem>
+        }
+    </MudList>
+}
+
+@code {
+    [Parameter] [EditorRequired] public required GameData Game { get; set; }
+    [Parameter] [EditorRequired] public required ImmutableArray<Card> Cards { get; set; }
+
+    private GameDelta? _delta;
+    private string? _error;
+
+    protected override void OnParametersSet()
+    {
+        _error = null;
+        _delta = null;
+
+        try
+        {
+            _delta = Engine.EvaluateTurn(Game, Cards);
+        }
+        catch (TurnValidationException ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private static IEnumerable<string> DescribeEffects(GameDelta delta)
+    {
+        if (delta.Reverse) yield return "will reverse the direction of the game";
+
+        if (delta.Skip > 0) yield return $"will skip {delta.Skip} {(delta.Skip == 1 ? "player" : "players")}";
+
+        if (delta.RequestLevel is CardRequestLevel.SuitRequest) yield return "can request a suit";
+
+        if (delta.RequestLevel is CardRequestLevel.CardRequest) yield return "can request a card";
+
+        if (delta.RemoveRequestLevels > 0) yield return $"will cancel {delta.RemoveRequestLevels} request levels";
+
+        if (delta.Give > 0) yield return $"will give the next player {delta.Give} card(s)";
+
+        if (delta.Pick > 0) yield return $"will pick {delta.Pick} card(s)";
+    }
+}

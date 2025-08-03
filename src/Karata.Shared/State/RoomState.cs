@@ -1,11 +1,13 @@
-using Karata.Cards;
+using System.Collections.Immutable;
 using Karata.Pebble;
+using Karata.Pebble.Interceptors;
 using Karata.Pebble.StateActions;
 using Karata.Shared.Models;
 
-namespace Karata.Client.Infrastructure.State;
+namespace Karata.Shared.State;
 
-public class RoomState(RoomData data, ILoggerFactory? logging = null) : Store<RoomData>(data, logging)
+public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> interceptors)
+    : Store<RoomData>(data, interceptors)
 {
     public record AddHandToRoom(UserData User, HandStatus Status) : StateAction<RoomData>
     {
@@ -24,7 +26,7 @@ public class RoomState(RoomData data, ILoggerFactory? logging = null) : Store<Ro
                 h.User == User ? h with { Cards = [..h.Cards, ..Enumerable.Repeat(new Card(), Count)] } : h);
             return state with
             {
-                Game = state.Game with { Hands = [..hands], DeckCount = state.Game.DeckCount - Count }
+                Game = state.Game with { Hands = [..hands], Deck = new Deck(state.Game.Deck.SkipLast(Count)) }
             };
         }
     }
@@ -38,7 +40,7 @@ public class RoomState(RoomData data, ILoggerFactory? logging = null) : Store<Ro
 
             return state with
             {
-                Game = state.Game with { Hands = [..hands], DeckCount = state.Game.DeckCount - Cards.Count }
+                Game = state.Game with { Hands = [..hands], Deck = new Deck(state.Game.Deck.SkipLast(Cards.Count)) }
             };
         }
     }
@@ -52,7 +54,7 @@ public class RoomState(RoomData data, ILoggerFactory? logging = null) : Store<Ro
 
             return state with
             {
-                Game = state.Game with { DeckCount = state.Game.DeckCount - Cards.Count, Pile = pile }
+                Game = state.Game with { Deck = new Deck(state.Game.Deck.SkipLast(Cards.Count)), Pile = pile }
             };
         }
     }
@@ -83,12 +85,15 @@ public class RoomState(RoomData data, ILoggerFactory? logging = null) : Store<Ro
     {
         public override RoomData Apply(RoomData state)
         {
+            var deck = state.Game.Deck;
             var pile = state.Game.Pile;
             var cards = pile.Reclaim();
 
+            foreach (var card in cards) state.Game.Deck.Push(card);
+
             return state with
             {
-                Game = state.Game with { Pile = pile, DeckCount = state.Game.DeckCount + cards.Count }
+                Game = state.Game with { Pile = pile, Deck = deck }
             };
         }
     }

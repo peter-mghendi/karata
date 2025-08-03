@@ -47,7 +47,7 @@ public class Game
         Request = Request,
         Pick = Pick,
         CurrentTurn = CurrentTurn,
-        DeckCount = Deck.Count,
+        Deck = new Deck(Enumerable.Repeat(new Card(), Deck.Count)),
         Pile = Pile,
         Hands = Hands.Select(h => h.ToData()).ToList(),
         Result = Result?.ToData(),
