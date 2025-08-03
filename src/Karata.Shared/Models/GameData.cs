@@ -10,8 +10,8 @@ public record GameData
     public Card? Request { get; set; }
     public uint Pick { get; set; }
     public int CurrentTurn { get; set; }
-    public int DeckCount { get; set; } = Deck.Standard.Count;
-    public Pile Pile { get; set; } = new();
+    public Deck Deck { get; set; } = [];
+    public Pile Pile { get; set; } = [];
     public List<HandData> Hands { get; set; } = [];
     public GameResultData? Result { get; set; }
 
