@@ -4,6 +4,7 @@ using Karata.Server.Services;
 using Karata.Shared.Engine;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -61,7 +62,6 @@ builder.Services.AddResponseCompression(compression =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-// Pick port from environment if it is set.
 if (int.TryParse(Environment.GetEnvironmentVariable("PORT"), out var port))
 {
     builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(port));
@@ -74,7 +74,11 @@ var services = scope.ServiceProvider;
 var context = services.GetRequiredService<DbContext>();
 await context.Database.MigrateAsync();
 
-// Configure the HTTP request pipeline.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
