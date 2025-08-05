@@ -35,7 +35,7 @@
                                     <CardTableGameInterface Game="_store.State.Game"
                                                             Hand="MyHand"
                                                             Turn="_turn.State"
-                                                            OnAddCardToTurn="info => _turn.Mutate(new TurnState.Add(info))"
+                                                            OnAddCardToTurn="info => _turn.Mutate(new TurnState.Insert(info))"
                                                             OnReorderCardInTurn="info => _turn.Mutate(new TurnState.Reorder(info))"
                                                             OnRemoveCardFromTurn="card => _turn.Mutate(new TurnState.Remove(card))"/>
                                 }
@@ -44,7 +44,7 @@
                                     <CardListGameInterface Game="_store.State.Game"
                                                            Hand="MyHand"
                                                            Turn="_turn.State"
-                                                           OnAddCardToTurn="info => _turn.Mutate(new TurnState.Add(info))"
+                                                           OnAddCardToTurn="info => _turn.Mutate(new TurnState.Insert(info))"
                                                            OnReorderCardInTurn="info => _turn.Mutate(new TurnState.Reorder(info))"
                                                            OnRemoveCardFromTurn="card => _turn.Mutate(new TurnState.Remove(card))"/>
                                 }
