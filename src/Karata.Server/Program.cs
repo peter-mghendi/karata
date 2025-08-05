@@ -69,6 +69,11 @@ if (int.TryParse(Environment.GetEnvironmentVariable("PORT"), out var port))
 
 var app = builder.Build();
 
+using var scope = app.Services.CreateScope();
+var services = scope.ServiceProvider;
+var context = services.GetRequiredService<DbContext>();
+await context.Database.MigrateAsync();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
