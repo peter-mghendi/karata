@@ -1,0 +1,109 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    permissions:
+      contents: read
+      deployments: write
+
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create GitHub Deployment
+        id: deployment
+        run: |
+          DEPLOY_ID=$(gh api repos/${{ github.repository }}/deployments \
+            -X POST \
+            -F ref="${{ github.sha }}" \
+            -F task="deploy" \
+            -F auto_merge=false \
+            -F environment="production" \
+            -F description="Deploying commit ${{ github.sha }}" \
+            -F transient_environment=false \
+            -F production_environment=true \
+            -f required_contexts\[\] \
+            --jq '.id')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify on Deployment
+        run: |
+          next=$(git rev-parse --short $GITHUB_SHA)
+          echo "next=$next" >> $GITHUB_ENV        
+          echo "Deploying commit $next"
+
+      - name: Mark Deployment as In Progress
+        run: |
+          gh api repos/${{ github.repository }}/deployments/${{ env.DEPLOY_ID }}/statuses \
+            -X POST \
+            -F state="in_progress" \
+            -F description="Deployment started" \
+            -F environment_url="https://karata.app"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+
+      - name: Publish
+        run: dotnet publish -c Release -o app
+
+      - name: Upload files via SCP
+        uses: appleboy/scp-action@v0.1.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          source: "app/*"
+          target: "/opt/karata/${{ env.next }}"
+          strip_components: 0
+
+      - name: Restart application service
+        uses: appleboy/ssh-action@v0.1.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script: sudo /usr/local/bin/deploy_karata.sh "/opt/karata/${{ env.next }}"
+
+      - name: Mark Deployment as Success
+        if: success()
+        run: |
+          gh api repos/${{ github.repository }}/deployments/${{ env.DEPLOY_ID }}/statuses \
+            -X POST \
+            -F state="success" \
+            -F description="Deployment completed successfully" \
+            -F environment_url="https://karata.app"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Mark Deployment as Failure
+        if: failure()
+        run: |
+          gh api repos/${{ github.repository }}/deployments/${{ env.DEPLOY_ID }}/statuses \
+            -X POST \
+            -F state="failure" \
+            -F description="Deployment failed" \
+            -F environment_url="https://karata.app"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
