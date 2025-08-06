@@ -47,6 +47,7 @@ builder.Services.TryAddEnumerable(
     ServiceDescriptor.Singleton<IPostConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>()
 );
 
+builder.Services.AddHealthChecks();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<KarataEngine>();
 builder.Services.AddSingleton<PresenceService>();
@@ -97,6 +98,8 @@ app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.MapHealthChecks("/health");
 
 app.UseIdentityServer();
 app.UseAuthorization();
