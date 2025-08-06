@@ -18,7 +18,7 @@ using TestCase = (
 
 namespace Karata.Shared.Tests.Engines;
 
-public class KarataEngineTest
+public class TwoPassKarataEngineTest
 {
 #pragma warning disable xUnit1026, xUnit1045
 
@@ -27,7 +27,7 @@ public class KarataEngineTest
     public void ValidateTurnCardsTest(string identifier, GameData game, List<Card> cards, bool expectedValidity,
         GameDelta expectedDelta)
     {
-        var engine = new KarataEngine(NullLogger<KarataEngine>.Instance);
+        var engine = new TwoPassKarataEngine(NullLogger<TwoPassKarataEngine>.Instance);
 
         if (expectedValidity)
         {

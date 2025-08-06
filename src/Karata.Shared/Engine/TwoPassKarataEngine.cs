@@ -9,23 +9,12 @@ using static Karata.Shared.Models.CardRequestLevel;
 
 namespace Karata.Shared.Engine;
 
-/// <summary>
-/// <see cref="KarataEngine"/> evaluates a turn and generates a <see cref="GameDelta"/> for the turn.
-/// </summary>
-///
-/// <remarks>
-/// <see cref="GameData.Hands"/> might contain bogus cards. This is by design.
-/// Deck and player hands should not be exposed here.
-/// </remarks>
-public class KarataEngine(ILogger<KarataEngine> logger)
+/// This is an implementation of an <see cref="IKarataEngine"/> that performs two steps internally:
+/// 1. A first pass that validates that the sequence of cards proposed is valid in the context of the game.
+/// 2. A second pass that determines the impact of the cards by looking for known patterns in the proposed cards.
+public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataEngine
 {
-    /// <summary>
-    /// Evaluates a turn, returning a <see cref="GameDelta"/> if the turn is valid, and throwing a
-    /// <see cref="TurnValidationException"/> if it is not.
-    /// </summary>
-    /// <param name="game">THe current game state.</param>
-    /// <param name="cards">The proposed cards.</param>
-    /// <returns>A <see cref="GameDelta"/> representing the turn's effect on the game.</returns>
+    /// <inheritdoc />
     [Pure]
     public GameDelta EvaluateTurn(GameData game, ImmutableArray<Card> cards)
     {
@@ -51,7 +40,7 @@ public class KarataEngine(ILogger<KarataEngine> logger)
         var first = cards.First();
 
         // If a card has been requested, that card - or an Ace - must start the turn.
-        if (!RequestMatches(game.Request, first) && first.Face is not Ace) throw new CardRequestedException();
+        if (!IKarataEngine.RequestMatches(game.Request, first) && first.Face is not Ace) throw new CardRequestedException();
 
         // If the top card is a "bomb", the next card should counter or block it.
         if (top.IsBomb() && game.Pick > 0 && first.Face is not Ace)
@@ -152,7 +141,7 @@ public class KarataEngine(ILogger<KarataEngine> logger)
         // If there was a request, and this turn is valid by virtue of the first card matching,
         // (i.e. not being an ace unless an Ace was requested), *clear* it immediately:
         // An Ace will still behave like an Ace if it was requested, its value will not be diminished.
-        if (RequestMatches(game.Request, cards.First()))
+        if (IKarataEngine.RequestMatches(game.Request, cards.First()))
         {
             delta = delta with { RemoveRequestLevels = (uint)game.RequestLevel };
         }
@@ -202,11 +191,4 @@ public class KarataEngine(ILogger<KarataEngine> logger)
 
         return delta;
     }
-
-    private static bool RequestMatches(Card? request, Card match) => request switch
-    {
-        null => true,
-        { Face: None } => match.SuitEquals(request),
-        { Face: not None } => match.SuitEquals(request) && match.FaceEquals(request),
-    };
 }

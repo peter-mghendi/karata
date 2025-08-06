@@ -49,7 +49,7 @@ builder.Services.TryAddEnumerable(
 
 builder.Services.AddHealthChecks();
 builder.Services.AddSignalR();
-builder.Services.AddSingleton<KarataEngine>();
+builder.Services.AddSingleton<IKarataEngine, TwoPassKarataEngine>();
 builder.Services.AddSingleton<PresenceService>();
 builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
 builder.Services.AddTransient<GameStartServiceFactory>();

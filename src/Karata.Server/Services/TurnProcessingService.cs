@@ -25,7 +25,7 @@ public class TurnProcessingService(
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILogger<TurnProcessingService> logger,
     KarataContext context,
-    KarataEngine engine,
+    IKarataEngine engine,
     UserManager<User> users,
     Guid room,
     string player,
