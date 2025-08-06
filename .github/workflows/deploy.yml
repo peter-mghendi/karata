@@ -19,7 +19,7 @@ jobs:
       - name: Create GitHub Deployment
         id: deployment
         run: |
-          DEPLOY_ID=$(gh api repos/${{ github.repository }}/deployments \
+          deploy=$(gh api repos/${{ github.repository }}/deployments \
             -X POST \
             -F ref="${{ github.sha }}" \
             -F task="deploy" \
@@ -30,18 +30,20 @@ jobs:
             -F production_environment=true \
             -f required_contexts\[\] \
             --jq '.id')
+          echo "deploy=$deploy" >> $GITHUB_ENV     
+          echo "Created deploy $deploy"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Notify on Deployment
         run: |
           next=$(git rev-parse --short $GITHUB_SHA)
-          echo "next=$next" >> $GITHUB_ENV        
+          echo "next=$next" >> $GITHUB_ENV     
           echo "Deploying commit $next"
 
       - name: Mark Deployment as In Progress
         run: |
-          gh api repos/${{ github.repository }}/deployments/${{ env.DEPLOY_ID }}/statuses \
+          gh api repos/${{ github.repository }}/deployments/${{ env.deploy }}/statuses \
             -X POST \
             -F state="in_progress" \
             -F description="Deployment started" \
@@ -89,7 +91,7 @@ jobs:
       - name: Mark Deployment as Success
         if: success()
         run: |
-          gh api repos/${{ github.repository }}/deployments/${{ env.DEPLOY_ID }}/statuses \
+          gh api repos/${{ github.repository }}/deployments/${{ env.deploy }}/statuses \
             -X POST \
             -F state="success" \
             -F description="Deployment completed successfully" \
@@ -100,7 +102,7 @@ jobs:
       - name: Mark Deployment as Failure
         if: failure()
         run: |
-          gh api repos/${{ github.repository }}/deployments/${{ env.DEPLOY_ID }}/statuses \
+          gh api repos/${{ github.repository }}/deployments/${{ env.deploy }}/statuses \
             -X POST \
             -F state="failure" \
             -F description="Deployment failed" \
