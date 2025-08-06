@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>Karata.Server-645e4e3b-a87e-4a2b-aa8f-239ea9c9b8f8</UserSecretsId>
+    <AssemblyName>karata</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
