@@ -72,7 +72,7 @@ var app = builder.Build();
 
 using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;
-var context = services.GetRequiredService<DbContext>();
+var context = services.GetRequiredService<KarataContext>();
 await context.Database.MigrateAsync();
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
