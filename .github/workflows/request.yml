@@ -1,0 +1,53 @@
+name: Request deployment
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref (branch or commit) to deploy"
+        default: "main"
+        required: true
+
+jobs:
+  deploy:
+    permissions:
+      contents: read
+      deployments: write
+
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Resolve ref
+        run: |
+          ref=${{ github.event.inputs.ref || github.sha }}
+          echo "ref=$ref" >> $GITHUB_ENV
+          
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with: 
+          ref: ${{ env.ref }}
+      
+      # to-do correctly get th long and short SHAs
+      - name: Create GitHub Deployment
+        run: |
+          sha=$(git rev-parse "${{ env.ref }}")
+          short=$(git rev-parse --short "${{ env.ref }}")
+          
+          deployment=$(gh api repos/${{ github.repository }}/deployments \
+            -X POST \
+            -F ref="${{ env.ref }}" \
+            -F task="deploy" \
+            -F auto_merge=false \
+            -F environment="production" \
+            -F description="Deploying commit ${{ env.sha }}" \
+            -F transient_environment=false \
+            -F production_environment=true \
+            -f required_contexts\[\] \
+            --jq '.id')
+          
+          
+          echo "Created deployment #$deployment for commit $short."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

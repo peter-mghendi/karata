@@ -1,8 +1,7 @@
 name: Deploy
 
-on:
-  push:
-    branches: [ "main" ]
+on: 
+  deployment
 
 jobs:
   deploy:
@@ -13,29 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Create GitHub Deployment
-        id: deployment
-        run: |
-          deploy=$(gh api repos/${{ github.repository }}/deployments \
-            -X POST \
-            -F ref="${{ github.sha }}" \
-            -F task="deploy" \
-            -F auto_merge=false \
-            -F environment="production" \
-            -F description="Deploying commit ${{ github.sha }}" \
-            -F transient_environment=false \
-            -F production_environment=true \
-            -f required_contexts\[\] \
-            --jq '.id')
-          echo "deploy=$deploy" >> $GITHUB_ENV     
-          echo "Created deploy $deploy"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Notify on Deployment
+      - name: Notify of Deployment
         run: |
           next=$(git rev-parse --short $GITHUB_SHA)
           echo "next=$next" >> $GITHUB_ENV     
@@ -50,6 +27,9 @@ jobs:
             -F environment_url="https://karata.app"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout code
+        uses: actions/checkout@v4    
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -94,7 +74,7 @@ jobs:
           gh api repos/${{ github.repository }}/deployments/${{ env.deploy }}/statuses \
             -X POST \
             -F state="success" \
-            -F description="Deployment completed successfully" \
+            -F description="Deployment successful" \
             -F environment_url="https://karata.app"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
