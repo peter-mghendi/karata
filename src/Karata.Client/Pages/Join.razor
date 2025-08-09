@@ -1,5 +1,7 @@
 @page "/game/join"
 
+@attribute [Authorize]
+
 @inject HttpClient Http
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigator
