@@ -13,7 +13,7 @@ public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
     {
         public override RoomData Apply(RoomData state)
         {
-            var hand = new HandData { User = User, Cards = [], Status = Status };
+            var hand = new HandData { Player = User, Cards = [], Status = Status };
             return state with { Game = state.Game with { Hands = [..state.Game.Hands, hand] } };
         }
     }
@@ -23,7 +23,7 @@ public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         public override RoomData Apply(RoomData state)
         {
             var hands = state.Game.Hands.Select(h =>
-                h.User == User ? h with { Cards = [..h.Cards, ..Enumerable.Repeat(new Card(), Count)] } : h);
+                h.Player == User ? h with { Cards = [..h.Cards, ..Enumerable.Repeat(new Card(), Count)] } : h);
             return state with
             {
                 Game = state.Game with { Hands = [..hands], Deck = new Deck(state.Game.Deck.SkipLast(Count)) }
@@ -36,7 +36,7 @@ public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         public override RoomData Apply(RoomData state)
         {
             var hands = state.Game.Hands
-                .Select(h => h.User == User ? h with { Cards = [..h.Cards, ..Cards] } : h);
+                .Select(h => h.Player == User ? h with { Cards = [..h.Cards, ..Cards] } : h);
 
             return state with
             {
@@ -65,8 +65,8 @@ public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         {
             var hands = Mine switch
             {
-                true => state.Game.Hands.Select(h => h.User == User ? h with { Cards = [..h.Cards.Except(Cards)] } : h),
-                false => state.Game.Hands.Select(h => h.User == User ? h with { Cards = h.Cards[Cards.Count..] } : h)
+                true => state.Game.Hands.Select(h => h.Player == User ? h with { Cards = [..h.Cards.Except(Cards)] } : h),
+                false => state.Game.Hands.Select(h => h.Player == User ? h with { Cards = h.Cards[Cards.Count..] } : h)
             };
 
             var pile = state.Game.Pile;
@@ -102,7 +102,7 @@ public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
     {
         public override RoomData Apply(RoomData state)
         {
-            return state with { Game = state.Game with { Hands = [..state.Game.Hands.Where(h => h.User != User)] } };
+            return state with { Game = state.Game with { Hands = [..state.Game.Hands.Where(h => h.Player != User)] } };
         }
     }
 
@@ -129,7 +129,7 @@ public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
             {
                 Game = state.Game with
                 {
-                    Hands = [..state.Game.Hands.Select(h => h.User == User ? h with { Status = Status } : h)]
+                    Hands = [..state.Game.Hands.Select(h => h.Player == User ? h with { Status = Status } : h)]
                 }
             };
         }

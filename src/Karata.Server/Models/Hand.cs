@@ -19,6 +19,6 @@ public class Hand
     {
         Status = Status,
         Cards = [..Enumerable.Repeat(new Card(), Cards.Count)],
-        User = Player.ToData(),
+        Player = Player.ToData(),
     };
 }

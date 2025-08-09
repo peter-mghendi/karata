@@ -55,6 +55,8 @@ builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
 builder.Services.AddTransient<GameStartServiceFactory>();
 builder.Services.AddTransient<RoomMembershipServiceFactory>();
 builder.Services.AddTransient<TurnProcessingServiceFactory>();
+builder.Services.AddTransient<VoidTurnServiceFactory>();
+builder.Services.AddTransient<SetAwayServiceFactory>();
 builder.Services.AddResponseCompression(compression =>
 {
     compression.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/octet-stream"]);

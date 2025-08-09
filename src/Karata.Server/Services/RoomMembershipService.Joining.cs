@@ -25,30 +25,30 @@ public partial class RoomMembershipService
         switch (room.Game.Status)
         {
             case GameStatus.Lobby when room.Game.Hands.SingleOrDefault(h => h.Player.Id == player.Id) is { } joined:
-                joined.Status = Connected;
+                joined.Status = Online;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(EnrichRoomDataForUser(room.ToData(), player));
+                await Me.AddToRoom(EnrichRoomDataForUser(room, player));
                 await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
                     .UpdateHandStatus(joined.Player.ToData(), joined.Status);
                 await RoomSpectators.UpdateHandStatus(joined.Player.ToData(), joined.Status);
                 break;
             case GameStatus.Lobby:
-                var hand = new Hand { Player = player, Status = Connected };
+                var hand = new Hand { Player = player, Status = Online };
                 room.Game.Hands.Add(hand);
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(EnrichRoomDataForUser(room.ToData(), player));
+                await Me.AddToRoom(EnrichRoomDataForUser(room, player));
                 await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
                     .AddHandToRoom(hand.Player.ToData(), hand.Status);
                 await RoomSpectators.AddHandToRoom(hand.Player.ToData(), hand.Status);
                 break;
             case GameStatus.Ongoing:
                 var rejoined = room.Game.Hands.Single(h => h.Player.Id == player.Id);
-                rejoined.Status = Connected;
+                rejoined.Status = Online;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(EnrichRoomDataForUser(room.ToData(), player));
+                await Me.AddToRoom(EnrichRoomDataForUser(room, player));
                 await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
                     .UpdateHandStatus(rejoined.Player.ToData(), rejoined.Status);
                 await RoomSpectators.UpdateHandStatus(rejoined.Player.ToData(), rejoined.Status);

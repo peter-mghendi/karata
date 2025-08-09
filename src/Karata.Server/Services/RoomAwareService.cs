@@ -34,11 +34,21 @@ public abstract class RoomAwareService(
     protected async Task RemoveFromRoom(string connection) =>
         await players.Groups.RemoveFromGroupAsync(connection, RoomId.ToString());
 
-    protected static RoomData EnrichRoomDataForUser(RoomData room, User me) => room with
+    protected static RoomData EnrichRoomDataForUser(Room room, User me)
     {
-        Game = room.Game with
+        var data = room.ToData();
+        return data with
         {
-            Hands = [..room.Game.Hands.Select(h => h.User.Id == me.Id ? h with { Cards = h.Cards } : h)]
-        }
-    };
+            Game = data.Game with
+            {
+                Hands =
+                [
+                    ..from hand in data.Game.Hands
+                    select hand.Player.Id == me.Id
+                        ? hand with { Cards = room.Game.Hands.Single(h => h.Player.Id == hand.Player.Id).Cards }
+                        : hand
+                ]
+            }
+        };
+    }
 }

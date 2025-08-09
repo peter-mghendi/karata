@@ -760,64 +760,6 @@ namespace Karata.Server.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsOne("Karata.Server.Models.GameDelta", "Delta", b1 =>
-                        {
-                            b1.Property<int>("TurnId")
-                                .HasColumnType("integer");
-
-                            b1.Property<long>("Give")
-                                .HasColumnType("bigint");
-
-                            b1.Property<long>("Pick")
-                                .HasColumnType("bigint");
-
-                            b1.Property<long>("RemoveRequestLevels")
-                                .HasColumnType("bigint");
-
-                            b1.Property<int>("RequestLevel")
-                                .HasColumnType("integer");
-
-                            b1.Property<bool>("Reverse")
-                                .HasColumnType("boolean");
-
-                            b1.Property<long>("Skip")
-                                .HasColumnType("bigint");
-
-                            b1.HasKey("TurnId");
-
-                            b1.ToTable("Turns");
-
-                            b1.ToJson("Delta");
-
-                            b1.WithOwner()
-                                .HasForeignKey("TurnId");
-
-                            b1.OwnsMany("Karata.Cards.Card", "Cards", b2 =>
-                                {
-                                    b2.Property<int>("GameDeltaTurnId")
-                                        .HasColumnType("integer");
-
-                                    b2.Property<int>("__synthesizedOrdinal")
-                                        .ValueGeneratedOnAdd()
-                                        .HasColumnType("integer");
-
-                                    b2.Property<int>("Face")
-                                        .HasColumnType("integer");
-
-                                    b2.Property<int>("Suit")
-                                        .HasColumnType("integer");
-
-                                    b2.HasKey("GameDeltaTurnId", "__synthesizedOrdinal");
-
-                                    b2.ToTable("Turns");
-
-                                    b2.WithOwner()
-                                        .HasForeignKey("GameDeltaTurnId");
-                                });
-
-                            b1.Navigation("Cards");
-                        });
-
                     b.OwnsMany("Karata.Cards.Card", "Cards", b1 =>
                         {
                             b1.Property<int>("TurnId")
@@ -887,6 +829,64 @@ namespace Karata.Server.Data.Migrations
 
                             b1.WithOwner()
                                 .HasForeignKey("TurnId");
+                        });
+
+                    b.OwnsOne("Karata.Shared.Models.GameDelta", "Delta", b1 =>
+                        {
+                            b1.Property<int>("TurnId")
+                                .HasColumnType("integer");
+
+                            b1.Property<long>("Give")
+                                .HasColumnType("bigint");
+
+                            b1.Property<long>("Pick")
+                                .HasColumnType("bigint");
+
+                            b1.Property<long>("RemoveRequestLevels")
+                                .HasColumnType("bigint");
+
+                            b1.Property<int>("RequestLevel")
+                                .HasColumnType("integer");
+
+                            b1.Property<bool>("Reverse")
+                                .HasColumnType("boolean");
+
+                            b1.Property<long>("Skip")
+                                .HasColumnType("bigint");
+
+                            b1.HasKey("TurnId");
+
+                            b1.ToTable("Turns");
+
+                            b1.ToJson("Delta");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TurnId");
+
+                            b1.OwnsMany("Karata.Cards.Card", "Cards", b2 =>
+                                {
+                                    b2.Property<int>("GameDeltaTurnId")
+                                        .HasColumnType("integer");
+
+                                    b2.Property<int>("__synthesizedOrdinal")
+                                        .ValueGeneratedOnAdd()
+                                        .HasColumnType("integer");
+
+                                    b2.Property<int>("Face")
+                                        .HasColumnType("integer");
+
+                                    b2.Property<int>("Suit")
+                                        .HasColumnType("integer");
+
+                                    b2.HasKey("GameDeltaTurnId", "__synthesizedOrdinal");
+
+                                    b2.ToTable("Turns");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("GameDeltaTurnId");
+                                });
+
+                            b1.Navigation("Cards");
                         });
 
                     b.Navigation("Cards");

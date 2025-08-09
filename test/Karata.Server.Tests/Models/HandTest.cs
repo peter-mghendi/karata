@@ -18,7 +18,7 @@ public class HandTest
     {
         var hand = new Hand
         {
-            Status = HandStatus.Connected,
+            Status = HandStatus.Online,
             Player = new User(),
             Cards = [..Enumerable.Range(0, count).Select(_ => Queen.Of(Hearts))]
         };

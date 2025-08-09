@@ -150,10 +150,11 @@
                                 <InformationPanel Room="_store!.State"/>
                             </MudExpansionPanel>
                             <MudExpansionPanel Text="Players">
-                                <PlayersPanel Me="MyHand.User" Room="_store.State"/>
+                                <PlayersPanel Me="MyHand.Player" Room="_store.State" Controls="IsAdministrator" 
+                                              OnSetAway="SetAway" OnVoidTurn="VoidTurn" />
                             </MudExpansionPanel>
                             <MudExpansionPanel Text="Chat" MaxHeight="480" Class="overflow-y-auto">
-                                <ChatPanel Room="_store!.State" Me="MyHand.User" OnSend="Send"/>
+                                <ChatPanel Room="_store!.State" Me="MyHand.Player" OnSend="Send"/>
                             </MudExpansionPanel>
                         </MudExpansionPanels>
                     </MudItem>
@@ -176,8 +177,8 @@
     private TurnState _turn = new([], []);
     private string? _username;
 
-    private HandData MyHand => _store!.State.Game.Hands.Single(h => h.User.Username == _username);
-    private bool IsAdministrator => MyHand.User == _store?.State.Administrator;
+    private HandData MyHand => _store!.State.Game.Hands.Single(h => h.Player.Username == _username);
+    private bool IsAdministrator => MyHand.Player == _store?.State.Administrator;
 
     private void OnStoreChanged<T>(T data) where T : class => StateHasChanged();
 
@@ -233,11 +234,11 @@
 
         _hub.On<UserData, int>("MoveCardCountFromDeckToHand", (user, num) => _store!.Mutate(new RoomState.MoveCardCountFromDeckToHand(user, num)));
 
-        _hub.On<List<Card>>("MoveCardsFromDeckToHand", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToHand(MyHand.User, cards)));
+        _hub.On<List<Card>>("MoveCardsFromDeckToHand", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToHand(MyHand.Player, cards)));
 
         _hub.On<List<Card>>("MoveCardsFromDeckToPile", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToPile(cards)));
 
-        _hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (user, cards) => _store!.Mutate(new RoomState.MoveCardsFromHandToPile(user, cards, MyHand.User == user)));
+        _hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (user, cards) => _store!.Mutate(new RoomState.MoveCardsFromHandToPile(user, cards, MyHand.Player == user)));
 
         _hub.On("NotifyTurnProcessed", () =>
         {
@@ -346,7 +347,7 @@
         _hub.On<UserData, HandStatus>("UpdateHandStatus", (user, status) =>
         {
             _store!.Mutate(new RoomState.UpdateHandStatus(user, status));
-            Snackbar.Add($"{user.Username} has {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+            Snackbar.Add($"{user.Username} is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
 
         _hub.On<uint>("UpdatePick", num => _store!.Mutate(new RoomState.UpdatePick(num)));
@@ -355,7 +356,7 @@
         {
             _store!.Mutate(new RoomState.UpdateTurn(turn));
 
-            var current = _store!.State.Game.CurrentHand.User.Username;
+            var current = _store!.State.Game.CurrentHand.Player.Username;
             var possessive = current == _username ? "your" : $"{current}'s";
             Snackbar.Add($"It is now {possessive} turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
@@ -375,6 +376,10 @@
     }
 
     async Task Send(string message) => await _hub!.SendAsync("SendChat", _store!.State.Id, message);
+    
+    async Task SetAway(string playerId) => await _hub!.SendAsync("SetAway", _store!.State.Id, playerId);
+
+    async Task VoidTurn(string playerId) => await _hub!.SendAsync("VoidTurn", _store!.State.Id, playerId);
 
     private async Task CopyRoomId()
     {

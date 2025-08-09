@@ -35,7 +35,7 @@ public class GameStartService(
         // Check caller role
         if (room.Administrator.Id != CurrentPlayerId)
         {
-            throw new UnauthorizedToStartException();
+            throw new UnauthorizedActionException();
         }
 
         // Check game status

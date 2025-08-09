@@ -1,4 +1,4 @@
-<MudList ReadOnly SelectedValue="@Game.CurrentHand.User">
+<MudList ReadOnly SelectedValue="@Game.CurrentHand.Player">
     @if (Subheader)
     {
         <MudListSubheader>Players</MudListSubheader>    
@@ -6,18 +6,25 @@
     
     @foreach (var hand in Game.Hands)
     {
-        <HandDisplay Hand="hand" IsAdministrator="@(hand.User == Room.Administrator)" IsMe="@(hand.User == Me)"/>
+        <HandDisplay Hand="hand" IsAdministrator="@(hand.Player == Room.Administrator)" IsMe="@(hand.Player == Me)"
+                     IsCurrent="@(Game.CurrentHand.Player == hand.Player)" Controls="Controls" 
+                     OnSetAway="OnSetAway" OnVoidTurn="OnVoidTurn"/>
     }
 </MudList>
 
 @code
 {
-    [Parameter]
-    public bool Subheader { get; set; }
+    [Parameter] public bool Controls { get; set; }
+
+    [Parameter] public bool Subheader { get; set; }
 
     [Parameter] public RoomData Room { get; set; } = null!;
     
     [Parameter] public UserData? Me { get; set; }
+    
+    [Parameter] public EventCallback<string> OnSetAway { get; set; }
+
+    [Parameter] public EventCallback<string> OnVoidTurn { get; set; }
 
     private GameData Game => Room.Game;
 }

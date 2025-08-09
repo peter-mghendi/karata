@@ -43,16 +43,16 @@
                                 </MudListItem>
                             }
                             <MudListItem IconColor="@Color.Info" Icon="@Icons.Material.Rounded.Person">
-                                Current player: @_store.State.Game.CurrentHand.User.Username
+                                Current player: @_store.State.Game.CurrentHand.Player.Username
                             </MudListItem>
                         </MudList>
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudList Color="Color.Info" SelectedValue="@_store.State.Game.CurrentHand.User">
+                        <MudList Color="Color.Info" SelectedValue="@_store.State.Game.CurrentHand.Player">
                             <MudListSubheader>Players</MudListSubheader>
                             @foreach (var hand in _store.State.Game.Hands)
                             {
-                                <HandDisplay Hand="hand" IsAdministrator="@(hand.User == _store.State.Administrator)"/>
+                                <HandDisplay Hand="hand" IsAdministrator="@(hand.Player == _store.State.Administrator)"/>
                             }
                         </MudList>
                     </MudItem>
@@ -67,7 +67,7 @@
                     @foreach (var turn in _turns)
                     {
                         <MudListItem Value="@turn">
-                            <MudText Typo="Typo.caption">@turn.Hand.User.Username</MudText>
+                            <MudText Typo="Typo.caption">@turn.Hand.Player.Username</MudText>
                             <MudText Typo="Typo.body1" Class="gray-text">@GetDescription(turn)</MudText>
                         </MudListItem>
                     }
@@ -172,7 +172,7 @@
         {
             _store!.Mutate(new RoomState.UpdateTurn(turn));
 
-            Snackbar.Add($"It is now {_store!.State.Game.CurrentHand.User.Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+            Snackbar.Add($"It is now {_store!.State.Game.CurrentHand.Player.Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
 
         await _hub.StartAsync();
@@ -194,7 +194,7 @@
         return turn.Type switch
         {
             TurnType.Skip => "Was skipped.",
-            TurnType.Void => "was skipped (disconnected).",
+            TurnType.Void => "was skipped (away).",
             TurnType.Deal => $"Was dealt {CardCount(turn.Picked.Count)}.",
             TurnType.Play => new[]
                 {
@@ -207,7 +207,7 @@
                 }.Where(x => x != null)
                 .DefaultIfEmpty("Took no action")
                 .Aggregate((a, b) => a + " and " + b?.ToLower()) + ".",
-            _ => $"{turn.Hand.User.Username} performed an unknown action."
+            _ => $"{turn.Hand.Player.Username} performed an unknown action."
         };
 
         string CardCount(int num) => $"{num} {(num == 1 ? "card" : "cards")}";
