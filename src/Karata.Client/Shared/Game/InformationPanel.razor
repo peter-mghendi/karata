@@ -63,6 +63,6 @@
     private async Task CopyInviteLink()
     {
         await Clipboard.SetTextAsync(Room.Id.ToString());
-        Snackbar.Add("Copied to clipboard.", Severity.Info);   
+        Snackbar.Add("Copied to clipboard.", Severity.Info, c => c.SnackbarVariant = Variant.Text);   
     }
 }

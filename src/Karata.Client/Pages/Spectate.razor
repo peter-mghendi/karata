@@ -101,7 +101,7 @@
         _hub.On<UserData, HandStatus>("AddHandToRoom", (user, status) =>
         {
             _store!.Mutate(new RoomState.AddHandToRoom(user, status));
-            Snackbar.Add($"{user.Username} (Status: {status}) has joined the room", Severity.Info);
+            Snackbar.Add($"{user.Username} has joined the room", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
 
         _hub.On<RoomData>("AddToRoom", room =>
@@ -128,7 +128,7 @@
                 MessageType.Warning => Severity.Warning,
                 _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
             };
-            Snackbar.Add(message.Text, severity);
+            Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
         });
 
         _hub.On("ReclaimPile", () => _store!.Mutate(new RoomState.ReclaimPile()));
@@ -147,7 +147,7 @@
         _hub.On<UserData>("RemoveHandFromRoom", user =>
         {
             _store!.Mutate(new RoomState.RemoveHandFromRoom(user));
-            Snackbar.Add($"{user.Username} has left the room.", Severity.Info);
+            Snackbar.Add($"{user.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
 
         _hub.On<Card>("SetCurrentRequest", request => _store!.Mutate(new RoomState.SetCurrentRequest(request)));
@@ -157,13 +157,13 @@
         _hub.On<GameStatus>("UpdateGameStatus", status =>
         {
             _store!.Mutate(new RoomState.UpdateGameStatus(status));
-            Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info);
+            Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
 
         _hub.On<UserData, HandStatus>("UpdateHandStatus", (user, status) =>
         {
             _store!.Mutate(new RoomState.UpdateHandStatus(user, status));
-            Snackbar.Add($"{user.Username} has {status.ToString().ToLower()}.", Severity.Info);
+            Snackbar.Add($"{user.Username} has {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
 
         _hub.On<uint>("UpdatePick", num => _store!.Mutate(new RoomState.UpdatePick(num)));
@@ -172,7 +172,7 @@
         {
             _store!.Mutate(new RoomState.UpdateTurn(turn));
 
-            Snackbar.Add($"It is now {_store!.State.Game.CurrentHand.User.Username}'s turn.", Severity.Info);
+            Snackbar.Add($"It is now {_store!.State.Game.CurrentHand.User.Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
 
         await _hub.StartAsync();

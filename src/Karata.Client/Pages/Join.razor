@@ -97,7 +97,7 @@
         if (!response.IsSuccessStatusCode)
         {
             _loading = false;
-            Snackbar.Add("Failed to create room. Please try again later.", Severity.Error);
+            Snackbar.Add("Failed to create room. Please try again later.", Severity.Error, c => c.SnackbarVariant = Variant.Text);
             StateHasChanged();
             return;
         }
@@ -106,7 +106,7 @@
         if (room == null)
         {
             _loading = false;
-            Snackbar.Add("Failed to create room. Please try again later.", Severity.Error);
+            Snackbar.Add("Failed to create room. Please try again later.", Severity.Error, c => c.SnackbarVariant = Variant.Text);
             StateHasChanged();
             return;
         }
