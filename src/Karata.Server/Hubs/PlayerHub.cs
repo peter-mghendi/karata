@@ -34,7 +34,7 @@ public class PlayerHub(
         if (!presence.TryGetPresence(user.Id, out var rooms) || rooms is null) return;
 
         var ids = rooms.Select(Parse);
-        foreach (var room in await context.Rooms.Where(r => ids.Contains(r.Id)).ToListAsync()) await Disconnect(membership, room.Id);
+        foreach (var room in await context.Rooms.Where(r => ids.Contains(r.Id)).ToListAsync()) await Disconnect(membership, room.Id, HandStatus.Offline);
     }
 
     public async Task SendChat(string roomId, string text)
@@ -67,7 +67,7 @@ public class PlayerHub(
     }
 
     public async Task LeaveRoom([FromServices] RoomMembershipServiceFactory factory, string roomId) =>
-        await Disconnect(factory, Parse(roomId));
+        await Disconnect(factory, Parse(roomId), HandStatus.Away);
 
     public async Task StartGame([FromServices] GameStartServiceFactory factory, string roomId)
     {
@@ -97,12 +97,40 @@ public class PlayerHub(
         }
     }
 
-    private async Task Disconnect(RoomMembershipServiceFactory factory, Guid roomId)
+    public async Task VoidTurn([FromServices] VoidTurnServiceFactory factory, string roomId, string voideeId)
+    {
+        try
+        {
+            logger.LogDebug("User {User} is voidinging a turn in room {Room}. Player: {Player}", Context.UserIdentifier,
+                roomId, voideeId);
+            await factory.Create(Parse(roomId), Context.UserIdentifier!).ExecuteAsync(voideeId);
+        }
+        catch (KarataException exception)
+        {
+            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+        }
+    }
+
+    public async Task SetAway([FromServices] SetAwayServiceFactory factory, string roomId, string voideeId)
+    {
+        try
+        {
+            logger.LogDebug("User {User} is setting player - {Player} as away in room {Room}.", Context.UserIdentifier,
+                voideeId, roomId);
+            await factory.Create(Parse(roomId), Context.UserIdentifier!).ExecuteAsync(voideeId);
+        }
+        catch (KarataException exception)
+        {
+            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+        }
+    }
+
+    private async Task Disconnect(RoomMembershipServiceFactory factory, Guid roomId, HandStatus intent)
     {
         try
         {
             logger.LogDebug("User {User} is leaving room {Room}.", Context.UserIdentifier, roomId);
-            await factory.Create(roomId, Context.UserIdentifier!).LeaveAsync(Context.ConnectionId);
+            await factory.Create(roomId, Context.UserIdentifier!).LeaveAsync(Context.ConnectionId, intent);
         }
         catch (KarataException exception)
         {

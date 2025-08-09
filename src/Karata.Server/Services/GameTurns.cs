@@ -9,7 +9,8 @@ public static class GameTurns
     ///  Encapsulates logic to determine the next playable turn in a game.
     /// </summary>
     /// <remarks>
-    ///  Does not validate against games with insufficient playable turns.
+    /// - Does not validate against games with insufficient playable turns.
+    /// - Assumes that the current turn has already been added, and will start evaluating the following turn.
     /// </remarks>
     public static void Advance(Game game)
     {
@@ -21,7 +22,8 @@ public static class GameTurns
             game.CurrentTurn = game.NextTurn;
             switch (game.CurrentHand.Status)
             {
-                case Connected:
+                case Online:
+                case Offline:
                     game.CurrentHand.Turns.Add(new Turn
                     {
                         Type = TurnType.Skip,
@@ -31,7 +33,7 @@ public static class GameTurns
 
                     --skip;
                     break;
-                case Disconnected:
+                case Away:
                     game.CurrentHand.Turns.Add(new Turn
                     {
                         Type = TurnType.Void,
@@ -43,8 +45,8 @@ public static class GameTurns
             }
         }
 
-        // correct to the next connected player
-        while (game.CurrentHand.Status is not Connected)
+        // correct to the next available player
+        while (game.CurrentHand.Status is Away)
         {
             game.CurrentHand.Turns.Add(new Turn
             {

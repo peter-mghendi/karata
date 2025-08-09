@@ -46,7 +46,7 @@
     {
         if (string.IsNullOrWhiteSpace(_message))
         {
-            Snackbar.Add("You must enter a message to send.", Severity.Error);
+            Snackbar.Add("You must enter a message to send.", Severity.Error, c => c.SnackbarVariant = Variant.Text);
             return;
         }
 

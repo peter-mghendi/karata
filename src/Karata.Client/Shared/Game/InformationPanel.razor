@@ -24,10 +24,10 @@
         <MudText Typo="Typo.caption">Room Creator</MudText>
         <MudText Typo="Typo.body1" Class="gray-text">@Room.Creator.Username</MudText>
     </MudListItem>
-    <MudListItem Value="@(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.User.Username : "---")">
+    <MudListItem Value="@(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.Player.Username : "---")">
         <MudText Typo="Typo.caption">Current Turn</MudText>
         <MudText Typo="Typo.body1" Class="gray-text">
-            @(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.User.Username : "---")
+            @(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.Player.Username : "---")
         </MudText>
     </MudListItem>
     <MudListItem Value="@Game.Hands.Count.ToString()">
@@ -63,6 +63,6 @@
     private async Task CopyInviteLink()
     {
         await Clipboard.SetTextAsync(Room.Id.ToString());
-        Snackbar.Add("Copied to clipboard.", Severity.Info);   
+        Snackbar.Add("Copied to clipboard.", Severity.Info, c => c.SnackbarVariant = Variant.Text);   
     }
 }

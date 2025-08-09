@@ -62,7 +62,7 @@
 
     private ImmutableList<Card> CurrentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToImmutableList();
 
-    private List<HandData> OtherHands => Game.Hands.Where(h => h.User.Id != Hand.User.Id).ToList();
+    private List<HandData> OtherHands => Game.Hands.Where(h => h.Player.Id != Hand.Player.Id).ToList();
 
     private string RequestText => Game.Request switch
     {

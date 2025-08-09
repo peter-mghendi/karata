@@ -16,8 +16,9 @@ public class Room
 
     public User? NextEligibleAdministrator => Game.Hands
         .Where(hand => hand.Player.Id != Administrator.Id)
-        .Where(hand => hand.Status is Connected)
-        .OrderBy(hand => hand.Id)
+        .Where(hand => hand.Status is Online or Offline)
+        .OrderBy(hand => (int)hand.Status)
+        .ThenBy(hand => hand.Id)
         .FirstOrDefault()?
         .Player;
 

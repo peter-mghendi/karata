@@ -52,7 +52,7 @@ public class RoomController(KarataContext context) : ControllerBase
         if (user is null) return Unauthorized();
 
         var room = new Room { Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow };
-        room.Game.Hands.Add(new Hand { Player = user, Status = HandStatus.Disconnected});
+        room.Game.Hands.Add(new Hand { Player = user, Status = HandStatus.Offline});
 
         if (!string.IsNullOrWhiteSpace(request.Password))
         {

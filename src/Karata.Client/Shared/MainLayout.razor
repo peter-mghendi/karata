@@ -13,26 +13,16 @@
         <MudLink Href="/" Typo="Typo.body1" Color="Color.Default" Class="me-4" Underline="Underline.None">
             Karata
         </MudLink>
-        <AuthorizeView>
-            <MudLink Href="/game/join" Typo="Typo.body2" Class="me-4" Color="Color.Default">
-                Play
-            </MudLink>
-        </AuthorizeView>
-        <MudLink Href="/about" Typo="Typo.body2" Class="me-4" Color="Color.Default">
-            About
-        </MudLink>
-        <MudLink Href="/help" Typo="Typo.body2" Color="Color.Default">
-            Help
+        <MudLink Href="/game/join" Typo="Typo.body2" Class="me-4" Color="Color.Default">
+            Play
         </MudLink>
         <MudSpacer />
         <AuthorizeView>
             <Authorized>
                 <MudLink Href="Identity/Account/Manage" Typo="Typo.body2" Class="me-4">
-                    Hello, @context.User.Identity!.Name
+                    Hi, @context.User.Identity!.Name!
                 </MudLink>
-                <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" ButtonType="ButtonType.Submit" form="logout">
-                    Log out
-                </MudButton>
+                <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Error" ButtonType="ButtonType.Submit" form="logout"/>
                 <form id="logout" method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" class="d-none"></form>
             </Authorized>
             <NotAuthorized>

@@ -13,6 +13,7 @@ using static Karata.Cards.Card.CardFace;
 using static Karata.Shared.Models.CardRequestLevel;
 using static Karata.Shared.Models.TurnType;
 using static Karata.Shared.Models.GameStatus;
+using static Karata.Shared.Models.HandStatus;
 
 namespace Karata.Server.Services;
 
@@ -107,10 +108,10 @@ public class TurnProcessingService(
     {
         if (room.Game.Status is Lobby) throw new GameNotStartedException();
         if (room.Game.Status is Over) throw new GameOverException();
-        if (room.Game.Hands.Count(hand => hand.Status is HandStatus.Connected) < 2) 
+        if (room.Game.Hands.Count(hand => hand.Status is Online or Offline) < 2) 
             throw new InsufficientPlayersException();
 
-        if (room.Game.CurrentHand.Player.Id != CurrentPlayerId) throw new NotYourTurnException();
+        if (room.Game.CurrentHand.Player.Id != CurrentPlayerId) throw new InvalidTurnException();
     }
 
     private async Task DetermineCardRequest(Room room, Turn turn)
