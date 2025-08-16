@@ -1,7 +1,10 @@
+using System.Collections.Immutable;
+
 namespace Karata.Shared.Engine.Exceptions;
 
-public class DrawCardsException : TurnValidationException
+public class DrawCardsException(int index, ImmutableArray<Card> cards) 
+    : TurnValidationException(index, cards, nameof(DrawCardsException), Narration)
 {
-    public override string Message =>
+    public const string Narration =
         "You have pending cards to draw. You must either draw these cards, add to them or block them.";
 }

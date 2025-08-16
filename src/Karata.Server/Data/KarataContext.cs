@@ -119,7 +119,13 @@ public class KarataContext(
             builder.ToJson();
             builder.OwnsMany<Card>(d => d.Cards);
         });
-        
+        modelBuilder.Entity<Turn>()
+            .Property(t => t.Metadata)
+            .HasConversion(
+                metadata => JsonSerializer.Serialize(metadata, options),
+                json => JsonSerializer.Deserialize<TurnMetadata>(json, options) ?? new TurnMetadata()
+            );
+
         // Activity
         modelBuilder.Entity<Activity>().Property(a => a.Type).HasConversion<string>();
         modelBuilder.Entity<Activity>().HasOne(a => a.Actor).WithMany();

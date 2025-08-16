@@ -32,6 +32,6 @@ builder.Services.AddMudServices();
 builder.Services.AddMudExtensions();
 builder.Services.InjectClipboard();
 
-builder.Services.AddSingleton<KarataEngine>();
+builder.Services.AddSingleton<IKarataEngine, TwoPassKarataEngine>();
 
 await builder.Build().RunAsync();

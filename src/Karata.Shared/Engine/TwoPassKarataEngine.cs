@@ -9,23 +9,12 @@ using static Karata.Shared.Models.CardRequestLevel;
 
 namespace Karata.Shared.Engine;
 
-/// <summary>
-/// <see cref="KarataEngine"/> evaluates a turn and generates a <see cref="GameDelta"/> for the turn.
-/// </summary>
-///
-/// <remarks>
-/// <see cref="GameData.Hands"/> might contain bogus cards. This is by design.
-/// Deck and player hands should not be exposed here.
-/// </remarks>
-public class KarataEngine(ILogger<KarataEngine> logger)
+/// This is an implementation of an <see cref="IKarataEngine"/> that performs two steps internally:
+/// 1. A first pass that validates that the sequence of cards proposed is valid in the context of the game.
+/// 2. A second pass that determines the impact of the cards by looking for known patterns in the proposed cards.
+public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataEngine
 {
-    /// <summary>
-    /// Evaluates a turn, returning a <see cref="GameDelta"/> if the turn is valid, and throwing a
-    /// <see cref="TurnValidationException"/> if it is not.
-    /// </summary>
-    /// <param name="game">THe current game state.</param>
-    /// <param name="cards">The proposed cards.</param>
-    /// <returns>A <see cref="GameDelta"/> representing the turn's effect on the game.</returns>
+    /// <inheritdoc />
     [Pure]
     public GameDelta EvaluateTurn(GameData game, ImmutableArray<Card> cards)
     {
@@ -51,7 +40,10 @@ public class KarataEngine(ILogger<KarataEngine> logger)
         var first = cards.First();
 
         // If a card has been requested, that card - or an Ace - must start the turn.
-        if (!RequestMatches(game.Request, first) && first.Face is not Ace) throw new CardRequestedException();
+        if (!IKarataEngine.RequestMatches(game.Request, first) && first.Face is not Ace)
+        {
+            throw new CardRequestedException(0, [first]);
+        }
 
         // If the top card is a "bomb", the next card should counter or block it.
         if (top.IsBomb() && game.Pick > 0 && first.Face is not Ace)
@@ -59,11 +51,11 @@ public class KarataEngine(ILogger<KarataEngine> logger)
             // Joker can only be countered by a joker while 2 and 3 can be countered by 2, 3 and Joker.
             if (top.Face is Joker)
             {
-                if (first.Face is not Joker) throw new DrawCardsException();
+                if (first.Face is not Joker) throw new DrawCardsException(0, [first]);
             }
             else
             {
-                if (!first.IsBomb()) throw new DrawCardsException();
+                if (!first.IsBomb()) throw new DrawCardsException(0, [first]);
             }
         }
 
@@ -85,7 +77,7 @@ public class KarataEngine(ILogger<KarataEngine> logger)
                 // Otherwise, face or suit must match previous card.
                 if (!current.FaceEquals(previous) && !current.SuitEquals(previous))
                 {
-                    throw new InvalidFirstCardException();
+                    throw new InvalidFirstCardException(i - 1, [first]);
                 }
             }
             // Subsequent cards
@@ -98,7 +90,7 @@ public class KarataEngine(ILogger<KarataEngine> logger)
                         // Ace, when not the first card, can only go on top of a question or another ace.
                         if (!previous.IsQuestion() && previous.Face is not Ace)
                         {
-                            throw new SubsequentAceOrJokerException();
+                            throw new SubsequentAceOrJokerException(i - 1, [previous, current]);
                         }
 
                         break;
@@ -108,7 +100,7 @@ public class KarataEngine(ILogger<KarataEngine> logger)
                         // Joker, when not the first card, can only go on top of a question or another joker.
                         if (!previous.IsQuestion() && previous.Face is not Joker)
                         {
-                            throw new SubsequentAceOrJokerException();
+                            throw new SubsequentAceOrJokerException(i - 1,[previous, current]);
                         }
 
                         break;
@@ -120,13 +112,13 @@ public class KarataEngine(ILogger<KarataEngine> logger)
                         {
                             if (!current.FaceEquals(previous) && !current.SuitEquals(previous))
                             {
-                                throw new InvalidAnswerException();
+                                throw new InvalidAnswerException(i - 1,[previous, current]);
                             }
                         }
                         else
                         {
                             // If the previous card is not a question, the current card must be of the same face.
-                            if (!current.FaceEquals(previous)) throw new InvalidCardSequenceException();
+                            if (!current.FaceEquals(previous)) throw new InvalidCardSequenceException(i - 1,[previous, current]);
                         }
 
                         break;
@@ -152,7 +144,7 @@ public class KarataEngine(ILogger<KarataEngine> logger)
         // If there was a request, and this turn is valid by virtue of the first card matching,
         // (i.e. not being an ace unless an Ace was requested), *clear* it immediately:
         // An Ace will still behave like an Ace if it was requested, its value will not be diminished.
-        if (RequestMatches(game.Request, cards.First()))
+        if (IKarataEngine.RequestMatches(game.Request, cards.First()))
         {
             delta = delta with { RemoveRequestLevels = (uint)game.RequestLevel };
         }
@@ -202,11 +194,4 @@ public class KarataEngine(ILogger<KarataEngine> logger)
 
         return delta;
     }
-
-    private static bool RequestMatches(Card? request, Card match) => request switch
-    {
-        null => true,
-        { Face: None } => match.SuitEquals(request),
-        { Face: not None } => match.SuitEquals(request) && match.FaceEquals(request),
-    };
 }

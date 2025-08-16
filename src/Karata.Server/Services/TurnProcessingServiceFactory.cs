@@ -12,7 +12,7 @@ public class TurnProcessingServiceFactory(
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILoggerFactory loggers,
     KarataContext context,
-    KarataEngine engine,
+    IKarataEngine engine,
     UserManager<User> users
 )
 {
