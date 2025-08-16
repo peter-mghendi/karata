@@ -40,7 +40,10 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
         var first = cards.First();
 
         // If a card has been requested, that card - or an Ace - must start the turn.
-        if (!IKarataEngine.RequestMatches(game.Request, first) && first.Face is not Ace) throw new CardRequestedException();
+        if (!IKarataEngine.RequestMatches(game.Request, first) && first.Face is not Ace)
+        {
+            throw new CardRequestedException(0, [first]);
+        }
 
         // If the top card is a "bomb", the next card should counter or block it.
         if (top.IsBomb() && game.Pick > 0 && first.Face is not Ace)
@@ -48,11 +51,11 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
             // Joker can only be countered by a joker while 2 and 3 can be countered by 2, 3 and Joker.
             if (top.Face is Joker)
             {
-                if (first.Face is not Joker) throw new DrawCardsException();
+                if (first.Face is not Joker) throw new DrawCardsException(0, [first]);
             }
             else
             {
-                if (!first.IsBomb()) throw new DrawCardsException();
+                if (!first.IsBomb()) throw new DrawCardsException(0, [first]);
             }
         }
 
@@ -74,7 +77,7 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
                 // Otherwise, face or suit must match previous card.
                 if (!current.FaceEquals(previous) && !current.SuitEquals(previous))
                 {
-                    throw new InvalidFirstCardException();
+                    throw new InvalidFirstCardException(i - 1, [first]);
                 }
             }
             // Subsequent cards
@@ -87,7 +90,7 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
                         // Ace, when not the first card, can only go on top of a question or another ace.
                         if (!previous.IsQuestion() && previous.Face is not Ace)
                         {
-                            throw new SubsequentAceOrJokerException();
+                            throw new SubsequentAceOrJokerException(i - 1, [previous, current]);
                         }
 
                         break;
@@ -97,7 +100,7 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
                         // Joker, when not the first card, can only go on top of a question or another joker.
                         if (!previous.IsQuestion() && previous.Face is not Joker)
                         {
-                            throw new SubsequentAceOrJokerException();
+                            throw new SubsequentAceOrJokerException(i - 1,[previous, current]);
                         }
 
                         break;
@@ -109,13 +112,13 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
                         {
                             if (!current.FaceEquals(previous) && !current.SuitEquals(previous))
                             {
-                                throw new InvalidAnswerException();
+                                throw new InvalidAnswerException(i - 1,[previous, current]);
                             }
                         }
                         else
                         {
                             // If the previous card is not a question, the current card must be of the same face.
-                            if (!current.FaceEquals(previous)) throw new InvalidCardSequenceException();
+                            if (!current.FaceEquals(previous)) throw new InvalidCardSequenceException(i - 1,[previous, current]);
                         }
 
                         break;

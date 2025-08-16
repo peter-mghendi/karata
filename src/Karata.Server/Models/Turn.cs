@@ -12,6 +12,7 @@ public class Turn
     public GameDelta? Delta { get; init; }
     public required TurnType Type { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
+    public TurnMetadata Metadata { get; init; } = new();
     public required Hand Hand { get; init; }
     public int HandId { get; init; }
     
