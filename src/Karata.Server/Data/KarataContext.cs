@@ -129,7 +129,12 @@ public class KarataContext(
         // Activity
         modelBuilder.Entity<Activity>().Property(a => a.Type).HasConversion<string>();
         modelBuilder.Entity<Activity>().HasOne(a => a.Actor).WithMany();
-        modelBuilder.Entity<Activity>().OwnsOne(a => a.Metadata, builder => builder.ToJson());
+        modelBuilder.Entity<Activity>()
+            .Property(t => t.Metadata)
+            .HasConversion(
+                metadata => JsonSerializer.Serialize(metadata, options),
+                json => JsonSerializer.Deserialize<Dictionary<string, object>>(json, options) ?? new()
+            );
         modelBuilder.Entity<Activity>().Navigation(a => a.Actor).AutoInclude();
     }
 }
