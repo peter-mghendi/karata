@@ -5,7 +5,6 @@ using Karata.Server.Services;
 using Karata.Shared.Exceptions;
 using Karata.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -18,18 +17,17 @@ public class PlayerHub(
     ILogger<PlayerHub> logger,
     KarataContext context,
     PresenceService presence,
-    RoomMembershipServiceFactory membership,
-    UserManager<User> users
+    RoomMembershipServiceFactory membership
 ) : Hub<IPlayerClient>
 {
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         await base.OnDisconnectedAsync(exception);
 
-        if (await users.FindByIdAsync(Context.UserIdentifier!) is not { } user)
+        if (await context.Users.FindAsync(Context.UserIdentifier!) is not { } user)
             throw new Exception("User not found.");
 
-        logger.LogDebug(exception, "User {User} disconnected.", user.UserName);
+        logger.LogDebug(exception, "User {User} disconnected.", user.Username);
 
         if (!presence.TryGetPresence(user.Id, out var rooms) || rooms is null) return;
 
@@ -39,7 +37,7 @@ public class PlayerHub(
 
     public async Task SendChat(string roomId, string text)
     {
-        if (await users.FindByIdAsync(Context.UserIdentifier!) is not { } user)
+        if (await context.Users.FindAsync(Context.UserIdentifier!) is not { } user)
             throw new Exception("User not found.");
 
         if (await context.Rooms.FindAsync(Parse(roomId)) is not { } room)

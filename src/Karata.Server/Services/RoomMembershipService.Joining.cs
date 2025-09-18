@@ -10,7 +10,7 @@ public partial class RoomMembershipService
 {
     public async Task JoinAsync(string connection)
     {
-        var player = (await users.FindByIdAsync(CurrentPlayerId))!;
+        var player = (await context.Users.FindAsync(CurrentPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
 
         bool authorized;

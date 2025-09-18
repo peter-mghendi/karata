@@ -75,7 +75,7 @@ public class GameStartService(
             var dealt = deck.DealMany(DealCount);
             var turn = new Turn { Picked = dealt, Type = TurnType.Deal, Hand = hand, CreatedAt = DateTimeOffset.UtcNow };
 
-            logger.LogDebug("Dealing {Count} cards to {User}. Cards: {Cards}.", DealCount, hand.Player.UserName, string.Join(", ", dealt));
+            logger.LogDebug("Dealing {Count} cards to {User}. Cards: {Cards}.", DealCount, hand.Player.Username, string.Join(", ", dealt));
             
             hand.Turns.Add(turn);
             hand.Cards.AddRange(dealt);

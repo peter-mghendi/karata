@@ -12,6 +12,5 @@ public partial class RoomMembershipService (
     IPasswordService passwords,
     KarataContext context,
     PresenceService presence,
-    UserManager<User> users,
     Guid room,
     string player) : RoomAwareService(players, spectators, room, player);

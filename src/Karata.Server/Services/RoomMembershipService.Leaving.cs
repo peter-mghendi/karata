@@ -8,7 +8,7 @@ public partial class RoomMembershipService
     public async Task LeaveAsync(string connection, HandStatus intent)
     {
         var room = (await context.Rooms.FindAsync(RoomId))!;
-        var player = (await users.FindByIdAsync(CurrentPlayerId))!;
+        var player = (await context.Users.FindAsync(CurrentPlayerId))!;
         var hand = room.Game.Hands.Single(h => h.Player.Id == player.Id);
 
         switch (room.Game.Status)

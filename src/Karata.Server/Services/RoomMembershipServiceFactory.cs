@@ -11,10 +11,9 @@ public class RoomMembershipServiceFactory(
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     IPasswordService passwords,
     KarataContext context,
-    PresenceService presence,
-    UserManager<User> users
+    PresenceService presence
 )
 {
     public RoomMembershipService Create(Guid room, string player) => 
-        new(players, spectators, passwords, context, presence, users, room, player);
+        new(players, spectators, passwords, context, presence, room, player);
 }

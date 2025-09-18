@@ -7,10 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Karata.Server.Data;
 
-public class KarataContext(
-    DbContextOptions<KarataContext> options,
-    IOptions<OperationalStoreOptions> operationalStoreOptions
-) : ApiAuthorizationDbContext<User>(options, operationalStoreOptions)
+public class KarataContext(DbContextOptions<KarataContext> options) : DbContext(options)
 {
     public DbSet<Activity> Activities => Set<Activity>();
     public DbSet<Chat> Chats => Set<Chat>();
@@ -18,6 +15,7 @@ public class KarataContext(
     public DbSet<Hand> Hands => Set<Hand>();
     public DbSet<Room> Rooms => Set<Room>();
     public DbSet<Turn> Turns => Set<Turn>();
+    public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

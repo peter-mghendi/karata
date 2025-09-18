@@ -19,7 +19,7 @@ public class HandTest
         var hand = new Hand
         {
             Status = HandStatus.Online,
-            Player = new User(),
+            Player = new User { Id = Guid.CreateVersion7().ToString(), Username = Guid.NewGuid().ToString() },
             Cards = [..Enumerable.Range(0, count).Select(_ => Queen.Of(Hearts))]
         };
         

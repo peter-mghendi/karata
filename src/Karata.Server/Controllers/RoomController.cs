@@ -43,12 +43,11 @@ public class RoomController(KarataContext context) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<RoomData>> Post(
         [FromServices] IPasswordService passwordService,
-        [FromServices] UserManager<User> userManager,
         [FromBody] RoomRequest request
     )
     {
         var userId = User.Claims.First(claim => claim.Type == ClaimTypes.NameIdentifier).Value;
-        var user = await userManager.FindByIdAsync(userId);
+        var user = await context.Users.FindAsync(userId);
         if (user is null) return Unauthorized();
 
         var room = new Room { Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow };

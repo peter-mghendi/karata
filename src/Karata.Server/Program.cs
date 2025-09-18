@@ -2,13 +2,10 @@ using Karata.Server.Data;
 using Karata.Server.Hubs;
 using Karata.Server.Services;
 using Karata.Shared.Engine;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,7 +14,7 @@ builder.Services.AddDbContext<KarataContext>(options =>
 {
     var uri = new Uri(builder.Configuration["DATABASE_URL"] ?? throw new Exception("DATABASE_URL is not set."));
     var credentials = uri.UserInfo.Split(':');
-
+    
     options.UseNpgsql(new NpgsqlConnectionStringBuilder
     {
         Host = uri.Host,
@@ -36,16 +33,12 @@ builder.Services.AddDbContext<KarataContext>(options =>
 });
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services
-    .AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<KarataContext>();
-builder.Services.AddIdentityServer()
-    .AddApiAuthorization<User, KarataContext>();
-builder.Services.AddAuthentication()
-    .AddIdentityServerJwt();
-builder.Services.TryAddEnumerable(
-    ServiceDescriptor.Singleton<IPostConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>()
-);
+// builder.Services
+//     .AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true)
+//     .AddEntityFrameworkStores<KarataContext>();
+// builder.Services.AddIdentityServer()
+//     .AddApiAuthorization<User, KarataContext>();
+builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
 
 builder.Services.AddHealthChecks();
 builder.Services.AddSignalR();
@@ -103,7 +96,7 @@ app.UseRouting();
 
 app.MapHealthChecks("/health");
 
-app.UseIdentityServer();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();

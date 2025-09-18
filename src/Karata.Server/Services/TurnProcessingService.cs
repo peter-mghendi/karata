@@ -26,7 +26,6 @@ public class TurnProcessingService(
     ILogger<TurnProcessingService> logger,
     KarataContext context,
     IKarataEngine engine,
-    UserManager<User> users,
     Guid room,
     string player,
     string connection
@@ -43,7 +42,7 @@ public class TurnProcessingService(
 
     public async Task ExecuteAsync(List<Card> cards)
     {
-        var player = (await users.FindByIdAsync(CurrentPlayerId))!;
+        var player = (await context.Users.FindAsync(CurrentPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
 
         try
@@ -129,7 +128,7 @@ public class TurnProcessingService(
                 CompletedAt = exception.Result.CompletedAt,
                 Winner = exception.Result.Winner is null
                     ? null
-                    : await users.FindByIdAsync(exception.Result.Winner!.Id)
+                    : await context.Users.FindAsync(exception.Result.Winner!.Id)
             };
 
             (room.Game.Status, room.Game.Result) = (Over, result);
