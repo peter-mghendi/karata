@@ -19,8 +19,6 @@ public partial class RoomMembershipService
 
         ValidateJoiningGameState(room, player);
         presence.AddPresence(player.Id, room.Id.ToString());
-
-        // var cards = BuildCardMap(room, player);
         
         switch (room.Game.Status)
         {

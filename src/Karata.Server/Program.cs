@@ -3,6 +3,7 @@ using Karata.Server.Hubs;
 using Karata.Server.Services;
 using Karata.Shared.Engine;
 using Keycloak.AuthServices.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
@@ -32,13 +33,20 @@ builder.Services.AddDbContext<KarataContext>(options =>
     }
 });
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-// builder.Services
-//     .AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true)
-//     .AddEntityFrameworkStores<KarataContext>();
-// builder.Services.AddIdentityServer()
-//     .AddApiAuthorization<User, KarataContext>();
 builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
+builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, opts =>
+{
+    var @base = opts.Events.OnMessageReceived;
+    opts.Events.OnMessageReceived = async ctx =>
+    {
+        await @base(ctx);
+
+        if (!ctx.HttpContext.Request.Path.StartsWithSegments("/hubs/game")) return;
+        if (ctx.Request.Query["access_token"] is not [_, ..] token) return;
+        
+        ctx.Token = token;
+    };
+});
 
 builder.Services.AddHealthChecks();
 builder.Services.AddSignalR();

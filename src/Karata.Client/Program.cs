@@ -26,7 +26,20 @@ builder.Services.AddKeyedScoped<HttpClient>(
     (sp, _) => sp.GetRequiredService<IHttpClientFactory>().CreateClient("Karata.Server.Public")
 );
 
-builder.Services.AddApiAuthorization();
+// TODO: Config
+builder.Services.AddOidcAuthentication(options =>
+{
+    options.ProviderOptions.MetadataUrl = "http://localhost:8080/realms/karata/.well-known/openid-configuration";
+    options.ProviderOptions.Authority = "http://localhost:8080/realms/karata";
+    options.ProviderOptions.ClientId = "karata-web";
+    options.ProviderOptions.ResponseType = "id_token token";
+    //options.ProviderOptions.DefaultScopes.Add("Audience");
+
+    options.UserOptions.NameClaim = "preferred_username";
+    options.UserOptions.RoleClaim = "roles";
+    options.UserOptions.ScopeClaim = "scope";
+});
+
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddMudServices();
 builder.Services.AddMudExtensions();
