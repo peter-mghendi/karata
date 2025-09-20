@@ -1,5 +1,6 @@
 using Karata.Server.Data;
 using Karata.Server.Hubs;
+using Karata.Server.Infrastructure.Security;
 using Karata.Server.Services;
 using Karata.Shared.Engine;
 using Keycloak.AuthServices.Authentication;
@@ -34,6 +35,11 @@ builder.Services.AddDbContext<KarataContext>(options =>
 });
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
+builder.Services.Configure<UserProvisioningOptions>(o =>
+{
+    o.AutoProvisionEnabled = true;
+    // o.NewUserFactory = User.FromClaims
+});
 builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, opts =>
 {
     var @base = opts.Events.OnMessageReceived;
@@ -48,11 +54,13 @@ builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.Authenticatio
     };
 });
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddHealthChecks();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IKarataEngine, TwoPassKarataEngine>();
 builder.Services.AddSingleton<PresenceService>();
 builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
+builder.Services.AddTransient<CurrentUserService>();
 builder.Services.AddTransient<GameStartServiceFactory>();
 builder.Services.AddTransient<RoomMembershipServiceFactory>();
 builder.Services.AddTransient<TurnProcessingServiceFactory>();

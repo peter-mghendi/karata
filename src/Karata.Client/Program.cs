@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Karata.Client;
+using Karata.Client.Infrastructure.Security;
 using Karata.Shared.Engine;
 using MudBlazor.Services;
 using MudExtensions.Services;
@@ -46,5 +47,6 @@ builder.Services.AddMudExtensions();
 builder.Services.InjectClipboard();
 
 builder.Services.AddSingleton<IKarataEngine, TwoPassKarataEngine>();
+builder.Services.AddScoped<AuthenticationHelper>();
 
 await builder.Build().RunAsync();

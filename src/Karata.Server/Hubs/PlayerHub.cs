@@ -1,5 +1,6 @@
 using Karata.Server.Data;
 using Karata.Server.Hubs.Clients;
+using Karata.Server.Infrastructure.Security;
 using Karata.Server.Support;
 using Karata.Server.Services;
 using Karata.Shared.Exceptions;
@@ -14,6 +15,7 @@ namespace Karata.Server.Hubs;
 
 [Authorize]
 public class PlayerHub(
+    CurrentUserService currentUser,
     ILogger<PlayerHub> logger,
     KarataContext context,
     PresenceService presence,
@@ -24,10 +26,8 @@ public class PlayerHub(
     {
         await base.OnDisconnectedAsync(exception);
 
-        if (await context.Users.FindAsync(Context.UserIdentifier!) is not { } user)
-            throw new Exception("User not found.");
-
-        logger.LogDebug(exception, "User {User} disconnected.", user.Username);
+        var user = await currentUser.RequireAsync();
+        logger.LogDebug(exception, "User {User} disconnected.", user.Id);
 
         if (!presence.TryGetPresence(user.Id, out var rooms) || rooms is null) return;
 
@@ -37,9 +37,7 @@ public class PlayerHub(
 
     public async Task SendChat(string roomId, string text)
     {
-        if (await context.Users.FindAsync(Context.UserIdentifier!) is not { } user)
-            throw new Exception("User not found.");
-
+        var user = await currentUser.RequireAsync();
         if (await context.Rooms.FindAsync(Parse(roomId)) is not { } room)
             throw new Exception("Room not found.");
 
@@ -52,11 +50,11 @@ public class PlayerHub(
 
     public async Task JoinRoom([FromServices] RoomMembershipServiceFactory factory, string roomId)
     {
-        logger.LogDebug("User {User} is joining room {Room}.", Context.UserIdentifier, roomId);
-
         try
         {
-            await factory.Create(Parse(roomId), Context.UserIdentifier!).JoinAsync(Context.ConnectionId);
+            var user = await currentUser.RequireAsync();
+            logger.LogDebug("User {User} is joining room {Room}.", user.Id, roomId);
+            await factory.Create(Parse(roomId), user.Id).JoinAsync(Context.ConnectionId);
         }
         catch (KarataException exception)
         {
@@ -71,8 +69,9 @@ public class PlayerHub(
     {
         try
         {
-            logger.LogDebug("User {User} is starting the game in room {Room}.", Context.UserIdentifier, roomId);
-            await factory.Create(Parse(roomId), Context.UserIdentifier!).ExecuteAsync();
+            var user = await currentUser.RequireAsync();
+            logger.LogDebug("User {User} is starting the game in room {Room}.", user.Id, roomId);
+            await factory.Create(Parse(roomId), user.Id).ExecuteAsync();
         }
         catch (KarataException exception)
         {
@@ -84,9 +83,9 @@ public class PlayerHub(
     {
         try
         {
-            logger.LogDebug("User {User} is performing a turn in room {Room}. Cards: {Cards}", Context.UserIdentifier,
-                roomId, string.Join(", ", cards));
-            await factory.Create(Parse(roomId), Context.UserIdentifier!, Context.ConnectionId).ExecuteAsync(cards);
+            var user = await currentUser.RequireAsync();
+            logger.LogDebug("User {User} is performing a turn in room {Room}. Cards: {Cards}", user.Id, roomId, string.Join(", ", cards));
+            await factory.Create(Parse(roomId), user.Id, Context.ConnectionId).ExecuteAsync(cards);
         }
         catch (KarataException exception)
         {
@@ -99,9 +98,9 @@ public class PlayerHub(
     {
         try
         {
-            logger.LogDebug("User {User} is voidinging a turn in room {Room}. Player: {Player}", Context.UserIdentifier,
-                roomId, voideeId);
-            await factory.Create(Parse(roomId), Context.UserIdentifier!).ExecuteAsync(voideeId);
+            var user = await currentUser.RequireAsync();
+            logger.LogDebug("User {User} is voiding a turn in room {Room}. Player: {Player}", user.Id, roomId, voideeId);
+            await factory.Create(Parse(roomId), user.Id).ExecuteAsync(voideeId);
         }
         catch (KarataException exception)
         {
@@ -113,9 +112,9 @@ public class PlayerHub(
     {
         try
         {
-            logger.LogDebug("User {User} is setting player - {Player} as away in room {Room}.", Context.UserIdentifier,
-                voideeId, roomId);
-            await factory.Create(Parse(roomId), Context.UserIdentifier!).ExecuteAsync(voideeId);
+            var user = await currentUser.RequireAsync();
+            logger.LogDebug("User {User} is setting player - {Player} as away in room {Room}.", user.Id, voideeId, roomId);
+            await factory.Create(Parse(roomId), user.Id).ExecuteAsync(voideeId);
         }
         catch (KarataException exception)
         {
@@ -127,8 +126,9 @@ public class PlayerHub(
     {
         try
         {
-            logger.LogDebug("User {User} is leaving room {Room}.", Context.UserIdentifier, roomId);
-            await factory.Create(roomId, Context.UserIdentifier!).LeaveAsync(Context.ConnectionId, intent);
+            var user = await currentUser.RequireAsync();
+            logger.LogDebug("User {User} is leaving room {Room}.", user.Id, roomId);
+            await factory.Create(roomId, Context.UserIdentifier!).LeaveAsync(user.Id, intent);
         }
         catch (KarataException exception)
         {

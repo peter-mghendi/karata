@@ -1,4 +1,5 @@
 @page "/game/join"
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 @attribute [Authorize]
 
@@ -87,7 +88,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _rooms = await Http.GetFromJsonAsync<List<RoomData>>($"api/rooms");
+        try
+        {
+            _rooms = await Http.GetFromJsonAsync<List<RoomData>>($"api/rooms");
+        }
+        catch (AccessTokenNotAvailableException)
+        {
+            Console.WriteLine("Redirecting you to login");
+        }
     }
 
     private async Task CreateRoom()
