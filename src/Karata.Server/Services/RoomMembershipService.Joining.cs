@@ -38,8 +38,8 @@ public partial class RoomMembershipService
                 await AddToRoom(connection);
                 await Me.AddToRoom(EnrichRoomDataForUser(room, player));
                 await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-                    .AddHandToRoom(hand.Player.ToData(), hand.Status);
-                await RoomSpectators.AddHandToRoom(hand.Player.ToData(), hand.Status);
+                    .AddHandToRoom(hand.Id, hand.Player.ToData(), hand.Status);
+                await RoomSpectators.AddHandToRoom(hand.Id, hand.Player.ToData(), hand.Status);
                 break;
             case GameStatus.Ongoing:
                 var rejoined = room.Game.Hands.Single(h => h.Player.Id == player.Id);

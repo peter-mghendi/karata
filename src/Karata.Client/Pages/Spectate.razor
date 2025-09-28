@@ -98,9 +98,9 @@
             .AddJsonProtocol()
             .Build();
 
-        _hub.On<UserData, HandStatus>("AddHandToRoom", (user, status) =>
+        _hub.On<long, UserData, HandStatus>("AddHandToRoom", (id, user, status) =>
         {
-            _store!.Mutate(new RoomState.AddHandToRoom(user, status));
+            _store!.Mutate(new RoomState.AddHandToRoom(id, user, status));
             Snackbar.Add($"{user.Username} has joined the room", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
 

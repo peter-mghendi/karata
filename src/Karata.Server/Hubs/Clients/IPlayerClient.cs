@@ -5,7 +5,7 @@ namespace Karata.Server.Hubs.Clients;
 public interface IPlayerClient
 {
     // Adds another user to the current room
-    Task AddHandToRoom(UserData user, HandStatus status);
+    Task AddHandToRoom(long id, UserData user, HandStatus status);
     
     // Adds the current user to a room
     Task AddToRoom(RoomData room);

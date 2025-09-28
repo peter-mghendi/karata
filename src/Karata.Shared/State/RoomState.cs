@@ -9,11 +9,11 @@ namespace Karata.Shared.State;
 public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> interceptors)
     : Store<RoomData>(data, interceptors)
 {
-    public record AddHandToRoom(UserData User, HandStatus Status) : StateAction<RoomData>
+    public record AddHandToRoom(long Id, UserData User, HandStatus Status) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state)
         {
-            var hand = new HandData { Player = User, Cards = [], Status = Status };
+            var hand = new HandData { Id = Id, Player = User, Cards = [], Status = Status };
             return state with { Game = state.Game with { Hands = [..state.Game.Hands, hand] } };
         }
     }

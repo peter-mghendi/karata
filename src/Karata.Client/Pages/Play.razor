@@ -20,19 +20,19 @@
 @inject NavigationManager Navigator
 
 <HubConnectionGuard Hub="_hub">
-    <MudLoading Loading="@(_store is null)" Text="Please wait..." Class="mud-height-full pa-0">
+    <MudLoading Loading="@(_room is null)" Text="Please wait..." Class="mud-height-full pa-0">
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mud-height-full pa-0">
-            @if (_store is not null)
+            @if (_room is not null)
             {
                 <MudGrid Class="mud-height-full px-4 pt-4">
                     <MudItem xs="12" md="8" xl="9" xxl="10">
                         @* TODO: What is this 88vh? *@
                         <MudCard Elevation="0" Style="background-color: transparent; height: 88vh">
-                            @if (_store!.State.Game.Status is GameStatus.Ongoing)
+                            @if (_room!.State.Game.Status is GameStatus.Ongoing)
                             {
                                 if (_table)
                                 {
-                                    <CardTableGameInterface Game="_store.State.Game"
+                                    <CardTableGameInterface Game="_room.State.Game"
                                                             Hand="MyHand"
                                                             Turn="_turn.State"
                                                             OnAddCardToTurn="info => _turn.Mutate(new TurnState.Insert(info))"
@@ -41,7 +41,7 @@
                                 }
                                 else
                                 {
-                                    <CardListGameInterface Game="_store.State.Game"
+                                    <CardListGameInterface Game="_room.State.Game"
                                                            Hand="MyHand"
                                                            Turn="_turn.State"
                                                            OnAddCardToTurn="info => _turn.Mutate(new TurnState.Insert(info))"
@@ -57,8 +57,8 @@
                                     </MudText>
                                     <MudText Align="Align.Center" Typo="Typo.h3" Class="mb-4">
                                     <span
-                                        style="@(_store.State.Game.Hands.Count is < 2 or > 4 ? "color: var(--mud-palette-error)" : "color: var(--mud-palette-success)")">
-                                        @_store.State.Game.Hands.Count    
+                                        style="@(_room.State.Game.Hands.Count is < 2 or > 4 ? "color: var(--mud-palette-error)" : "color: var(--mud-palette-success)")">
+                                        @_room.State.Game.Hands.Count    
                                     </span>
                                         of 4
                                     </MudText>
@@ -66,7 +66,7 @@
                                         Room ID
                                     </MudText>
                                     <MudText Align="Align.Center" Typo="Typo.body1" Class="mb-2">
-                                        @_store.State.Id
+                                        @_room.State.Id
                                         <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.ContentCopy"
                                                        Color="Color.Primary" OnClick="CopyRoomId"/>
                                     </MudText>
@@ -90,7 +90,7 @@
                     <MudItem Class="mud-height-full overflow-y-scroll" xs="12" md="4" xl="3" xxl="2">
                         <MudPaper Elevation="0" Class="mb-4">
                             <MudToolBar>
-                                @if (_store!.State.Game.Status is GameStatus.Ongoing)
+                                @if (_room!.State.Game.Status is GameStatus.Ongoing)
                                 {
                                     <MudTooltip Text="Pick card(s)">
                                         <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleUp"
@@ -123,7 +123,7 @@
                             <div class="mb-2">
                                 <MudSwitch @bind-Value="_table" Color="Color.Primary"
                                            Label="Table interface (Experimental)"
-                                           Disabled="@(_store!.State.Game.Status is not GameStatus.Ongoing)"/>
+                                           Disabled="@(_room!.State.Game.Status is not GameStatus.Ongoing)"/>
                             </div>
                             <MudText Typo="Typo.caption" Class="text-gray">
                                 The table interface is still under development and, as such, may contain bugs.
@@ -134,27 +134,27 @@
                             <div class="mb-2">
                                 <MudSwitch @bind-Value="_learner" Color="Color.Primary"
                                            Label="Learner mode (Experimental)"
-                                           Disabled="@(_store!.State.Game.Status is not GameStatus.Ongoing)"/>
+                                           Disabled="@(_room!.State.Game.Status is not GameStatus.Ongoing)"/>
                             </div>
                             <MudText Typo="Typo.caption" Class="text-gray">Shows hints.</MudText>
                         </MudPaper>
 
                         <MudExpansionPanels Outlined="false" Elevation="0" Class="mb-4">
-                            @if (_learner && _store!.State.Game.Status is GameStatus.Ongoing)
+                            @if (_learner && _room!.State.Game.Status is GameStatus.Ongoing)
                             {
                                 <MudExpansionPanel Text="Learner mode">
-                                    <TurnEffects Game="_store!.State.Game" Cards="@( [.._turn.State])"/>
+                                    <TurnEffects Game="_room!.State.Game" Cards="@( [.._turn.State])"/>
                                 </MudExpansionPanel>
                             }
                             <MudExpansionPanel Text="Information">
-                                <InformationPanel Room="_store!.State"/>
+                                <InformationPanel Room="_room!.State"/>
                             </MudExpansionPanel>
                             <MudExpansionPanel Text="Players">
-                                <PlayersPanel Me="MyHand.Player" Room="_store.State" Controls="IsAdministrator" 
+                                <PlayersPanel Me="MyHand.Player" Room="_room.State" Controls="IsAdministrator" 
                                               OnSetAway="SetAway" OnVoidTurn="VoidTurn" />
                             </MudExpansionPanel>
                             <MudExpansionPanel Text="Chat" MaxHeight="480" Class="overflow-y-auto">
-                                <ChatPanel Room="_store!.State" Me="MyHand.Player" OnSend="Send"/>
+                                <ChatPanel Room="_room!.State" Me="MyHand.Player" OnSend="Send"/>
                             </MudExpansionPanel>
                         </MudExpansionPanels>
                     </MudItem>
@@ -173,12 +173,12 @@
     private bool _learner;
     private bool _table;
     private HubConnection? _hub;
-    private RoomState? _store;
+    private RoomState? _room;
     private TurnState _turn = new([], []);
     private string? _username;
 
-    private HandData MyHand => _store!.State.Game.Hands.Single(h => h.Player.Username == _username);
-    private bool IsAdministrator => MyHand.Player == _store?.State.Administrator;
+    private HandData MyHand => _room!.State.Game.Hands.Single(h => h.Player.Username == _username);
+    private bool IsAdministrator => MyHand.Player == _room?.State.Administrator;
 
     private void OnStoreChanged<T>(T data) where T : class => StateHasChanged();
 
@@ -201,15 +201,15 @@
             .AddJsonProtocol()
             .Build();
 
-        _hub.On<UserData, HandStatus>("AddHandToRoom", (user, status) =>
+        _hub.On<long, UserData, HandStatus>("AddHandToRoom", (id, user, status) =>
         {
-            _store!.Mutate(new RoomState.AddHandToRoom(user, status));
+            _room!.Mutate(new RoomState.AddHandToRoom(id, user, status));
             Snackbar.Add($"{user.Username} has joined the room", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
 
         _hub.On<RoomData>("AddToRoom", room =>
         {
-            _store = new RoomState(room, [
+            _room = new RoomState(room, [
                 new LoggingInterceptor<RoomData>(LoggerFactory),
                 new TimingInterceptor<RoomData>(LoggerFactory)
             ]);
@@ -218,7 +218,7 @@
                 new TimingInterceptor<ImmutableList<Card>>(LoggerFactory)
             ]);
 
-            _store.Changes
+            _room.Changes
                 .Merge<object>(_turn.Changes)
                 .Throttle(TimeSpan.FromMilliseconds(500))
                 .Subscribe(OnStoreChanged);
@@ -229,16 +229,16 @@
         _hub.On("EndGame", async () =>
         {
             await _hub.StopAsync();
-            Navigator.NavigateTo($"/game/{_store!.State.Id.ToString()}/over");
+            Navigator.NavigateTo($"/game/{_room!.State.Id.ToString()}/over");
         });
 
-        _hub.On<UserData, int>("MoveCardCountFromDeckToHand", (user, num) => _store!.Mutate(new RoomState.MoveCardCountFromDeckToHand(user, num)));
+        _hub.On<UserData, int>("MoveCardCountFromDeckToHand", (user, num) => _room!.Mutate(new RoomState.MoveCardCountFromDeckToHand(user, num)));
 
-        _hub.On<List<Card>>("MoveCardsFromDeckToHand", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToHand(MyHand.Player, cards)));
+        _hub.On<List<Card>>("MoveCardsFromDeckToHand", cards => _room!.Mutate(new RoomState.MoveCardsFromDeckToHand(MyHand.Player, cards)));
 
-        _hub.On<List<Card>>("MoveCardsFromDeckToPile", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToPile(cards)));
+        _hub.On<List<Card>>("MoveCardsFromDeckToPile", cards => _room!.Mutate(new RoomState.MoveCardsFromDeckToPile(cards)));
 
-        _hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (user, cards) => _store!.Mutate(new RoomState.MoveCardsFromHandToPile(user, cards, MyHand.Player == user)));
+        _hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (user, cards) => _room!.Mutate(new RoomState.MoveCardsFromHandToPile(user, cards, MyHand.Player == user)));
 
         _hub.On("NotifyTurnProcessed", () =>
         {
@@ -283,7 +283,7 @@
 
         _hub.On<ChatData>("ReceiveChat", message =>
         {
-            _store!.Mutate(new RoomState.ReceiveChat(message));
+            _room!.Mutate(new RoomState.ReceiveChat(message));
 
             if (message.Sender.Username != _username)
             {
@@ -313,13 +313,13 @@
             Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
         });
 
-        _hub.On("ReclaimPile", () => _store!.Mutate(new RoomState.ReclaimPile()));
+        _hub.On("ReclaimPile", () => _room!.Mutate(new RoomState.ReclaimPile()));
 
         _hub.On("RemoveFromRoom", async () =>
         {
-            var uri = $"/game/{_store!.State.Id}";
+            var uri = $"/game/{_room!.State.Id}";
 
-            _store!.Dispose();
+            _room!.Dispose();
             _turn.Dispose();
 
             StateHasChanged();
@@ -330,33 +330,33 @@
 
         _hub.On<UserData>("RemoveHandFromRoom", user =>
         {
-            _store!.Mutate(new RoomState.RemoveHandFromRoom(user));
+            _room!.Mutate(new RoomState.RemoveHandFromRoom(user));
             Snackbar.Add($"{user.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
 
-        _hub.On<Card>("SetCurrentRequest", request => _store!.Mutate(new RoomState.SetCurrentRequest(request)));
+        _hub.On<Card>("SetCurrentRequest", request => _room!.Mutate(new RoomState.SetCurrentRequest(request)));
 
-        _hub.On<UserData>("UpdateAdministrator", administrator => _store!.Mutate(new RoomState.UpdateAdministrator(administrator)));
+        _hub.On<UserData>("UpdateAdministrator", administrator => _room!.Mutate(new RoomState.UpdateAdministrator(administrator)));
 
         _hub.On<GameStatus>("UpdateGameStatus", status =>
         {
-            _store!.Mutate(new RoomState.UpdateGameStatus(status));
+            _room!.Mutate(new RoomState.UpdateGameStatus(status));
             Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
 
         _hub.On<UserData, HandStatus>("UpdateHandStatus", (user, status) =>
         {
-            _store!.Mutate(new RoomState.UpdateHandStatus(user, status));
+            _room!.Mutate(new RoomState.UpdateHandStatus(user, status));
             Snackbar.Add($"{user.Username} is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
 
-        _hub.On<uint>("UpdatePick", num => _store!.Mutate(new RoomState.UpdatePick(num)));
+        _hub.On<uint>("UpdatePick", num => _room!.Mutate(new RoomState.UpdatePick(num)));
 
         _hub.On<int>("UpdateTurn", turn =>
         {
-            _store!.Mutate(new RoomState.UpdateTurn(turn));
+            _room!.Mutate(new RoomState.UpdateTurn(turn));
 
-            var current = _store!.State.Game.CurrentHand.Player.Username;
+            var current = _room!.State.Game.CurrentHand.Player.Username;
             var possessive = current == _username ? "your" : $"{current}'s";
             Snackbar.Add($"It is now {possessive} turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         });
@@ -365,21 +365,21 @@
         await _hub.SendAsync("JoinRoom", Id);
     }
 
-    async Task LeaveRoom() => await _hub!.SendAsync("LeaveRoom", _store!.State.Id);
+    async Task LeaveRoom() => await _hub!.SendAsync("LeaveRoom", _room!.State.Id);
 
-    async Task StartGame() => await _hub!.SendAsync("StartGame", _store!.State.Id);
+    async Task StartGame() => await _hub!.SendAsync("StartGame", _room!.State.Id);
 
     async Task PerformTurn(List<Card> cards)
     {
-        await _hub!.SendAsync("PerformTurn", _store!.State.Id, cards);
+        await _hub!.SendAsync("PerformTurn", _room!.State.Id, cards);
         StateHasChanged();
     }
 
-    async Task Send(string message) => await _hub!.SendAsync("SendChat", _store!.State.Id, message);
+    async Task Send(string message) => await _hub!.SendAsync("SendChat", _room!.State.Id, message);
     
-    async Task SetAway(string playerId) => await _hub!.SendAsync("SetAway", _store!.State.Id, playerId);
+    async Task SetAway(string playerId) => await _hub!.SendAsync("SetAway", _room!.State.Id, playerId);
 
-    async Task VoidTurn(string playerId) => await _hub!.SendAsync("VoidTurn", _store!.State.Id, playerId);
+    async Task VoidTurn(string playerId) => await _hub!.SendAsync("VoidTurn", _room!.State.Id, playerId);
 
     private async Task CopyRoomId()
     {
@@ -395,7 +395,7 @@
 
     public async ValueTask DisposeAsync()
     {
-        _store?.Dispose();
+        _room?.Dispose();
         _turn.Dispose();
 
         if (_hub is null) return;

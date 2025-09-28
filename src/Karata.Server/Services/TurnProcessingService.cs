@@ -7,7 +7,6 @@ using Karata.Server.Support.Exceptions;
 using Karata.Shared.Engine;
 using Karata.Shared.Engine.Exceptions;
 using Karata.Shared.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Shared.Models.CardRequestLevel;
@@ -159,10 +158,9 @@ public class TurnProcessingService(
     {
         room.Game.Request = room.Game.RequestLevel switch
         {
-            CardRequest when turn.Delta!.RemoveRequestLevels is 1 => None.Of(room.Game.Request!
-                .Suit), // One cancels the card request, leaves the suit
-            CardRequest when turn.Delta!.RemoveRequestLevels >= 2 => null, // Anything above 1 cancels a suit request
-            SuitRequest when turn.Delta!.RemoveRequestLevels >= 1 => null, // Anything above 0 cancels a card request
+            CardRequest when turn.Delta!.RemoveRequestLevels is 1 => None.Of(room.Game.Request!.Suit),
+            CardRequest when turn.Delta!.RemoveRequestLevels >= 2 => null,
+            SuitRequest when turn.Delta!.RemoveRequestLevels >= 1 => null,
             _ => room.Game.Request
         };
 
@@ -209,17 +207,14 @@ public class TurnProcessingService(
             if (room.Game.Pick > room.Game.Pile.Count + room.Game.Deck.Count - 1)
                 throw new EndGameException(GameResultData.DeckExhaustion());
 
-            // Reclaim pile
             room.Game.Pile.Reclaim().ToList().ForEach(room.Game.Deck.Push);
             await RoomPlayers.ReclaimPile();
             await RoomSpectators.ReclaimPile();
 
-            // Shuffle & deal
             room.Game.Deck.Shuffle();
             dealt = room.Game.Deck.DealMany(room.Game.Pick);
         }
 
-        // Add cards to player hand and reset counter
         room.Game.Pick = 0;
         room.Game.CurrentHand.Cards.AddRange(dealt);
         turn.Picked = dealt;
@@ -247,13 +242,24 @@ public class TurnProcessingService(
 
     private async Task DetermineLastCardStatus(Room room, Turn turn)
     {
-        turn.IsLastCard = await PlayerConnection(connection).PromptLastCardRequest();
-        if (turn.IsLastCard)
+        try
         {
-            room.Game.CurrentHand.IsLastCard = true;
-            await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-                .ReceiveSystemMessage(Messages.LastCard(room.Game.CurrentHand.Player));
-            await RoomSpectators.ReceiveSystemMessage(Messages.LastCard(room.Game.CurrentHand.Player));
+            turn.IsLastCard = await PlayerConnection(connection).PromptLastCardRequest();
+            if (turn.IsLastCard)
+            {
+                room.Game.CurrentHand.IsLastCard = true;
+                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
+                    .ReceiveSystemMessage(Messages.LastCard(room.Game.CurrentHand.Player));
+                await RoomSpectators.ReceiveSystemMessage(Messages.LastCard(room.Game.CurrentHand.Player));
+            }
+        }
+        catch (IOException)
+        {
+            turn.IsLastCard = false;
+        }
+        catch (Exception)
+        {
+            turn.IsLastCard = false;
         }
     }
 }

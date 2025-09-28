@@ -115,7 +115,6 @@ app.MapHealthChecks("/health");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapRazorPages();
 app.MapControllers();
 app.MapHub<PlayerHub>("/hubs/game/play", options => options.AllowStatefulReconnects = true);
 app.MapHub<SpectatorHub>("/hubs/game/spectate", options => options.AllowStatefulReconnects = true);
