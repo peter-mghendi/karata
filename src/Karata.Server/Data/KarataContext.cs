@@ -1,10 +1,6 @@
 ﻿using System.Text.Json;
-using Duende.IdentityServer.EntityFramework.Options;
-using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.Extensions.Options;
-
 namespace Karata.Server.Data;
 
 public class KarataContext(DbContextOptions<KarataContext> options) : DbContext(options)

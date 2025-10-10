@@ -14,8 +14,6 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddBlazoredLocalStorage();
-
 builder.Services.AddOidcAuthentication(options =>
 {
     var configuration = Configuration.Client[builder.HostEnvironment.Environment];
@@ -29,9 +27,10 @@ builder.Services.AddOidcAuthentication(options =>
     options.UserOptions.RoleClaim = "roles";
     options.UserOptions.ScopeClaim = "scope";
 });
+builder.Services.AddBlazoredLocalStorage();
+builder.Services.InjectClipboard();
 builder.Services.AddMudServices();
 builder.Services.AddMudExtensions();
-builder.Services.InjectClipboard();
 builder.Services.AddKarataCore(karata =>
 {
     karata.Host = new Uri(builder.HostEnvironment.BaseAddress);
