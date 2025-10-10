@@ -1,16 +1,18 @@
 @page "/game/{id:guid}/play"
 
 @using System.Collections.Immutable
+@using System.Reactive.Disposables
 @using System.Reactive.Linq
 @using Karata.Pebble.Interceptors
+@using Karata.Shared.Client
 @using Karata.Shared.State
-@using Microsoft.AspNetCore.SignalR.Client
+@using Karata.Shared.Support
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using TextCopy
 
 @attribute [Authorize]
 
-@implements IAsyncDisposable
+@implements IDisposable
 
 @inject AuthenticationStateProvider Authenticator
 @inject IAccessTokenProvider Provider
@@ -19,7 +21,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigator
 
-<HubConnectionGuard Hub="_hub">
+<GameConnectionGuard Connection="_connection">
     <MudLoading Loading="@(_room is null)" Text="Please wait..." Class="mud-height-full pa-0">
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mud-height-full pa-0">
             @if (_room is not null)
@@ -33,7 +35,7 @@
                                 if (_table)
                                 {
                                     <CardTableGameInterface Game="_room.State.Game"
-                                                            Hand="MyHand"
+                                                            Hand="MyHand(_room)"
                                                             Turn="_turn.State"
                                                             OnAddCardToTurn="info => _turn.Mutate(new TurnState.Insert(info))"
                                                             OnReorderCardInTurn="info => _turn.Mutate(new TurnState.Reorder(info))"
@@ -42,7 +44,7 @@
                                 else
                                 {
                                     <CardListGameInterface Game="_room.State.Game"
-                                                           Hand="MyHand"
+                                                           Hand="MyHand(_room)"
                                                            Turn="_turn.State"
                                                            OnAddCardToTurn="info => _turn.Mutate(new TurnState.Insert(info))"
                                                            OnReorderCardInTurn="info => _turn.Mutate(new TurnState.Reorder(info))"
@@ -94,13 +96,11 @@
                                 {
                                     <MudTooltip Text="Pick card(s)">
                                         <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleUp"
-                                                       Color="Color.Inherit"
-                                                       OnClick="() => PerformTurn([])"/>
+                                                       Color="Color.Inherit" OnClick="PerformEmptyTurn"/>
                                     </MudTooltip>
                                     <MudTooltip Text="Play card(s)">
                                         <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleDown"
-                                                       Color="Color.Inherit"
-                                                       OnClick="() => PerformTurn([.._turn.State])"/>
+                                                       Color="Color.Inherit" OnClick="PerformCurrentTurn"/>
                                     </MudTooltip>
                                 }
                                 else
@@ -143,18 +143,18 @@
                             @if (_learner && _room!.State.Game.Status is GameStatus.Ongoing)
                             {
                                 <MudExpansionPanel Text="Learner mode">
-                                    <TurnEffects Game="_room!.State.Game" Cards="@( [.._turn.State])"/>
+                                    <TurnEffects Game="_room!.State.Game" Cards="@([.._turn.State])"/>
                                 </MudExpansionPanel>
                             }
                             <MudExpansionPanel Text="Information">
                                 <InformationPanel Room="_room!.State"/>
                             </MudExpansionPanel>
                             <MudExpansionPanel Text="Players">
-                                <PlayersPanel Me="MyHand.Player" Room="_room.State" Controls="IsAdministrator" 
-                                              OnSetAway="SetAway" OnVoidTurn="VoidTurn" />
+                                <PlayersPanel Me="MyHand(_room).Player" Room="_room.State" Controls="IsAdministrator"
+                                              OnSetAway="SetAway" OnVoidTurn="VoidTurn"/>
                             </MudExpansionPanel>
                             <MudExpansionPanel Text="Chat" MaxHeight="480" Class="overflow-y-auto">
-                                <ChatPanel Room="_room!.State" Me="MyHand.Player" OnSend="Send"/>
+                                <ChatPanel Room="_room!.State" Me="MyHand(_room).Player" OnSend="Send"/>
                             </MudExpansionPanel>
                         </MudExpansionPanels>
                     </MudItem>
@@ -162,7 +162,7 @@
             }
         </MudContainer>
     </MudLoading>
-</HubConnectionGuard>
+</GameConnectionGuard>
 
 @code
 {
@@ -172,13 +172,15 @@
 
     private bool _learner;
     private bool _table;
-    private HubConnection? _hub;
+
+    private PlayerRoomConnection? _connection;
     private RoomState? _room;
     private TurnState _turn = new([], []);
     private string? _username;
+    private readonly CompositeDisposable _subscriptions = new();
 
-    private HandData MyHand => _room!.State.Game.Hands.Single(h => h.Player.Username == _username);
-    private bool IsAdministrator => MyHand.Player == _room?.State.Administrator;
+    private HandData MyHand(RoomState? room) => room!.State.Game.Hands.Single(h => h.Player.Username == _username);
+    private bool IsAdministrator => MyHand(_room).Player == _room?.State.Administrator;
 
     private void OnStoreChanged<T>(T data) where T : class => StateHasChanged();
 
@@ -187,27 +189,40 @@
         var auth = await Authenticator.GetAuthenticationStateAsync();
         _username = auth.User.Identity!.Name!;
 
-        _hub = new HubConnectionBuilder()
-            .WithUrl(Navigator.ToAbsoluteUri("/hubs/game/play"), options =>
-            {
-                options.AccessTokenProvider = async () =>
-                {
-                    var result = await Provider.RequestAccessToken();
-                    result.TryGetToken(out var token);
-                    return token!.Value;
-                };
-            })
-            .WithStatefulReconnect()
-            .AddJsonProtocol()
-            .Build();
-
-        _hub.On<long, UserData, HandStatus>("AddHandToRoom", (id, user, status) =>
+        _connection = new PlayerRoomConnection(new Uri("", UriKind.Relative), Id)
         {
-            _room!.Mutate(new RoomState.AddHandToRoom(id, user, status));
-            Snackbar.Add($"{user.Username} has joined the room", Severity.Info, c => c.SnackbarVariant = Variant.Text);
-        });
+            AccessTokenProvider = async () =>
+            {
+                var result = await Provider.RequestAccessToken();
+                result.TryGetToken(out var token);
+                return token!.Value;
+            },
+            RoomPasswordProvider = async () =>
+            {
+                bool repeat;
+                do
+                {
+                    var dialog = await DialogService.ShowAsync<PasswordRequestModal>("Enter password");
+                    var result = await dialog.Result;
 
-        _hub.On<RoomData>("AddToRoom", room =>
+                    if (result?.Data is string passcode) return passcode;
+
+                    var back = DialogService.ShowMessageBox("Go back?", "Exit to 'Join Game' screen?", "Exit", "Try again");
+                    repeat = await back is false;
+                } while (repeat);
+
+                Navigator.NavigateTo("/game/join");
+                return null;
+            },
+        };
+
+        _connection.Events.AddHandToRoom.Subscribe(data =>
+        {
+            var (_, user, _) = data;
+            Snackbar.Add($"{user.Username} has joined the room", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+        }).AddTo(_subscriptions);
+
+        _connection.Events.AddToRoom.Subscribe(room =>
         {
             _room = new RoomState(room, [
                 new LoggingInterceptor<RoomData>(LoggerFactory),
@@ -223,68 +238,20 @@
                 .Throttle(TimeSpan.FromMilliseconds(500))
                 .Subscribe(OnStoreChanged);
 
+            _connection.Events.BindRoomState(_room, MyHand).AddTo(_subscriptions);
             StateHasChanged();
-        });
+        }).AddTo(_subscriptions);
 
-        _hub.On("EndGame", async () =>
+        _connection.Events.EndGame.Subscribe(async _ =>
         {
-            await _hub.StopAsync();
+            await _connection.StopAsync();
             Navigator.NavigateTo($"/game/{_room!.State.Id.ToString()}/over");
-        });
+        }).AddTo(_subscriptions);
 
-        _hub.On<UserData, int>("MoveCardCountFromDeckToHand", (user, num) => _room!.Mutate(new RoomState.MoveCardCountFromDeckToHand(user, num)));
+        _connection.Events.NotifyTurnProcessed.Subscribe(_ => _turn.Mutate(new TurnState.Clear())).AddTo(_subscriptions);
 
-        _hub.On<List<Card>>("MoveCardsFromDeckToHand", cards => _room!.Mutate(new RoomState.MoveCardsFromDeckToHand(MyHand.Player, cards)));
-
-        _hub.On<List<Card>>("MoveCardsFromDeckToPile", cards => _room!.Mutate(new RoomState.MoveCardsFromDeckToPile(cards)));
-
-        _hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (user, cards) => _room!.Mutate(new RoomState.MoveCardsFromHandToPile(user, cards, MyHand.Player == user)));
-
-        _hub.On("NotifyTurnProcessed", () =>
+        _connection.Events.ReceiveChat.Subscribe(message =>
         {
-            _turn.Mutate(new TurnState.Clear());
-            StateHasChanged();
-        });
-
-        _hub.On<bool, Card?>("PromptCardRequest", async specific =>
-        {
-            var parameters = new DialogParameters { { nameof(CardRequestModal.Specific), specific } };
-            var dialog = await DialogService.ShowAsync<CardRequestModal>("Request a card", parameters);
-            var result = await dialog.Result;
-
-            return result?.Data as Card;
-        });
-
-        _hub.On("PromptLastCardRequest", async () =>
-        {
-            const string blurb = "Declare <b>last card</b> if you have a card or cards that you can legally finish the game with in the next turn.";
-            var dialog = DialogService.ShowMessageBox("Last Card?", new MarkupString(blurb), "Yes!", "No");
-            return await dialog ?? false;
-        });
-
-
-        _hub.On("PromptPasscode", async () =>
-        {
-            bool repeat;
-            do
-            {
-                var dialog = await DialogService.ShowAsync<PasswordRequestModal>("Enter password");
-                var result = await dialog.Result;
-
-                if (result?.Data is string passcode) return passcode;
-
-                var back = DialogService.ShowMessageBox("Go back?", "Exit to 'Join Game' screen?", "Exit", "Try again");
-                repeat = await back is false;
-            } while (repeat);
-
-            Navigator.NavigateTo("/game/join");
-            return null;
-        });
-
-        _hub.On<ChatData>("ReceiveChat", message =>
-        {
-            _room!.Mutate(new RoomState.ReceiveChat(message));
-
             if (message.Sender.Username != _username)
             {
                 Snackbar.Add(
@@ -296,11 +263,9 @@
                     c => c.SnackbarVariant = Variant.Text
                 );
             }
+        }).AddTo(_subscriptions);
 
-            StateHasChanged();
-        });
-
-        _hub.On<SystemMessage>("ReceiveSystemMessage", message =>
+        _connection.Events.ReceiveSystemMessage.Subscribe(message =>
         {
             var severity = message.Type switch
             {
@@ -311,75 +276,76 @@
                 _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
             };
             Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
-        });
+        }).AddTo(_subscriptions);
 
-        _hub.On("ReclaimPile", () => _room!.Mutate(new RoomState.ReclaimPile()));
+        _connection.Events.RemoveFromRoom
+            .Select(_ => Observable.FromAsync(async _ =>
+                {
+                    var uri = $"/game/{_room!.State.Id}";
 
-        _hub.On("RemoveFromRoom", async () =>
+                    _room!.Dispose();
+                    _turn.Dispose();
+
+                    StateHasChanged();
+
+                    await _connection.StopAsync();
+                    Navigator.NavigateTo(uri);
+                }
+            ))
+            .Concat()
+            .Subscribe()
+            .AddTo(_subscriptions);
+
+        _connection.Events.RemoveHandFromRoom.Subscribe(user => { Snackbar.Add($"{user.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text); }).AddTo(_subscriptions);
+
+        _connection.Events.UpdateGameStatus.Subscribe(status => { Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text); }).AddTo(_subscriptions);
+
+        _connection.Events.UpdateHandStatus.Subscribe(data =>
         {
-            var uri = $"/game/{_room!.State.Id}";
-
-            _room!.Dispose();
-            _turn.Dispose();
-
-            StateHasChanged();
-
-            await _hub.StopAsync();
-            Navigator.NavigateTo(uri);
-        });
-
-        _hub.On<UserData>("RemoveHandFromRoom", user =>
-        {
-            _room!.Mutate(new RoomState.RemoveHandFromRoom(user));
-            Snackbar.Add($"{user.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
-        });
-
-        _hub.On<Card>("SetCurrentRequest", request => _room!.Mutate(new RoomState.SetCurrentRequest(request)));
-
-        _hub.On<UserData>("UpdateAdministrator", administrator => _room!.Mutate(new RoomState.UpdateAdministrator(administrator)));
-
-        _hub.On<GameStatus>("UpdateGameStatus", status =>
-        {
-            _room!.Mutate(new RoomState.UpdateGameStatus(status));
-            Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
-        });
-
-        _hub.On<UserData, HandStatus>("UpdateHandStatus", (user, status) =>
-        {
-            _room!.Mutate(new RoomState.UpdateHandStatus(user, status));
+            var (user, status) = data;
             Snackbar.Add($"{user.Username} is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
-        });
+        }).AddTo(_subscriptions);
 
-        _hub.On<uint>("UpdatePick", num => _room!.Mutate(new RoomState.UpdatePick(num)));
-
-        _hub.On<int>("UpdateTurn", turn =>
+        _connection.Events.UpdateTurn.Subscribe(turn =>
         {
-            _room!.Mutate(new RoomState.UpdateTurn(turn));
-
-            var current = _room!.State.Game.CurrentHand.Player.Username;
+            var current = _room!.State.Game.Hands[turn].Player.Username;
             var possessive = current == _username ? "your" : $"{current}'s";
             Snackbar.Add($"It is now {possessive} turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
-        });
+        }).AddTo(_subscriptions);
 
-        await _hub.StartAsync();
-        await _hub.SendAsync("JoinRoom", Id);
+        await _connection.StartAsync(
+            onRequestCard: async specific =>
+            {
+                var parameters = new DialogParameters { { nameof(CardRequestModal.Specific), specific } };
+                var dialog = await DialogService.ShowAsync<CardRequestModal>("Request a card", parameters);
+                var result = await dialog.Result;
+
+                return result?.Data as Card;
+            },
+            onRequestLastCard: async () =>
+            {
+                const string blurb = "Declare <b>last card</b> if you have a card or cards that you can legally finish the game with in the next turn.";
+                var dialog = DialogService.ShowMessageBox("Last Card?", new MarkupString(blurb), "Yes!", "No");
+                return await dialog ?? false;
+            }
+        );
     }
 
-    async Task LeaveRoom() => await _hub!.SendAsync("LeaveRoom", _room!.State.Id);
+    async Task LeaveRoom() => await _connection!.LeaveRoom();
 
-    async Task StartGame() => await _hub!.SendAsync("StartGame", _room!.State.Id);
+    async Task StartGame() => await _connection!.StartGame();
 
-    async Task PerformTurn(List<Card> cards)
-    {
-        await _hub!.SendAsync("PerformTurn", _room!.State.Id, cards);
-        StateHasChanged();
-    }
+    async Task PerformCurrentTurn() => await PerformTurn([.._turn.State]);
 
-    async Task Send(string message) => await _hub!.SendAsync("SendChat", _room!.State.Id, message);
-    
-    async Task SetAway(string playerId) => await _hub!.SendAsync("SetAway", _room!.State.Id, playerId);
+    async Task PerformEmptyTurn() => await PerformTurn([]);
 
-    async Task VoidTurn(string playerId) => await _hub!.SendAsync("VoidTurn", _room!.State.Id, playerId);
+    async Task PerformTurn(List<Card> cards) => await _connection!.PerformTurn(cards);
+
+    async Task Send(string message) => await _connection!.SendChat(message);
+
+    async Task SetAway(string playerId) => await _connection!.SetAway(playerId);
+
+    async Task VoidTurn(string playerId) => await _connection!.VoidTurn(playerId);
 
     private async Task CopyRoomId()
     {
@@ -393,12 +359,10 @@
         Snackbar.Add("Copied to clipboard.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
     }
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
+        _subscriptions.Dispose();
         _room?.Dispose();
         _turn.Dispose();
-
-        if (_hub is null) return;
-        await _hub.DisposeAsync();
     }
 }

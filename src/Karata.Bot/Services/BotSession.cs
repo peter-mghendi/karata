@@ -1,93 +1,113 @@
+using System.Collections.Immutable;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Karata.Bot.Strategy;
+using Karata.Cards;
 using Karata.Cards.Extensions;
 using Karata.Pebble.Interceptors;
+using Karata.Shared.Client;
 using Karata.Shared.Engine;
 using Karata.Shared.Engine.Exceptions;
 using Karata.Shared.Models;
 using Karata.Shared.State;
-using Microsoft.Extensions.Logging.Abstractions;
+using Karata.Shared.Support;
 using static Karata.Shared.Models.GameStatus;
 
 namespace Karata.Bot.Services;
 
 public sealed class BotSession(
     UserData player,
-    PlayerConnection realtime,
+    PlayerRoomConnection connection,
     IBotStrategy strategy,
     IKarataEngine engine,
     ILoggerFactory loggers
 ) : IAsyncDisposable
 {
     private readonly ILogger<BotSession> _log = loggers.CreateLogger<BotSession>();
-    private readonly CompositeDisposable _subs = new();
+    private readonly CompositeDisposable _subscriptions = new();
 
     private RoomState? _room;
     private TurnState _turn = new([], []);
-    private RoomStreamsStateBinder? _binder;
 
     private UserData Player { get; } = player;
-    public HandData? CurrentHand => _room is null ? null : TryGetMyHand(_room.State, Player.Id);
+    public HandData? CurrentHand => _room is null ? null : TryGetMyHand(_room);
 
     public async Task StartAsync(CancellationToken ct)
     {
-        realtime.Streams.AddToRoom
+        connection.Events.AddToRoom
             .Subscribe(r =>
             {
                 _log.LogInformation("I'm joining room {Room} as {Player}. Ready to bring the pain.", r.Id, Player);
-                
                 _room = new RoomState(r, [
                     new LoggingInterceptor<RoomData>(loggers),
                     new TimingInterceptor<RoomData>(loggers)
                 ]);
-                _turn = new TurnState([], []);
+                _turn = new TurnState([], [
+                    new LoggingInterceptor<ImmutableList<Card>>(loggers),
+                    new TimingInterceptor<ImmutableList<Card>>(loggers)
+                ]);
 
-                _binder = new RoomStreamsStateBinder(_room, _turn, realtime.Streams, NullLoggerFactory.Instance, Player.Id);
+                connection.Events.BindRoomState(_room, TryGetMyHand).AddTo(_subscriptions);
             })
-            .AddTo(_subs);
-        
-        realtime.Streams.UpdateGameStatus
+            .AddTo(_subscriptions);
+
+        connection.Events.UpdateGameStatus
             .Where(_ => _room?.State.Game.Status is Ongoing)
-            .Subscribe(_ => realtime.SendChat("gg"))
-            .AddTo(_subs);
+            .Select(_ => Observable.FromAsync(async _ => await connection.SendChat("gg", ct)))
+            .Concat()
+            .Subscribe()
+            .AddTo(_subscriptions);
 
-        realtime.Streams.AddToRoom
+        connection.Events.AddToRoom
             .Where(_ => _room?.State.Game.Status is Ongoing && _room.State.Game.CurrentHand.Player.Id == Player.Id)
-            .Subscribe(_ => PlayTurnSafeAsync(CancellationToken.None))
-            .AddTo(_subs);
+            .Select(_ => Observable.FromAsync(async _ => await PlayTurnSafeAsync(CancellationToken.None)))
+            .Concat()
+            .Subscribe()
+            .AddTo(_subscriptions);
+        
+        connection.Events.NotifyTurnProcessed.Subscribe(_ => _turn.Mutate(new TurnState.Clear())).AddTo(_subscriptions);
 
-        realtime.Streams.UpdateGameStatus
+        connection.Events.UpdateGameStatus
             .Where(_ => _room?.State.Game.Status is Ongoing && _room.State.Game.CurrentHand.Player.Id == Player.Id)
-            .Subscribe(_ => PlayTurnSafeAsync(CancellationToken.None))
-            .AddTo(_subs);
+            .Select(_ => Observable.FromAsync(async _ => await PlayTurnSafeAsync(CancellationToken.None)))
+            .Concat()
+            .Subscribe()
+            .AddTo(_subscriptions);
 
-        realtime.Streams.ReceiveChat
+        connection.Events.ReceiveChat
             .Where(_ => _room?.State.Game.Status is Ongoing && _room.State.Game.CurrentHand.Player.Id == Player.Id)
-            .Subscribe(_ => PlayTurnSafeAsync(CancellationToken.None))
-            .AddTo(_subs);
+            .Select(_ => Observable.FromAsync(async _ => await PlayTurnSafeAsync(CancellationToken.None)))
+            .Concat()
+            .Subscribe()
+            .AddTo(_subscriptions);
 
-        realtime.Streams.UpdateTurn
+        connection.Events.UpdateTurn
             .Where(_ => _room?.State.Game.Status is Ongoing && _room.State.Game.CurrentHand.Player.Id == Player.Id)
-            .Subscribe(_ => PlayTurnSafeAsync(CancellationToken.None))
-            .AddTo(_subs);
+            .Select(_ => Observable.FromAsync(async _ => await PlayTurnSafeAsync(CancellationToken.None)))
+            .Concat()
+            .Subscribe()
+            .AddTo(_subscriptions);
 
-        realtime.Streams.ReceiveSystemMessage
+        connection.Events.ReceiveSystemMessage
             .Subscribe(message => _log.LogInformation("{Message}", message))
-            .AddTo(_subs);
+            .AddTo(_subscriptions);
 
-        await realtime.StartAsync(specific =>
-        {
-            var hand = TryGetMyHand(_room!.State, Player.Id);
-            var request = strategy.Request(_room.State, hand.Cards, specific);
-            
-            _log.LogInformation("I have to request a card. I will request {Card}.", request);
-            return request;
-        }, ct);
+        await connection.StartAsync(
+            onRequestCard: specific =>
+            {
+                var hand = TryGetMyHand(_room);
+                var request = strategy.Request(_room!.State, hand.Cards, specific);
+
+                _log.LogInformation("I have to request a card. I will request {Card}.", request);
+                return Task.FromResult(request);
+            },
+            onRequestLastCard: () => Task.FromResult(true),
+            ct
+        );
     }
 
-    private static HandData TryGetMyHand(RoomData room, string selfId)
-        => room.Game.Hands.First(h => h.Player.Id == selfId);
+    private HandData TryGetMyHand(RoomState? room)
+        => room!.State.Game.Hands.First(h => h.Player.Id == Player.Id);
 
     private async Task PlayTurnSafeAsync(CancellationToken ct)
     {
@@ -103,29 +123,28 @@ public sealed class BotSession(
 
     private async Task PlayTurnAsync(CancellationToken ct)
     {
-        var room = _room!.State;
-        var my = TryGetMyHand(room, Player.Id).Cards;
-        _log.LogInformation("It's my turn. I have {Cards}.", string.Join(", ", my.Select(m => m.GetName())));
+        var cards = TryGetMyHand(_room).Cards;
+        _log.LogInformation("It's my turn. I have {Cards}.", string.Join(", ", cards.Select(m => m.GetName())));
 
-        var move = strategy.Decide(room, my);
+        var room = _room!.State;
+        var move = strategy.Decide(room, cards);
         _log.LogInformation("I'm thinking of playing {Move}.", string.Join(", ", move.Select(m => m.GetName())));
 
         try
         {
             _ = engine.EvaluateTurn(room.Game, move);
-            await realtime.PerformTurn(move, ct);
-            await realtime.SendChat("get rekt", ct);
+            await connection.PerformTurn(move, ct);
+            await connection.SendChat("get rekt", ct);
         }
         catch (KarataEngineException)
         {
-            await realtime.PerformTurn([], ct);
+            await connection.PerformTurn([], ct);
         }
     }
 
     public async ValueTask DisposeAsync()
     {
-        _subs.Dispose();
-        _binder?.Dispose();
-        await realtime.StopAsync();
+        _subscriptions.Dispose();
+        await connection.StopAsync();
     }
 }

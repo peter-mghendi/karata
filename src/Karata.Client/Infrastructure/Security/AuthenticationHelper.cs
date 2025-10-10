@@ -5,7 +5,7 @@ using Microsoft.JSInterop;
 
 namespace Karata.Client.Infrastructure.Security;
 
-public sealed class AuthenticationHelper(NavigationManager navigator, IAccessTokenProvider provider, IJSRuntime js)
+public sealed class AuthenticationHelper(NavigationManager navigator, IJSRuntime js)
 {
     private string ReturnUrl => navigator.ToAbsoluteUri(navigator.Uri).GetLeftPart(UriPartial.Path);
 

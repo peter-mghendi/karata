@@ -1,4 +1,7 @@
 @page "/"
+@using Karata.Shared.Client
+
+@inject KarataClient KarataClient
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full py-4">
     @if (_activities is [_, ..])
@@ -60,15 +63,11 @@
 
 @code
 {
-    [Inject(Key = "Karata.Server.Public")] 
-    public HttpClient Http { get; set; } = null!;
-    
     private List<ActivityData> _activities = [];
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        
-        _activities = await Http.GetFromJsonAsync<List<ActivityData>>("api/activity") ?? [];
+        _activities = await KarataClient.Activity.ListAsync();
     }
 }

@@ -1,10 +1,10 @@
 @page "/game/join"
+@using Karata.Shared.Client
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 @attribute [Authorize]
 
-@inject HttpClient Http
-@inject ISnackbar Snackbar
+@inject KarataClient KarataClient
 @inject NavigationManager Navigator
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full">
@@ -90,7 +90,7 @@
     {
         try
         {
-            _rooms = await Http.GetFromJsonAsync<List<RoomData>>($"api/rooms");
+            _rooms = await KarataClient.Rooms.ListAsync();
         }
         catch (AccessTokenNotAvailableException)
         {
@@ -101,24 +101,7 @@
     private async Task CreateRoom()
     {
         _loading = true;
-        var response = await Http.PostAsJsonAsync("api/rooms", new RoomRequest { Password = _password });
-        if (!response.IsSuccessStatusCode)
-        {
-            _loading = false;
-            Snackbar.Add("Failed to create room. Please try again later.", Severity.Error, c => c.SnackbarVariant = Variant.Text);
-            StateHasChanged();
-            return;
-        }
-        
-        var room = await response.Content.ReadFromJsonAsync<RoomData>();
-        if (room == null)
-        {
-            _loading = false;
-            Snackbar.Add("Failed to create room. Please try again later.", Severity.Error, c => c.SnackbarVariant = Variant.Text);
-            StateHasChanged();
-            return;
-        }
-
+        var room = await KarataClient.Rooms.CreateAsync(new RoomRequest { Password = _password });
         Navigator.NavigateTo($"/game/{room.Id.ToString()}/play");
     }
 }

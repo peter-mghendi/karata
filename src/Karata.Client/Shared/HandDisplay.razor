@@ -53,16 +53,18 @@
         var online = (Icon: Icons.Material.Rounded.Link, Color: Color.Success);
         var offline = (Icon: Icons.Material.Rounded.LinkOff, Color: Color.Error);
         var away = (Icon: Icons.Material.Rounded.LinkOff, Color: Color.Default);
+        var unknown = (Icon: Icons.Material.Rounded.Circle, Color: Color.Default);
 
         return hand.Player switch
         {
-            // Alternatively, use the SignalR Hub's ConnectionState to determine our owm connection status.
-            // var user when user == Me => Hub?.State is HubConnectionState.Connected ? connected : disconnected,
+            // Alternatively, use the SignalR Hub's ConnectionState to determine our own connection status.
+            // var user when user == Me => Hub?.State is HubConnectionState.Connected ? online : offline,
             _ => hand.Status switch
             {
                 HandStatus.Online => online,
                 HandStatus.Offline => offline,
-                HandStatus.Away => away
+                HandStatus.Away => away,
+                _ => unknown
             }
         };
     }

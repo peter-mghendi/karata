@@ -1,5 +1,6 @@
 using Karata.Bot.Infrastructure.Security;
 using Karata.Bot.Strategy;
+using Karata.Shared.Client;
 using Karata.Shared.Engine;
 using Karata.Shared.Models;
 
@@ -8,22 +9,21 @@ namespace Karata.Bot.Services;
 public sealed class BotSessionFactory(
     IServiceProvider services,
     IConfiguration configuration,
-    KeycloakAccessTokenProvider tokens
+    AccessTokenProvider tokens
 )
 {
     private static readonly string[] Strategies = ["bail", "random-valid"];
     private static readonly Random Random = new();
     private static string RandomStrategy => Strategies.OrderBy(_ => Random.Next()).First();
 
-    public BotSession Create(UserData player, string roomId, string? password)
+    public BotSession Create(UserData player, Guid roomId, string? password)
     {
-        var url = configuration["Karata:Host"]!;
-        var subscriber = new PlayerConnection(
-            url,
-            roomId,
-            password,
-            factory: async () => $"{await tokens.GetAccessTokenAsync()}"
-        );
+        var url = new Uri(configuration["Karata:Host"]!);
+        var subscriber = new PlayerRoomConnection(url, roomId)
+        {
+            AccessTokenProvider = async () => await tokens.GetAccessTokenAsync(),
+            RoomPasswordProvider = () => Task.FromResult(password)
+        };
 
         IBotStrategy strategy = RandomStrategy switch
         {

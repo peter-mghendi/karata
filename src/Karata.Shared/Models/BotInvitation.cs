@@ -1,3 +1,3 @@
 namespace Karata.Shared.Models;
 
-public sealed record BotInvitation(string Room, string? Password, string? Host);
+public sealed record BotInvitation(Guid Room, string? Password);

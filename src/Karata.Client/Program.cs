@@ -1,10 +1,10 @@
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Karata.Client;
 using Karata.Client.Infrastructure.Security;
-using Karata.Shared.Engine;
+using Karata.Shared;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using MudBlazor.Services;
 using MudExtensions.Services;
 using TextCopy;
@@ -14,39 +14,35 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-var host = builder.HostEnvironment.BaseAddress;
-builder.Services
-    .AddHttpClient("Karata.Server", client => client.BaseAddress = new Uri(host))
-    .AddHttpMessageHandler<BaseAddressAuthorizationMessageHandler>();
-builder.Services.AddHttpClient("Karata.Server.Public", client => client.BaseAddress = new Uri(host));
+builder.Services.AddBlazoredLocalStorage();
 
-// Supply HttpClient instances that include access tokens when making requests to the server project
-builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("Karata.Server"));
-builder.Services.AddKeyedScoped<HttpClient>(
-    "Karata.Server.Public", 
-    (sp, _) => sp.GetRequiredService<IHttpClientFactory>().CreateClient("Karata.Server.Public")
-);
-
-// TODO: Config
 builder.Services.AddOidcAuthentication(options =>
 {
-    options.ProviderOptions.MetadataUrl = "http://localhost:8080/realms/karata/.well-known/openid-configuration";
-    options.ProviderOptions.Authority = "http://localhost:8080/realms/karata";
-    options.ProviderOptions.ClientId = "karata-web";
-    options.ProviderOptions.ResponseType = "id_token token";
-    //options.ProviderOptions.DefaultScopes.Add("Audience");
+    var configuration = Configuration.Client[builder.HostEnvironment.Environment];
 
+    // options.ProviderOptions.DefaultScopes.Add("Audience");
+    options.ProviderOptions.Authority = configuration.Authority;
+    options.ProviderOptions.ClientId = configuration.Client;
+    options.ProviderOptions.MetadataUrl = $"{configuration.Authority}/.well-known/openid-configuration";
+    options.ProviderOptions.ResponseType = "id_token token";
     options.UserOptions.NameClaim = "preferred_username";
     options.UserOptions.RoleClaim = "roles";
     options.UserOptions.ScopeClaim = "scope";
 });
-
-builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddMudServices();
 builder.Services.AddMudExtensions();
 builder.Services.InjectClipboard();
+builder.Services.AddKarataCore(karata =>
+{
+    karata.Host = new Uri(builder.HostEnvironment.BaseAddress);
+    karata.TokenProvider = async (services, _) =>
+    {
+        var provider = services.GetRequiredService<IAccessTokenProvider>();
+        var result = await provider.RequestAccessToken();
 
-builder.Services.AddSingleton<IKarataEngine, TwoPassKarataEngine>();
+        return result.TryGetToken(out var token) ? token.Value : null;
+    };
+});
 builder.Services.AddScoped<AuthenticationHelper>();
 
 await builder.Build().RunAsync();

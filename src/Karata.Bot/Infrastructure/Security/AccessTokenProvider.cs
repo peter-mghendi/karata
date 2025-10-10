@@ -4,7 +4,7 @@ using Karata.Shared.Models;
 
 namespace Karata.Bot.Infrastructure.Security;
 
-public sealed class KeycloakAccessTokenProvider(IHttpClientFactory factory, IConfiguration configuration) : IDisposable
+public sealed class AccessTokenProvider(IHttpClientFactory factory, IConfiguration configuration) : IDisposable
 {
     private readonly HttpClient _http = factory.CreateClient();
     private readonly string _clientId = configuration["Keycloak:ClientId"]!;
@@ -49,7 +49,7 @@ public sealed class KeycloakAccessTokenProvider(IHttpClientFactory factory, ICon
             var body = await response.Content.ReadAsStringAsync(ct);
             var json = JsonDocument.Parse(body);
 
-            var expiresIn = json.RootElement.GetProperty("expires_in").GetInt32()!;
+            var expiresIn = json.RootElement.GetProperty("expires_in").GetInt32();
             _expiresAt = DateTimeOffset.UtcNow.AddSeconds(Math.Max(10, expiresIn - 30));
             _token = json.RootElement.GetProperty("access_token").GetString()!;
 

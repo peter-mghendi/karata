@@ -1,6 +1,5 @@
-using System.Text.Json;
-using Karata.Bot.Infrastructure.Security;
 using Karata.Bot.Services;
+using Karata.Shared.Client;
 using Karata.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,29 +10,18 @@ public static class BotRoutes
     public static void MapBotRoutes(this WebApplication routes)
     {
         var api = routes.MapGroup("/api");
+        api.MapPost("/hands", InvitationHandler);
+    }
 
-        api.MapPost("/hands", async (
-            [FromServices] BotSessionManager bots,
-            [FromServices] IHttpClientFactory factory,
-            [FromServices] ILogger<Program> logger,
-            [FromServices] KeycloakAccessTokenProvider tokens,
-            [FromBody] BotInvitation invitation
-        ) =>
-        {
-            using var http = factory.CreateClient("KarataClient");
-
-            var request = new HttpRequestMessage(HttpMethod.Get, $"api/rooms/{invitation.Room}");
-            request.Headers.Add("Authorization", $"Bearer {await tokens.GetAccessTokenAsync()}");
-
-            var response = await http.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
-            var body = await response.Content.ReadAsStringAsync();
-            var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
-            var room = JsonSerializer.Deserialize<RoomData>(body, options) ?? throw new BadHttpRequestException("Invalid room data.");
-
-            var hand = await bots.StartAsync(room.Id.ToString(), invitation.Password);
-            return Results.Accepted($"/api/hands/{hand.Id}");
-        });
+    private static async Task<IResult> InvitationHandler(
+        [FromServices] BotSessionManager bots,
+        [FromServices] KarataClient karata,
+        [FromBody] BotInvitation invitation
+    )
+    {
+        // TODO: Handle room not found
+        var room = await karata.Rooms.GetAsync(invitation.Room);
+        var hand = await bots.StartAsync(room.Id, invitation.Password);
+        return Results.Accepted($"/api/hands/{hand.Id}");
     }
 }

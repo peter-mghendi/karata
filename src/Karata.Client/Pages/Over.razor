@@ -1,6 +1,8 @@
 @page "/game/{id:guid}/over"
 
-@inject HttpClient Http
+@using Karata.Shared.Client
+
+@inject KarataClient KarataClient
 
 @if (_room is not null)
 {
@@ -22,6 +24,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _room = await Http.GetFromJsonAsync<RoomData>($"api/Room/{Id}");
+        _room = await KarataClient.Rooms.GetAsync(Id);
     }
 }

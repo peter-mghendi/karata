@@ -6,58 +6,51 @@ namespace Karata.Bot.Services;
 
 public sealed class BotSessionManager(
     BotSessionFactory bots,
-    IHttpClientFactory factory,
     ILogger<BotSessionManager> log,
-    KeycloakAccessTokenProvider tokens
-) : IDisposable
+    AccessTokenProvider tokens
+    ) : IAsyncDisposable
 {
     private sealed record Entry(
-        string RoomId,
+        Guid Room,
         DateTimeOffset StartedAt,
-        CancellationTokenSource Cts,
-        Task RunnerTask,
+        CancellationTokenSource Cancellation,
+        Task Runner,
         BotSession Session
     );
 
-    private readonly ConcurrentDictionary<string, Entry> _sessions = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<Guid, Entry> _sessions = new();
 
     /// <summary>
-    /// Starts (or no-ops) a bot session for a room and returns the best-known HandData snapshot for the bot.
-    /// If the game state hasn't hydrated yet, returns a placeholder with Status = Away and empty cards,
-    /// using the session's SelfUser if available.
+    /// Starts (or no-ops) a bot session for a room and returns the best-known <see cref="HandData"/> snapshot for the bot.
+    /// If the game state hasn't hydrated yet, returns a placeholder with <see cref="HandStatus.Away"/> and empty cards,
+    /// using the session's <see cref="AccessTokenProvider.CurrentUser"/> if available.
     /// </summary>
-    public async Task<HandData> StartAsync(string roomId, string? password, CancellationToken ct = default)
+    public Task<HandData> StartAsync(Guid room, string? password, CancellationToken ct = default)
     {
-        if (_sessions.TryGetValue(roomId, out var existing))
-            return Snapshot(existing);
+        if (_sessions.TryGetValue(room, out var existing)) return Task.FromResult(Snapshot(existing));
 
-        using var http = factory.CreateClient("KarataClient");
-        var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        var player = tokens.CurrentUser!;
-        var session = bots.Create(player, roomId, password);
+        var cancellation = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var session = bots.Create(tokens.CurrentUser!, room, password);
+        var entry = new Entry(room, DateTimeOffset.UtcNow, cancellation, Task.CompletedTask, session);
 
-        var startedAt = DateTimeOffset.UtcNow;
-        var entry = new Entry(roomId, startedAt, cts, Task.CompletedTask, session);
-        if (!_sessions.TryAdd(roomId, entry))
-            return Snapshot(_sessions[roomId]);
+        if (!_sessions.TryAdd(room, entry)) return Task.FromResult(Snapshot(_sessions[room]));
 
         var runner = Task.Run(async () =>
         {
             try
             {
-                await session.StartAsync(cts.Token).ConfigureAwait(false);
-
                 // Keep the session alive; it reacts to SignalR events internally.
                 // We don't spin a busy loop; this awaits cancellation cooperatively.
-                await Task.Delay(Timeout.InfiniteTimeSpan, cts.Token).ConfigureAwait(false);
+                await session.StartAsync(cancellation.Token).ConfigureAwait(false);
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellation.Token).ConfigureAwait(false);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException ex)
             {
-                // normal shutdown
+                log.LogError(ex, "Shutting down bot session for room {RoomId}", room);
             }
             catch (Exception ex)
             {
-                log.LogError(ex, "Bot session crashed for room {RoomId}", roomId);
+                log.LogError(ex, "Bot session crashed for room {RoomId}", room);
             }
             finally
             {
@@ -67,42 +60,38 @@ public sealed class BotSessionManager(
                 }
                 catch
                 {
-                    /* swallow */
+                    // ignored
                 }
             }
         }, CancellationToken.None);
 
-        _sessions[roomId] = entry with { RunnerTask = runner };
-        return Snapshot(_sessions[roomId]);
+        _sessions[room] = entry with { Runner = runner };
+        return Task.FromResult(Snapshot(_sessions[room]));
     }
 
     /// <summary>
     /// Lists current HandData snapshots for all active sessions.
     /// </summary>
-    public IReadOnlyList<HandData> List()
-        => _sessions.Values
-            .Select(Snapshot)
-            .ToList();
+    public IReadOnlyList<HandData> List() => _sessions.Values.Select(Snapshot).ToList();
 
     /// <summary>
     /// Gets the current HandData snapshot for a single room, if running.
     /// </summary>
-    public HandData? Get(string roomId)
-        => _sessions.TryGetValue(roomId, out var e) ? Snapshot(e) : null;
+    public HandData? Get(Guid room) => _sessions.TryGetValue(room, out var e) ? Snapshot(e) : null;
 
     /// <summary>
     /// Stops a running session for a room.
     /// </summary>
-    public async Task<bool> StopAsync(string roomId, CancellationToken ct)
+    public async Task<bool> StopAsync(Guid room, CancellationToken ct)
     {
-        if (!_sessions.TryRemove(roomId, out var e)) return false;
+        if (!_sessions.TryRemove(room, out var e)) return false;
         try
         {
-            await e.Cts.CancelAsync();
+            await e.Cancellation.CancelAsync();
 
             try
             {
-                await e.RunnerTask.ConfigureAwait(false);
+                await e.Runner.ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -110,24 +99,18 @@ public sealed class BotSessionManager(
         }
         finally
         {
-            e.Cts.Dispose();
+            e.Cancellation.Dispose();
         }
 
         return true;
     }
 
-    public void Dispose()
-    {
-        foreach (var kv in _sessions.Keys) _ = StopAsync(kv, CancellationToken.None);
-    }
+    public async ValueTask DisposeAsync() => await Task.WhenAll(from key in _sessions.Keys select StopAsync(key, CancellationToken.None));
 
-    private HandData Snapshot(Entry e)
+    private HandData Snapshot(Entry e) => e.Session.CurrentHand ?? new HandData
     {
-        return e.Session.CurrentHand ?? new HandData
-        {
-            Id = 0,
-            Status = HandStatus.Away,
-            Player = tokens.CurrentUser!,
-        };
-    }
+        Id = 0,
+        Status = HandStatus.Away,
+        Player = tokens.CurrentUser!
+    };
 }

@@ -1,8 +1,9 @@
 @page "/game/{id:guid}"
 
+@using Karata.Shared.Client
 @using TextCopy
 
-@inject HttpClient Http
+@inject KarataClient KarataClient
 
 <MudLoading Loading="@(_room is null)" Text="Please wait..." Class="mud-height-full pa-0">
     <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full py-4">
@@ -33,6 +34,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _room = await Http.GetFromJsonAsync<RoomData>($"api/rooms/{Id}");
+        _room = await KarataClient.Rooms.GetAsync(Id);
     }
 }

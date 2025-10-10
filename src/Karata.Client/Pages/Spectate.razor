@@ -1,18 +1,22 @@
 @page "/game/{id:guid}/spectate"
+
+@using System.Reactive.Disposables
+@using System.Reactive.Linq
 @using Karata.Client.Support
 @using Karata.Pebble.Interceptors
+@using Karata.Shared.Client
 @using Karata.Shared.State
-@using Microsoft.AspNetCore.SignalR.Client
+@using Karata.Shared.Support
 @using TextCopy
 
-@implements IAsyncDisposable
+@implements IDisposable
 
-@inject HttpClient Http
 @inject ILoggerFactory LoggerFactory
 @inject ISnackbar Snackbar
+@inject KarataClient KarataClient
 @inject NavigationManager Navigator
 
-<HubConnectionGuard Hub="_hub">
+<GameConnectionGuard Connection="_connection">
     <MudLoading Loading="@(_store is null)" Text="Please wait..." Class="mud-height-full pa-0">
         <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full pa-0">
             @if (_store is not null)
@@ -52,7 +56,8 @@
                             <MudListSubheader>Players</MudListSubheader>
                             @foreach (var hand in _store.State.Game.Hands)
                             {
-                                <HandDisplay Hand="hand" IsAdministrator="@(hand.Player == _store.State.Administrator)"/>
+                                <HandDisplay Hand="hand"
+                                             IsAdministrator="@(hand.Player == _store.State.Administrator)"/>
                             }
                         </MudList>
                     </MudItem>
@@ -75,7 +80,7 @@
             }
         </MudContainer>
     </MudLoading>
-</HubConnectionGuard>
+</GameConnectionGuard>
 
 @code
 {
@@ -83,42 +88,35 @@
 
     [Inject] public required IClipboard Clipboard { get; set; }
 
-    private HubConnection? _hub;
+    private SpectatorRoomConnection? _connection;
     private RoomState? _store;
     private List<TurnData>? _turns;
+    private readonly CompositeDisposable _subscriptions = new();
 
     private void OnStoreChanged(RoomData room) => StateHasChanged();
 
     protected override async Task OnInitializedAsync()
     {
-        _turns = await Http.GetFromJsonAsync<List<TurnData>>($"api/rooms/{Id}/turns");
-        _hub = new HubConnectionBuilder()
-            .WithUrl(Navigator.ToAbsoluteUri("/hubs/game/spectate"))
-            .WithStatefulReconnect()
-            .AddJsonProtocol()
-            .Build();
+        _turns = await KarataClient.Turns.ListAsync(Id);
+        _connection = new SpectatorRoomConnection(new Uri("", UriKind.Relative), Id);
 
-        _hub.On<long, UserData, HandStatus>("AddHandToRoom", (id, user, status) =>
+        _connection.Events.AddHandToRoom.Subscribe(data =>
         {
-            _store!.Mutate(new RoomState.AddHandToRoom(id, user, status));
+            var (id, user, status) = data;
             Snackbar.Add($"{user.Username} has joined the room", Severity.Info, c => c.SnackbarVariant = Variant.Text);
-        });
+        }).AddTo(_subscriptions);
 
-        _hub.On<RoomData>("AddToRoom", room =>
+        _connection.Events.AddToRoom.Subscribe(room =>
         {
             _store = new RoomState(room, [new LoggingInterceptor<RoomData>(LoggerFactory), new TimingInterceptor<RoomData>(LoggerFactory)]);
             _store.Changes.Subscribe(OnStoreChanged);
 
+            _connection.Events.BindRoomState(_store).AddTo(_subscriptions);
             OnStoreChanged(room);
-        });
+        }).AddTo(_subscriptions);
 
-        _hub.On<UserData, int>("MoveCardCountFromDeckToHand", (user, num) => _store!.Mutate(new RoomState.MoveCardCountFromDeckToHand(user, num)));
 
-        _hub.On<List<Card>>("MoveCardsFromDeckToPile", cards => _store!.Mutate(new RoomState.MoveCardsFromDeckToPile(cards)));
-
-        _hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (user, cards) => _store!.Mutate(new RoomState.MoveCardsFromHandToPile(user, cards, false)));
-
-        _hub.On<SystemMessage>("ReceiveSystemMessage", message =>
+        _connection.Events.ReceiveSystemMessage.Subscribe(message =>
         {
             var severity = message.Type switch
             {
@@ -129,54 +127,42 @@
                 _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
             };
             Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
-        });
+        }).AddTo(_subscriptions);
 
-        _hub.On("ReclaimPile", () => _store!.Mutate(new RoomState.ReclaimPile()));
+        _connection.Events.RemoveFromRoom
+            .Select(_ => Observable.FromAsync(async _ =>
+            {
+                _store!.Dispose();
+                _store = null;
 
-        _hub.On("RemoveFromRoom", async () =>
+                StateHasChanged();
+
+                await _connection.StopAsync();
+                Navigator.NavigateTo("/game/join");
+            }))
+            .Concat()
+            .Subscribe()
+            .AddTo(_subscriptions);
+
+        _connection.Events.RemoveHandFromRoom
+            .Subscribe(user => Snackbar.Add($"{user.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text))
+            .AddTo(_subscriptions);
+
+        _connection.Events.UpdateGameStatus
+            .Subscribe(status => Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text))
+            .AddTo(_subscriptions);
+
+        _connection.Events.UpdateHandStatus.Subscribe(data =>
         {
-            _store!.Dispose();
-            _store = null;
-
-            StateHasChanged();
-
-            await _hub.StopAsync();
-            Navigator.NavigateTo("/game/join");
-        });
-
-        _hub.On<UserData>("RemoveHandFromRoom", user =>
-        {
-            _store!.Mutate(new RoomState.RemoveHandFromRoom(user));
-            Snackbar.Add($"{user.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
-        });
-
-        _hub.On<Card>("SetCurrentRequest", request => _store!.Mutate(new RoomState.SetCurrentRequest(request)));
-
-        _hub.On<UserData>("UpdateAdministrator", administrator => _store!.Mutate(new RoomState.UpdateAdministrator(administrator)));
-
-        _hub.On<GameStatus>("UpdateGameStatus", status =>
-        {
-            _store!.Mutate(new RoomState.UpdateGameStatus(status));
-            Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
-        });
-
-        _hub.On<UserData, HandStatus>("UpdateHandStatus", (user, status) =>
-        {
-            _store!.Mutate(new RoomState.UpdateHandStatus(user, status));
+            var (user, status) = data;
             Snackbar.Add($"{user.Username} has {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
-        });
+        }).AddTo(_subscriptions);
 
-        _hub.On<uint>("UpdatePick", num => _store!.Mutate(new RoomState.UpdatePick(num)));
+        _connection.Events.UpdateTurn
+            .Subscribe(turn => { Snackbar.Add($"It is now {_store!.State.Game.Hands[turn].Player.Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text); })
+            .AddTo(_subscriptions);
 
-        _hub.On<int>("UpdateTurn", turn =>
-        {
-            _store!.Mutate(new RoomState.UpdateTurn(turn));
-
-            Snackbar.Add($"It is now {_store!.State.Game.CurrentHand.Player.Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
-        });
-
-        await _hub.StartAsync();
-        await _hub.SendAsync("JoinRoom", Id);
+        await _connection.StartAsync();
     }
 
     private static string GetIcon(Card card) => card.Suit switch
@@ -213,11 +199,9 @@
         string CardCount(int num) => $"{num} {(num == 1 ? "card" : "cards")}";
     }
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
+        _subscriptions.Dispose();
         _store?.Dispose();
-
-        if (_hub is null) return;
-        await _hub.DisposeAsync();
     }
 }
