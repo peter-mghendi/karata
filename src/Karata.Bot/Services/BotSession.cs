@@ -28,9 +28,8 @@ public sealed class BotSession(
 
     private RoomState? _room;
     private TurnState _turn = new([], []);
-
     private UserData Player { get; } = player;
-    public HandData? CurrentHand => _room is null ? null : TryGetMyHand(_room);
+    public HandData CurrentHand => _room!.State.Game.Hands.First(h => h.Player.Id == Player.Id);
 
     public async Task StartAsync(CancellationToken ct)
     {
@@ -47,7 +46,7 @@ public sealed class BotSession(
                     new TimingInterceptor<ImmutableList<Card>>(loggers)
                 ]);
 
-                connection.Events.BindRoomState(_room, TryGetMyHand).AddTo(_subscriptions);
+                connection.Events.BindRoomState(_room).AddTo(_subscriptions);
             })
             .AddTo(_subscriptions);
 
@@ -95,7 +94,7 @@ public sealed class BotSession(
         await connection.StartAsync(
             onRequestCard: specific =>
             {
-                var hand = TryGetMyHand(_room);
+                var hand = CurrentHand;
                 var request = strategy.Request(_room!.State, hand.Cards, specific);
 
                 _log.LogInformation("I have to request a card. I will request {Card}.", request);
@@ -105,9 +104,6 @@ public sealed class BotSession(
             ct
         );
     }
-
-    private HandData TryGetMyHand(RoomState? room)
-        => room!.State.Game.Hands.First(h => h.Player.Id == Player.Id);
 
     private async Task PlayTurnSafeAsync(CancellationToken ct)
     {
@@ -123,7 +119,7 @@ public sealed class BotSession(
 
     private async Task PlayTurnAsync(CancellationToken ct)
     {
-        var cards = TryGetMyHand(_room).Cards;
+        var cards = CurrentHand.Cards;
         _log.LogInformation("It's my turn. I have {Cards}.", string.Join(", ", cards.Select(m => m.GetName())));
 
         var room = _room!.State;

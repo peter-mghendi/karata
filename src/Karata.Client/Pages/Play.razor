@@ -35,7 +35,7 @@
                                 if (_table)
                                 {
                                     <CardTableGameInterface Game="_room.State.Game"
-                                                            Hand="MyHand(_room)"
+                                                            Hand="CurrentHand"
                                                             Turn="_turn.State"
                                                             OnAddCardToTurn="info => _turn.Mutate(new TurnState.Insert(info))"
                                                             OnReorderCardInTurn="info => _turn.Mutate(new TurnState.Reorder(info))"
@@ -44,7 +44,7 @@
                                 else
                                 {
                                     <CardListGameInterface Game="_room.State.Game"
-                                                           Hand="MyHand(_room)"
+                                                           Hand="CurrentHand"
                                                            Turn="_turn.State"
                                                            OnAddCardToTurn="info => _turn.Mutate(new TurnState.Insert(info))"
                                                            OnReorderCardInTurn="info => _turn.Mutate(new TurnState.Reorder(info))"
@@ -70,7 +70,7 @@
                                     <MudText Align="Align.Center" Typo="Typo.body1" Class="mb-2">
                                         @_room.State.Id
                                         <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.ContentCopy"
-                                                       Color="Color.Primary" OnClick="CopyRoomId"/>
+                                                       Color="Color.Primary" OnClick="@CopyRoomId"/>
                                     </MudText>
                                     <MudText Align="Align.Center" Typo="Typo.body2" Class="gray-text">
                                         Room link
@@ -78,7 +78,7 @@
                                     <MudText Align="Align.Center" Typo="Typo.body2" Class="mb-8">
                                         @Navigator.Uri
                                         <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.ContentCopy"
-                                                       Color="Color.Primary" OnClick="CopyRoomLink"/>
+                                                       Color="Color.Primary" OnClick="@CopyRoomLink"/>
                                     </MudText>
                                     <MudGrid Spacing="2" Justify="Justify.Center">
                                         <MudItem xs="12" sm="8" md="6" lg="4" xl="3" xxl="2">
@@ -96,11 +96,11 @@
                                 {
                                     <MudTooltip Text="Pick card(s)">
                                         <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleUp"
-                                                       Color="Color.Inherit" OnClick="PerformEmptyTurn"/>
+                                                       Color="Color.Inherit" OnClick="@PerformEmptyTurn"/>
                                     </MudTooltip>
                                     <MudTooltip Text="Play card(s)">
                                         <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleDown"
-                                                       Color="Color.Inherit" OnClick="PerformCurrentTurn"/>
+                                                       Color="Color.Inherit" OnClick="@PerformCurrentTurn"/>
                                     </MudTooltip>
                                 }
                                 else
@@ -108,13 +108,13 @@
                                     <MudTooltip
                                         Text="@(IsAdministrator ? "Start Game" : "Only the admin can start the game.")">
                                         <MudIconButton Icon="@Icons.Material.Rounded.PlayArrow" Color="Color.Inherit"
-                                                       OnClick="StartGame" Disabled="!IsAdministrator"/>
+                                                       OnClick="@StartGame" Disabled="!IsAdministrator"/>
                                     </MudTooltip>
                                 }
 
                                 <MudTooltip Text="Leave Room">
                                     <MudIconButton Icon="@Icons.Material.Rounded.PersonRemove" Color="Color.Inherit"
-                                                   OnClick="() => LeaveRoom()"/>
+                                                   OnClick="@LeaveRoom"/>
                                 </MudTooltip>
                             </MudToolBar>
                         </MudPaper>
@@ -150,11 +150,11 @@
                                 <InformationPanel Room="_room!.State"/>
                             </MudExpansionPanel>
                             <MudExpansionPanel Text="Players">
-                                <PlayersPanel Me="MyHand(_room).Player" Room="_room.State" Controls="IsAdministrator"
+                                <PlayersPanel Me="CurrentHand.Player" Room="_room.State" Controls="IsAdministrator"
                                               OnSetAway="SetAway" OnVoidTurn="VoidTurn"/>
                             </MudExpansionPanel>
                             <MudExpansionPanel Text="Chat" MaxHeight="480" Class="overflow-y-auto">
-                                <ChatPanel Room="_room!.State" Me="MyHand(_room).Player" OnSend="Send"/>
+                                <ChatPanel Room="_room!.State" Me="CurrentHand.Player" OnSend="Send"/>
                             </MudExpansionPanel>
                         </MudExpansionPanels>
                     </MudItem>
@@ -179,8 +179,8 @@
     private string? _username;
     private readonly CompositeDisposable _subscriptions = new();
 
-    private HandData MyHand(RoomState? room) => room!.State.Game.Hands.Single(h => h.Player.Username == _username);
-    private bool IsAdministrator => MyHand(_room).Player == _room?.State.Administrator;
+    private HandData CurrentHand => _room!.State.Game.Hands.Single(h => h.Player.Username == _username);
+    private bool IsAdministrator => CurrentHand.Player == _room?.State.Administrator;
 
     private void OnStoreChanged<T>(T data) where T : class => StateHasChanged();
 
@@ -236,17 +236,23 @@
             _room.Changes
                 .Merge<object>(_turn.Changes)
                 .Throttle(TimeSpan.FromMilliseconds(500))
-                .Subscribe(OnStoreChanged);
+                .Subscribe(OnStoreChanged)
+                .AddTo(_subscriptions);
 
-            _connection.Events.BindRoomState(_room, MyHand).AddTo(_subscriptions);
+            _connection.Events.BindRoomState(_room).AddTo(_subscriptions);
             StateHasChanged();
         }).AddTo(_subscriptions);
 
-        _connection.Events.EndGame.Subscribe(async _ =>
-        {
-            await _connection.StopAsync();
-            Navigator.NavigateTo($"/game/{_room!.State.Id.ToString()}/over");
-        }).AddTo(_subscriptions);
+        _connection.Events.EndGame
+            .Select(_ => Observable.FromAsync(async _ =>
+                {
+                    await _connection.StopAsync();
+                    Navigator.NavigateTo($"/game/{_room!.State.Id.ToString()}/over");
+                }
+            ))
+            .Concat()
+            .Subscribe()
+            .AddTo(_subscriptions);
 
         _connection.Events.NotifyTurnProcessed.Subscribe(_ => _turn.Mutate(new TurnState.Clear())).AddTo(_subscriptions);
 

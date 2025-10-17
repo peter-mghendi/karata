@@ -26,10 +26,9 @@ public sealed class PlayerRoomConnection(Uri url, Guid room) : IRoomConnection
         Hub.On<RoomData>("AddToRoom", r => Events.OnAddToRoom(r));
         Hub.On<long, UserData, HandStatus>("AddHandToRoom", (i, u, s) => Events.OnAddHandToRoom(i, u, s));
         Hub.On("EndGame", () => Events.OnEndGame());
-        Hub.On<UserData, int>("MoveCardCountFromDeckToHand", (u, n) => Events.OnMoveCardCountFromDeckToHand(u, n));
-        Hub.On<List<Card>>("MoveCardsFromDeckToHand", c => Events.OnMoveCardsFromDeckToHand(c));
+        Hub.On<UserData, IReadOnlyList<Card>>("MoveCardsFromDeckToHand", (u, c) => Events.OnMoveCardsFromDeckToHand(u, c));
         Hub.On<List<Card>>("MoveCardsFromDeckToPile", c => Events.OnMoveCardsFromDeckToPile(c));
-        Hub.On<UserData, List<Card>>("MoveCardsFromHandToPile", (u, c) => Events.OnMoveCardsFromHandToPile(u, c));
+        Hub.On<UserData, List<Card>, bool>("MoveCardsFromHandToPile", (u, c, v) => Events.OnMoveCardsFromHandToPile(u, c, v));
         Hub.On("NotifyTurnProcessed", () => Events.OnNotifyTurnProcessed());
         Hub.On<ChatData>("ReceiveChat", m => Events.OnReceiveChat(m));
         Hub.On<SystemMessage>("ReceiveSystemMessage", m => Events.OnReceiveSystemMessage(m));

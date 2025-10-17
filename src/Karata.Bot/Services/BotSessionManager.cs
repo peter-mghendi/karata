@@ -31,10 +31,6 @@ public sealed class BotSessionManager(
 
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var session = bots.Create(tokens.CurrentUser!, room, password);
-        var entry = new Entry(room, DateTimeOffset.UtcNow, cancellation, Task.CompletedTask, session);
-
-        if (!_sessions.TryAdd(room, entry)) return Task.FromResult(Snapshot(_sessions[room]));
-
         var runner = Task.Run(async () =>
         {
             try
@@ -65,7 +61,8 @@ public sealed class BotSessionManager(
             }
         }, CancellationToken.None);
 
-        _sessions[room] = entry with { Runner = runner };
+        var entry = new Entry(room, DateTimeOffset.UtcNow, cancellation, runner, session);
+        _ = _sessions.TryAdd(room, entry);
         return Task.FromResult(Snapshot(_sessions[room]));
     }
 
@@ -107,10 +104,5 @@ public sealed class BotSessionManager(
 
     public async ValueTask DisposeAsync() => await Task.WhenAll(from key in _sessions.Keys select StopAsync(key, CancellationToken.None));
 
-    private HandData Snapshot(Entry e) => e.Session.CurrentHand ?? new HandData
-    {
-        Id = 0,
-        Status = HandStatus.Away,
-        Player = tokens.CurrentUser!
-    };
+    private HandData Snapshot(Entry e) => e.Session.CurrentHand;
 }

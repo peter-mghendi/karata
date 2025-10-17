@@ -11,13 +11,13 @@ public interface ISpectatorClient
     Task AddToRoom(RoomData room);
     
     // Moves n cards from deck to a player's hand. 
-    Task MoveCardCountFromDeckToHand(UserData user, int num);
+    Task MoveCardsFromDeckToHand(UserData user, List<Card> cards);
     
     // Moves cards from deck to the pile. 
     Task MoveCardsFromDeckToPile(List<Card> cards);
     
     // Moves cards from hand to the pile. 
-    Task MoveCardsFromHandToPile(UserData user, List<Card> cards);
+    Task MoveCardsFromHandToPile(UserData user, List<Card> cards, bool visible);
     
     // Receives a system message.
     Task ReceiveSystemMessage(SystemMessage message);

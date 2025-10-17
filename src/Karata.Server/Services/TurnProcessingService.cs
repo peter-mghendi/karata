@@ -65,8 +65,8 @@ public class TurnProcessingService(
             await DetermineCardRequest(room, turn);
             ApplyTurnDelta(room, turn);
 
-            await NotifyClientsOfGameState(player, turn);
-            await EnsurePendingCardsPicked(room, turn);
+            await NotifyClientsOfGameState(room, player, turn);
+            await EnsurePendingCardsPicked(room, player, turn);
             await CheckRemainingCards(room, player, turn);
 
             GameTurns.Advance(room.Game);
@@ -191,14 +191,16 @@ public class TurnProcessingService(
         (room.Game.Give, room.Game.Pick) = (turn.Delta!.Give, turn.Delta!.Pick);
     }
 
-    private async Task NotifyClientsOfGameState(User player, Turn turn)
+    private async Task NotifyClientsOfGameState(Room room, User player, Turn turn)
     {
         await Me.NotifyTurnProcessed();
-        await RoomPlayers.MoveCardsFromHandToPile(player, turn.Delta!.Cards);
-        await RoomSpectators.MoveCardsFromHandToPile(player, turn.Delta!.Cards);
+
+        await Me.MoveCardsFromHandToPile(player, turn.Delta!.Cards, true);
+        await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).MoveCardsFromHandToPile(player, turn.Delta!.Cards, false);
+        await RoomSpectators.MoveCardsFromHandToPile(player, turn.Delta!.Cards, false);
     }
 
-    private async Task EnsurePendingCardsPicked(Room room, Turn turn)
+    private async Task EnsurePendingCardsPicked(Room room, User player, Turn turn)
     {
         if (room.Game.Pick <= 0) return;
 
@@ -219,17 +221,18 @@ public class TurnProcessingService(
         room.Game.CurrentHand.Cards.AddRange(dealt);
         turn.Picked = dealt;
 
-        await Me.MoveCardsFromDeckToHand(dealt);
-        await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-            .MoveCardCountFromDeckToHand(room.Game.CurrentHand.Player.ToData(), dealt.Count);
-        await RoomSpectators.MoveCardCountFromDeckToHand(room.Game.CurrentHand.Player.ToData(), dealt.Count);
+        var dummies = Enumerable.Repeat(new Card(), dealt.Count).ToList();
+
+        await Me.MoveCardsFromDeckToHand(player, dealt);
+        await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).MoveCardsFromDeckToHand(player, dummies);
+        await RoomSpectators.MoveCardsFromDeckToHand(player, dummies);
     }
 
     private async Task CheckRemainingCards(Room room, User player, Turn turn)
     {
         if (room.Game.CurrentHand.Cards.Count != 0)
         {
-            await DetermineLastCardStatus(room, turn);
+            await DetermineLastCardStatus(room, player, turn);
             return;
         }
 
@@ -240,7 +243,7 @@ public class TurnProcessingService(
         await RoomSpectators.ReceiveSystemMessage(Messages.Cardless(player));
     }
 
-    private async Task DetermineLastCardStatus(Room room, Turn turn)
+    private async Task DetermineLastCardStatus(Room room, User player, Turn turn)
     {
         try
         {
@@ -248,9 +251,8 @@ public class TurnProcessingService(
             if (turn.IsLastCard)
             {
                 room.Game.CurrentHand.IsLastCard = true;
-                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-                    .ReceiveSystemMessage(Messages.LastCard(room.Game.CurrentHand.Player));
-                await RoomSpectators.ReceiveSystemMessage(Messages.LastCard(room.Game.CurrentHand.Player));
+                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).ReceiveSystemMessage(Messages.LastCard(player));
+                await RoomSpectators.ReceiveSystemMessage(Messages.LastCard(player));
             }
         }
         catch (IOException)

@@ -18,19 +18,6 @@ public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         }
     }
 
-    public record MoveCardCountFromDeckToHand(UserData User, int Count) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state)
-        {
-            var hands = state.Game.Hands.Select(h =>
-                h.Player == User ? h with { Cards = [..h.Cards, ..Enumerable.Repeat(new Card(), Count)] } : h);
-            return state with
-            {
-                Game = state.Game with { Hands = [..hands], Deck = new Deck(state.Game.Deck.SkipLast(Count)) }
-            };
-        }
-    }
-
     public record MoveCardsFromDeckToHand(UserData User, List<Card> Cards) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state)
@@ -59,11 +46,11 @@ public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         }
     }
 
-    public record MoveCardsFromHandToPile(UserData User, List<Card> Cards, bool Mine) : StateAction<RoomData>
+    public record MoveCardsFromHandToPile(UserData User, List<Card> Cards, bool Visible) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state)
         {
-            var hands = Mine switch
+            var hands = Visible switch
             {
                 true => state.Game.Hands.Select(h => h.Player == User ? h with { Cards = [..h.Cards.Except(Cards)] } : h),
                 false => state.Game.Hands.Select(h => h.Player == User ? h with { Cards = h.Cards[Cards.Count..] } : h)

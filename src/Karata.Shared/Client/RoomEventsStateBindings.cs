@@ -7,13 +7,13 @@ namespace Karata.Shared.Client;
 
 public static class RoomEventsStateBindings  
 {
-    public static IDisposable BindRoomState(this RoomEvents e, RoomState room, Func<RoomState, HandData>? selector = null)
+    public static IDisposable BindRoomState(this RoomEvents e, RoomState room)
     {
         var actions = Observable.Merge<StateAction<RoomData>>(
             e.AddHandToRoom.Select(x => new RoomState.AddHandToRoom(x.Id, x.User, x.Status)),
-            e.MoveCardCountFromDeckToHand.Select(x => new RoomState.MoveCardCountFromDeckToHand(x.User, x.Count)),
+            e.MoveCardsFromDeckToHand.Select(x => new RoomState.MoveCardsFromDeckToHand(x.User, [..x.Cards])),
             e.MoveCardsFromDeckToPile.Select(cs => new RoomState.MoveCardsFromDeckToPile([..cs])),
-            e.MoveCardsFromHandToPile.Select(x => new RoomState.MoveCardsFromHandToPile(x.User, [..x.Cards], selector is not null && selector(room).Player == x.User)),
+            e.MoveCardsFromHandToPile.Select(x => new RoomState.MoveCardsFromHandToPile(x.User, [..x.Cards], x.Visible)),
             e.ReceiveChat.Select(m => new RoomState.ReceiveChat(m)),
             e.ReclaimPile.Select(_ => new RoomState.ReclaimPile()),
             e.RemoveHandFromRoom.Select(u => new RoomState.RemoveHandFromRoom(u)),
@@ -24,11 +24,6 @@ public static class RoomEventsStateBindings
             e.UpdatePick.Select(n => new RoomState.UpdatePick(n)),
             e.UpdateTurn.Select(t => new RoomState.UpdateTurn(t))
         );
-
-        if (selector is not null)
-        {
-            actions = actions.Merge(e.MoveCardsFromDeckToHand.Select(cs => new RoomState.MoveCardsFromDeckToHand(selector(room).Player, [..cs])));
-        }
 
         return actions.Subscribe(room.Mutate);
     }

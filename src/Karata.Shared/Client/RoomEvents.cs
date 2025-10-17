@@ -14,17 +14,14 @@ public sealed class RoomEvents : IDisposable
 
     private readonly ISubject<Unit> _endGame = Subject.Synchronize(new Subject<Unit>());
 
-    private readonly ISubject<(UserData User, int Count)> _moveCardCountFromDeckToHand =
-        Subject.Synchronize(new Subject<(UserData, int)>());
-
-    private readonly ISubject<IReadOnlyList<Card>> _moveCardsFromDeckToHand =
-        Subject.Synchronize(new Subject<IReadOnlyList<Card>>());
+    private readonly ISubject<(UserData User, IReadOnlyList<Card> Cards)> _moveCardsFromDeckToHand =
+        Subject.Synchronize(new Subject<(UserData, IReadOnlyList<Card>)>());
 
     private readonly ISubject<IReadOnlyList<Card>> _moveCardsFromDeckToPile =
         Subject.Synchronize(new Subject<IReadOnlyList<Card>>());
 
-    private readonly ISubject<(UserData User, IReadOnlyList<Card> Cards)> _moveCardsFromHandToPile =
-        Subject.Synchronize(new Subject<(UserData, IReadOnlyList<Card>)>());
+    private readonly ISubject<(UserData User, IReadOnlyList<Card> Cards, bool Visible)> _moveCardsFromHandToPile =
+        Subject.Synchronize(new Subject<(UserData, IReadOnlyList<Card>, bool Visible)>());
 
     private readonly ISubject<Unit> _notifyTurnProcessed = Subject.Synchronize(new Subject<Unit>());
     private readonly ISubject<ChatData> _receiveChat = Subject.Synchronize(new Subject<ChatData>());
@@ -45,10 +42,9 @@ public sealed class RoomEvents : IDisposable
     public IObservable<RoomData> AddToRoom => _addToRoom.AsObservable();
     public IObservable<(long Id, UserData User, HandStatus Status)> AddHandToRoom => _addHandToRoom.AsObservable();
     public IObservable<Unit> EndGame => _endGame.AsObservable();
-    public IObservable<(UserData User, int Count)> MoveCardCountFromDeckToHand => _moveCardCountFromDeckToHand.AsObservable();
-    public IObservable<IReadOnlyList<Card>> MoveCardsFromDeckToHand => _moveCardsFromDeckToHand.AsObservable();
+    public IObservable<(UserData User, IReadOnlyList<Card> Cards)> MoveCardsFromDeckToHand => _moveCardsFromDeckToHand.AsObservable();
     public IObservable<IReadOnlyList<Card>> MoveCardsFromDeckToPile => _moveCardsFromDeckToPile.AsObservable();
-    public IObservable<(UserData User, IReadOnlyList<Card> Cards)> MoveCardsFromHandToPile => _moveCardsFromHandToPile.AsObservable();
+    public IObservable<(UserData User, IReadOnlyList<Card> Cards, bool Visible)> MoveCardsFromHandToPile => _moveCardsFromHandToPile.AsObservable();
     public IObservable<Unit> NotifyTurnProcessed => _notifyTurnProcessed.AsObservable();
     public IObservable<ChatData> ReceiveChat => _receiveChat.AsObservable();
     public IObservable<SystemMessage> ReceiveSystemMessage => _receiveSystemMessage.AsObservable();
@@ -68,13 +64,11 @@ public sealed class RoomEvents : IDisposable
 
     internal void OnEndGame() => _endGame.OnNext(Unit.Default);
 
-    internal void OnMoveCardCountFromDeckToHand(UserData u, int n) => _moveCardCountFromDeckToHand.OnNext((u, n));
-
-    internal void OnMoveCardsFromDeckToHand(IReadOnlyList<Card> c) => _moveCardsFromDeckToHand.OnNext(c);
+    internal void OnMoveCardsFromDeckToHand(UserData u, IReadOnlyList<Card> c) => _moveCardsFromDeckToHand.OnNext((u, c));
 
     internal void OnMoveCardsFromDeckToPile(IReadOnlyList<Card> c) => _moveCardsFromDeckToPile.OnNext(c);
 
-    internal void OnMoveCardsFromHandToPile(UserData u, IReadOnlyList<Card> c) => _moveCardsFromHandToPile.OnNext((u, c));
+    internal void OnMoveCardsFromHandToPile(UserData u, IReadOnlyList<Card> c, bool v) => _moveCardsFromHandToPile.OnNext((u, c, v));
 
     internal void OnNotifyTurnProcessed() => _notifyTurnProcessed.OnNext(Unit.Default);
 
@@ -104,7 +98,6 @@ public sealed class RoomEvents : IDisposable
         _addToRoom.OnCompleted();
         _addHandToRoom.OnCompleted();
         _endGame.OnCompleted();
-        _moveCardCountFromDeckToHand.OnCompleted();
         _moveCardsFromDeckToHand.OnCompleted();
         _moveCardsFromDeckToPile.OnCompleted();
         _moveCardsFromHandToPile.OnCompleted();
