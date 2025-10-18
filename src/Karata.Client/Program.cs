@@ -36,7 +36,8 @@ builder.Services.AddKarataCore(karata =>
     karata.Host = new Uri(builder.HostEnvironment.BaseAddress);
     karata.TokenProvider = async (services, _) =>
     {
-        var provider = services.GetRequiredService<IAccessTokenProvider>();
+        using var scope = services.CreateScope();
+        var provider = scope.ServiceProvider.GetRequiredService<IAccessTokenProvider>();
         var result = await provider.RequestAccessToken();
 
         return result.TryGetToken(out var token) ? token.Value : null;

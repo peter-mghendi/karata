@@ -54,6 +54,10 @@ builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.Authenticatio
     };
 });
 
+builder.Services.AddCors(cors =>
+{
+    cors.AddPolicy("AllowAll", policy => policy.AllowAnyOrigin().AllowAnyHeader());
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHealthChecks();
 builder.Services.AddSignalR();
@@ -109,6 +113,7 @@ app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseCors("AllowAll");
 
 app.MapHealthChecks("/health");
 

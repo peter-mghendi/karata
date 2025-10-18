@@ -13,7 +13,7 @@ public static class DependencyInjection
         services.AddSingleton<KarataClient>(sp =>
         {
             var o = sp.GetRequiredService<IOptions<KarataClientOptions>>().Value;
-            return new KarataClient(o.Host, () => o.TokenProvider(sp, default));
+            return new KarataClient(o.Host, () => o.TokenProvider(sp, CancellationToken.None));
         });
 
         services.AddSingleton<IKarataEngine, TwoPassKarataEngine>();
