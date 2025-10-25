@@ -1,6 +1,6 @@
-namespace Karata.Client.Infrastructure.Security;
+namespace Karata.Web.Infrastructure.Security;
 
-// Karata.Client is a public client - there is no client secret since it uses the Authorization Code grant.
+// Karata.Web is a public client - there is no client secret since it uses the Authorization Code grant.
 public static class Configuration
 {
     public static Dictionary<string, ClientConfiguration> Client = new()

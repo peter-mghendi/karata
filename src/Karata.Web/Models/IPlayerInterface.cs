@@ -1,11 +1,11 @@
 #pragma warning disable BL0007
 
 using System.Collections.Immutable;
-using Microsoft.AspNetCore.Components;
-using Karata.Shared.Models;
 using Karata.Cards;
+using Karata.Shared.Models;
+using Microsoft.AspNetCore.Components;
 
-namespace Karata.Client.Models;
+namespace Karata.Web.Models;
 
 public interface IPlayerInterface
 {

@@ -1,9 +1,9 @@
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Karata.Client;
-using Karata.Client.Infrastructure.Security;
+using Karata.Web;
 using Karata.Shared;
+using Karata.Web.Infrastructure.Security;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using MudBlazor.Services;
 using MudExtensions.Services;

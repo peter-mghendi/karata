@@ -1,4 +1,4 @@
-namespace Karata.Client.Support;
+namespace Karata.Web.Support;
 
 public static class CardIcons
 {

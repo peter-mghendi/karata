@@ -1,7 +1,7 @@
 using Karata.Cards;
 using static Karata.Cards.Card.CardFace;
 
-namespace Karata.Client.Extensions;
+namespace Karata.Web.Extensions;
 
 public static class CardExtensions
 {

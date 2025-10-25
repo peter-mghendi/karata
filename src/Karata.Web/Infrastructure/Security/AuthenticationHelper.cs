@@ -1,9 +1,8 @@
 using System.Web;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.JSInterop;
 
-namespace Karata.Client.Infrastructure.Security;
+namespace Karata.Web.Infrastructure.Security;
 
 public sealed class AuthenticationHelper(NavigationManager navigator, IJSRuntime js)
 {

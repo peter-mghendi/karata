@@ -1,3 +1,3 @@
-namespace Karata.Client.Infrastructure.Security;
+namespace Karata.Web.Infrastructure.Security;
 
 public record ClientConfiguration(string Authority, string Client);
