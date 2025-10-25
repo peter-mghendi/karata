@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 using Karata.Bot.Strategy;
 using Karata.Cards;
@@ -10,7 +11,6 @@ using Karata.Shared.Engine;
 using Karata.Shared.Engine.Exceptions;
 using Karata.Shared.Models;
 using Karata.Shared.State;
-using Karata.Shared.Support;
 using static Karata.Shared.Models.GameStatus;
 
 namespace Karata.Bot.Services;
@@ -31,7 +31,7 @@ public sealed class BotSession(
     private UserData Player { get; } = player;
     public HandData CurrentHand => _room!.State.Game.Hands.First(h => h.Player.Id == Player.Id);
 
-    public async Task StartAsync(CancellationToken ct)
+    public async Task StartAsync(CancellationToken cancellation)
     {
         connection.Events.AddToRoom
             .Subscribe(r =>
@@ -46,50 +46,50 @@ public sealed class BotSession(
                     new TimingInterceptor<ImmutableList<Card>>(loggers)
                 ]);
 
-                connection.Events.BindRoomState(_room).AddTo(_subscriptions);
+                connection.Events.BindRoomState(_room).DisposeWith(_subscriptions);
             })
-            .AddTo(_subscriptions);
+            .DisposeWith(_subscriptions);
 
         connection.Events.UpdateGameStatus
             .Where(_ => _room?.State.Game.Status is Ongoing)
-            .Select(_ => Observable.FromAsync(async _ => await connection.SendChat("gg", ct)))
+            .Select(_ => Observable.FromAsync(async _ => await connection.SendChat("gg", cancellation)))
             .Concat()
             .Subscribe()
-            .AddTo(_subscriptions);
+            .DisposeWith(_subscriptions);
 
         connection.Events.AddToRoom
             .Where(_ => _room?.State.Game.Status is Ongoing && _room.State.Game.CurrentHand.Player.Id == Player.Id)
             .Select(_ => Observable.FromAsync(async _ => await PlayTurnSafeAsync(CancellationToken.None)))
             .Concat()
             .Subscribe()
-            .AddTo(_subscriptions);
+            .DisposeWith(_subscriptions);
         
-        connection.Events.NotifyTurnProcessed.Subscribe(_ => _turn.Mutate(new TurnState.Clear())).AddTo(_subscriptions);
+        connection.Events.NotifyTurnProcessed.Subscribe(_ => _turn.Mutate(new TurnState.Clear())).DisposeWith(_subscriptions);
 
         connection.Events.UpdateGameStatus
             .Where(_ => _room?.State.Game.Status is Ongoing && _room.State.Game.CurrentHand.Player.Id == Player.Id)
             .Select(_ => Observable.FromAsync(async _ => await PlayTurnSafeAsync(CancellationToken.None)))
             .Concat()
             .Subscribe()
-            .AddTo(_subscriptions);
+            .DisposeWith(_subscriptions);
 
         connection.Events.ReceiveChat
             .Where(_ => _room?.State.Game.Status is Ongoing && _room.State.Game.CurrentHand.Player.Id == Player.Id)
             .Select(_ => Observable.FromAsync(async _ => await PlayTurnSafeAsync(CancellationToken.None)))
             .Concat()
             .Subscribe()
-            .AddTo(_subscriptions);
+            .DisposeWith(_subscriptions);
 
         connection.Events.UpdateTurn
             .Where(_ => _room?.State.Game.Status is Ongoing && _room.State.Game.CurrentHand.Player.Id == Player.Id)
             .Select(_ => Observable.FromAsync(async _ => await PlayTurnSafeAsync(CancellationToken.None)))
             .Concat()
             .Subscribe()
-            .AddTo(_subscriptions);
+            .DisposeWith(_subscriptions);
 
         connection.Events.ReceiveSystemMessage
             .Subscribe(message => _log.LogInformation("{Message}", message))
-            .AddTo(_subscriptions);
+            .DisposeWith(_subscriptions);
 
         await connection.StartAsync(
             onRequestCard: specific =>
@@ -101,8 +101,9 @@ public sealed class BotSession(
                 return Task.FromResult(request);
             },
             onRequestLastCard: () => Task.FromResult(true),
-            ct
+            cancellation
         );
+        await connection.SendChat("hi guys", cancellation);
     }
 
     private async Task PlayTurnSafeAsync(CancellationToken ct)

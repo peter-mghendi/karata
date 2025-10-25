@@ -48,8 +48,6 @@ public sealed class PlayerRoomConnection(Uri url, Guid room) : IRoomConnection
 
         await Hub.StartAsync(cancellation);
         await Hub.SendAsync("JoinRoom", room, cancellationToken: cancellation);
-
-        await SendChat("hi guys", cancellation);
     }
 
     public async Task LeaveRoom() => await Hub!.SendAsync(nameof(LeaveRoom), room);

@@ -130,5 +130,8 @@ public class KarataContext(DbContextOptions<KarataContext> options) : DbContext(
                 json => JsonSerializer.Deserialize<Dictionary<string, object>>(json, options) ?? new()
             );
         modelBuilder.Entity<Activity>().Navigation(a => a.Actor).AutoInclude();
+        
+        // Chat
+        modelBuilder.Entity<Chat>().Navigation(c => c.Sender).AutoInclude();
     }
 }

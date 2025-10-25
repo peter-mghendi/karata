@@ -1,12 +1,12 @@
 @page "/game/{id:guid}/spectate"
 
 @using System.Reactive.Disposables
+@using System.Reactive.Disposables.Fluent
 @using System.Reactive.Linq
 @using Karata.Client.Support
 @using Karata.Pebble.Interceptors
 @using Karata.Shared.Client
 @using Karata.Shared.State
-@using Karata.Shared.Support
 @using TextCopy
 
 @implements IDisposable
@@ -104,16 +104,16 @@
         {
             var (id, user, status) = data;
             Snackbar.Add($"{user.Username} has joined the room", Severity.Info, c => c.SnackbarVariant = Variant.Text);
-        }).AddTo(_subscriptions);
+        }).DisposeWith(_subscriptions);
 
         _connection.Events.AddToRoom.Subscribe(room =>
         {
             _store = new RoomState(room, [new LoggingInterceptor<RoomData>(LoggerFactory), new TimingInterceptor<RoomData>(LoggerFactory)]);
             _store.Changes.Subscribe(OnStoreChanged);
 
-            _connection.Events.BindRoomState(_store).AddTo(_subscriptions);
+            _connection.Events.BindRoomState(_store).DisposeWith(_subscriptions);
             OnStoreChanged(room);
-        }).AddTo(_subscriptions);
+        }).DisposeWith(_subscriptions);
 
 
         _connection.Events.ReceiveSystemMessage.Subscribe(message =>
@@ -127,7 +127,7 @@
                 _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
             };
             Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
-        }).AddTo(_subscriptions);
+        }).DisposeWith(_subscriptions);
 
         _connection.Events.RemoveFromRoom
             .Select(_ => Observable.FromAsync(async _ =>
@@ -142,25 +142,25 @@
             }))
             .Concat()
             .Subscribe()
-            .AddTo(_subscriptions);
+            .DisposeWith(_subscriptions);
 
         _connection.Events.RemoveHandFromRoom
             .Subscribe(user => Snackbar.Add($"{user.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text))
-            .AddTo(_subscriptions);
+            .DisposeWith(_subscriptions);
 
         _connection.Events.UpdateGameStatus
             .Subscribe(status => Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text))
-            .AddTo(_subscriptions);
+            .DisposeWith(_subscriptions);
 
         _connection.Events.UpdateHandStatus.Subscribe(data =>
         {
             var (user, status) = data;
             Snackbar.Add($"{user.Username} has {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
-        }).AddTo(_subscriptions);
+        }).DisposeWith(_subscriptions);
 
         _connection.Events.UpdateTurn
             .Subscribe(turn => { Snackbar.Add($"It is now {_store!.State.Game.Hands[turn].Player.Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text); })
-            .AddTo(_subscriptions);
+            .DisposeWith(_subscriptions);
 
         await _connection.StartAsync();
     }
