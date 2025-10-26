@@ -1,0 +1,10 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Karata.App.ViewModels"
+             x:Class="Karata.App.Views.PlayView"
+             x:DataType="vm:PlayViewModel">
+    <StackPanel HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+        <TextBlock Text="Hi, I'm the play view!" />
+    </StackPanel>
+</UserControl>

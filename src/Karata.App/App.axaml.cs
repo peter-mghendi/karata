@@ -1,17 +1,20 @@
 using System;
-using System.Threading.Tasks;
+using System.Reactive.Concurrency;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.ReactiveUI;
+using Karata.App.Infrastructure;
 using Karata.App.ViewModels;
 using Karata.App.Views;
-using Karata.Shared.Client;
-using MainView = Karata.App.Views.MainView;
-using MainWindow = Karata.App.Views.MainWindow;
+using Microsoft.Extensions.Hosting;
+using ReactiveUI;
+using Splat.Microsoft.Extensions.DependencyInjection;
 
 namespace Karata.App;
 
-public partial class App : Application
+public sealed partial class App : Application
 {
     public override void Initialize()
     {
@@ -20,23 +23,36 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        var karata = new KarataClient(new Uri("https://localhost:7240"), () => Task.FromResult<string?>(string.Empty));
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        var builder = new HostBuilder().ConfigureServices((_, services) => services.Configure());
+        var host = builder.Build();
+        host.Services.UseMicrosoftDependencyResolver();
+
+        var screen = host.Services.GetService(typeof(IScreen)) as IScreen ??
+                     throw new InvalidOperationException("IScreen not registered");
+        var shell = new ShellView
         {
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = new MainViewModel(karata)
-            };
-        }
-        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
+            ViewModel = screen as ShellViewModel ?? throw new InvalidOperationException("IScreen is not ShellViewModel")
+        };
+
+        var locator = (IViewLocator)host.Services.GetService(typeof(IViewLocator))!;
+        shell.FindControl<RoutedViewHost>("RouterHost")!.ViewLocator = locator;
+
+        switch (ApplicationLifetime)
         {
-            singleViewPlatform.MainView = new MainView
-            {
-                DataContext = new MainViewModel(karata)
-            };
+            case IClassicDesktopStyleApplicationLifetime desktop:
+                desktop.MainWindow = new Window { Content = shell, Title = "Karata" };
+                desktop.Exit += (_, _) => host.Dispose();
+                break;
+            case ISingleViewApplicationLifetime singleView:
+                singleView.MainView = shell;
+                break;
         }
 
+        RxApp.MainThreadScheduler.Schedule(() =>
+        {
+            var home = (HomeViewModel)host.Services.GetService(typeof(HomeViewModel))!;
+            screen.Router.NavigateAndReset.Execute(home).Subscribe();
+        });
         base.OnFrameworkInitializationCompleted();
     }
-
 }

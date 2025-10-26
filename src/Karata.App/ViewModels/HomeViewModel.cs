@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -10,12 +11,16 @@ using ReactiveUI;
 // it doesn't require System.Reactive. Otherwise implement INotifyPropertyChanged.
 namespace Karata.App.ViewModels;
 
-public class MainViewModel(KarataClient karata) : ViewModelBase
+public class HomeViewModel(IScreen screen, KarataClient karata) : ViewModelBase
 {
     private ObservableCollection<ActivityData> _activity = new();
     private bool _loading;
     private string? _error;
     private bool _loadedOnce;
+
+    public override IScreen HostScreen { get; } = screen;
+
+    public override string UrlPathSegment => "home";    
 
     public ObservableCollection<ActivityData> Activity
     {
