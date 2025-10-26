@@ -16,19 +16,18 @@
                    VerticalAlignment="Center" />
       </rxui:RoutedViewHost.DefaultContent>
     </rxui:RoutedViewHost>
+    
+    <DockPanel Grid.Row="1" Margin="8">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+        <TextBlock Text="{Binding Username}" Margin="0,0,10,0" />
+        <Button Content="Logout" Command="{Binding Logout}" />
+      </StackPanel>
 
-    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="8">
-      <StackPanel.Styles>
-        <Style Selector="StackPanel > :is(Control)">
-          <Setter Property="Margin" Value="2"/>
-        </Style>
-        <Style Selector="StackPanel > TextBlock">
-          <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-      </StackPanel.Styles>
-      <Button Content="Back" Command="{Binding Back}" />
-      <Button Content="Home" Command="{Binding Home}" />
-      <Button Content="Play" Command="{Binding Play}" />
-    </StackPanel>
+      <StackPanel Orientation="Horizontal">
+        <Button Content="Back" Command="{Binding Back}" />
+        <Button Content="Home" Command="{Binding Home}" />
+        <Button Content="Play" Command="{Binding Play}" />
+      </StackPanel>
+    </DockPanel>
   </Grid>
 </UserControl>

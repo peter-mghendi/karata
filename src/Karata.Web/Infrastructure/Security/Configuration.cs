@@ -1,3 +1,5 @@
+using Karata.Shared.Security;
+
 namespace Karata.Web.Infrastructure.Security;
 
 // Karata.Web is a public client - there is no client secret since it uses the Authorization Code grant.
