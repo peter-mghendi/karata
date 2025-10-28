@@ -10,7 +10,7 @@ public partial class RoomMembershipService
 {
     public async Task JoinAsync(string connection)
     {
-        var player = (await users.FindByIdAsync(CurrentPlayerId))!;
+        var player = (await context.Users.FindAsync(CurrentPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
 
         bool authorized;
@@ -19,8 +19,6 @@ public partial class RoomMembershipService
 
         ValidateJoiningGameState(room, player);
         presence.AddPresence(player.Id, room.Id.ToString());
-
-        // var cards = BuildCardMap(room, player);
         
         switch (room.Game.Status)
         {
@@ -40,8 +38,8 @@ public partial class RoomMembershipService
                 await AddToRoom(connection);
                 await Me.AddToRoom(EnrichRoomDataForUser(room, player));
                 await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-                    .AddHandToRoom(hand.Player.ToData(), hand.Status);
-                await RoomSpectators.AddHandToRoom(hand.Player.ToData(), hand.Status);
+                    .AddHandToRoom(hand.Id, hand.Player.ToData(), hand.Status);
+                await RoomSpectators.AddHandToRoom(hand.Id, hand.Player.ToData(), hand.Status);
                 break;
             case GameStatus.Ongoing:
                 var rejoined = room.Game.Hands.Single(h => h.Player.Id == player.Id);

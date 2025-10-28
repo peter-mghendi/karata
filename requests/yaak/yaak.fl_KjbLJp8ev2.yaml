@@ -1,0 +1,20 @@
+type: folder
+model: folder
+id: fl_KjbLJp8ev2
+createdAt: 2025-10-28T08:16:14.629153347
+updatedAt: 2025-10-28T10:24:33.790553227
+workspaceId: wk_DXsTB3LLeB
+folderId: null
+authentication:
+  accessTokenUrl: ${[ karata_authority_access_token_url ]}
+  audience: ${[ karata_server_client_id ]}
+  authorizationUrl: ${[ karata_authority_authorization_url ]}
+  clientId: ${[ karata_server_client_id ]}
+  clientSecret: ${[ karata_server_client_secret ]}
+  redirectUri: ${[ karata_server_address ]}
+  scope: ${[ karata_authority_scope ]}
+authenticationType: oauth2
+description: ''
+headers: []
+name: Karata.Server
+sortPriority: -1761639400000.0

@@ -1,0 +1,207 @@
+@page "/game/{id:guid}/spectate"
+
+@using System.Reactive.Disposables
+@using System.Reactive.Disposables.Fluent
+@using System.Reactive.Linq
+@using Karata.Pebble.Interceptors
+@using Karata.Shared.Client
+@using Karata.Shared.State
+@using Karata.Web.Support
+@using TextCopy
+
+@implements IDisposable
+
+@inject ILoggerFactory LoggerFactory
+@inject ISnackbar Snackbar
+@inject KarataClient KarataClient
+@inject NavigationManager Navigator
+
+<GameConnectionGuard Connection="_connection">
+    <MudLoading Loading="@(_store is null)" Text="Please wait..." Class="mud-height-full pa-0">
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full pa-0">
+            @if (_store is not null)
+            {
+                <MudGrid Spacing="4" Justify="Justify.Center" Class="mb-4">
+                    <MudItem xs="6">
+                        <MudList T="string" Color="Color.Info">
+                            <MudListSubheader>Game info</MudListSubheader>
+                            @if (_store.State.Game.Pile.Any())
+                            {
+                                <MudListItem Icon="@GetIcon(_store.State.Game.Pile.Peek())"
+                                             IconColor="@(_store.State.Game.Pile.Peek().GetColor() == Red ? Color.Error : Color.Default)">
+                                    Top card: @_store.State.Game.Pile.Peek().GetName()
+                                </MudListItem>
+                            }
+                            @if (_store.State.Game.Pick > 0)
+                            {
+                                <MudListItem IconColor="Color.Warning" Icon="@Icons.Material.Rounded.PostAdd">
+                                    Cards to pick: @_store.State.Game.Pick
+                                </MudListItem>
+                            }
+                            @if (_store.State.Game.Request is not null)
+                            {
+                                <MudListItem Icon="@GetIcon(_store.State.Game.Request)"
+                                             IconColor="@(_store.State.Game.Request.GetColor() == Red ? Color.Error : Color.Default)">
+                                    Current
+                                    request: @(_store.State.Game.Request.Face is None ? _store.State.Game.Request.Suit.ToString() : _store.State.Game.Request.GetName())
+                                </MudListItem>
+                            }
+                            <MudListItem IconColor="@Color.Info" Icon="@Icons.Material.Rounded.Person">
+                                Current player: @_store.State.Game.CurrentHand.Player.Username
+                            </MudListItem>
+                        </MudList>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudList Color="Color.Info" SelectedValue="@_store.State.Game.CurrentHand.Player">
+                            <MudListSubheader>Players</MudListSubheader>
+                            @foreach (var hand in _store.State.Game.Hands)
+                            {
+                                <HandDisplay Hand="hand"
+                                             IsAdministrator="@(hand.Player == _store.State.Administrator)"/>
+                            }
+                        </MudList>
+                    </MudItem>
+                </MudGrid>
+            }
+
+            @if (_turns is not null)
+            {
+                <MudList T="string">
+                    <MudListSubheader Class="pb-4">Turns</MudListSubheader>
+
+                    @foreach (var turn in _turns)
+                    {
+                        <MudListItem Value="@turn">
+                            <MudText Typo="Typo.caption">@turn.Hand.Player.Username</MudText>
+                            <MudText Typo="Typo.body1" Class="gray-text">@GetDescription(turn)</MudText>
+                        </MudListItem>
+                    }
+                </MudList>
+            }
+        </MudContainer>
+    </MudLoading>
+</GameConnectionGuard>
+
+@code
+{
+    [Parameter] public Guid Id { get; set; }
+
+    [Inject] public required IClipboard Clipboard { get; set; }
+
+    private SpectatorRoomConnection? _connection;
+    private RoomState? _store;
+    private List<TurnData>? _turns;
+    private readonly CompositeDisposable _subscriptions = new();
+
+    private void OnStoreChanged(RoomData room) => StateHasChanged();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _turns = await KarataClient.Turns.ListAsync(Id);
+        _connection = new SpectatorRoomConnection(new Uri("", UriKind.Relative), Id);
+
+        _connection.Events.AddHandToRoom.Subscribe(data =>
+        {
+            var (id, user, status) = data;
+            Snackbar.Add($"{user.Username} has joined the room", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+        }).DisposeWith(_subscriptions);
+
+        _connection.Events.AddToRoom.Subscribe(room =>
+        {
+            _store = new RoomState(room, [new LoggingInterceptor<RoomData>(LoggerFactory), new TimingInterceptor<RoomData>(LoggerFactory)]);
+            _store.Changes.Subscribe(OnStoreChanged);
+
+            _connection.Events.BindRoomState(_store).DisposeWith(_subscriptions);
+            OnStoreChanged(room);
+        }).DisposeWith(_subscriptions);
+
+
+        _connection.Events.ReceiveSystemMessage.Subscribe(message =>
+        {
+            var severity = message.Type switch
+            {
+                MessageType.Error => Severity.Error,
+                MessageType.Info => Severity.Info,
+                MessageType.Success => Severity.Success,
+                MessageType.Warning => Severity.Warning,
+                _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
+            };
+            Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
+        }).DisposeWith(_subscriptions);
+
+        _connection.Events.RemoveFromRoom
+            .Select(_ => Observable.FromAsync(async _ =>
+            {
+                _store!.Dispose();
+                _store = null;
+
+                StateHasChanged();
+
+                await _connection.StopAsync();
+                Navigator.NavigateTo("/game/join");
+            }))
+            .Concat()
+            .Subscribe()
+            .DisposeWith(_subscriptions);
+
+        _connection.Events.RemoveHandFromRoom
+            .Subscribe(user => Snackbar.Add($"{user.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text))
+            .DisposeWith(_subscriptions);
+
+        _connection.Events.UpdateGameStatus
+            .Subscribe(status => Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text))
+            .DisposeWith(_subscriptions);
+
+        _connection.Events.UpdateHandStatus.Subscribe(data =>
+        {
+            var (user, status) = data;
+            Snackbar.Add($"{user.Username} has {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+        }).DisposeWith(_subscriptions);
+
+        _connection.Events.UpdateTurn
+            .Subscribe(turn => { Snackbar.Add($"It is now {_store!.State.Game.Hands[turn].Player.Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text); })
+            .DisposeWith(_subscriptions);
+
+        await _connection.StartAsync();
+    }
+
+    private static string GetIcon(Card card) => card.Suit switch
+    {
+        Spades => CardIcons.Spade,
+        Hearts => CardIcons.Heart,
+        Clubs => CardIcons.Club,
+        Diamonds => CardIcons.Diamond,
+        BlackJoker or RedJoker => Icons.Material.Rounded.TheaterComedy,
+        _ => throw new ArgumentException($"Invalid suit {card.Suit}", nameof(card))
+    };
+
+    private static string GetDescription(TurnData turn)
+    {
+        return turn.Type switch
+        {
+            TurnType.Skip => "Was skipped.",
+            TurnType.Void => "was skipped (away).",
+            TurnType.Deal => $"Was dealt {CardCount(turn.Picked.Count)}.",
+            TurnType.Play => new[]
+                {
+                    turn.Cards.Count > 0
+                        ? $"Played {CardCount(turn.Cards.Count)}"
+                        : null,
+                    turn.Picked.Count > 0
+                        ? $"Picked {CardCount(turn.Picked.Count)}"
+                        : null
+                }.Where(x => x != null)
+                .DefaultIfEmpty("Took no action")
+                .Aggregate((a, b) => a + " and " + b?.ToLower()) + ".",
+            _ => $"{turn.Hand.Player.Username} performed an unknown action."
+        };
+
+        string CardCount(int num) => $"{num} {(num == 1 ? "card" : "cards")}";
+    }
+
+    public void Dispose()
+    {
+        _subscriptions.Dispose();
+        _store?.Dispose();
+    }
+}

@@ -1,0 +1,76 @@
+<!-- MainView.xaml -->
+<UserControl
+    x:Class="Karata.App.Views.HomeView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:Karata.App.ViewModels"
+    xmlns:support="clr-namespace:Karata.App.Support"
+    xmlns:models="clr-namespace:Karata.Shared.Models;assembly=Karata.Shared"
+    x:DataType="vm:HomeViewModel">
+
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="CardBackground" Color="#2F3139" />
+        <SolidColorBrush x:Key="AvatarBackground" Color="#FF4A6E" />
+        <SolidColorBrush x:Key="TextSubtle" Color="#A8ACB8" />
+        <SolidColorBrush x:Key="LinkBrush" Color="#6CA8FF" />
+    </UserControl.Resources>
+
+    <Grid Margin="8" RowDefinitions="Auto,*">
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Activity"
+                       FontSize="16"
+                       FontWeight="Bold" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Activity}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:ActivityData">
+                        <Border Background="{StaticResource CardBackground}"
+                                CornerRadius="12"
+                                Padding="12"
+                                Margin="0,0,0,10">
+                            <StackPanel Orientation="Vertical" Spacing="8">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border Background="{StaticResource AvatarBackground} "
+                                            CornerRadius="18"
+                                            Width="36" Height="36"
+                                            VerticalAlignment="Top">
+                                        <TextBlock
+                                            Text="{Binding Actor.Username, Converter={x:Static support:StringConverters.FirstInitial}}"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontWeight="Bold" />
+                                    </Border>
+
+                                    <StackPanel Orientation="Vertical" Spacing="4">
+                                        <TextBlock Text="{Binding Actor.Username}" FontWeight="Bold" />
+                                        <TextBlock Text="{Binding CreatedAt, StringFormat={}{0:G}}"
+                                                   Foreground="{StaticResource TextSubtle}"
+                                                   FontSize="12" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Text}"
+                                           Margin="0,4,0,0"
+                                           TextWrapping="Wrap" />
+
+                                <Button Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="0"
+                                        Tag="{Binding Link}"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,8,0,0">
+                                    <TextBlock Text="CHECK IT OUT!"
+                                               Foreground="{StaticResource LinkBrush}"
+                                               FontSize="12"
+                                               FontWeight="Bold" />
+                                </Button>
+
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

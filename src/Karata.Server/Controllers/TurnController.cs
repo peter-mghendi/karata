@@ -12,12 +12,8 @@ public class TurnController(KarataContext context) : ControllerBase
     public async Task<ActionResult<List<TurnData>>> Get(string id)
     {
         if (!Guid.TryParse(id, out var guid)) return BadRequest();
-        var room = await context.Rooms.FindAsync(guid);
+        if (await context.Rooms.FindAsync(guid) is not {} room) return NotFound();
 
-        if (room == null) return NotFound();
-        
-        
-        
         return room.Game.Hands.SelectMany(h => h.Turns).Select(t => t.ToData()).ToList();
     }
 }

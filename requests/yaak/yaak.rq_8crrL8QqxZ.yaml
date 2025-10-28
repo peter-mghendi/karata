@@ -1,0 +1,18 @@
+type: http_request
+model: http_request
+id: rq_8crrL8QqxZ
+createdAt: 2025-10-28T08:01:57.819119782
+updatedAt: 2025-10-28T08:28:54.023377609
+workspaceId: wk_DXsTB3LLeB
+folderId: fl_oie9nbRZWe
+authentication: {}
+authenticationType: none
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: List Activity
+sortPriority: 5.0
+url: ${[ karata_server_address ]}/api/activity
+urlParameters: []

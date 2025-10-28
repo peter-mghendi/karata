@@ -1,0 +1,29 @@
+@page "/game/{id:guid}/over"
+
+@using Karata.Shared.Client
+
+@inject KarataClient KarataClient
+
+@if (_room is not null)
+{
+    <div class="d-flex mud-height-full">
+        <div class="d-flex flex-column flex-grow-1 justify-center align-self-center align-center ma-8">
+            <MudText Typo="Typo.h3" Class="mb-4">Game Over!</MudText>
+            <MudText Typo="Typo.h5">@(_room.Game.Result?.Reason)</MudText>
+            <MudSpacer></MudSpacer>
+            <MudText Typo="Typo.caption">Room ID: @(_room.Id)</MudText>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+    
+    private RoomData? _room;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _room = await KarataClient.Rooms.GetAsync(Id);
+    }
+}

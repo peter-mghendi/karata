@@ -73,16 +73,17 @@ public class GameStartService(
         foreach (var hand in game.Hands)
         {
             var dealt = deck.DealMany(DealCount);
+            var dummies = Enumerable.Repeat(new Card(), dealt.Count).ToList();
             var turn = new Turn { Picked = dealt, Type = TurnType.Deal, Hand = hand, CreatedAt = DateTimeOffset.UtcNow };
 
-            logger.LogDebug("Dealing {Count} cards to {User}. Cards: {Cards}.", DealCount, hand.Player.UserName, string.Join(", ", dealt));
+            logger.LogDebug("Dealing {Count} cards to {User}. Cards: {Cards}.", DealCount, hand.Player.Username, string.Join(", ", dealt));
             
             hand.Turns.Add(turn);
             hand.Cards.AddRange(dealt);
 
-            await Hand(hand).MoveCardsFromDeckToHand(dealt);
-            await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).MoveCardCountFromDeckToHand(hand.Player.ToData(), DealCount);
-            await RoomSpectators.MoveCardCountFromDeckToHand(hand.Player.ToData(), DealCount);
+            await Hand(hand).MoveCardsFromDeckToHand(hand.Player.ToData(), dealt);
+            await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).MoveCardsFromDeckToHand(hand.Player.ToData(), dummies);
+            await RoomSpectators.MoveCardsFromDeckToHand(hand.Player.ToData(), dummies);
         }
 
         logger.LogDebug("Finished dealing cards.");

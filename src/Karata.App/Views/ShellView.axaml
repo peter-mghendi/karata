@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:rxui="http://reactiveui.net"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Karata.App.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Karata.App.Views.ShellView"
+             x:DataType="vm:ShellViewModel">
+  <Grid RowDefinitions="*,Auto">
+    <rxui:RoutedViewHost x:Name="RouterHost" Grid.Row="0"
+                         Router="{Binding Router}">
+      <rxui:RoutedViewHost.DefaultContent>
+        <TextBlock Text="Loading..."
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center" />
+      </rxui:RoutedViewHost.DefaultContent>
+    </rxui:RoutedViewHost>
+    
+    <DockPanel Grid.Row="1" Margin="8">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+        <TextBlock Text="{Binding Username}" Margin="0,0,10,0" />
+        <Button Content="Logout" Command="{Binding Logout}" />
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal">
+        <Button Content="Back" Command="{Binding Back}" />
+        <Button Content="Home" Command="{Binding Home}" />
+        <Button Content="Play" Command="{Binding Play}" />
+      </StackPanel>
+    </DockPanel>
+  </Grid>
+</UserControl>

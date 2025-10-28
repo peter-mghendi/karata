@@ -5,7 +5,7 @@ namespace Karata.Server.Hubs.Clients;
 public interface IPlayerClient
 {
     // Adds another user to the current room
-    Task AddHandToRoom(UserData user, HandStatus status);
+    Task AddHandToRoom(long id, UserData user, HandStatus status);
     
     // Adds the current user to a room
     Task AddToRoom(RoomData room);
@@ -13,17 +13,14 @@ public interface IPlayerClient
     // Ends the game
     Task EndGame();
     
-    // Moves n cards from deck to another player's hand. 
-    Task MoveCardCountFromDeckToHand(UserData user, int num);
-    
     // Moves cards from deck to current player's hand.
-    Task MoveCardsFromDeckToHand(List<Card> cards);
+    Task MoveCardsFromDeckToHand(UserData user, List<Card> cards);
     
     // Moves cards from deck to the pile. 
     Task MoveCardsFromDeckToPile(List<Card> cards);
     
     // Moves cards from hand to the pile. 
-    Task MoveCardsFromHandToPile(UserData user, List<Card> cards);
+    Task MoveCardsFromHandToPile(UserData user, List<Card> cards, bool visible);
 
     // Notifies the current user's client that the turn has been processed - so the UI can clean up and state.
     Task NotifyTurnProcessed();

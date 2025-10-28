@@ -1,0 +1,18 @@
+type: http_request
+model: http_request
+id: rq_tJG66aM7H8
+createdAt: 2025-10-28T08:01:57.817703419
+updatedAt: 2025-10-28T08:29:23.638261268
+workspaceId: wk_DXsTB3LLeB
+folderId: fl_aarMfUdnWm
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: List Rooms
+sortPriority: 1.0
+url: ${[ karata_server_address ]}/api/rooms
+urlParameters: []

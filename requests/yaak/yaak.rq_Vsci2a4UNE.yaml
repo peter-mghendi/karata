@@ -1,0 +1,18 @@
+type: http_request
+model: http_request
+id: rq_Vsci2a4UNE
+createdAt: 2025-10-28T08:01:57.819844659
+updatedAt: 2025-10-28T08:16:43.005684691
+workspaceId: wk_DXsTB3LLeB
+folderId: fl_KjbLJp8ev2
+authentication: {}
+authenticationType: none
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Health
+sortPriority: 3000.0
+url: ${[ karata_server_address ]}/health
+urlParameters: []

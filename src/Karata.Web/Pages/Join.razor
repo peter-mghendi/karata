@@ -1,0 +1,107 @@
+@page "/game/join"
+@using Karata.Shared.Client
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+@attribute [Authorize]
+
+@inject KarataClient KarataClient
+@inject NavigationManager Navigator
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full">
+    <MudText Typo="Typo.h5" Class="pa-4 my-4">Join or create a game room to play.</MudText>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
+        <MudTextField @bind-Value="_link" Label="Invite Link" Variant="Variant.Filled" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.QrCodeScanner" Class="mb-4"></MudTextField>
+        <MudButton Disabled="@_loading" Href="@JoinLink" Variant="Variant.Filled" Color="Color.Primary">
+            @if (_loading)
+            {
+                <MudProgressCircular Indeterminate Class="ms-n1" Color="Color.Primary" Size="Size.Small" />
+                <MudText Class="ms-2">Joining room</MudText>
+            }
+            else
+            {
+                <MudText>Join room</MudText>
+            }
+        </MudButton>
+        <MudButton Disabled="@_loading" Href="@SpectateLink" Variant="Variant.Outlined" Class="ml-2">
+            @if (_loading)
+            {
+                <MudProgressCircular Indeterminate Class="ms-n1" Color="Color.Primary" Size="Size.Small" />
+                <MudText Class="ms-2">Joining as spectator</MudText>
+            }
+            else
+            {
+                <MudText>Spectate</MudText>
+            }
+        </MudButton>
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
+        <MudTextField @bind-Value="_password" Label="Password (Optional)" Variant="Variant.Filled" Class="mb-4"></MudTextField>
+        <MudButton Disabled="@_loading" OnClick="CreateRoom" Variant="Variant.Filled">
+            @if (_loading)
+            {
+                <MudProgressCircular Indeterminate Class="ms-n1" Size="Size.Small" />
+                <MudText Class="ms-2">Creating room</MudText>
+            }
+            else
+            {
+                <MudText>Create room</MudText>
+            }
+        </MudButton>
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
+        <MudList T="string">
+            <MudListSubheader>Available Games</MudListSubheader>
+
+            @if (_rooms is [..])
+            {
+                @foreach (var room in _rooms)
+                {
+                    <MudListItem Text="@room.Id.ToString()" SecondaryText="@($"Created at {room.CreatedAt.ToLocalTime()}")" Href="@($"/game/{room.Id}")"/>
+                }
+            }
+            else
+            {
+                @foreach (var _ in Enumerable.Range(0, 5))
+                {
+                    <MudListItem>
+                        <MudSkeleton Animation="Animation.Wave" Width="40%"/>
+                        <MudSkeleton Animation="Animation.Wave" Width="30%"/>       
+                    </MudListItem>
+                }
+            }
+        </MudList>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private bool _loading;
+    private List<RoomData>? _rooms;
+    private string _link = string.Empty;
+    private string _password = string.Empty;
+
+
+    private string JoinLink => $"/game/{_link}/play";
+    private string SpectateLink => $"/game/{_link}/spectate";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _rooms = await KarataClient.Rooms.ListAsync();
+        }
+        catch (AccessTokenNotAvailableException)
+        {
+            Console.WriteLine("Redirecting you to login");
+        }
+    }
+
+    private async Task CreateRoom()
+    {
+        _loading = true;
+        var room = await KarataClient.Rooms.CreateAsync(new RoomRequest { Password = _password });
+        Navigator.NavigateTo($"/game/{room.Id.ToString()}/play");
+    }
+}

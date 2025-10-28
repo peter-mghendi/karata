@@ -1,0 +1,10 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Karata.App.ViewModels"
+             x:Class="Karata.App.Views.LoginView"
+             x:DataType="vm:LoginViewModel">
+    <StackPanel Margin="24" Spacing="12">
+        <TextBlock Text="Please sign in to continue" FontSize="20"/>
+        <Button Content="Sign in" Command="{Binding Login}" />
+    </StackPanel>
+</UserControl>

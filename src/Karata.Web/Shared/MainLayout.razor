@@ -1,0 +1,82 @@
+﻿@using Blazored.LocalStorage
+@using Karata.Web.Infrastructure.Security
+@inherits LayoutComponentBase
+
+@inject AuthenticationHelper Authenticator
+@inject ILocalStorageService LocalStorage
+@inject NavigationManager Navigator
+
+@code {
+    static string Authority => "http://localhost:8080/realms/karata";
+    static string ClientId  => "karata-web";
+    string Redirect  => Navigator.BaseUri.TrimEnd('/') + "/authentication/login-callback";
+}
+
+<MudThemeProvider @ref="_themer" @bind-IsDarkMode="@_dark" Theme="_theme"/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout Class="mud-height-full">
+    <MudAppBar Elevation="0" Style="background-color: var(--mud-palette-background-gray);">
+        <MudLink Href="/" Typo="Typo.body1" Color="Color.Default" Class="me-4" Underline="Underline.None">
+            Karata
+        </MudLink>
+        <MudLink Href="/game/join" Typo="Typo.body2" Class="me-4" Color="Color.Default">
+            Play
+        </MudLink>
+        <MudSpacer />
+        <AuthorizeView>
+            <Authorized>
+                <MudLink OnClick="() => Authenticator.OpenProfileAsync(Authority, ClientId)" Typo="Typo.body2" Class="me-4">
+                    Hi, @context.User.Identity!.Name!
+                </MudLink>
+                <MudLink OnClick="() => Authenticator.Logout()" Typo="Typo.body2" Class="me-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Logout" />
+                </MudLink>
+            </Authorized>
+            <NotAuthorized>
+                <MudLink OnClick="() => Authenticator.Register(ClientId, Authority, Redirect)" Typo="Typo.body2" Class="me-4" Color="Color.Default">
+                    Register
+                </MudLink>
+                <MudLink OnClick="() => Authenticator.Login()" Typo="Typo.body2" Class="me-2" Color="Color.Primary">
+                    Log in
+                </MudLink>
+            </NotAuthorized>
+        </AuthorizeView>
+        <MudIconButton Icon="@ThemeToggleIcon" Color="@Color.Default" OnClick="OnToggleThemeAsync"/>
+    </MudAppBar>
+    <MudMainContent Class="mud-height-full" Style="position: relative">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code
+{
+    private bool _dark;
+    private readonly MudTheme _theme = new();
+    private MudThemeProvider _themer = null!;
+
+    private string ThemeToggleIcon => _dark switch
+    {
+        true => Icons.Material.Filled.LightMode,
+        false => Icons.Material.Filled.DarkMode,
+    };
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dark = await LocalStorage.GetItemAsync<bool?>("karata:settings:dark") ?? await _themer.GetSystemDarkModeAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnToggleThemeAsync()
+    {
+        await LocalStorage.SetItemAsync("karata:settings:dark", !_dark);
+        _dark = !_dark;
+
+        StateHasChanged();
+    }
+}

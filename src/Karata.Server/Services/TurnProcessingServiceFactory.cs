@@ -12,8 +12,7 @@ public class TurnProcessingServiceFactory(
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILoggerFactory loggers,
     KarataContext context,
-    IKarataEngine engine,
-    UserManager<User> users
+    IKarataEngine engine
 )
 {
     public TurnProcessingService Create(Guid room, string player, string connection) =>
@@ -23,7 +22,6 @@ public class TurnProcessingServiceFactory(
             loggers.CreateLogger<TurnProcessingService>(),
             context,
             engine,
-            users,
             room,
             player,
             connection

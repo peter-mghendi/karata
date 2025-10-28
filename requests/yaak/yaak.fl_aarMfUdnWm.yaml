@@ -1,0 +1,13 @@
+type: folder
+model: folder
+id: fl_aarMfUdnWm
+createdAt: 2025-10-28T08:01:57.820285735
+updatedAt: 2025-10-28T08:16:43.001413661
+workspaceId: wk_DXsTB3LLeB
+folderId: fl_KjbLJp8ev2
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
+name: Rooms
+sortPriority: 1000.0

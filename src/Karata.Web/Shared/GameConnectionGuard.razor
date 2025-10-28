@@ -1,0 +1,24 @@
+@using Karata.Shared.Client
+@using static Microsoft.AspNetCore.SignalR.Client.HubConnectionState
+
+<CascadingValue Value="Connection">
+    @if (Connection?.Hub?.State is not Connected)
+    {
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full">
+            <MudText Typo="Typo.h5" Class="pa-4 my-4">You are not connected to a server.</MudText>
+            <MudText Typo="Typo.body1" Class="pa-4 mb-4">
+                If this message persists, check your internet connection and reload this page to establish a connection.
+            </MudText>
+        </MudContainer>
+    }
+    else
+    {
+        @ChildContent
+    }
+</CascadingValue>
+
+@code {
+    [Parameter] public IRoomConnection? Connection { get; set; }
+
+    [Parameter] public RenderFragment ChildContent { get; set; } = null!;
+}

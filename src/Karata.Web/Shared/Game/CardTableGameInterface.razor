@@ -1,0 +1,82 @@
+@using System.Collections.Immutable
+
+@implements Karata.Web.Models.IPlayerInterface
+
+<div id="table" class="mud-width-full mud-height-full relative teal rounded mud-elevation-1">
+    @* Me *@
+    <div id="bottom" class="absolute">
+        <HandComponent FaceUp Cards="@CurrentHand" OnCardSelected="AddCardToTurn" />
+    </div>
+
+    @* Current Turn *@
+    <div id="turn" class="absolute">
+        <HandComponent FaceUp Cards="@Turn" OnCardSelected="RemoveCardFromTurn" />
+    </div>
+
+    @* Player 2 *@
+    <div id="top" class="absolute">
+        <HandComponent Cards="@OtherHands[0].Cards.ToImmutableList()" />
+    </div>
+
+    @* Player 3 *@
+    @if (OtherHands.Count > 1)
+    {
+        <div id="left" class="absolute">
+            <HandComponent Cards="@OtherHands[1].Cards.ToImmutableList()" />
+        </div>
+    }
+
+    @* Player 4 *@
+    @if (OtherHands.Count > 2)
+    {
+        <div id="right" class="hand-container">
+            <HandComponent Cards="@OtherHands[2].Cards.ToImmutableList()" />
+        </div>
+    }
+
+    @* Deck and Pile *@
+    <img id="deck" class="absolute" src="img/cards/Back.svg" alt="Card back" title="@($"Cards to pick: {Game.Pick}")"/>
+    <img id="pile" class="absolute" src="@ImageUrl(Game.Pile.Peek())" alt="@Game.Pile.Peek().GetName()" title="@RequestText"/>
+</div>
+
+@code 
+{
+    [Parameter]
+    public GameData Game { get; set; } = null!;
+
+    [Parameter]
+    public HandData Hand { get; set; } = null!;
+
+    [Parameter]
+    public ImmutableList<Card> Turn { get; set; } = ImmutableList<Card>.Empty;
+
+    [Parameter]
+    public EventCallback<ValueTuple<Card, int>> OnAddCardToTurn { get; set; }
+
+    [Parameter]
+    public EventCallback<ValueTuple<Card, int>> OnReorderCardInTurn { get; set; }
+    
+    [Parameter]
+    public EventCallback<Card> OnRemoveCardFromTurn { get; set; }
+
+    private ImmutableList<Card> CurrentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToImmutableList();
+
+    private List<HandData> OtherHands => Game.Hands.Where(h => h.Player.Id != Hand.Player.Id).ToList();
+
+    private string RequestText => Game.Request switch
+    {
+        null => "No card has been requested",
+        { Face: None } => Game.Request.ToString(),
+        _ => Game.Request.GetName()
+    };
+
+    private string ImageUrl(Card card) => card is { Face: Joker }
+        ? $"img/cards/{card.Suit.ToString()}.svg"
+        : $"img/cards/{card.Face.ToString()}{card.Suit.ToString()}.svg";
+
+    private async Task AddCardToTurn(Card card) => await OnAddCardToTurn.InvokeAsync((card, Turn.Count));
+
+    private async Task ReorderCard(Card card, int index) => await OnReorderCardInTurn.InvokeAsync((card, index));
+
+    private async Task RemoveCardFromTurn(Card card) => await OnRemoveCardFromTurn.InvokeAsync(card);
+}

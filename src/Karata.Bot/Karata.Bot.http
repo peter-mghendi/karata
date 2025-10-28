@@ -1,0 +1,9 @@
+POST {{Karata.Bot.Host}}/api/hands
+Accept: application/json
+Content-Type: application/json
+
+{ 
+  "room": "01996469-9a7d-7e18-b93f-e15f294f880e",
+  "password": "password",
+  "host": "00000000-0000-0000-0000-000000000000"
+}

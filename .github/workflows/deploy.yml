@@ -3,6 +3,9 @@ name: Deploy
 on:
   push:
     branches: [ "main" ]
+    
+env:
+  DEPLOYS_ENABLED: true
 
 jobs:
   deploy:
@@ -13,8 +16,16 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      - name: Check Deploy Toggle
+          run: |
+            echo "DEPLOYS_ENABLED: $DEPLOYS_ENABLED"
+            if [ "$DEPLOYS_ENABLED" != "true" ]; then
+              echo "🚫 Deploys are disabled. Exiting."
+              exit 0
+            fi
+
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Create GitHub Deployment
         id: deployment
@@ -52,24 +63,27 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.0.x
 
+      - name: Install Android workload
+        run: dotnet workload install android
+
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore Karata.slnf
 
       - name: Build
-        run: dotnet build --no-restore
+        run: dotnet build --no-restore Karata.slnf
 
       - name: Test
-        run: dotnet test --no-build --verbosity normal
+        run: dotnet test --no-build --verbosity normal Karata.slnf
 
       - name: Publish
-        run: dotnet publish -c Release -o app
+        run: dotnet publish -c Release -o app Karata.slnf
 
       - name: Upload files via SCP
-        uses: appleboy/scp-action@v0.1.3
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -80,7 +94,7 @@ jobs:
           strip_components: 0
 
       - name: Restart application service
-        uses: appleboy/ssh-action@v0.1.3
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}

@@ -1,0 +1,14 @@
+type: workspace
+model: workspace
+id: wk_DXsTB3LLeB
+createdAt: 2025-10-28T08:01:57.816986024
+updatedAt: 2025-10-28T08:20:48.679843721
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
+name: Karata
+encryptionKeyChallenge: null
+settingValidateCertificates: false
+settingFollowRedirects: true
+settingRequestTimeout: 0

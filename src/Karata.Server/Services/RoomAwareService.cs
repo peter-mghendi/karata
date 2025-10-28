@@ -26,8 +26,6 @@ public abstract class RoomAwareService(
     protected IPlayerClient Hand(Hand hand) => players.Clients.User(hand.Player.Id);
     protected IPlayerClient Hands(HashSet<Hand> hands) => players.Clients.Users([..hands.Select(h => h.Player.Id)]);
     protected IPlayerClient PlayerConnection(string connection) => players.Clients.Client(connection);
-    protected ISpectatorClient SpectatorConnection(string connection) => spectators.Clients.Client(connection);
-
     protected async Task AddToRoom(string connection) =>
         await players.Groups.AddToGroupAsync(connection, RoomId.ToString());
 
