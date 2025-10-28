@@ -1,0 +1,26 @@
+type: http_request
+model: http_request
+id: rq_64UMtFaEd7
+createdAt: 2025-10-28T08:01:57.818665848
+updatedAt: 2025-10-28T08:10:03.451143599
+workspaceId: wk_DXsTB3LLeB
+folderId: fl_aarMfUdnWm
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+        "password": ""
+    }
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: null
+method: POST
+name: Create Room
+sortPriority: 3.0
+url: ${[ karata_server_address ]}/api/rooms
+urlParameters: []
