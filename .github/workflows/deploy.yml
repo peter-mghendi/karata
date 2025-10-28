@@ -5,27 +5,32 @@ on:
     branches: [ "main" ]
     
 env:
-  DEPLOYS_ENABLED: true
+  DEPLOYS_ENABLED: false
 
 jobs:
   deploy:
     permissions:
+      actions: write
       contents: read
       deployments: write
 
     runs-on: ubuntu-latest
     
     steps:
-      - name: Check Deploy Toggle
-          run: |
-            echo "DEPLOYS_ENABLED: $DEPLOYS_ENABLED"
-            if [ "$DEPLOYS_ENABLED" != "true" ]; then
-              echo "🚫 Deploys are disabled. Exiting."
-              exit 0
-            fi
-
       - name: Checkout code
         uses: actions/checkout@v5
+
+      - name: Check Deploy Toggle
+        run: |
+          echo "DEPLOYS_ENABLED: $DEPLOYS_ENABLED"
+          if [ "$DEPLOYS_ENABLED" != "true" ]; then
+            echo "🚫 Deploys are disabled. Exiting."
+            gh run cancel ${{ github.run_id }}
+            gh run watch ${{ github.run_id }}
+            exit 0
+          fi
+        env:
+          GH_TOKEN: ${{ secrets. GITHUB_TOKEN }}
 
       - name: Create GitHub Deployment
         id: deployment
