@@ -1,0 +1,18 @@
+{
+  "solution": {
+    "path": "Karata.sln",
+    "projects": [
+      "src/Karata.App/Karata.App.csproj",
+      "src/Karata.Bot/Karata.Bot.csproj",
+      "src/Karata.Cards/Karata.Cards.csproj",
+      "src/Karata.Desktop/Karata.Desktop.csproj",
+      "src/Karata.Pebble/Karata.Pebble.csproj",
+      "src/Karata.Server/Karata.Server.csproj",
+      "src/Karata.Shared/Karata.Shared.csproj",
+      "src/Karata.Web/Karata.Web.csproj",
+      "test/Karata.Cards.Tests/Karata.Cards.Tests.csproj",
+      "test/Karata.Server.Tests/Karata.Server.Tests.csproj",
+      "test/Karata.Shared.Tests/Karata.Shared.Tests.csproj"
+    ]
+  }
+}

@@ -7,7 +7,7 @@ namespace Karata.App;
 
 public class AppViewLocator : ReactiveUI.IViewLocator
 {
-    public IViewFor ResolveView<T>(T? viewModel, string contract = null) => viewModel switch
+    public IViewFor ResolveView<T>(T? viewModel, string? contract = null) => viewModel switch
     {
         HomeViewModel context => new HomeView { DataContext = context },
         PlayViewModel context => new PlayView { DataContext = context },
