@@ -18,6 +18,7 @@
     <PackageVersion Include="Blazored.LocalStorage" Version="4.5.0" />
     <PackageVersion Include="CodeBeam.MudBlazor.Extensions" Version="8.2.3" />
     <PackageVersion Include="Consolonia" Version="11.3.7-beta.1773" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="Duende.IdentityModel.OidcClient" Version="6.0.1" />
     <PackageVersion Include="GitInfo" Version="2.3.0" />
     <PackageVersion Include="Keycloak.AuthServices.Authentication" Version="2.6.1" />
@@ -36,6 +37,7 @@
     <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.10" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
     <PackageVersion Include="MudBlazor" Version="8.9.0" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
@@ -46,5 +48,7 @@
     <PackageVersion Include="System.Reactive" Version="6.1.0" />
     <PackageVersion Include="TextCopy" Version="6.2.1" />
     <PackageVersion Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.15" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.1"/>
   </ItemGroup>
 </Project>
