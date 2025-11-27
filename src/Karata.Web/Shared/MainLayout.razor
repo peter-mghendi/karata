@@ -47,7 +47,12 @@
         <MudIconButton Icon="@ThemeToggleIcon" Color="@Color.Default" OnClick="OnToggleThemeAsync"/>
     </MudAppBar>
     <MudMainContent Class="mud-height-full" Style="position: relative">
-        @Body
+        <div>
+            @Body
+        </div>
+        <footer class="pt-6 pb-8 d-flex flex-row justify-center">
+            &copy; @(DateTimeOffset.Now.Year) bytesmoothie | build @(ThisAssembly.Git.Commit) | .NET @(Environment.Version)
+        </footer>
     </MudMainContent>
 </MudLayout>
 
@@ -57,7 +62,7 @@
     private readonly MudTheme _theme = new();
     private MudThemeProvider _themer = null!;
 
-    private string ThemeToggleIcon => _dark switch
+    private string ThemeToggleIcon => _dark switch 
     {
         true => Icons.Material.Filled.LightMode,
         false => Icons.Material.Filled.DarkMode,

@@ -5,6 +5,7 @@ using Karata.Server.Services;
 using Karata.Shared.Engine;
 using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
@@ -15,14 +16,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<KarataContext>(options =>
 {
     var uri = new Uri(builder.Configuration["DATABASE_URL"] ?? throw new Exception("DATABASE_URL is not set."));
-    var credentials = uri.UserInfo.Split(':');
+    if (uri.UserInfo.Split(':') is not [var username, var password]) throw new Exception("Invalid DATABASE_URL.");
     
     options.UseNpgsql(new NpgsqlConnectionStringBuilder
     {
         Host = uri.Host,
         Port = uri.Port,
-        Username = credentials.First(),
-        Password = credentials.Last(),
+        Username = username,
+        Password = password,
         Database = uri.LocalPath.TrimStart('/'),
         SslMode = SslMode.Prefer
     }.ToString());
@@ -35,11 +36,7 @@ builder.Services.AddDbContext<KarataContext>(options =>
 });
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
-builder.Services.Configure<UserProvisioningOptions>(o =>
-{
-    o.AutoProvisionEnabled = true;
-    // o.NewUserFactory = User.FromClaims
-});
+builder.Services.Configure<UserProvisioningOptions>(o => o.AutoProvisionEnabled = true);
 builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, opts =>
 {
     var @base = opts.Events.OnMessageReceived;
@@ -56,7 +53,7 @@ builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.Authenticatio
 
 builder.Services.AddCors(cors =>
 {
-    cors.AddPolicy("AllowAll", policy => policy.AllowAnyOrigin().AllowAnyHeader());
+    cors.AddPolicy(nameof(CrossOrigin.AllowAll), policy => CrossOrigin.AllowAll(policy));
 });
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHealthChecks();
@@ -109,17 +106,15 @@ else
 
 app.UseHttpsRedirection();
 
-app.UseBlazorFrameworkFiles();
-app.UseStaticFiles();
-
 app.UseRouting();
-app.UseCors("AllowAll");
+app.UseCors(nameof(CrossOrigin.AllowAll));
 
 app.MapHealthChecks("/health");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapStaticAssets();
 app.MapControllers();
 app.MapHub<PlayerHub>("/hubs/game/play", options => options.AllowStatefulReconnects = true);
 app.MapHub<SpectatorHub>("/hubs/game/spectate", options => options.AllowStatefulReconnects = true);
