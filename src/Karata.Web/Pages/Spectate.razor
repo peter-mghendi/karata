@@ -27,9 +27,8 @@
                             <MudListSubheader>Game info</MudListSubheader>
                             @if (_store.State.Game.Pile.Any())
                             {
-                                <MudListItem Icon="@GetIcon(_store.State.Game.Pile.Peek())"
-                                             IconColor="@(_store.State.Game.Pile.Peek().GetColor() == Red ? Color.Error : Color.Default)">
-                                    Top card: @_store.State.Game.Pile.Peek().GetName()
+                                <MudListItem Icon="@GetIcon(_store.State.Game.Pile.Peek())" IconColor="@(_store.State.Game.Pile.Peek().Color is Red ? Color.Error : Color.Default)">
+                                    Top card: @(_store.State.Game.Pile.Peek().Name)
                                 </MudListItem>
                             }
                             @if (_store.State.Game.Pick > 0)
@@ -40,10 +39,8 @@
                             }
                             @if (_store.State.Game.Request is not null)
                             {
-                                <MudListItem Icon="@GetIcon(_store.State.Game.Request)"
-                                             IconColor="@(_store.State.Game.Request.GetColor() == Red ? Color.Error : Color.Default)">
-                                    Current
-                                    request: @(_store.State.Game.Request.Face is None ? _store.State.Game.Request.Suit.ToString() : _store.State.Game.Request.GetName())
+                                <MudListItem Icon="@GetIcon(_store.State.Game.Request)" IconColor="@(_store.State.Game.Request.Color is Red ? Color.Error : Color.Default)">
+                                    Current request: @(_store.State.Game.Request.Face is None ? _store.State.Game.Request.Suit.ToString() : _store.State.Game.Request.Name)
                                 </MudListItem>
                             }
                             <MudListItem IconColor="@Color.Info" Icon="@Icons.Material.Rounded.Person">
@@ -56,8 +53,7 @@
                             <MudListSubheader>Players</MudListSubheader>
                             @foreach (var hand in _store.State.Game.Hands)
                             {
-                                <HandDisplay Hand="hand"
-                                             IsAdministrator="@(hand.Player == _store.State.Administrator)"/>
+                                <HandDisplay Hand="hand" IsAdministrator="@(hand.Player == _store.State.Administrator)"/>
                             }
                         </MudList>
                     </MudItem>
@@ -72,7 +68,7 @@
                     @foreach (var turn in _turns)
                     {
                         <MudListItem Value="@turn">
-                            <MudText Typo="Typo.caption">@turn.Hand.Player.Username</MudText>
+                            <MudText Typo="Typo.caption">@(turn.Hand.Player.Username)</MudText>
                             <MudText Typo="Typo.body1" Class="gray-text">@GetDescription(turn)</MudText>
                         </MudListItem>
                     }

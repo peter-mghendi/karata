@@ -1,5 +1,5 @@
 @using Karata.Web.Extensions
-<img class="card cursor-pointer" src="@Assets[Card.GetImageSrc(faceUp: FaceUp)]" @onclick="Click" alt="@Card.GetName()"/>
+<img class="card cursor-pointer" src="@Assets[Card.ImageSource(faceUp: FaceUp)]" @onclick="Click" alt="@Card.Name"/>
 
 @code {
     [Parameter]

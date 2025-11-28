@@ -46,7 +46,7 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
         }
 
         // If the top card is a "bomb", the next card should counter or block it.
-        if (top.IsBomb() && game.Pick > 0 && first.Face is not Ace)
+        if (top.IsBomb && game.Pick > 0 && first.Face is not Ace)
         {
             // Joker can only be countered by a joker while 2 and 3 can be countered by 2, 3 and Joker.
             if (top.Face is Joker)
@@ -55,7 +55,7 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
             }
             else
             {
-                if (!first.IsBomb()) throw new DrawCardsException(0, [first]);
+                if (!first.IsBomb) throw new DrawCardsException(0, [first]);
             }
         }
 
@@ -88,7 +88,7 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
                     case { Face: Ace }:
                     {
                         // Ace, when not the first card, can only go on top of a question or another ace.
-                        if (!previous.IsQuestion() && previous.Face is not Ace)
+                        if (previous is { IsQuestion: false, Face: not Ace })
                         {
                             throw new SubsequentAceOrJokerException(i - 1, [previous, current]);
                         }
@@ -98,7 +98,7 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
                     case { Face: Joker }:
                     {
                         // Joker, when not the first card, can only go on top of a question or another joker.
-                        if (!previous.IsQuestion() && previous.Face is not Joker)
+                        if (previous is { IsQuestion: false, Face: not Joker })
                         {
                             throw new SubsequentAceOrJokerException(i - 1,[previous, current]);
                         }
@@ -108,7 +108,7 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
                     default:
                     {
                         // An answer is only valid if it is the same face or suit as the previous card.
-                        if (previous.IsQuestion())
+                        if (previous.IsQuestion)
                         {
                             if (!current.FaceEquals(previous) && !current.SuitEquals(previous))
                             {
@@ -158,10 +158,10 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
         });
 
         // If the last card played is a "question" card, the player has to immediately pick a card
-        if (cards.Last().IsQuestion()) return delta with { Pick = 1 };
+        if (cards.Last().IsQuestion) return delta with { Pick = 1 };
 
         // If the last card played is a "bomb" card, the next player should pick some cards.
-        if (cards.Last().IsBomb()) return delta with { Give = cards.Last().GetPickValue() };
+        if (cards.Last().IsBomb) return delta with { Give = cards.Last().PickValue };
 
         // If the last card played is an ace, handle two cases:
         //  - A non‐Ace request (standard behavior): knock off existing requests then any leftover aces become a new request
@@ -169,7 +169,7 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
         if (cards.Last().Face is Ace)
         {
             // Getting ace values, instead of actual cards of the Ace suit, compensates for Ace of Spades (value = 2).
-            var aces = cards.Sum(card => card.GetAceValue());
+            var aces = cards.Sum(card => card.AceValue);
             var removed = delta.RemoveRequestLevels;
             
             // Using aces to block any requests and setting delta.RemoveRequestLevels to the number of aces used, i.e:

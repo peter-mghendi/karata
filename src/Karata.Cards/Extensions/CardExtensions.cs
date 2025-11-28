@@ -7,55 +7,62 @@ namespace Karata.Cards.Extensions
 {
     public static class CardExtensions
     {
-        public static Card Of(this CardFace face, CardSuit suit) => new() { Face = face, Suit = suit };
-
-        public static Card ColoredJoker(this CardColor color)
+        extension(CardFace face)
         {
-            if (!Enum.IsDefined(color)) 
-                throw new ArgumentException("Invalid color", nameof(color));
-            return Joker.Of(color is Black ? BlackJoker : RedJoker);
+            public Card Of(CardSuit suit) => new() { Face = face, Suit = suit };
         }
 
-        public static string GetName(this Card card) => card.Face is Joker 
-            ? $"{card.Suit.ToString()[0..^5]} Joker"
-            : $"{card.Face} of {card.Suit}";
-
-        public static uint GetRank(this Card card) => !Enum.IsDefined(card.Face) 
-            ? throw new ArgumentException("Invalid face", nameof(card)) 
-            : (uint)card.Face;
-
-        public static CardColor GetColor(this Card card)
+        extension(CardColor color)
         {
-            if (card.Suit is Spades or Clubs or BlackJoker) return Black;
-            if (card.Suit is Hearts or Diamonds or RedJoker) return Red;
-            throw new ArgumentException("Invalid suit", nameof(card));
+            public Card Joker => !Enum.IsDefined(color)
+                ? throw new ArgumentException("Invalid color", nameof(color))
+                : Joker.Of(color is Black ? BlackJoker : RedJoker);
         }
 
-        public static uint GetAceValue(this Card card) {
-            if (card is not { Face: Ace }) return 0;
-            if (card is not { Suit: Spades }) return 1;
-            return 2;
+        extension(Card card)
+        {
+            public string Name => card.Face is Joker
+                ? $"{card.Suit.ToString()[0..^5]} Joker"
+                : $"{card.Face} of {card.Suit}";
+
+            public uint Rank =>
+                !Enum.IsDefined(card.Face)
+                    ? throw new ArgumentException("Invalid face", nameof(card))
+                    : (uint)card.Face;
+
+            public CardColor Color =>
+                card.Suit switch
+                {
+                    Spades or Clubs or BlackJoker => Black,
+                    Hearts or Diamonds or RedJoker => Red,
+                    _ => throw new ArgumentException("Invalid suit", nameof(card))
+                };
+
+            public uint AceValue =>
+                card switch
+                {
+                    { Face: Ace, Suit: Spades } => 2,
+                    { Face: Ace } => 1,
+                    _ => 0,
+                };
+
+            public uint PickValue =>
+                card switch
+                {
+                    { Face: Two or Three } => card.Rank,
+                    { Face: Joker } => 5,
+                    _ => 0
+                };
+
+            public bool IsBomb => card.Face is Two or Three or Joker;
+
+            public bool IsQuestion => card.Face is Queen or Eight;
+
+            public bool IsSpecial => card.IsBomb || card.IsQuestion || card.Face is Ace or Jack or King;
+
+            public bool FaceEquals(Card otherCard) => card.Face == otherCard.Face;
+
+            public bool SuitEquals(Card otherCard) => card.Suit == otherCard.Suit;
         }
-
-        public static uint GetPickValue(this Card card) {
-            if (card is { Face: Joker }) return 5;
-            if (card is { Face: Two or Three }) return card.GetRank();
-            return 0;
-        }
-
-        public static bool IsBomb(this Card card)
-            => card.Face is Two or Three or Joker;
-
-        public static bool IsQuestion(this Card card)
-            => card.Face is Queen or Eight;
-
-        public static bool IsSpecial(this Card card) 
-            => card.IsBomb() || card.IsQuestion() || card.Face is Ace or Jack or King;
-
-        public static bool FaceEquals(this Card thisCard, Card otherCard)
-            => thisCard.Face == otherCard.Face;
-
-        public static bool SuitEquals(this Card thisCard, Card otherCard)
-            => thisCard.Suit == otherCard.Suit;
     }
 }

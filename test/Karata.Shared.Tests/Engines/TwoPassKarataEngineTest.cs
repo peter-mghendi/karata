@@ -64,7 +64,7 @@ public class TwoPassKarataEngineTest
      *     - ExpectedValidity is used to filter out tests cases that are also used for the generation test cases.
      *     A Note on Aces:
      *     - The word "Ace" as used in these tests is misleading - it is used to refer to a single AceValue
-     *     <see cref="CardExtensions.GetAceValue" />, rather than any specific Ace card, i.e: [Ace of Spades, Ace of Hearts]
+     *     <see cref="CardExtensions.AceValue" />, rather than any specific Ace card, i.e: [Ace of Spades, Ace of Hearts]
      *     has the same number of "Aces" as [Ace of Hearts, Ace of Diamonds, Ace of Clubs].
      *     - The reason for this is that the engine does not care about the suit of the Ace, only its value.
      * </remarks>
@@ -212,21 +212,21 @@ public class TwoPassKarataEngineTest
             (
                 Identifier: 13,
                 Game: ProvideGame(),
-                Cards: [Black.ColoredJoker()],
+                Cards: [Black.Joker],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Give = 5, Cards = [Black.ColoredJoker()] }
+                ExpectedDelta: new GameDelta { Give = 5, Cards = [Black.Joker] }
             ),
 
             // When a Joker is played as an answer, the next player picks up 5 cards
             (
                 Identifier: 14,
                 Game: ProvideGame(),
-                Cards: [Queen.Of(Spades), Eight.Of(Spades), Black.ColoredJoker(), Red.ColoredJoker()],
+                Cards: [Queen.Of(Spades), Eight.Of(Spades), Black.Joker, Red.Joker],
                 ExpectedValid: true,
                 ExpectedDelta: new GameDelta
                 {
                     Give = 5,
-                    Cards = [Queen.Of(Spades), Eight.Of(Spades), Black.ColoredJoker(), Red.ColoredJoker()],
+                    Cards = [Queen.Of(Spades), Eight.Of(Spades), Black.Joker, Red.Joker],
                 }
             ),
 
@@ -234,7 +234,7 @@ public class TwoPassKarataEngineTest
             (
                 Identifier: 15,
                 Game: ProvideGame(),
-                Cards: [Black.ColoredJoker(), Seven.Of(Spades)],
+                Cards: [Black.Joker, Seven.Of(Spades)],
                 ExpectedValid: false,
                 ExpectedDelta: new GameDelta()
             ),
@@ -242,7 +242,7 @@ public class TwoPassKarataEngineTest
             // If the previous player played a Joker, the next player picks up 5 cards
             (
                 Identifier: 16,
-                Game: ProvideGame(top: Black.ColoredJoker(), pick: 5),
+                Game: ProvideGame(top: Black.Joker, pick: 5),
                 Cards: [],
                 ExpectedValid: true,
                 ExpectedDelta: new GameDelta { Pick = 5 }
@@ -251,16 +251,16 @@ public class TwoPassKarataEngineTest
             // A player can "forward" a Joker to the next player using another Joker
             (
                 Identifier: 17,
-                Game: ProvideGame(top: Black.ColoredJoker(), pick: 5),
-                Cards: [Black.ColoredJoker()],
+                Game: ProvideGame(top: Black.Joker, pick: 5),
+                Cards: [Black.Joker],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Give = 5, Cards = [Black.ColoredJoker()] }
+                ExpectedDelta: new GameDelta { Give = 5, Cards = [Black.Joker] }
             ),
 
             // A player can "block" a Joker using an Ace
             (
                 Identifier: 18,
-                Game: ProvideGame(top: Black.ColoredJoker(), pick: 5),
+                Game: ProvideGame(top: Black.Joker, pick: 5),
                 Cards: [Ace.Of(Diamonds)],
                 ExpectedValid: true,
                 ExpectedDelta: new GameDelta { Cards = [Ace.Of(Diamonds)] }
@@ -269,7 +269,7 @@ public class TwoPassKarataEngineTest
             // A player cannot "block" a Joker using any other card
             (
                 Identifier: 19,
-                Game: ProvideGame(top: Black.ColoredJoker(), pick: 5),
+                Game: ProvideGame(top: Black.Joker, pick: 5),
                 Cards: [Seven.Of(Spades)],
                 ExpectedValid: false,
                 ExpectedDelta: new GameDelta()
@@ -324,9 +324,9 @@ public class TwoPassKarataEngineTest
             (
                 Identifier: 24,
                 Game: ProvideGame(top: Three.Of(Spades), pick: 3),
-                Cards: [Black.ColoredJoker()],
+                Cards: [Black.Joker],
                 ExpectedValid: true,
-                ExpectedDelta: new GameDelta { Give = 5, Cards = [Black.ColoredJoker()] }
+                ExpectedDelta: new GameDelta { Give = 5, Cards = [Black.Joker] }
             ),
 
             // If the previous player played a "bomb", the player has to pick up the cards or play a "bomb" of the same face

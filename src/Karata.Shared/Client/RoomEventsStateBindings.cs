@@ -7,24 +7,27 @@ namespace Karata.Shared.Client;
 
 public static class RoomEventsStateBindings  
 {
-    public static IDisposable BindRoomState(this RoomEvents e, RoomState room)
+    extension(RoomEvents events)
     {
-        var actions = Observable.Merge<StateAction<RoomData>>(
-            e.AddHandToRoom.Select(x => new RoomState.AddHandToRoom(x.Id, x.User, x.Status)),
-            e.MoveCardsFromDeckToHand.Select(x => new RoomState.MoveCardsFromDeckToHand(x.User, [..x.Cards])),
-            e.MoveCardsFromDeckToPile.Select(cs => new RoomState.MoveCardsFromDeckToPile([..cs])),
-            e.MoveCardsFromHandToPile.Select(x => new RoomState.MoveCardsFromHandToPile(x.User, [..x.Cards], x.Visible)),
-            e.ReceiveChat.Select(m => new RoomState.ReceiveChat(m)),
-            e.ReclaimPile.Select(_ => new RoomState.ReclaimPile()),
-            e.RemoveHandFromRoom.Select(u => new RoomState.RemoveHandFromRoom(u)),
-            e.SetCurrentRequest.Select(c => new RoomState.SetCurrentRequest(c)),
-            e.UpdateAdministrator.Select(a => new RoomState.UpdateAdministrator(a)),
-            e.UpdateGameStatus.Select(s => new RoomState.UpdateGameStatus(s)),
-            e.UpdateHandStatus.Select(x => new RoomState.UpdateHandStatus(x.User, x.Status)),
-            e.UpdatePick.Select(n => new RoomState.UpdatePick(n)),
-            e.UpdateTurn.Select(t => new RoomState.UpdateTurn(t))
-        );
+        public IDisposable BindRoomState(RoomState room)
+        {
+            var actions = Observable.Merge<StateAction<RoomData>>(
+                events.AddHandToRoom.Select(data => new RoomState.AddHandToRoom(data.Id, data.User, data.Status)),
+                events.MoveCardsFromDeckToHand.Select(data => new RoomState.MoveCardsFromDeckToHand(data.User, [..data.Cards])),
+                events.MoveCardsFromDeckToPile.Select(cards => new RoomState.MoveCardsFromDeckToPile([..cards])),
+                events.MoveCardsFromHandToPile.Select(data => new RoomState.MoveCardsFromHandToPile(data.User, [..data.Cards], data.Visible)),
+                events.ReceiveChat.Select(chat => new RoomState.ReceiveChat(chat)),
+                events.ReclaimPile.Select(_ => new RoomState.ReclaimPile()),
+                events.RemoveHandFromRoom.Select(user => new RoomState.RemoveHandFromRoom(user)),
+                events.SetCurrentRequest.Select(card => new RoomState.SetCurrentRequest(card)),
+                events.UpdateAdministrator.Select(user => new RoomState.UpdateAdministrator(user)),
+                events.UpdateGameStatus.Select(status => new RoomState.UpdateGameStatus(status)),
+                events.UpdateHandStatus.Select(data => new RoomState.UpdateHandStatus(data.User, data.Status)),
+                events.UpdatePick.Select(pick => new RoomState.UpdatePick(pick)),
+                events.UpdateTurn.Select(turn => new RoomState.UpdateTurn(turn))
+            );
 
-        return actions.Subscribe(room.Mutate);
+            return actions.Subscribe(room.Mutate);
+        }
     }
 }

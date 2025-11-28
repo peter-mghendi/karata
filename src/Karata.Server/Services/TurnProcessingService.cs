@@ -213,7 +213,7 @@ public class TurnProcessingService(
             await RoomPlayers.ReclaimPile();
             await RoomSpectators.ReclaimPile();
 
-            room.Game.Deck.Shuffle();
+            room.Game.Deck.ShuffleInPlace();
             dealt = room.Game.Deck.DealMany(room.Game.Pick);
         }
 
@@ -236,7 +236,7 @@ public class TurnProcessingService(
             return;
         }
 
-        if (room.Game.CurrentHand.IsLastCard && !turn.Delta!.Cards.Last().IsSpecial())
+        if (room.Game.CurrentHand.IsLastCard && !turn.Delta!.Cards.Last().IsSpecial)
             throw new EndGameException(GameResultData.Win(winner: player));
 
         await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).ReceiveSystemMessage(Messages.Cardless(player));

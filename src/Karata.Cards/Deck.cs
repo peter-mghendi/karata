@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using Karata.Cards.Extensions;
 using static Karata.Cards.Card;
 using static Karata.Cards.Card.CardColor;
@@ -9,7 +8,6 @@ namespace Karata.Cards;
 
 public class Deck : Stack<Card>
 {
-    private readonly Random _random = new();
 
     public Deck(IEnumerable<Card> collection) : base(collection)
     {
@@ -34,20 +32,15 @@ public class Deck : Stack<Card>
                 }
             }
 
-            deck.Push(Black.ColoredJoker());
-            deck.Push(Red.ColoredJoker());
+            deck.Push(Black.Joker);
+            deck.Push(Red.Joker);
             return new Deck(deck);
         }
     }
 
-    public void Shuffle()
+    public void ShuffleInPlace()
     {
-        var cards = ToArray();
-        for (var i = cards.Length - 1; i > 0; i--)
-        {
-            var j = _random.Next(i + 1);
-            (cards[i], cards[j]) = (cards[j], cards[i]);
-        }
+        var cards = this.Shuffle();
         
         Clear();
         foreach(var card in cards) Push(card);

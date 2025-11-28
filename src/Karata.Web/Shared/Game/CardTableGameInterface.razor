@@ -36,7 +36,7 @@
 
     @* Deck and Pile *@
     <img id="deck" class="absolute" src="@Assets["img/cards/Back.svg"]" alt="Card back" title="@($"Cards to pick: {Game.Pick}")"/>
-    <img id="pile" class="absolute" src="@Assets[ImageUrl(Game.Pile.Peek())]" alt="@Game.Pile.Peek().GetName()" title="@RequestText"/>
+    <img id="pile" class="absolute" src="@Assets[ImageUrl(Game.Pile.Peek())]" alt="@Game.Pile.Peek().Name" title="@RequestText"/>
 </div>
 
 @code
@@ -59,12 +59,12 @@
 
     private string RequestText => Game.Request switch
     {
-        null => "No card has been requested",
         { Face: None } => Game.Request.ToString(),
-        _ => Game.Request.GetName()
+        { Face: not None } => Game.Request.Name,
+        null => "No card has been requested",
     };
 
-    private string ImageUrl(Card card) => card is { Face: Joker }
+    private static string ImageUrl(Card card) => card is { Face: Joker }
         ? $"img/cards/{card.Suit.ToString()}.svg"
         : $"img/cards/{card.Face.ToString()}{card.Suit.ToString()}.svg";
 

@@ -9,8 +9,8 @@
         <MudItem xs="6">
             <MudList T="string" Color="Color.Info">
                 <MudListSubheader>Game Info:</MudListSubheader>
-                <MudAlert Class="mb-4" Severity="@(Game.Pile.Peek().GetColor() == Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(Game.Pile.Peek())">
-                    Top card: @Game.Pile.Peek().GetName()
+                <MudAlert Class="mb-4" Severity="@(Game.Pile.Peek().Color is Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(Game.Pile.Peek())">
+                    Top card: @(Game.Pile.Peek().Name)
                 </MudAlert>
                 @if (Game.Pick > 0)
                 {
@@ -20,8 +20,8 @@
                 }
                 @if (Game.Request is not null)
                 {
-                    <MudAlert Class="mb-4" Severity="@(Game.Request.GetColor() == Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(Game.Request)">
-                        Current request: @(Game.Request.Face is None ? Game.Request.Suit.ToString() : Game.Request.GetName())
+                    <MudAlert Class="mb-4" Severity="@(Game.Request.Color is Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(Game.Request)">
+                        Current request: @(Game.Request.Face is None ? Game.Request.Suit.ToString() : Game.Request.Name)
                     </MudAlert>
                 }
                 <MudAlert Severity="@Severity.Info" Icon="@Icons.Material.Rounded.Person">
@@ -63,8 +63,8 @@
         </div>
     </ChildContent>
     <ItemRenderer>
-        <MudAlert Class="mt-4" Severity="@(context.Card.GetColor() == Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(@context.Card)">
-            @context.Card.GetName()
+        <MudAlert Class="mt-4" Severity="@(context.Card.Color is Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(context.Card)">
+            @context.Card.Name
         </MudAlert>
     </ItemRenderer>
 </MudDropContainer>
