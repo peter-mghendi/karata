@@ -5,6 +5,8 @@ using Karata.Kit.Application;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
+builder.Services.AddHealthChecks();
+builder.Services.AddHttpClient();
 builder.Services.AddSingleton<AccessTokenProvider>();
 builder.Services.AddKarataCore(karata =>
 {
@@ -20,5 +22,6 @@ builder.Services.AddSingleton<BotSessionFactory>();
 builder.Services.AddSingleton<BotSessionManager>();
 
 var app = builder.Build();
+app.MapHealthChecks("/health");
 app.MapBotRoutes();
 app.Run();
