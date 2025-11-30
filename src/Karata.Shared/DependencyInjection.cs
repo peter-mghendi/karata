@@ -7,16 +7,19 @@ namespace Karata.Shared;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddKarataCore(this IServiceCollection services, Action<KarataClientOptions> configure)
+    extension(IServiceCollection services)
     {
-        services.AddOptions<KarataClientOptions>().Configure(configure);
-        services.AddSingleton<KarataClient>(sp =>
+        public IServiceCollection AddKarataCore(Action<KarataClientOptions> configure)
         {
-            var o = sp.GetRequiredService<IOptions<KarataClientOptions>>().Value;
-            return new KarataClient(o.Host, () => o.TokenProvider(sp, CancellationToken.None));
-        });
+            services.AddOptions<KarataClientOptions>().Configure(configure);
+            services.AddSingleton<KarataClient>(sp =>
+            {
+                var o = sp.GetRequiredService<IOptions<KarataClientOptions>>().Value;
+                return new KarataClient(o.Host, () => o.TokenProvider(sp, CancellationToken.None));
+            });
 
-        services.AddSingleton<IKarataEngine, TwoPassKarataEngine>();
-        return services;
+            services.AddSingleton<IKarataEngine, TwoPassKarataEngine>();
+            return services;
+        }
     }
 }

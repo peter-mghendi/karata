@@ -121,11 +121,11 @@ public sealed class BotSession(
     private async Task PlayTurnAsync(CancellationToken ct)
     {
         var cards = CurrentHand.Cards;
-        _log.LogInformation("It's my turn. I have {Cards}.", string.Join(", ", cards.Select(m => m.GetName())));
+        _log.LogInformation("It's my turn. I have {Cards}.", string.Join(", ", cards.Select(card => card.Name)));
 
         var room = _room!.State;
         var move = strategy.Decide(room, cards);
-        _log.LogInformation("I'm thinking of playing {Move}.", string.Join(", ", move.Select(m => m.GetName())));
+        _log.LogInformation("I'm thinking of playing {Move}.", string.Join(", ", move.Select(card => card.Name)));
 
         try
         {

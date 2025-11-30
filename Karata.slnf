@@ -1,6 +1,6 @@
 {
   "solution": {
-    "path": "Karata.sln",
+    "path": "Karata.slnx",
     "projects": [
       "src/Karata.App/Karata.App.csproj",
       "src/Karata.Bot/Karata.Bot.csproj",

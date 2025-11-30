@@ -7,10 +7,13 @@ namespace Karata.Bot.Routes;
 
 public static class BotRoutes
 {
-    public static void MapBotRoutes(this WebApplication routes)
+    extension(WebApplication routes)
     {
-        var api = routes.MapGroup("/api");
-        api.MapPost("/hands", InvitationHandler);
+        public void MapBotRoutes()
+        {
+            var api = routes.MapGroup("/api");
+            api.MapPost("/hands", InvitationHandler);
+        }
     }
 
     private static async Task<IResult> InvitationHandler(

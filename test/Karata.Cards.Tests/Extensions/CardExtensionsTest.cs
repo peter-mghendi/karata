@@ -1,4 +1,3 @@
-using System;
 using Karata.Cards.Extensions;
 using Xunit;
 using static Karata.Cards.Card;
@@ -28,10 +27,10 @@ public class CardExtensionsTest
         var expectedJoker = new Card { Face = Joker, Suit = suit };
 
         if (throws)
-            Assert.Throws<ArgumentException>(() => _ = color.ColoredJoker());
+            Assert.Throws<ArgumentException>(() => _ = color.Joker);
         else
         {
-            var actualJoker = color.ColoredJoker();
+            var actualJoker = color.Joker;
             Assert.Equal(expectedJoker, actualJoker);
         }
     }
@@ -42,23 +41,23 @@ public class CardExtensionsTest
     public void GetNameTest(CardFace face, CardSuit suit, string name)
     {
         var card = new Card { Face = face, Suit = suit };
-        Assert.Equal(name, card.GetName());
+        Assert.Equal(name, card.Name);
     }
 
     [Theory]
     [InlineData(Ace, Spades, 1, false)]
-    [InlineData((CardFace)15, Spades, default(uint), true)]
+    [InlineData((CardFace)15, Spades, 0, true)]
     public void GetRankTest(CardFace face, CardSuit suit, uint rank, bool throws)
     {
         var card = new Card { Face = face, Suit = suit };
 
         if (throws)
         {
-            Assert.Throws<ArgumentException>(() => _ = card.GetRank());
+            Assert.Throws<ArgumentException>(() => _ = card.Rank);
         }
         else
         {
-            Assert.Equal(rank, card.GetRank());
+            Assert.Equal(rank, card.Rank);
         }
     }
 
@@ -75,9 +74,9 @@ public class CardExtensionsTest
         var card = new Card { Face = face, Suit = suit };
 
         if (throws)
-            Assert.Throws<ArgumentException>(() => _ = card.GetColor());
+            Assert.Throws<ArgumentException>(() => _ = card.Color);
         else
-            Assert.Equal(color, card.GetColor());
+            Assert.Equal(color, card.Color);
     }
 
     [Theory]
@@ -87,7 +86,7 @@ public class CardExtensionsTest
     public void GetAceValueTest(CardFace face, CardSuit suit, uint value)
     {
         var card = new Card { Face = face, Suit = suit };
-        var actual = card.GetAceValue();
+        var actual = card.AceValue;
         Assert.Equal(value, actual);
     }
 
@@ -99,7 +98,7 @@ public class CardExtensionsTest
     public void GetPickValueTest(CardFace face, CardSuit suit, uint value)
     {
         var card = new Card { Face = face, Suit = suit };
-        var actual = card.GetPickValue();
+        var actual = card.PickValue;
         Assert.Equal(value, actual);
     }
 
@@ -110,7 +109,7 @@ public class CardExtensionsTest
     public void IsBombTest(CardFace face, CardSuit suit, bool isBomb)
     {
         var card = new Card { Face = face, Suit = suit };
-        Assert.Equal(isBomb, card.IsBomb());
+        Assert.Equal(isBomb, card.IsBomb);
     }
 
     [Theory]
@@ -120,7 +119,7 @@ public class CardExtensionsTest
     public void IsQuestionTest(CardFace face, CardSuit suit, bool isQuestion)
     {
         var card = new Card { Face = face, Suit = suit };
-        var actual = card.IsQuestion();
+        var actual = card.IsQuestion;
         Assert.Equal(isQuestion, actual);
     }
     
@@ -134,7 +133,7 @@ public class CardExtensionsTest
     public void IsSpecialTest(CardFace face, CardSuit suit, bool isSpecial)
     {
         var card = new Card { Face = face, Suit = suit };
-        Assert.Equal(isSpecial, card.IsSpecial());
+        Assert.Equal(isSpecial, card.IsSpecial);
     }
 
     [Theory]

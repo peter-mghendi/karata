@@ -1,16 +1,13 @@
-using System;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Duende.IdentityModel.OidcClient.Browser;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 using static System.Net.Mime.MediaTypeNames.Application;
 using static System.Net.Mime.MediaTypeNames.Text;
 
@@ -75,7 +72,7 @@ file sealed class LoopbackHttpListener : IDisposable
 {
     private const int DefaultTimeoutInSeconds = checked((int)(5 * TimeSpan.SecondsPerMinute));
 
-    private readonly IWebHost _host;
+    private readonly IHost _host;
     private readonly TaskCompletionSource<string> _source = new();
     private readonly string _url;
 
@@ -86,11 +83,10 @@ file sealed class LoopbackHttpListener : IDisposable
         if (path is ['/', .. var trimmed]) path = trimmed;
 
         _url = $"http://127.0.0.1:{port}/{path}"; 
-        _host = new WebHostBuilder()
-            .UseKestrel()
-            .UseUrls(_url)
-            .Configure(Configure)
+        _host = new HostBuilder()
+            .ConfigureWebHost(builder => builder.UseKestrel().UseUrls(_url).Configure(Configure))
             .Build();
+
         _host.Start();
     }
 

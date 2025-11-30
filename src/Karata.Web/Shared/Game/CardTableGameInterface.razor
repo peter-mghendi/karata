@@ -5,24 +5,24 @@
 <div id="table" class="mud-width-full mud-height-full relative teal rounded mud-elevation-1">
     @* Me *@
     <div id="bottom" class="absolute">
-        <HandComponent FaceUp Cards="@CurrentHand" OnCardSelected="AddCardToTurn" />
+        <HandComponent FaceUp Cards="@CurrentHand" OnCardSelected="AddCardToTurn"/>
     </div>
 
     @* Current Turn *@
     <div id="turn" class="absolute">
-        <HandComponent FaceUp Cards="@Turn" OnCardSelected="RemoveCardFromTurn" />
+        <HandComponent FaceUp Cards="@Turn" OnCardSelected="RemoveCardFromTurn"/>
     </div>
 
     @* Player 2 *@
     <div id="top" class="absolute">
-        <HandComponent Cards="@OtherHands[0].Cards.ToImmutableList()" />
+        <HandComponent Cards="@OtherHands[0].Cards.ToImmutableList()"/>
     </div>
 
     @* Player 3 *@
     @if (OtherHands.Count > 1)
     {
         <div id="left" class="absolute">
-            <HandComponent Cards="@OtherHands[1].Cards.ToImmutableList()" />
+            <HandComponent Cards="@OtherHands[1].Cards.ToImmutableList()"/>
         </div>
     }
 
@@ -30,34 +30,28 @@
     @if (OtherHands.Count > 2)
     {
         <div id="right" class="hand-container">
-            <HandComponent Cards="@OtherHands[2].Cards.ToImmutableList()" />
+            <HandComponent Cards="@OtherHands[2].Cards.ToImmutableList()"/>
         </div>
     }
 
     @* Deck and Pile *@
-    <img id="deck" class="absolute" src="img/cards/Back.svg" alt="Card back" title="@($"Cards to pick: {Game.Pick}")"/>
-    <img id="pile" class="absolute" src="@ImageUrl(Game.Pile.Peek())" alt="@Game.Pile.Peek().GetName()" title="@RequestText"/>
+    <img id="deck" class="absolute" src="@Assets["img/cards/Back.svg"]" alt="Card back" title="@($"Cards to pick: {Game.Pick}")"/>
+    <img id="pile" class="absolute" src="@Assets[ImageUrl(Game.Pile.Peek())]" alt="@Game.Pile.Peek().Name" title="@RequestText"/>
 </div>
 
-@code 
+@code
 {
-    [Parameter]
-    public GameData Game { get; set; } = null!;
+    [Parameter] public GameData Game { get; set; } = null!;
 
-    [Parameter]
-    public HandData Hand { get; set; } = null!;
+    [Parameter] public HandData Hand { get; set; } = null!;
 
-    [Parameter]
-    public ImmutableList<Card> Turn { get; set; } = ImmutableList<Card>.Empty;
+    [Parameter] public ImmutableList<Card> Turn { get; set; } = ImmutableList<Card>.Empty;
 
-    [Parameter]
-    public EventCallback<ValueTuple<Card, int>> OnAddCardToTurn { get; set; }
+    [Parameter] public EventCallback<ValueTuple<Card, int>> OnAddCardToTurn { get; set; }
 
-    [Parameter]
-    public EventCallback<ValueTuple<Card, int>> OnReorderCardInTurn { get; set; }
-    
-    [Parameter]
-    public EventCallback<Card> OnRemoveCardFromTurn { get; set; }
+    [Parameter] public EventCallback<ValueTuple<Card, int>> OnReorderCardInTurn { get; set; }
+
+    [Parameter] public EventCallback<Card> OnRemoveCardFromTurn { get; set; }
 
     private ImmutableList<Card> CurrentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToImmutableList();
 
@@ -65,12 +59,12 @@
 
     private string RequestText => Game.Request switch
     {
-        null => "No card has been requested",
         { Face: None } => Game.Request.ToString(),
-        _ => Game.Request.GetName()
+        { Face: not None } => Game.Request.Name,
+        null => "No card has been requested",
     };
 
-    private string ImageUrl(Card card) => card is { Face: Joker }
+    private static string ImageUrl(Card card) => card is { Face: Joker }
         ? $"img/cards/{card.Suit.ToString()}.svg"
         : $"img/cards/{card.Face.ToString()}{card.Suit.ToString()}.svg";
 

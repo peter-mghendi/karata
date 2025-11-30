@@ -53,12 +53,11 @@ public class GameStartService(
 
     private async Task DealCards(Room room)
     {
-        // Shuffle deck and deal starting card
         var game = room.Game;
         var deck = game.Deck;
 
-        do deck.Shuffle();
-        while (deck.Peek().IsSpecial());
+        // Shuffle deck and deal starting card. Do not deal special cards to start.
+        do deck.ShuffleInPlace(); while (deck.Peek().IsSpecial);
 
         var top = deck.Deal();
         logger.LogDebug("Top card is {Card}.", top);

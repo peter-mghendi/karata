@@ -93,7 +93,7 @@
                     </MudItem>
                     <MudItem Class="mud-height-full overflow-y-scroll" xs="12" md="4" xl="3" xxl="2">
                         <MudPaper Elevation="0" Class="mb-4">
-                            <MudToolBar>
+                            <MudToolBar Gutters="false" Class="px-2">
                                 @if (_room!.State.Game.Status is GameStatus.Ongoing)
                                 {
                                     <MudTooltip Text="Pick card(s)">
@@ -144,18 +144,18 @@
                         <MudExpansionPanels Outlined="false" Elevation="0" Class="mb-4">
                             @if (_learner && _room!.State.Game.Status is GameStatus.Ongoing)
                             {
-                                <MudExpansionPanel Text="Learner mode">
+                                <MudExpansionPanel Text="Learner mode" Class="px-4">
                                     <TurnEffects Game="_room!.State.Game" Cards="@([.._turn.State])"/>
                                 </MudExpansionPanel>
                             }
-                            <MudExpansionPanel Text="Information">
+                            <MudExpansionPanel Text="Information" Class="px-4">
                                 <InformationPanel Room="_room!.State"/>
                             </MudExpansionPanel>
-                            <MudExpansionPanel Text="Players">
+                            <MudExpansionPanel Text="Players" Class="px-4">
                                 <PlayersPanel Me="CurrentHand.Player" Room="_room.State" Controls="IsAdministrator"
                                               OnSetAway="SetAway" OnVoidTurn="VoidTurn"/>
                             </MudExpansionPanel>
-                            <MudExpansionPanel Text="Chat" MaxHeight="480" Class="overflow-y-auto">
+                            <MudExpansionPanel Text="Chat" MaxHeight="480" Class="overflow-y-auto px-4">
                                 <ChatPanel Room="_room!.State" Me="CurrentHand.Player" OnSend="Send"/>
                             </MudExpansionPanel>
                         </MudExpansionPanels>
