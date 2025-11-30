@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using Karata.Bot.Infrastructure.Security;
-using Karata.Shared.Models;
+using Karata.Kit.Domain.Models;
 
 namespace Karata.Bot.Services;
 

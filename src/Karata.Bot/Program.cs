@@ -1,7 +1,7 @@
 using Karata.Bot.Infrastructure.Security;
 using Karata.Bot.Routes;
 using Karata.Bot.Services;
-using Karata.Shared;
+using Karata.Kit.Application;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 

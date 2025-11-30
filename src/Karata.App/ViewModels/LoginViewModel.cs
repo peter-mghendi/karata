@@ -1,8 +1,8 @@
-using ReactiveUI;
 using System.Reactive;
 using System.Reactive.Linq;
 using Karata.App.Services;
-using Karata.Shared.Client;
+using Karata.Kit.Application.Client;
+using ReactiveUI;
 
 namespace Karata.App.ViewModels;
 

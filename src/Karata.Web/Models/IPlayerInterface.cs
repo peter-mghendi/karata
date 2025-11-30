@@ -2,7 +2,7 @@
 
 using System.Collections.Immutable;
 using Karata.Cards;
-using Karata.Shared.Models;
+using Karata.Kit.Domain.Models;
 using Microsoft.AspNetCore.Components;
 
 namespace Karata.Web.Models;

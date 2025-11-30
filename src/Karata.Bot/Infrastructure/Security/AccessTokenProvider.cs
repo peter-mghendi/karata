@@ -1,6 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
-using Karata.Shared.Models;
+using Karata.Kit.Domain.Models;
 
 namespace Karata.Bot.Infrastructure.Security;
 

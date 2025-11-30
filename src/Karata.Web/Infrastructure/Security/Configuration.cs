@@ -1,4 +1,4 @@
-using Karata.Shared.Security;
+using Karata.Kit.Application.Security;
 
 namespace Karata.Web.Infrastructure.Security;
 

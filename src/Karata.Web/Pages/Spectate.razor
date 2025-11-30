@@ -3,9 +3,9 @@
 @using System.Reactive.Disposables
 @using System.Reactive.Disposables.Fluent
 @using System.Reactive.Linq
+@using Karata.Kit.Application.Client
+@using Karata.Kit.Application.State
 @using Karata.Pebble.Interceptors
-@using Karata.Shared.Client
-@using Karata.Shared.State
 @using Karata.Web.Support
 @using TextCopy
 
@@ -98,7 +98,7 @@
 
         _connection.Events.AddHandToRoom.Subscribe(data =>
         {
-            var (id, user, status) = data;
+            var (_, user, _) = data;
             Snackbar.Add($"{user.Username} has joined the room", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         }).DisposeWith(_subscriptions);
 

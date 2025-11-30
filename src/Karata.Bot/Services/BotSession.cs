@@ -5,13 +5,14 @@ using System.Reactive.Linq;
 using Karata.Bot.Strategy;
 using Karata.Cards;
 using Karata.Cards.Extensions;
+using Karata.Kit.Application.Client;
+using Karata.Kit.Application.State;
+using Karata.Kit.Bot.Strategy;
+using Karata.Kit.Domain.Models;
+using Karata.Kit.Engine;
+using Karata.Kit.Engine.Exceptions;
 using Karata.Pebble.Interceptors;
-using Karata.Shared.Client;
-using Karata.Shared.Engine;
-using Karata.Shared.Engine.Exceptions;
-using Karata.Shared.Models;
-using Karata.Shared.State;
-using static Karata.Shared.Models.GameStatus;
+using static Karata.Kit.Domain.Models.GameStatus;
 
 namespace Karata.Bot.Services;
 

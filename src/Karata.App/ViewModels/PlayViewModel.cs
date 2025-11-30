@@ -1,4 +1,3 @@
-using System;
 using ReactiveUI;
 
 namespace Karata.App.ViewModels;

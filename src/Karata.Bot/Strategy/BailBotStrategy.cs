@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using Karata.Cards;
-using Karata.Shared.Models;
+using Karata.Kit.Bot.Strategy;
+using Karata.Kit.Domain.Models;
 
 namespace Karata.Bot.Strategy;
 

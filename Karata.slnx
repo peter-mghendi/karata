@@ -12,14 +12,14 @@
     <Project Path="src/Karata.Cards/Karata.Cards.csproj" />
     <Project Path="src/Karata.Desktop/Karata.Desktop.csproj" />
     <Project Path="src/Karata.iOS/Karata.iOS.csproj" />
+    <Project Path="src/Karata.Kit/Karata.Kit.csproj" />
     <Project Path="src/Karata.Pebble/Karata.Pebble.csproj" />
     <Project Path="src/Karata.Server/Karata.Server.csproj" />
-    <Project Path="src/Karata.Shared/Karata.Shared.csproj" />
     <Project Path="src/Karata.Web/Karata.Web.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Karata.Cards.Tests/Karata.Cards.Tests.csproj" />
     <Project Path="test/Karata.Server.Tests/Karata.Server.Tests.csproj" />
-    <Project Path="test/Karata.Shared.Tests/Karata.Shared.Tests.csproj" />
+    <Project Path="test\Karata.Kit.Tests\Karata.Kit.Tests.csproj" />
   </Folder>
 </Solution>

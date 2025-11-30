@@ -1,7 +1,7 @@
 using Karata.Cards;
 using Karata.Cards.Extensions;
+using Karata.Kit.Domain.Models;
 using Karata.Server.Models;
-using Karata.Shared.Models;
 using static Karata.Cards.Card.CardFace;
 using static Karata.Cards.Card.CardSuit;
 

@@ -26,6 +26,5 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Karata.Web\Karata.Web.csproj" />
-    <ProjectReference Include="..\Karata.Shared\Karata.Shared.csproj" />
   </ItemGroup>
 </Project>

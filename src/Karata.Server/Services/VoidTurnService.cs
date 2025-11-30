@@ -1,19 +1,9 @@
-using System.Text.Json;
+using Karata.Kit.Domain.Models;
 using Karata.Server.Data;
 using Karata.Server.Hubs;
 using Karata.Server.Hubs.Clients;
-using Karata.Server.Support;
 using Karata.Server.Support.Exceptions;
-using Karata.Shared.Engine;
-using Karata.Shared.Engine.Exceptions;
-using Karata.Shared.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
-using static Karata.Cards.Card.CardFace;
-using static Karata.Shared.Models.CardRequestLevel;
-using static Karata.Shared.Models.TurnType;
-using static Karata.Shared.Models.GameStatus;
-using static Karata.Shared.Models.HandStatus;
 
 namespace Karata.Server.Services;
 

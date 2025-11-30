@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Immutable;
-using System.Linq;
 using Xunit;
 
 namespace Karata.Cards.Tests;

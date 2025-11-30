@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using System.Windows.Input;
-using Karata.Shared.Client;
-using Karata.Shared.Models;
+using Karata.Kit.Application.Client;
+using Karata.Kit.Domain.Models;
 using ReactiveUI;
 
 // If your ViewModelBase derives from ReactiveObject, that's fine—

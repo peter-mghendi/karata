@@ -1,5 +1,5 @@
-using Karata.Shared.Exceptions;
-using Karata.Shared.Models;
+using Karata.Kit.Core.Exceptions;
+using Karata.Kit.Domain.Models;
 
 namespace Karata.Server.Support;
 

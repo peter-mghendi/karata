@@ -1,4 +1,4 @@
-using Karata.Shared.Exceptions;
+using Karata.Kit.Core.Exceptions;
 
 namespace Karata.Server.Support.Exceptions;
 

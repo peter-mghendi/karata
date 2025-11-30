@@ -1,8 +1,9 @@
 using Karata.Bot.Infrastructure.Security;
 using Karata.Bot.Strategy;
-using Karata.Shared.Client;
-using Karata.Shared.Engine;
-using Karata.Shared.Models;
+using Karata.Kit.Application.Client;
+using Karata.Kit.Bot.Strategy;
+using Karata.Kit.Domain.Models;
+using Karata.Kit.Engine;
 
 namespace Karata.Bot.Services;
 

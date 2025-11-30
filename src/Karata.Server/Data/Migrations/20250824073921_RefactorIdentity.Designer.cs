@@ -498,7 +498,7 @@ namespace Karata.Server.Data.Migrations
                                 .HasForeignKey("TurnId");
                         });
 
-                    b.OwnsOne("Karata.Shared.Models.GameDelta", "Delta", b1 =>
+                    b.OwnsOne("Karata.Kit.Domain.Models.GameDelta", "Delta", b1 =>
                         {
                             b1.Property<int>("TurnId")
                                 .HasColumnType("integer");

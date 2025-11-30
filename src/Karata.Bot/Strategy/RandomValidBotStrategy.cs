@@ -1,9 +1,10 @@
 using System.Collections.Immutable;
 using Karata.Cards;
 using Karata.Cards.Extensions;
-using Karata.Shared.Engine;
-using Karata.Shared.Engine.Exceptions;
-using Karata.Shared.Models;
+using Karata.Kit.Bot.Strategy;
+using Karata.Kit.Domain.Models;
+using Karata.Kit.Engine;
+using Karata.Kit.Engine.Exceptions;
 using static Karata.Cards.Card.CardFace;
 
 namespace Karata.Bot.Strategy;

@@ -1,10 +1,10 @@
+using Karata.Kit.Core.Exceptions;
+using Karata.Kit.Domain.Models;
 using Karata.Server.Data;
 using Karata.Server.Hubs.Clients;
 using Karata.Server.Infrastructure.Security;
-using Karata.Server.Support;
 using Karata.Server.Services;
-using Karata.Shared.Exceptions;
-using Karata.Shared.Models;
+using Karata.Server.Support;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;

@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Karata.Shared\Karata.Shared.csproj" />
+    <ProjectReference Include="..\Karata.Kit\Karata.Kit.csproj" />
   </ItemGroup>
 
   <ItemGroup>

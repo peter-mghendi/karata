@@ -1,8 +1,8 @@
 using System.Text;
+using Karata.Kit.Domain.Models;
 using Karata.Server.Support;
 using Karata.Server.Support.Exceptions;
-using Karata.Shared.Models;
-using static Karata.Shared.Models.HandStatus;
+using static Karata.Kit.Domain.Models.HandStatus;
 
 namespace Karata.Server.Services;
 

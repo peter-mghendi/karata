@@ -1,7 +1,7 @@
+using Karata.Kit.Core.Exceptions;
 using Karata.Server.Data;
 using Karata.Server.Hubs.Clients;
 using Karata.Server.Support;
-using Karata.Shared.Exceptions;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Server.Hubs;

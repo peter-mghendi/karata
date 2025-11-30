@@ -1,6 +1,6 @@
 using Karata.Bot.Services;
-using Karata.Shared.Client;
-using Karata.Shared.Models;
+using Karata.Kit.Application.Client;
+using Karata.Kit.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Karata.Bot.Routes;
