@@ -22,4 +22,6 @@
     <Project Path="test/Karata.Server.Tests/Karata.Server.Tests.csproj" />
     <Project Path="test\Karata.Kit.Tests\Karata.Kit.Tests.csproj" />
   </Folder>
+  <Project Path="Karata.AppHost/Karata.AppHost.csproj" />
+  <Project Path="Karata.ServiceDefaults/Karata.ServiceDefaults.csproj" />
 </Solution>
