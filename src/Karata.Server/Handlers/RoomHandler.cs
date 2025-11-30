@@ -1,48 +1,45 @@
-using System.Security.Claims;
 using System.Text;
 using Karata.Server.Data;
 using Karata.Server.Infrastructure.Security;
 using Karata.Server.Services;
 using Karata.Shared.Models;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static Karata.Shared.Models.GameStatus;
 
-namespace Karata.Server.Controllers;
+namespace Karata.Server.Handlers;
 
-[ApiController]
-[Route("api/rooms")]
-public class RoomController(KarataContext context) : ControllerBase
+public static class RoomHandler
 {
-    [Authorize]
-    [HttpGet]
-    public async Task<ActionResult<List<RoomData>>> Get()
+    public static async Task<Ok<List<RoomData>>> ListRooms([FromServices] KarataContext context)
     {
         // TODO: Hardcoding these conditions in for now because this endpoint is only used to find joinable games.
-        return await context.Rooms
+        var rooms = await context.Rooms
             .Where(room => room.Game.Status == Lobby)
             .Where(room => room.Game.Hands.Count < 4)
             .OrderByDescending(room => room.CreatedAt)
             .Take(5)
             .Select(room => room.ToData())
             .ToListAsync();
+
+        return TypedResults.Ok(rooms);
     }
-    
-    [HttpGet("{id}")]
-    public async Task<ActionResult<RoomData>> Get(string id)
+
+    public static async Task<Results<Ok<RoomData>, BadRequest, NotFound>> GetRoom(
+        [FromServices] KarataContext context,
+        string id
+    )
     {
-        if (!Guid.TryParse(id, out var guid)) return BadRequest();
+        if (!Guid.TryParse(id, out var guid)) return TypedResults.BadRequest();
         var room = await context.Rooms.FindAsync(guid);
 
-        if (room == null) return NotFound();
-        return room.ToData();
+        if (room == null) return TypedResults.NotFound();
+        return TypedResults.Ok(room.ToData());
     }
 
-    [Authorize]
-    [HttpPost]
-    public async Task<ActionResult<RoomData>> Post(
+    public static async Task<Results<CreatedAtRoute<RoomData>, UnauthorizedHttpResult>> CreateRoom(
+        [FromServices] KarataContext context,
         [FromServices] CurrentUserService currentUserService,
         [FromServices] IPasswordService passwordService,
         [FromBody] RoomRequest request
@@ -53,7 +50,7 @@ public class RoomController(KarataContext context) : ControllerBase
             var user = await currentUserService.RequireAsync();
 
             var room = new Room { Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow };
-            room.Game.Hands.Add(new Hand { Player = user, Status = HandStatus.Offline});
+            room.Game.Hands.Add(new Hand { Player = user, Status = HandStatus.Offline });
 
             if (!string.IsNullOrWhiteSpace(request.Password))
             {
@@ -65,12 +62,11 @@ public class RoomController(KarataContext context) : ControllerBase
             context.Activities.Add(Activity.GameCreated(room));
 
             await context.SaveChangesAsync();
-            return CreatedAtAction(nameof(Get), new { id = room.Id }, room.ToData());
+            return TypedResults.CreatedAtRoute(room.ToData(), nameof(GetRoom), new { id = room.Id });
         }
         catch (UnauthorizedAccessException)
         {
-            return Unauthorized();
+            return TypedResults.Unauthorized();
         }
     }
 }
-
