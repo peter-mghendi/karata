@@ -1,12 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using Karata.Kit.Domain.Models;
+using Microsoft.Extensions.Configuration;
 
-namespace Karata.Bot.Infrastructure.Security;
+namespace Karata.Kit.Bot.Infrastructure.Security;
 
-public sealed class AccessTokenProvider(IHttpClientFactory factory, IConfiguration configuration) : IDisposable
+public sealed class AccessTokenProvider(HttpClient http, IConfiguration configuration) : IDisposable
 {
-    private readonly HttpClient _http = factory.CreateClient();
     private readonly string _clientId = configuration["Keycloak:ClientId"]!;
     private readonly string _clientSecret = configuration["Keycloak:ClientSecret"]!;
     private readonly string _authority = configuration["Keycloak:Authority"]!;
@@ -43,7 +43,7 @@ public sealed class AccessTokenProvider(IHttpClientFactory factory, IConfigurati
             using var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint);
             request.Content = form;
 
-            using var response = await _http.SendAsync(request, ct);
+            using var response = await http.SendAsync(request, ct);
             response.EnsureSuccessStatusCode();
 
             var body = await response.Content.ReadAsStringAsync(ct);
@@ -72,7 +72,7 @@ public sealed class AccessTokenProvider(IHttpClientFactory factory, IConfigurati
 
     public void Dispose()
     {
-        _http.Dispose();
+        http.Dispose();
         _gate.Dispose();
     }
 }

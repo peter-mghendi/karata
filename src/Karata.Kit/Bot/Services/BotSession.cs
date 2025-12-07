@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
-using Karata.Bot.Strategy;
 using Karata.Cards;
 using Karata.Cards.Extensions;
 using Karata.Kit.Application.Client;
@@ -12,9 +11,10 @@ using Karata.Kit.Domain.Models;
 using Karata.Kit.Engine;
 using Karata.Kit.Engine.Exceptions;
 using Karata.Pebble.Interceptors;
+using Microsoft.Extensions.Logging;
 using static Karata.Kit.Domain.Models.GameStatus;
 
-namespace Karata.Bot.Services;
+namespace Karata.Kit.Bot.Services;
 
 public sealed class BotSession(
     UserData player,

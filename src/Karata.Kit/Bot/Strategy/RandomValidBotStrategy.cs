@@ -1,17 +1,20 @@
 using System.Collections.Immutable;
 using Karata.Cards;
 using Karata.Cards.Extensions;
-using Karata.Kit.Bot.Strategy;
 using Karata.Kit.Domain.Models;
 using Karata.Kit.Engine;
 using Karata.Kit.Engine.Exceptions;
 using static Karata.Cards.Card.CardFace;
 
-namespace Karata.Bot.Strategy;
+namespace Karata.Kit.Bot.Strategy;
 
 public class RandomValidBotStrategy(IKarataEngine engine) : IBotStrategy
 {
     private static readonly Random Random = new();
+    
+    public string Name => "Random valid bot";
+
+    public string Description => "A bot that plays a random valid turn.";
 
     public ImmutableArray<Card> Decide(RoomData room, List<Card> cards) =>
         cards
@@ -21,8 +24,7 @@ public class RandomValidBotStrategy(IKarataEngine engine) : IBotStrategy
     public Card? Request(RoomData room, List<Card> cards, bool specific)
     {
         var decision = Decide(room, cards);
-        var candidate = cards.Except(decision).FirstOrDefault();
-        if (candidate is null) return null;
+        if (cards.Except(decision).FirstOrDefault() is not { } candidate) return null;
 
         return specific switch
         {

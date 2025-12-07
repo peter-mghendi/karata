@@ -7,6 +7,7 @@
   <Folder Name="/src/">
     <Project Path="src/Karata.Android/Karata.Android.csproj" />
     <Project Path="src/Karata.App/Karata.App.csproj" />
+    <Project Path="src/Karata.AppHost/Karata.AppHost.csproj" />
     <Project Path="src/Karata.Bot/Karata.Bot.csproj" />
     <Project Path="src/Karata.Browser/Karata.Browser.csproj" />
     <Project Path="src/Karata.Cards/Karata.Cards.csproj" />
@@ -15,13 +16,12 @@
     <Project Path="src/Karata.Kit/Karata.Kit.csproj" />
     <Project Path="src/Karata.Pebble/Karata.Pebble.csproj" />
     <Project Path="src/Karata.Server/Karata.Server.csproj" />
+    <Project Path="src/Karata.ServiceDefaults/Karata.ServiceDefaults.csproj" />
     <Project Path="src/Karata.Web/Karata.Web.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Karata.Cards.Tests/Karata.Cards.Tests.csproj" />
     <Project Path="test/Karata.Server.Tests/Karata.Server.Tests.csproj" />
-    <Project Path="test\Karata.Kit.Tests\Karata.Kit.Tests.csproj" />
+    <Project Path="test/Karata.Kit.Tests/Karata.Kit.Tests.csproj" />
   </Folder>
-  <Project Path="Karata.AppHost/Karata.AppHost.csproj" />
-  <Project Path="Karata.ServiceDefaults/Karata.ServiceDefaults.csproj" />
 </Solution>

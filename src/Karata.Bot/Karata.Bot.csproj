@@ -9,8 +9,4 @@
       <ProjectReference Include="..\Karata.ServiceDefaults\Karata.ServiceDefaults.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
-    </ItemGroup>
-
 </Project>

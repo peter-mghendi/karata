@@ -1,14 +1,16 @@
 using System.Collections.Concurrent;
-using Karata.Bot.Infrastructure.Security;
+using Karata.Kit.Bot.Infrastructure.Security;
+using Karata.Kit.Bot.Strategy;
 using Karata.Kit.Domain.Models;
+using Microsoft.Extensions.Logging;
 
-namespace Karata.Bot.Services;
+namespace Karata.Kit.Bot.Services;
 
 public sealed class BotSessionManager(
     BotSessionFactory bots,
     ILogger<BotSessionManager> log,
     AccessTokenProvider tokens
-    ) : IAsyncDisposable
+) : IAsyncDisposable
 {
     private sealed record Entry(
         Guid Room,
@@ -25,12 +27,12 @@ public sealed class BotSessionManager(
     /// If the game state hasn't hydrated yet, returns a placeholder with <see cref="HandStatus.Away"/> and empty cards,
     /// using the session's <see cref="AccessTokenProvider.CurrentUser"/> if available.
     /// </summary>
-    public Task<HandData> StartAsync(Guid room, string? password, CancellationToken ct = default)
+    public Task<HandData> StartAsync(IBotStrategy strategy, Guid room, string? password, CancellationToken ct = default)
     {
         if (_sessions.TryGetValue(room, out var existing)) return Task.FromResult(Snapshot(existing));
 
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        var session = bots.Create(tokens.CurrentUser!, room, password);
+        var session = bots.Create(strategy, tokens.CurrentUser!, room, password);
         var runner = Task.Run(async () =>
         {
             try
@@ -102,7 +104,8 @@ public sealed class BotSessionManager(
         return true;
     }
 
-    public async ValueTask DisposeAsync() => await Task.WhenAll(from key in _sessions.Keys select StopAsync(key, CancellationToken.None));
+    public async ValueTask DisposeAsync() =>
+        await Task.WhenAll(from key in _sessions.Keys select StopAsync(key, CancellationToken.None));
 
     private HandData Snapshot(Entry e) => e.Session.CurrentHand;
 }

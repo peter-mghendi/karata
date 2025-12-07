@@ -1,7 +1,8 @@
-using Karata.Bot.Infrastructure.Security;
-using Karata.Bot.Routes;
-using Karata.Bot.Services;
+using Karata.Bot.Endpoints;
 using Karata.Kit.Application;
+using Karata.Kit.Bot;
+using Karata.Kit.Bot.Infrastructure.Security;
+using Karata.Kit.Bot.Strategy;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
@@ -18,10 +19,13 @@ builder.Services.AddKarataCore(karata =>
     };
 });
 
-builder.Services.AddSingleton<BotSessionFactory>();
-builder.Services.AddSingleton<BotSessionManager>();
+builder.Services.AddKarataBot();
+builder.Services.AddKeyedTransient<IBotStrategy, BailBotStrategy>(nameof(BailBotStrategy));
+builder.Services.AddKeyedTransient<IBotStrategy, RandomValidBotStrategy>(nameof(RandomValidBotStrategy));
 
 var app = builder.Build();
+
 app.MapHealthChecks("/health");
-app.MapBotRoutes();
+app.MapBotStrategy("bail", app.Services.GetRequiredKeyedService<IBotStrategy>(nameof(BailBotStrategy)));
+app.MapBotStrategy("random", app.Services.GetRequiredKeyedService<IBotStrategy>(nameof(RandomValidBotStrategy)));
 app.Run();

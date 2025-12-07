@@ -5,11 +5,11 @@ namespace Karata.Server.Endpoints;
 
 public static class Endpoints
 {
-    extension(IEndpointRouteBuilder app)
+    extension(IEndpointRouteBuilder endpoints)
     {
         public void MapEndpoints()
         {
-            var api = app.MapGroup("/api");
+            var api = endpoints.MapGroup("/api");
 
             var activity = api.MapGroup("/activity");
             activity.MapGet("", ActivityHandler.ListActivity).WithName(nameof(ActivityHandler.ListActivity));
@@ -25,8 +25,8 @@ public static class Endpoints
 
         public void MapHubs()
         {
-            app.MapHub<PlayerHub>("/hubs/game/play", options => options.AllowStatefulReconnects = true);
-            app.MapHub<SpectatorHub>("/hubs/game/spectate", options => options.AllowStatefulReconnects = true);
+            endpoints.MapHub<PlayerHub>("/hubs/game/play", options => options.AllowStatefulReconnects = true);
+            endpoints.MapHub<SpectatorHub>("/hubs/game/spectate", options => options.AllowStatefulReconnects = true);
         }
     }
 }
