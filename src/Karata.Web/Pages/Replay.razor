@@ -1,4 +1,4 @@
-@page "/game/{id:guid}/spectate"
+@page "/game/{id:guid}/replay"
 
 @using System.Reactive.Disposables
 @using System.Reactive.Disposables.Fluent
@@ -7,10 +7,14 @@
 @using Karata.Kit.Application.State
 @using Karata.Pebble.Interceptors
 @using Karata.Web.Support
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using TextCopy
+
+@attribute [Authorize]
 
 @implements IDisposable
 
+@inject IAccessTokenProvider Provider
 @inject ILoggerFactory LoggerFactory
 @inject ISnackbar Snackbar
 @inject KarataClient KarataClient
@@ -84,7 +88,7 @@
 
     [Inject] public required IClipboard Clipboard { get; set; }
 
-    private SpectatorRoomConnection? _connection;
+    private ReplayerRoomConnection? _connection;
     private RoomState? _store;
     private List<TurnData>? _turns;
     private readonly CompositeDisposable _subscriptions = new();
@@ -94,7 +98,15 @@
     protected override async Task OnInitializedAsync()
     {
         _turns = await KarataClient.Turns.ListAsync(Id);
-        _connection = new SpectatorRoomConnection(new Uri("", UriKind.Relative), Id);
+        _connection = new ReplayerRoomConnection(new Uri("", UriKind.Relative), Id)
+        {
+            AccessTokenProvider = async () =>
+            {
+                var result = await Provider.RequestAccessToken();
+                result.TryGetToken(out var token);
+                return token!.Value;
+            },
+        };
 
         _connection.Events.AddHandToRoom.Subscribe(data =>
         {
@@ -110,7 +122,7 @@
             _connection.Events.BindRoomState(_store).DisposeWith(_subscriptions);
             OnStoreChanged(room);
         }).DisposeWith(_subscriptions);
-        
+
         _connection.Events.ReceiveSystemMessage.Subscribe(message =>
         {
             var severity = message.Type switch

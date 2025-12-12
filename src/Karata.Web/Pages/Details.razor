@@ -13,12 +13,23 @@
                 <InformationPanel Subheader Room="_room"/>
                 <PlayersPanel Subheader Room="_room" />
                 <MudDivider Class="my-2"/>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/game/{_room.Id}/play")">
-                    Join
-                </MudButton>
-                <MudButton Variant="Variant.Outlined" Href="@($"/game/{_room.Id}/spectate")" Class="ml-2">
-                    Spectate
-                </MudButton>
+                
+                @if (_room.Game.Status is GameStatus.Lobby or GameStatus.Ongoing)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/game/{_room.Id}/play")">
+                        Join
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Href="@($"/game/{_room.Id}/spectate")" Class="ml-2">
+                        Spectate
+                    </MudButton>
+                }
+                
+                @if (_room.Game.Status is GameStatus.Over)
+                {
+                    <MudButton Variant="Variant.Outlined" Href="@($"/game/{_room.Id}/replay")" Class="ml-2">
+                        Replay
+                    </MudButton>
+                }
             </MudPaper>
         }
     </MudContainer>
