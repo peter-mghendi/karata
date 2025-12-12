@@ -61,37 +61,40 @@ public sealed class RoomEvents : IDisposable
 
     internal void OnAddToRoom(RoomData r) => _addToRoom.OnNext(r);
 
-    internal void OnAddHandToRoom(long i, UserData u, HandStatus s) => _addHandToRoom.OnNext((i, u, s));
+    internal void OnAddHandToRoom(long id, UserData user, HandStatus status) => _addHandToRoom.OnNext((id, user, status));
 
     internal void OnEndGame() => _endGame.OnNext(Unit.Default);
 
-    internal void OnMoveCardsFromDeckToHand(UserData u, IReadOnlyList<Card> c) => _moveCardsFromDeckToHand.OnNext((u, c));
+    internal void OnMoveCardsFromDeckToHand(UserData user, IReadOnlyList<Card> cards) => _moveCardsFromDeckToHand.OnNext((user, cards));
 
-    internal void OnMoveCardsFromDeckToPile(IReadOnlyList<Card> c) => _moveCardsFromDeckToPile.OnNext(c);
+    internal void OnMoveCardsFromDeckToPile(IReadOnlyList<Card> cards) => _moveCardsFromDeckToPile.OnNext(cards);
 
-    internal void OnMoveCardsFromHandToPile(UserData u, IReadOnlyList<Card> c, bool v) => _moveCardsFromHandToPile.OnNext((u, c, v));
+    internal void OnMoveCardsFromHandToPile(UserData user, IReadOnlyList<Card> cards, bool visible) =>
+        _moveCardsFromHandToPile.OnNext((user, cards, visible));
 
     internal void OnNotifyTurnProcessed() => _notifyTurnProcessed.OnNext(Unit.Default);
 
-    internal void OnReceiveChat(ChatData m) => _receiveChat.OnNext(m);
+    internal void OnReceiveChat(ChatData chat) => _receiveChat.OnNext(chat);
 
-    internal void OnReceiveSystemMessage(SystemMessage m) => _receiveSystemMessage.OnNext(m);
+    internal void OnReceiveSystemMessage(SystemMessage message) => _receiveSystemMessage.OnNext(message);
 
     internal void OnReclaimPile() => _reclaimPile.OnNext(Unit.Default);
 
     internal void OnRemoveFromRoom() => _removeFromRoom.OnNext(Unit.Default);
 
-    internal void OnRemoveHandFromRoom(UserData u) => _removeHandFromRoom.OnNext(u);
+    internal void OnRemoveHandFromRoom(UserData user) => _removeHandFromRoom.OnNext(user);
 
-    internal void OnSetCurrentRequest(Card c) => _setCurrentRequest.OnNext(c);
+    internal void OnSetCurrentRequest(Card card) => _setCurrentRequest.OnNext(card);
 
-    internal void OnUpdateAdministrator(UserData a) => _updateAdministrator.OnNext(a);
+    internal void OnUpdateAdministrator(UserData user) => _updateAdministrator.OnNext(user);
 
-    internal void OnUpdateGameStatus(GameStatus s) => _updateGameStatus.OnNext(s);
+    internal void OnUpdateGameStatus(GameStatus status) => _updateGameStatus.OnNext(status);
 
-    internal void OnUpdateHandStatus(UserData u, HandStatus s) => _updateHandStatus.OnNext((u, s));
-    internal void OnUpdatePick(uint n) => _updatePick.OnNext(n);
-    internal void OnUpdateTurn(int t) => _updateTurn.OnNext(t);
+    internal void OnUpdateHandStatus(UserData user, HandStatus status) => _updateHandStatus.OnNext((user, status));
+    
+    internal void OnUpdatePick(uint pick) => _updatePick.OnNext(pick);
+    
+    internal void OnUpdateTurn(int turn) => _updateTurn.OnNext(turn);
 
     // Subjects are IDisposable in practice; ok to just complete for now
     public void Dispose()
