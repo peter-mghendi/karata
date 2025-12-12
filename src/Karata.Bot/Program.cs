@@ -1,4 +1,4 @@
-using Karata.Bot.Endpoints;
+using Karata.BotFramework.Endpoints;
 using Karata.Kit.Application;
 using Karata.Kit.Bot;
 using Karata.Kit.Bot.Infrastructure.Security;

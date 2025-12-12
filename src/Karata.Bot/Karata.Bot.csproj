@@ -5,7 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Karata.Kit\Karata.Kit.csproj" />
+      <ProjectReference Include="..\Karata.BotFramework\Karata.BotFramework.csproj" />
       <ProjectReference Include="..\Karata.ServiceDefaults\Karata.ServiceDefaults.csproj" />
     </ItemGroup>
 

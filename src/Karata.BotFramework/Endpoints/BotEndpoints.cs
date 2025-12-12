@@ -2,12 +2,14 @@ using Karata.Kit.Application.Client;
 using Karata.Kit.Bot.Services;
 using Karata.Kit.Bot.Strategy;
 using Karata.Kit.Domain.Models;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 
-namespace Karata.Bot.Endpoints;
+namespace Karata.BotFramework.Endpoints;
 
-// TODO: [IEndpointRouteBuilder] This needs to move into Karata.Kit.Bot
 public static class BotEndpoints
 {
     extension(IEndpointRouteBuilder routes)

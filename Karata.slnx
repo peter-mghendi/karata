@@ -9,6 +9,7 @@
     <Project Path="src/Karata.App/Karata.App.csproj" />
     <Project Path="src/Karata.AppHost/Karata.AppHost.csproj" />
     <Project Path="src/Karata.Bot/Karata.Bot.csproj" />
+    <Project Path="src/Karata.BotFramework/Karata.BotFramework.csproj" />
     <Project Path="src/Karata.Browser/Karata.Browser.csproj" />
     <Project Path="src/Karata.Cards/Karata.Cards.csproj" />
     <Project Path="src/Karata.Desktop/Karata.Desktop.csproj" />

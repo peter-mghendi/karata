@@ -9,17 +9,17 @@ namespace Karata.Kit.Bot.Interface;
 /// <param name="http">
 /// A <see cref="HttpClient"/> with the <see cref="HttpClient.BaseAddress"/> set to the base address of the bot.
 /// </param>
-public class BotInterface(HttpClient http, string identifier)
+public class BotInterface(HttpClient http)
 {
-    public async Task<BotData> IntrospectAsync(CancellationToken ct = default)
+    public async Task<BotData> IntrospectAsync(CancellationToken cancellation = default)
     {
-        var response = await http.GetFromJsonAsync<BotData>($"/api/bots/{identifier}", ct);
-        return response ?? throw new Exception($"Unable to fetch details for bot: {identifier}.");
+        var response = await http.GetFromJsonAsync<BotData>("", cancellation);
+        return response ?? throw new Exception($"Unable to fetch details for bot: {http.BaseAddress}.");
     }
 
-    public async Task InviteAsync(BotInvitation invitation, CancellationToken ct = default)
+    public async Task InviteAsync(BotInvitation invitation, CancellationToken cancellation   = default)
     {
-        var response = await http.PostAsJsonAsync($"/api/bots/{identifier}/hands", invitation, ct);
+        var response = await http.PostAsJsonAsync("/hands", invitation, cancellation);
         response.EnsureSuccessStatusCode();
     }
 }
