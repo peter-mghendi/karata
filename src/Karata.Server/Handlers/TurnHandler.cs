@@ -1,5 +1,5 @@
+using Karata.Kit.Domain.Models;
 using Karata.Server.Data;
-using Karata.Shared.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 

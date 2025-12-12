@@ -1,5 +1,4 @@
-using System.Collections.Generic;
-using Karata.Shared.Security;
+using Karata.Kit.Application.Security;
 
 namespace Karata.App.Services;
 

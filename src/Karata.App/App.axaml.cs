@@ -1,4 +1,3 @@
-using System;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using Avalonia;
@@ -10,7 +9,6 @@ using Karata.App.Infrastructure;
 using Karata.App.Services;
 using Karata.App.ViewModels;
 using Karata.App.Views;
-using Karata.Shared.Security;
 using Microsoft.Extensions.Hosting;
 using ReactiveUI;
 using Splat.Microsoft.Extensions.DependencyInjection;

@@ -1,12 +1,12 @@
 using System.Text;
+using Karata.Kit.Domain.Models;
 using Karata.Server.Data;
 using Karata.Server.Infrastructure.Security;
 using Karata.Server.Services;
-using Karata.Shared.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using static Karata.Shared.Models.GameStatus;
+using static Karata.Kit.Domain.Models.GameStatus;
 
 namespace Karata.Server.Handlers;
 

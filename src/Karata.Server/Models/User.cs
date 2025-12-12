@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
-using Karata.Shared.Models;
-using Microsoft.AspNetCore.Identity;
+using Karata.Kit.Domain.Models;
 
 namespace Karata.Server.Models;
 

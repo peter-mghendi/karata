@@ -1,4 +1,3 @@
-using System;
 using Karata.App.ViewModels;
 using Karata.App.Views;
 using ReactiveUI;

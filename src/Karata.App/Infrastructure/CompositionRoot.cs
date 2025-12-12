@@ -1,13 +1,11 @@
-using System;
-using System.Threading.Tasks;
 using Avalonia.ReactiveUI;
 using Duende.IdentityModel.OidcClient;
 using Duende.IdentityModel.OidcClient.Browser;
 using Karata.App.Services;
 using Karata.App.ViewModels;
 using Karata.App.Views;
-using Karata.Shared;
-using Karata.Shared.Security;
+using Karata.Kit.Application;
+using Karata.Kit.Application.Security;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
 using Splat;

@@ -1,6 +1,6 @@
+using Karata.Kit.Domain.Models;
 using Karata.Server.Hubs;
 using Karata.Server.Hubs.Clients;
-using Karata.Shared.Models;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Server.Services;

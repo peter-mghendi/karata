@@ -5,11 +5,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Karata.Shared\Karata.Shared.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
+      <ProjectReference Include="..\Karata.BotFramework\Karata.BotFramework.csproj" />
+      <ProjectReference Include="..\Karata.ServiceDefaults\Karata.ServiceDefaults.csproj" />
     </ItemGroup>
 
 </Project>

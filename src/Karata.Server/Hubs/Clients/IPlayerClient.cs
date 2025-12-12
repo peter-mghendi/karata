@@ -1,4 +1,4 @@
-using Karata.Shared.Models;
+using Karata.Kit.Domain.Models;
 
 namespace Karata.Server.Hubs.Clients;
 

@@ -2,9 +2,9 @@ name: Build + Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [ * ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -20,6 +20,9 @@ jobs:
 
     - name: Install Android workload
       run: dotnet workload install android
+
+    - name: Install Webassembly workload
+      run: dotnet workload install wasm-tools
 
     - name: Restore dependencies
       run: dotnet restore Karata.slnf

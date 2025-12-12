@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
-using Karata.Shared.Models;
+using Karata.Kit.Domain.Models;
 using static Karata.Cards.Card.CardFace;
-using static Karata.Shared.Models.CardRequestLevel;
+using static Karata.Kit.Domain.Models.CardRequestLevel;
 
 namespace Karata.Server.Models;
 
