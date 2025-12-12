@@ -26,6 +26,7 @@ public static class Endpoints
         public void MapHubs()
         {
             endpoints.MapHub<PlayerHub>("/hubs/game/play", options => options.AllowStatefulReconnects = true);
+            endpoints.MapHub<ReplayerHub>("/hubs/game/replay", options => options.AllowStatefulReconnects = true);
             endpoints.MapHub<SpectatorHub>("/hubs/game/spectate", options => options.AllowStatefulReconnects = true);
         }
     }
