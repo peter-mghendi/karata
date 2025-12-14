@@ -14,11 +14,11 @@ public class TurnProcessingServiceFactory(
     IKarataEngine engine
 )
 {
-    public TurnProcessingService Create(Guid room, string player, string connection) =>
+    public LiveTurnProcessingService Create(Guid room, string player, string connection) =>
         new(
             players,
             spectators,
-            loggers.CreateLogger<TurnProcessingService>(),
+            loggers.CreateLogger<LiveTurnProcessingService>(),
             context,
             engine,
             room,

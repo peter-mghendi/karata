@@ -17,12 +17,12 @@ using static Karata.Kit.Domain.Models.TurnType;
 namespace Karata.Server.Services;
 
 /// <summary>
-/// Orchestrates turn processing: validation, delta generation, state mutation, notifications, and persistence.
+/// Orchestrates live turn processing: validation, delta generation, state mutation, notifications, and persistence.
 /// </summary>
-public class TurnProcessingService(
+public class LiveTurnProcessingService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
-    ILogger<TurnProcessingService> logger,
+    ILogger<LiveTurnProcessingService> logger,
     KarataContext context,
     IKarataEngine engine,
     Guid room,
