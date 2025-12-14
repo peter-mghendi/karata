@@ -9,6 +9,9 @@ namespace Karata.Kit.Engine;
 
 public interface IKarataEngine
 {
+    /// <summary>The name of the engine.</summary>
+    string Name { get; }
+    
     /// <summary>
     /// Evaluates a turn, returning a <see cref="GameDelta"/> if the turn is valid, and throwing a
     /// <see cref="TurnValidationException"/> if it is not.

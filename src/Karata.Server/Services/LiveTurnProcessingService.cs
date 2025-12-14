@@ -25,14 +25,14 @@ public class LiveTurnProcessingService(
     ILogger<LiveTurnProcessingService> logger,
     KarataContext context,
     IKarataEngine engine,
-    Guid room,
+    Guid roomId,
     string player,
     string connection
-) : RoomAwareService(players, spectators, room, player)
+) : RoomAwareService(players, spectators, roomId, player)
 {
-    private static readonly EngineData EngineDetails = new()
+    private readonly EngineData _details = new()
     {
-        Name = nameof(TwoPassKarataEngine),
+        Name = engine.Name,
         Date = ThisAssembly.Git.CommitDate,
         Branch =  ThisAssembly.Git.Branch,
         Version = ThisAssembly.Git.Sha,
@@ -46,7 +46,8 @@ public class LiveTurnProcessingService(
 
         try
         {
-            ValidateGameState(room);
+            ValidateTurn(room, cards);
+            
             (room.Game.Pick, room.Game.Give) = (room.Game.Give, 0);
 
             var delta = engine.EvaluateTurn(game: room.Game, cards: [..cards]);
@@ -57,7 +58,7 @@ public class LiveTurnProcessingService(
                 Type = Play,
                 Hand = room.Game.CurrentHand,
                 CreatedAt = DateTimeOffset.UtcNow,
-                Metadata = new TurnMetadata { Engine = EngineDetails }
+                Metadata = new TurnMetadata { Engine = _details }
                 
             };
             logger.LogDebug("User {User} performed turn {Turn}.", CurrentPlayerId, JsonSerializer.Serialize(turn));
@@ -99,7 +100,7 @@ public class LiveTurnProcessingService(
                     CreatedAt = DateTimeOffset.UtcNow,
                     Metadata = new TurnMetadata
                     {
-                        Engine = EngineDetails,
+                        Engine = _details,
                         Problem = exception.Problem
                     }
                 }
@@ -144,14 +145,14 @@ public class LiveTurnProcessingService(
         }
     }
 
-    private void ValidateGameState(Room room)
+    private void ValidateTurn(Room room, List<Card> cards)
     {
         if (room.Game.Status is Lobby) throw new GameNotStartedException();
         if (room.Game.Status is Over) throw new GameOverException();
-        if (room.Game.Hands.Count(hand => hand.Status is Online or Offline) < 2)
-            throw new InsufficientPlayersException();
-
+        if (room.Game.Hands.Count(hand => hand.Status is Online or Offline) < 2) throw new NotEnoughPlayersException();
         if (room.Game.CurrentHand.Player.Id != CurrentPlayerId) throw new InvalidTurnException();
+        if (!room.Game.CurrentHand.Cards.ToHashSet().IsSupersetOf(cards) || cards.Distinct().Count() != cards.Count) 
+            throw new SuspiciousCardsException();
     }
 
     private async Task DetermineCardRequest(Room room, Turn turn)

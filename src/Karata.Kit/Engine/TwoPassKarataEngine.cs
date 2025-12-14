@@ -15,6 +15,8 @@ namespace Karata.Kit.Engine;
 /// 2. A second pass that determines the impact of the cards by looking for known patterns in the proposed cards.
 public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataEngine
 {
+    public string Name => nameof(TwoPassKarataEngine);
+    
     /// <inheritdoc />
     [Pure]
     public GameDelta EvaluateTurn(GameData game, ImmutableArray<Card> cards)

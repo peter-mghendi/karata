@@ -47,7 +47,7 @@ public class GameStartService(
         // Check player number
         if (game.Hands.Count is < 2 or > 4)
         {
-            throw new InsufficientPlayersException();
+            throw new NotEnoughPlayersException();
         }
     }
 
