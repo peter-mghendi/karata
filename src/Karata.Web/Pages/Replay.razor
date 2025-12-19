@@ -1,0 +1,198 @@
+@page "/game/{id:guid}/replay"
+
+@using System.Collections.Immutable
+@using System.Reactive.Disposables
+@using System.Reactive.Disposables.Fluent
+@using System.Reactive.Linq
+@using Karata.Kit.Application.Client
+@using Karata.Kit.Application.State
+@using Karata.Pebble.Interceptors
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.AspNetCore.Components.WebAssembly.Hosting
+
+@attribute [Authorize]
+
+@implements IDisposable
+
+@inject AuthenticationStateProvider Authenticator
+@inject IAccessTokenProvider Provider
+@inject ILoggerFactory LoggerFactory
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigator
+@inject IWebAssemblyHostEnvironment Environment
+
+<GameConnectionGuard Connection="_connection">
+    <MudLoading Loading="@(_room is null)" Text="Please wait..." Class="mud-height-full pa-0">
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mud-height-full pa-0">
+            @if (_room is not null)
+            {
+                <MudGrid Class="mud-height-full px-4 pt-4">
+                    <MudItem xs="12" md="8" xl="9" xxl="10">
+                        @* TODO: What is this 88vh? *@
+                        <MudCard Elevation="0" Style="background-color: transparent; height: 88vh">
+                            <CardTableGameInterface Game="_room.State.Game"
+                                                    Hand="CurrentHand"
+                                                    Turn="_turn.State"
+                                                    OnAddCardToTurn="info => _turn.Mutate(new TurnState.Insert(info))"
+                                                    OnReorderCardInTurn="info => _turn.Mutate(new TurnState.Reorder(info))"
+                                                    OnRemoveCardFromTurn="card => _turn.Mutate(new TurnState.Remove(card))"/>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem Class="mud-height-full overflow-y-scroll" xs="12" md="4" xl="3" xxl="2">
+                        <MudExpansionPanels Outlined="false" Elevation="0" Class="mb-4">
+                            <MudExpansionPanel Text="Information" Class="px-4">
+                                <InformationPanel Room="_room!.State"/>
+                            </MudExpansionPanel>
+                            <MudExpansionPanel Text="Players" Class="px-4">
+                                <PlayersPanel Me="CurrentHand.Player" Room="_room.State" />
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    </MudItem>
+                </MudGrid>
+            }
+        </MudContainer>
+    </MudLoading>
+</GameConnectionGuard>
+
+@code
+{
+    [Parameter] public Guid Id { get; set; }
+
+    private ReplayerRoomConnection? _connection;
+    private RoomState? _room;
+    private TurnState _turn = new([], []);
+    private string? _username;
+    private readonly CompositeDisposable _subscriptions = new();
+
+    private HandData CurrentHand => _room!.State.Game.Hands.Single(h => h.Player.Username == _username);
+
+    private void OnStoreChanged<T>(T data) where T : class => StateHasChanged();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await Authenticator.GetAuthenticationStateAsync();
+        _username = auth.User.Identity!.Name!;
+
+        _connection = new ReplayerRoomConnection(new Uri(Environment.BaseAddress), Id)
+        {
+            AccessTokenProvider = async () =>
+            {
+                var result = await Provider.RequestAccessToken();
+                result.TryGetToken(out var token);
+                return token!.Value;
+            },
+        };
+
+        _connection.Events.AddHandToRoom.Subscribe(data =>
+        {
+            var (_, user, _) = data;
+            Snackbar.Add($"{user.Username} has joined the room", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+        }).DisposeWith(_subscriptions);
+
+        _connection.Events.AddToRoom.Subscribe(room =>
+        {
+            _room = new RoomState(room, [
+                new LoggingInterceptor<RoomData>(LoggerFactory),
+                new TimingInterceptor<RoomData>(LoggerFactory)
+            ]);
+            _turn = new TurnState([], [
+                new LoggingInterceptor<ImmutableList<Card>>(LoggerFactory),
+                new TimingInterceptor<ImmutableList<Card>>(LoggerFactory)
+            ]);
+
+            _room.Changes
+                .Merge<object>(_turn.Changes)
+                .Throttle(TimeSpan.FromMilliseconds(500))
+                .Subscribe(OnStoreChanged)
+                .DisposeWith(_subscriptions);
+
+            _connection.Events.BindRoomState(_room).DisposeWith(_subscriptions);
+            StateHasChanged();
+        }).DisposeWith(_subscriptions);
+
+        _connection.Events.EndGame
+            .Select(_ => Observable.FromAsync(async _ =>
+                {
+                    await _connection.StopAsync();
+                    Navigator.NavigateTo($"/game/{_room!.State.Id.ToString()}/over");
+                }
+            ))
+            .Concat()
+            .Subscribe()
+            .DisposeWith(_subscriptions);
+
+        _connection.Events.NotifyTurnProcessed.Subscribe(_ => _turn.Mutate(new TurnState.Clear())).DisposeWith(_subscriptions);
+
+        _connection.Events.ReceiveChat.Subscribe(message =>
+        {
+            if (message.Sender.Username != _username)
+            {
+                Snackbar.Add(
+                    @<div>
+                        <p class="mud-typography-body2">@message.Sender.Username:</p>
+                        <p class="mud-typography-body1">@message.Text</p>
+                    </div>,
+                    Severity.Normal,
+                    c => c.SnackbarVariant = Variant.Text
+                );
+            }
+        }).DisposeWith(_subscriptions);
+
+        _connection.Events.ReceiveSystemMessage.Subscribe(message =>
+        {
+            var severity = message.Type switch
+            {
+                MessageType.Error => Severity.Error,
+                MessageType.Info => Severity.Info,
+                MessageType.Success => Severity.Success,
+                MessageType.Warning => Severity.Warning,
+                _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
+            };
+            Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
+        }).DisposeWith(_subscriptions);
+
+        _connection.Events.RemoveFromRoom
+            .Select(_ => Observable.FromAsync(async _ =>
+                {
+                    var uri = $"/game/{_room!.State.Id}";
+
+                    _room!.Dispose();
+                    _turn.Dispose();
+
+                    StateHasChanged();
+
+                    await _connection.StopAsync();
+                    Navigator.NavigateTo(uri);
+                }
+            ))
+            .Concat()
+            .Subscribe()
+            .DisposeWith(_subscriptions);
+
+        _connection.Events.RemoveHandFromRoom.Subscribe(user => { Snackbar.Add($"{user.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text); }).DisposeWith(_subscriptions);
+
+        _connection.Events.UpdateGameStatus.Subscribe(status => { Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text); }).DisposeWith(_subscriptions);
+
+        _connection.Events.UpdateHandStatus.Subscribe(data =>
+        {
+            var (user, status) = data;
+            Snackbar.Add($"{user.Username} is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+        }).DisposeWith(_subscriptions);
+
+        _connection.Events.UpdateTurn.Subscribe(turn =>
+        {
+            var current = _room!.State.Game.Hands[turn].Player.Username;
+            var possessive = current == _username ? "your" : $"{current}'s";
+            Snackbar.Add($"It is now {possessive} turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+        }).DisposeWith(_subscriptions);
+
+        await _connection.StartAsync(TimeSpan.FromSeconds(3));
+    }
+
+    public void Dispose()
+    {
+        _subscriptions.Dispose();
+        _room?.Dispose();
+        _turn.Dispose();
+    }
+}

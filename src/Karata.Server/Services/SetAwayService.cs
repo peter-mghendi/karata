@@ -17,7 +17,7 @@ public class SetAwayService(
     KarataContext context,
     Guid room,
     string player
-) : RoomAwareService(players, spectators, room, player)
+) : LiveRoomAwareService(players, spectators, room, player)
 {
     public async Task ExecuteAsync(string voideeId)
     {

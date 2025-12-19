@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Karata.Kit.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 namespace Karata.Server.Data;
@@ -90,6 +91,7 @@ public class KarataContext(DbContextOptions<KarataContext> options) : DbContext(
             .WithMany()
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
+
         modelBuilder.Entity<GameResult>().Navigation(r => r.Winner).AutoInclude();
         
         // Hand
@@ -105,14 +107,26 @@ public class KarataContext(DbContextOptions<KarataContext> options) : DbContext(
 
         // Turn
         modelBuilder.Entity<Turn>().Property(t => t.Type).HasConversion<string>();
-        modelBuilder.Entity<Turn>().OwnsMany(t => t.Cards, builder => builder.ToJson());
-        modelBuilder.Entity<Turn>().OwnsMany(t => t.Picked, builder => builder.ToJson());
+        modelBuilder.Entity<Turn>().OwnsMany(t => t.CardsPlayed, builder => builder.ToJson());
+        modelBuilder.Entity<Turn>().OwnsMany(t => t.CardsPicked, builder => builder.ToJson());
         modelBuilder.Entity<Turn>().OwnsOne(t => t.Request, builder => builder.ToJson());
         modelBuilder.Entity<Turn>().OwnsOne(t => t.Delta, builder =>
         {
             builder.ToJson();
             builder.OwnsMany<Card>(d => d.Cards);
         });
+        modelBuilder.Entity<Turn>()
+            .Property(t => t.GameResult)
+            .HasConversion(
+                metadata => JsonSerializer.Serialize(metadata, options),
+                json => JsonSerializer.Deserialize<GameResult>(json, options)!
+            );
+        modelBuilder.Entity<Turn>()
+            .Property(t => t.GameSnapshot)
+            .HasConversion(
+                metadata => JsonSerializer.Serialize(metadata, options),
+                json => JsonSerializer.Deserialize<GameData>(json, options) ?? new GameData()
+            );
         modelBuilder.Entity<Turn>()
             .Property(t => t.Metadata)
             .HasConversion(
@@ -127,7 +141,12 @@ public class KarataContext(DbContextOptions<KarataContext> options) : DbContext(
             .Property(t => t.Metadata)
             .HasConversion(
                 metadata => JsonSerializer.Serialize(metadata, options),
-                json => JsonSerializer.Deserialize<Dictionary<string, object>>(json, options) ?? new()
+                json => JsonSerializer.Deserialize<Dictionary<string, object>>(json, options) ?? new(),
+                new ValueComparer<Dictionary<string, object>>(
+                        (left, right) => left != null && right != null && JsonSerializer.Serialize(left, options) == JsonSerializer.Serialize(right, options),
+                        s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                        s => s  
+                    )
             );
         modelBuilder.Entity<Activity>().Navigation(a => a.Actor).AutoInclude();
         

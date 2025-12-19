@@ -3,6 +3,7 @@
 @using Karata.Kit.Application.Client
 @using TextCopy
 
+@inject AuthenticationStateProvider Authenticator
 @inject KarataClient KarataClient
 
 <MudLoading Loading="@(_room is null)" Text="Please wait..." Class="mud-height-full pa-0">
@@ -11,14 +12,25 @@
         {
             <MudPaper Class="pa-4 mb-4">
                 <InformationPanel Subheader Room="_room"/>
-                <PlayersPanel Subheader Room="_room" />
+                <PlayersPanel Subheader Room="_room"/>
                 <MudDivider Class="my-2"/>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/game/{_room.Id}/play")">
-                    Join
-                </MudButton>
-                <MudButton Variant="Variant.Outlined" Href="@($"/game/{_room.Id}/spectate")" Class="ml-2">
-                    Spectate
-                </MudButton>
+
+                @if (_room.Game.Status is GameStatus.Lobby or GameStatus.Ongoing)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/game/{_room.Id}/play")">
+                        Join
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Href="@($"/game/{_room.Id}/spectate")" Class="ml-2">
+                        Spectate
+                    </MudButton>
+                }
+                @if (_room.Game.Status is GameStatus.Over)
+                {
+                    <MudButton Variant="Variant.Outlined" Href="@($"/game/{_room.Id}/replay")" Class="ml-2"
+                               Disabled="_room.Game.Hands.All(hand => hand.Player.Username != _username)">
+                        Replay
+                    </MudButton>
+                }
             </MudPaper>
         }
     </MudContainer>
@@ -31,9 +43,13 @@
     [Inject] public required IClipboard Clipboard { get; set; }
 
     private RoomData? _room;
+    private string? _username;
 
     protected override async Task OnInitializedAsync()
     {
+        var auth = await Authenticator.GetAuthenticationStateAsync();
+        if (auth.User.Identity?.Name is { } username) _username = username;
+
         _room = await KarataClient.Rooms.GetAsync(Id);
     }
 }

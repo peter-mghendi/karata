@@ -35,6 +35,7 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<IKarataEngine, TwoPassKarataEngine>();
 builder.Services.AddSingleton<PresenceService>();
 builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
+builder.Services.AddSingleton<ReplayProcessor>();
 builder.Services.AddTransient<CurrentUserService>();
 builder.Services.AddTransient<GameStartServiceFactory>();
 builder.Services.AddTransient<RoomMembershipServiceFactory>();

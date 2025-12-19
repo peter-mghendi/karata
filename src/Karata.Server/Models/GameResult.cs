@@ -15,6 +15,7 @@ public class GameResult
 
     public GameResultData ToData() => new()
     {
+        Winner =  Winner?.ToData(),
         Reason = Reason,
         ReasonType = ReasonType,
         ResultType = ResultType,

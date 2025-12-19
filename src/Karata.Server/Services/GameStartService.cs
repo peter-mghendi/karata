@@ -14,7 +14,7 @@ public class GameStartService(
     KarataContext context,
     Guid room,
     string player
-) : RoomAwareService(players, spectators, room, player)
+) : LiveRoomAwareService(players, spectators, room, player)
 {
     private const int DealCount = 4;
     
@@ -47,7 +47,7 @@ public class GameStartService(
         // Check player number
         if (game.Hands.Count is < 2 or > 4)
         {
-            throw new InsufficientPlayersException();
+            throw new NotEnoughPlayersException();
         }
     }
 
@@ -73,7 +73,7 @@ public class GameStartService(
         {
             var dealt = deck.DealMany(DealCount);
             var dummies = Enumerable.Repeat(new Card(), dealt.Count).ToList();
-            var turn = new Turn { Picked = dealt, Type = TurnType.Deal, Hand = hand, CreatedAt = DateTimeOffset.UtcNow };
+            var turn = new Turn { CardsPicked = dealt, Type = TurnType.Deal, Hand = hand, CreatedAt = DateTimeOffset.UtcNow };
 
             logger.LogDebug("Dealing {Count} cards to {User}. Cards: {Cards}.", DealCount, hand.Player.Username, string.Join(", ", dealt));
             

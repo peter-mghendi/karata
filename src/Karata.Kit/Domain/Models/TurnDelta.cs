@@ -3,7 +3,7 @@ using static Karata.Kit.Domain.Models.CardRequestLevel;
 
 namespace Karata.Kit.Domain.Models;
 
-public record GameDelta
+public record TurnDelta
 {
     /**
      * <summary>Cards to be added to the game.</summary>
@@ -61,7 +61,7 @@ public record GameDelta
                """;
     }
 
-    public virtual bool Equals(GameDelta? other)
+    public virtual bool Equals(TurnDelta? other)
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;

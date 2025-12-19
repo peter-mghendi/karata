@@ -6,10 +6,10 @@ using Microsoft.AspNetCore.SignalR;
 namespace Karata.Server.Services;
 
 /// <summary>
-/// Base for services that need SignalR context and room/user identification.
+/// Base for services that need SignalR context and live room/user identification.
 /// Provides helper methods to broadcast to specific subsets of clients.
 /// </summary>
-public abstract class RoomAwareService(
+public abstract class LiveRoomAwareService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     Guid room,

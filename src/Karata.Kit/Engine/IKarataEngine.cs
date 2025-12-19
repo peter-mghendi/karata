@@ -9,14 +9,17 @@ namespace Karata.Kit.Engine;
 
 public interface IKarataEngine
 {
+    /// <summary>The name of the engine.</summary>
+    string Name { get; }
+    
     /// <summary>
-    /// Evaluates a turn, returning a <see cref="GameDelta"/> if the turn is valid, and throwing a
+    /// Evaluates a turn, returning a <see cref="TurnDelta"/> if the turn is valid, and throwing a
     /// <see cref="TurnValidationException"/> if it is not.
     /// </summary>
     /// <param name="game">THe current game state.</param>
     /// <param name="cards">The proposed cards.</param>
-    /// <returns>A <see cref="GameDelta"/> representing the turn's effect on the game.</returns>
-    GameDelta EvaluateTurn(GameData game, ImmutableArray<Card> cards);
+    /// <returns>A <see cref="TurnDelta"/> representing the turn's effect on the game.</returns>
+    TurnDelta EvaluateTurn(GameData game, ImmutableArray<Card> cards);
 
     /// <summary>
     /// Helper method to determine whether a card matches the request.

@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Karata.Kit.Application.Client;
 
-public sealed class PlayerRoomConnection(Uri url, Guid room) : IRoomConnection
+public sealed class PlayerRoomConnection(Uri host, Guid room) : IRoomConnection
 {
     public HubConnection? Hub { get; private set; }
     public RoomEvents Events { get; } = new();
@@ -19,7 +19,7 @@ public sealed class PlayerRoomConnection(Uri url, Guid room) : IRoomConnection
     )
     {
         Hub = new HubConnectionBuilder()
-            .WithUrl(new Uri(url, "/hubs/game/play"), o => o.AccessTokenProvider = AccessTokenProvider)
+            .WithUrl(new Uri(host, "/hubs/game/play"), o => o.AccessTokenProvider = AccessTokenProvider)
             .WithAutomaticReconnect()
             .AddJsonProtocol()
             .Build();

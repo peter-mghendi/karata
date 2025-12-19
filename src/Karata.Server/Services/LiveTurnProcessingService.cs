@@ -17,22 +17,22 @@ using static Karata.Kit.Domain.Models.TurnType;
 namespace Karata.Server.Services;
 
 /// <summary>
-/// Orchestrates turn processing: validation, delta generation, state mutation, notifications, and persistence.
+/// Orchestrates live turn processing: validation, delta generation, state mutation, notifications, and persistence.
 /// </summary>
-public class TurnProcessingService(
+public class LiveTurnProcessingService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
-    ILogger<TurnProcessingService> logger,
+    ILogger<LiveTurnProcessingService> logger,
     KarataContext context,
     IKarataEngine engine,
-    Guid room,
+    Guid roomId,
     string player,
     string connection
-) : RoomAwareService(players, spectators, room, player)
+) : LiveRoomAwareService(players, spectators, roomId, player)
 {
-    private static readonly EngineData EngineDetails = new()
+    private readonly EngineData _details = new()
     {
-        Name = nameof(TwoPassKarataEngine),
+        Name = engine.Name,
         Date = ThisAssembly.Git.CommitDate,
         Branch =  ThisAssembly.Git.Branch,
         Version = ThisAssembly.Git.Sha,
@@ -46,18 +46,19 @@ public class TurnProcessingService(
 
         try
         {
-            ValidateGameState(room);
+            ValidateTurn(room, cards);
+            
             (room.Game.Pick, room.Game.Give) = (room.Game.Give, 0);
 
             var delta = engine.EvaluateTurn(game: room.Game, cards: [..cards]);
             var turn = new Turn
             {
-                Cards = [..cards],
+                CardsPlayed = [..cards],
                 Delta = delta,
                 Type = Play,
                 Hand = room.Game.CurrentHand,
                 CreatedAt = DateTimeOffset.UtcNow,
-                Metadata = new TurnMetadata { Engine = EngineDetails }
+                Metadata = new TurnMetadata { Engine = _details }
                 
             };
             logger.LogDebug("User {User} performed turn {Turn}.", CurrentPlayerId, JsonSerializer.Serialize(turn));
@@ -68,6 +69,8 @@ public class TurnProcessingService(
             await NotifyClientsOfGameState(room, player, turn);
             await EnsurePendingCardsPicked(room, player, turn);
             await CheckRemainingCards(room, player, turn);
+
+            turn.GameSnapshot = CaptureSnapshot(room.Game);
 
             GameTurns.Advance(room.Game);
 
@@ -92,14 +95,14 @@ public class TurnProcessingService(
             room.Game.CurrentHand.Turns.Add(
                 new Turn
                 {
-                    Cards = [..cards],
+                    CardsPlayed = [..cards],
                     Delta = null,
                     Type = Fail,
                     Hand = room.Game.CurrentHand,
                     CreatedAt = DateTimeOffset.UtcNow,
                     Metadata = new TurnMetadata
                     {
-                        Engine = EngineDetails,
+                        Engine = _details,
                         Problem = exception.Problem
                     }
                 }
@@ -131,6 +134,8 @@ public class TurnProcessingService(
             };
 
             (room.Game.Status, room.Game.Result) = (Over, result);
+            room.Game.CurrentHand.Turns.OrderBy(t => t.CreatedAt).Last().GameSnapshot = CaptureSnapshot(room.Game);
+
             if (exception.Result.ResultType is GameResultType.Win) context.Activities.Add(Activity.GameWon(room));
 
             await context.SaveChangesAsync();
@@ -144,14 +149,14 @@ public class TurnProcessingService(
         }
     }
 
-    private void ValidateGameState(Room room)
+    private void ValidateTurn(Room room, List<Card> cards)
     {
         if (room.Game.Status is Lobby) throw new GameNotStartedException();
         if (room.Game.Status is Over) throw new GameOverException();
-        if (room.Game.Hands.Count(hand => hand.Status is Online or Offline) < 2)
-            throw new InsufficientPlayersException();
-
+        if (room.Game.Hands.Count(hand => hand.Status is Online or Offline) < 2) throw new NotEnoughPlayersException();
         if (room.Game.CurrentHand.Player.Id != CurrentPlayerId) throw new InvalidTurnException();
+        if (!room.Game.CurrentHand.Cards.ToHashSet().IsSupersetOf(cards) || cards.Distinct().Count() != cards.Count) 
+            throw new SuspiciousCardsException();
     }
 
     private async Task DetermineCardRequest(Room room, Turn turn)
@@ -207,8 +212,12 @@ public class TurnProcessingService(
         if (!room.Game.Deck.TryDealMany(room.Game.Pick, out var dealt))
         {
             if (room.Game.Pick > room.Game.Pile.Count + room.Game.Deck.Count - 1)
+            {
+                turn.DeckExhausted = true;
                 throw new EndGameException(GameResultData.DeckExhaustion());
+            }
 
+            turn.ReclaimedPile = true;
             room.Game.Pile.Reclaim().ToList().ForEach(room.Game.Deck.Push);
             await RoomPlayers.ReclaimPile();
             await RoomSpectators.ReclaimPile();
@@ -219,7 +228,7 @@ public class TurnProcessingService(
 
         room.Game.Pick = 0;
         room.Game.CurrentHand.Cards.AddRange(dealt);
-        turn.Picked = dealt;
+        turn.CardsPicked = dealt;
 
         var dummies = Enumerable.Repeat(new Card(), dealt.Count).ToList();
 
@@ -236,9 +245,11 @@ public class TurnProcessingService(
             return;
         }
 
+        // TODO: Make sure players can't win by declaring in the same turn as they exhaust their cards
         if (room.Game.CurrentHand.IsLastCard && !turn.Delta!.Cards.Last().IsSpecial)
             throw new EndGameException(GameResultData.Win(winner: player));
 
+        turn.IsCardless = true;
         await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).ReceiveSystemMessage(Messages.Cardless(player));
         await RoomSpectators.ReceiveSystemMessage(Messages.Cardless(player));
     }
@@ -264,4 +275,6 @@ public class TurnProcessingService(
             turn.IsLastCard = false;
         }
     }
+    
+    private static GameData CaptureSnapshot(Game game) => game;
 }

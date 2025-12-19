@@ -12,4 +12,4 @@ public partial class RoomMembershipService (
     KarataContext context,
     PresenceService presence,
     Guid room,
-    string player) : RoomAwareService(players, spectators, room, player);
+    string player) : LiveRoomAwareService(players, spectators, room, player);

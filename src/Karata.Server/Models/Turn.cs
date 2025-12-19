@@ -5,13 +5,18 @@ namespace Karata.Server.Models;
 public class Turn
 {
     public int Id { get; init; }
-    public List<Card> Cards { get; init; } = [];
-    public List<Card> Picked { get; set; } = [];
+    public List<Card> CardsPlayed { get; init; } = [];
+    public List<Card> CardsPicked { get; set; } = [];
     public Card? Request { get; set; }  
+    public bool IsCardless { get; set; }
     public bool IsLastCard { get; set; }
-    public GameDelta? Delta { get; init; }
+    public bool ReclaimedPile { get; set; }
+    public bool DeckExhausted { get; set; }
+    public TurnDelta? Delta { get; init; }
+    public GameResult? GameResult { get; set; }
     public required TurnType Type { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
+    public GameData? GameSnapshot { get; set; }
     public TurnMetadata Metadata { get; init; } = new();
     public required Hand Hand { get; init; }
     public int HandId { get; init; }
@@ -19,8 +24,8 @@ public class Turn
     public TurnData ToData() => new()
     {
         Id = Id,
-        Cards = Cards,
-        Picked = Picked,
+        CardsPlayed = CardsPlayed,
+        CardsPicked = CardsPicked,
         Request = Request,
         IsLastCard = IsLastCard,
         Delta = Delta,

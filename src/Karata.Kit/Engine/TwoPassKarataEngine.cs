@@ -15,9 +15,11 @@ namespace Karata.Kit.Engine;
 /// 2. A second pass that determines the impact of the cards by looking for known patterns in the proposed cards.
 public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataEngine
 {
+    public string Name => nameof(TwoPassKarataEngine);
+    
     /// <inheritdoc />
     [Pure]
-    public GameDelta EvaluateTurn(GameData game, ImmutableArray<Card> cards)
+    public TurnDelta EvaluateTurn(GameData game, ImmutableArray<Card> cards)
     {
         EnsureTurnIsValid(game, cards);
         var delta = GenerateTurnDelta(game, cards);
@@ -130,12 +132,12 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
     }
 
     /// <summary>
-    /// <see cref="GenerateTurnDelta"/> Generates a <see cref="GameDelta"/> for this turn.
+    /// <see cref="GenerateTurnDelta"/> Generates a <see cref="TurnDelta"/> for this turn.
     /// </summary>
     [Pure]
-    private static GameDelta GenerateTurnDelta(GameData game, ImmutableArray<Card> cards)
+    private static TurnDelta GenerateTurnDelta(GameData game, ImmutableArray<Card> cards)
     {
-        var delta = new GameDelta { Cards = [..cards] };
+        var delta = new TurnDelta { Cards = [..cards] };
 
         // If no cards are played,
         // - If the last card played is a "bomb" card that has not been picked, the player has to immediately pick the cards
