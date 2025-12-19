@@ -7,6 +7,7 @@
 @using Karata.Kit.Application.State
 @using Karata.Pebble.Interceptors
 @using Karata.Web.Support
+@using Microsoft.AspNetCore.Components.WebAssembly.Hosting
 @using TextCopy
 
 @implements IDisposable
@@ -15,6 +16,7 @@
 @inject ISnackbar Snackbar
 @inject KarataClient KarataClient
 @inject NavigationManager Navigator
+@inject IWebAssemblyHostEnvironment Environment
 
 <GameConnectionGuard Connection="_connection">
     <MudLoading Loading="@(_store is null)" Text="Please wait..." Class="mud-height-full pa-0">
@@ -94,7 +96,7 @@
     protected override async Task OnInitializedAsync()
     {
         _turns = await KarataClient.Turns.ListAsync(Id);
-        _connection = new SpectatorRoomConnection(new Uri("", UriKind.Relative), Id);
+        _connection = new SpectatorRoomConnection(new Uri(Environment.BaseAddress), Id);
 
         _connection.Events.AddHandToRoom.Subscribe(data =>
         {
@@ -176,14 +178,14 @@
         {
             TurnType.Skip => "Was skipped.",
             TurnType.Void => "was skipped (away).",
-            TurnType.Deal => $"Was dealt {CardCount(turn.Picked.Count)}.",
+            TurnType.Deal => $"Was dealt {CardCount(turn.CardsPicked.Count)}.",
             TurnType.Play => new[]
                 {
-                    turn.Cards.Count > 0
-                        ? $"Played {CardCount(turn.Cards.Count)}"
+                    turn.CardsPlayed.Count > 0
+                        ? $"Played {CardCount(turn.CardsPlayed.Count)}"
                         : null,
-                    turn.Picked.Count > 0
-                        ? $"Picked {CardCount(turn.Picked.Count)}"
+                    turn.CardsPicked.Count > 0
+                        ? $"Picked {CardCount(turn.CardsPicked.Count)}"
                         : null
                 }.Where(x => x != null)
                 .DefaultIfEmpty("Took no action")

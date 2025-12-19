@@ -9,6 +9,7 @@ public record GameData
     public bool IsReversed { get; set; } = true;
     public GameStatus Status { get; set; }
     public Card? Request { get; set; }
+    public uint Give { get; set; }
     public uint Pick { get; set; }
     public int CurrentTurn { get; set; }
     public Deck Deck { get; set; } = [];

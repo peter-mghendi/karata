@@ -22,7 +22,7 @@ else if (_delta is not null)
     [Parameter] [EditorRequired] public required GameData Game { get; set; }
     [Parameter] [EditorRequired] public required ImmutableArray<Card> Cards { get; set; }
 
-    private GameDelta? _delta;
+    private TurnDelta? _delta;
     private string? _error;
 
     protected override void OnParametersSet()
@@ -40,7 +40,7 @@ else if (_delta is not null)
         }
     }
 
-    private static IEnumerable<string> DescribeEffects(GameDelta delta)
+    private static IEnumerable<string> DescribeEffects(TurnDelta delta)
     {
         if (delta.Reverse) yield return "will reverse the direction of the game";
 

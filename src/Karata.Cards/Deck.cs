@@ -40,10 +40,10 @@ public class Deck : Stack<Card>
 
     public void ShuffleInPlace()
     {
-        var cards = this.Shuffle();
+        var cards = this.Shuffle().ToList();
         
         Clear();
-        foreach(var card in cards) Push(card);
+        cards.ForEach(Push);
     }
 
     // Deal single card without checking deck size first.

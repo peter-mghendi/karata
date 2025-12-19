@@ -45,6 +45,7 @@ public class Game
         IsReversed = IsReversed,
         Status = Status,
         Request = Request,
+        Give = Give,
         Pick = Pick,
         CurrentTurn = CurrentTurn,
         Deck = new Deck(Enumerable.Repeat(new Card(), Deck.Count)),

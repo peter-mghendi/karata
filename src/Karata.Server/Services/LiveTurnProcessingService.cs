@@ -28,7 +28,7 @@ public class LiveTurnProcessingService(
     Guid roomId,
     string player,
     string connection
-) : RoomAwareService(players, spectators, roomId, player)
+) : LiveRoomAwareService(players, spectators, roomId, player)
 {
     private readonly EngineData _details = new()
     {
@@ -53,7 +53,7 @@ public class LiveTurnProcessingService(
             var delta = engine.EvaluateTurn(game: room.Game, cards: [..cards]);
             var turn = new Turn
             {
-                Cards = [..cards],
+                CardsPlayed = [..cards],
                 Delta = delta,
                 Type = Play,
                 Hand = room.Game.CurrentHand,
@@ -69,6 +69,8 @@ public class LiveTurnProcessingService(
             await NotifyClientsOfGameState(room, player, turn);
             await EnsurePendingCardsPicked(room, player, turn);
             await CheckRemainingCards(room, player, turn);
+
+            turn.GameSnapshot = CaptureSnapshot(room.Game);
 
             GameTurns.Advance(room.Game);
 
@@ -93,7 +95,7 @@ public class LiveTurnProcessingService(
             room.Game.CurrentHand.Turns.Add(
                 new Turn
                 {
-                    Cards = [..cards],
+                    CardsPlayed = [..cards],
                     Delta = null,
                     Type = Fail,
                     Hand = room.Game.CurrentHand,
@@ -132,6 +134,8 @@ public class LiveTurnProcessingService(
             };
 
             (room.Game.Status, room.Game.Result) = (Over, result);
+            room.Game.CurrentHand.Turns.OrderBy(t => t.CreatedAt).Last().GameSnapshot = CaptureSnapshot(room.Game);
+
             if (exception.Result.ResultType is GameResultType.Win) context.Activities.Add(Activity.GameWon(room));
 
             await context.SaveChangesAsync();
@@ -208,8 +212,12 @@ public class LiveTurnProcessingService(
         if (!room.Game.Deck.TryDealMany(room.Game.Pick, out var dealt))
         {
             if (room.Game.Pick > room.Game.Pile.Count + room.Game.Deck.Count - 1)
+            {
+                turn.DeckExhausted = true;
                 throw new EndGameException(GameResultData.DeckExhaustion());
+            }
 
+            turn.ReclaimedPile = true;
             room.Game.Pile.Reclaim().ToList().ForEach(room.Game.Deck.Push);
             await RoomPlayers.ReclaimPile();
             await RoomSpectators.ReclaimPile();
@@ -220,7 +228,7 @@ public class LiveTurnProcessingService(
 
         room.Game.Pick = 0;
         room.Game.CurrentHand.Cards.AddRange(dealt);
-        turn.Picked = dealt;
+        turn.CardsPicked = dealt;
 
         var dummies = Enumerable.Repeat(new Card(), dealt.Count).ToList();
 
@@ -237,9 +245,11 @@ public class LiveTurnProcessingService(
             return;
         }
 
+        // TODO: Make sure players can't win by declaring in the same turn as they exhaust their cards
         if (room.Game.CurrentHand.IsLastCard && !turn.Delta!.Cards.Last().IsSpecial)
             throw new EndGameException(GameResultData.Win(winner: player));
 
+        turn.IsCardless = true;
         await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).ReceiveSystemMessage(Messages.Cardless(player));
         await RoomSpectators.ReceiveSystemMessage(Messages.Cardless(player));
     }
@@ -265,4 +275,6 @@ public class LiveTurnProcessingService(
             turn.IsLastCard = false;
         }
     }
+    
+    private static GameData CaptureSnapshot(Game game) => game;
 }
