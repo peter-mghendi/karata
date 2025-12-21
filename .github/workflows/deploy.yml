@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
     
 env:
-  DEPLOYS_ENABLED: false
+  DEPLOYS_ENABLED: true
 
 jobs:
   deploy:
@@ -108,7 +108,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
-          script: sudo /usr/local/bin/deploy_karata.sh "/opt/karata/${{ env.next }}"
+          script: sudo /usr/local/bin/deploy karata "/opt/karata/${{ env.next }}"
 
       - name: Mark Deployment as Success
         if: success()
