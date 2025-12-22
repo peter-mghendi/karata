@@ -99,7 +99,6 @@ jobs:
           port: ${{ secrets.DEPLOY_PORT || 22 }}
           source: "app/*"
           target: "/opt/karata/${{ env.next }}"
-          debug: true
           strip_components: 0
 
       - name: Restart application service
@@ -109,7 +108,6 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
-          debug: true
           script: sudo /usr/local/bin/deploy karata "/opt/karata/${{ env.next }}"
 
       - name: Mark Deployment as Success
