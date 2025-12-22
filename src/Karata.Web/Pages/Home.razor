@@ -3,13 +3,25 @@
 @using Karata.Kit.Application.Client
 
 @inject KarataClient KarataClient
+@inject NavigationManager Navigator
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full pt-4">
+    <AuthorizeView>
+        <Authorized>
+            <MudText Typo="Typo.h6" Class="mb-8">Welcome back, @context.User.Identity?.Name.</MudText>
+        </Authorized>
+        <NotAuthorized>
+            <MudText Typo="Typo.h6" Class="mb-8">Welcome back, friend.</MudText>
+        </NotAuthorized>
+    </AuthorizeView>
+    <QuickJoin KarataClient="KarataClient" Navigator="Navigator"/>
+
+
     @if (_activities is [_, ..])
     {
         @foreach (var activity in _activities)
         {
-            <MudCard Elevation="0" Class="mb-4 pa-2 rounded-xl">
+            <MudCard Elevation="0" Class="mb-4 pa-2">
                 <MudCardHeader>
                     <CardHeaderAvatar>
                         <MudAvatar Color="Color.Secondary">@activity.Actor.Username.ToUpper().First()</MudAvatar>
@@ -34,10 +46,11 @@
     {
         @for (var i = 0; i < 10; i++)
         {
-            <MudCard Elevation="0" Class="mb-4 pa-2 rounded-xl">
+            <MudCard Elevation="0" Class="mb-4 pa-2">
                 <MudCardHeader>
                     <CardHeaderAvatar>
-                        <MudSkeleton SkeletonType="SkeletonType.Circle" Animation="Animation.Wave" Height="40px" Width="40px"/>
+                        <MudSkeleton SkeletonType="SkeletonType.Circle" Animation="Animation.Wave" Height="40px"
+                                     Width="40px"/>
                     </CardHeaderAvatar>
                     <CardHeaderContent>
                         <MudSkeleton Animation="Animation.Wave" Width="40%"/>
@@ -51,7 +64,7 @@
                     <MudSkeleton Animation="Animation.Wave" Width="60%"/>
                 </MudCardContent>
                 <MudCardActions>
-                    <MudSkeleton Animation="Animation.Wave" Width="105px" Height="40px" Class="ml-3" />
+                    <MudSkeleton Animation="Animation.Wave" Width="105px" Height="40px" Class="ml-3"/>
                 </MudCardActions>
             </MudCard>
         }

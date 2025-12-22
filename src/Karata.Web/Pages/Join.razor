@@ -14,26 +14,10 @@
     <MudPaper Class="pa-4 mb-4" Elevation="0">
         <MudTextField @bind-Value="_link" Label="Invite Link" Variant="Variant.Filled" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.QrCodeScanner" Class="mb-4"></MudTextField>
         <MudButton Disabled="@_loading" Href="@JoinLink" Variant="Variant.Filled" Color="Color.Primary">
-            @if (_loading)
-            {
-                <MudProgressCircular Indeterminate Class="ms-n1" Color="Color.Primary" Size="Size.Small" />
-                <MudText Class="ms-2">Joining room</MudText>
-            }
-            else
-            {
-                <MudText>Join room</MudText>
-            }
+            <MudText>Join game</MudText>
         </MudButton>
         <MudButton Disabled="@_loading" Href="@SpectateLink" Variant="Variant.Outlined" Class="ml-2">
-            @if (_loading)
-            {
-                <MudProgressCircular Indeterminate Class="ms-n1" Color="Color.Primary" Size="Size.Small" />
-                <MudText Class="ms-2">Joining as spectator</MudText>
-            }
-            else
-            {
-                <MudText>Spectate</MudText>
-            }
+            <MudText>Spectate</MudText>
         </MudButton>
     </MudPaper>
 
@@ -43,11 +27,11 @@
             @if (_loading)
             {
                 <MudProgressCircular Indeterminate Class="ms-n1" Size="Size.Small" />
-                <MudText Class="ms-2">Creating room</MudText>
+                <MudText Class="ms-2">Creating game</MudText>
             }
             else
             {
-                <MudText>Create room</MudText>
+                <MudText>Create game</MudText>
             }
         </MudButton>
     </MudPaper>
@@ -101,8 +85,15 @@
 
     private async Task CreateRoom()
     {
-        _loading = true;
-        var room = await KarataClient.Rooms.CreateAsync(new RoomRequest { Password = _password });
-        Navigator.NavigateTo($"/game/{room.Id.ToString()}/play");
+        try
+        {
+            _loading = true;
+            var room = await KarataClient.Rooms.CreateAsync(new RoomRequest { Password = _password });
+            Navigator.NavigateTo($"/game/{room.Id.ToString()}/play");
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 }
