@@ -18,12 +18,12 @@
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <PackageReference Include="MudBlazor" />
-    <PackageReference Include="QRCoder" />
     <PackageReference Include="TextCopy" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Karata.Kit\Karata.Kit.csproj" />
+    <ProjectReference Include="..\Karata.Surface\Karata.Surface.csproj" />
   </ItemGroup>
 
   <ItemGroup>

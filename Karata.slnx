@@ -18,6 +18,7 @@
     <Project Path="src/Karata.Pebble/Karata.Pebble.csproj" />
     <Project Path="src/Karata.Server/Karata.Server.csproj" />
     <Project Path="src/Karata.ServiceDefaults/Karata.ServiceDefaults.csproj" />
+    <Project Path="src/Karata.Surface/Karata.Surface.csproj" />
     <Project Path="src/Karata.Web/Karata.Web.csproj" />
   </Folder>
   <Folder Name="/test/">
