@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Karata.Kit.Engine;
 using Karata.Server.Endpoints;
 using Karata.Server.Infrastructure.Security;
@@ -11,7 +10,6 @@ using Microsoft.AspNetCore.ResponseCompression;
 
 var builder = WebApplication.CreateBuilder(args);
 var db = builder.Configuration["DATABASE_URL"] ?? throw new Exception("DATABASE_URL is not set.");
-Console.WriteLine($"\nCONFIGURATION:\n{builder.Configuration.GetDebugView()}\n\n");
 
 builder.Services.AddDatabase(db, builder.Environment);
 builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
