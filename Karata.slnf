@@ -9,6 +9,7 @@
       "src/Karata.Kit/Karata.Kit.csproj",
       "src/Karata.Pebble/Karata.Pebble.csproj",
       "src/Karata.Server/Karata.Server.csproj",
+      "src/Karata.Surface/Karata.Surface.csproj",
       "src/Karata.Web/Karata.Web.csproj",
       "test/Karata.Cards.Tests/Karata.Cards.Tests.csproj",
       "test/Karata.Kit.Tests/Karata.Kit.Tests.csproj",

@@ -7,6 +7,7 @@
 @using Karata.Kit.Application.Client
 @using Karata.Kit.Application.State
 @using Karata.Pebble.Interceptors
+@using Karata.Surface.Components
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using Microsoft.AspNetCore.Components.WebAssembly.Hosting
 @using TextCopy
@@ -84,7 +85,7 @@
                                     </MudText>
                                     <MudGrid Spacing="2" Justify="Justify.Center">
                                         <MudItem xs="12" sm="8" md="6" lg="4" xl="3" xxl="2">
-                                            <QRCode Data="@Navigator.Uri"/>
+                                            <QuickResponseCode Data="@Navigator.Uri"/>
                                         </MudItem>
                                     </MudGrid>
                                 </div>
