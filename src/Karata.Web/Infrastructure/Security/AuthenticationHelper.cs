@@ -1,34 +1,56 @@
-using System.Web;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 
 namespace Karata.Web.Infrastructure.Security;
 
-public sealed class AuthenticationHelper(NavigationManager navigator, IJSRuntime js)
+file sealed class Route
 {
-    private string ReturnUrl => navigator.ToAbsoluteUri(navigator.Uri).GetLeftPart(UriPartial.Path);
+    public const string Login = "authentication/login";
+    public const string Logout = "authentication/logout";
+    public const string Root = "/";
+}
 
-    public void Login(string? returnUrl = null)
-        => navigator.NavigateTo($"authentication/login?returnUrl={Uri.EscapeDataString(returnUrl ?? ReturnUrl)}");
+public sealed class AuthenticationHelper(NavigationManager navigator)
+{
+    private string CurrentPath => navigator.ToAbsoluteUri(navigator.Uri).GetLeftPart(UriPartial.Path);
 
-    public void Register(string clientId, string authority, string redirectUri)
+    public void Login(string? returnTo = null)
     {
-        var url =
-            $"{authority}/protocol/openid-connect/registrations" +
-            $"?client_id={Uri.EscapeDataString(clientId)}" +
-            $"&response_type=code" +
-            $"&scope=openid%20profile%20email" +
-            $"&redirect_uri={Uri.EscapeDataString(redirectUri)}";
-        navigator.NavigateTo(url, forceLoad: true);
+        var options = new InteractiveRequestOptions
+        {
+            Interaction = InteractionType.SignIn,
+            ReturnUrl = returnTo ?? CurrentPath
+        };
+
+        navigator.NavigateToLogin(Route.Login, options);
     }
 
-    public async Task OpenProfileAsync(string realmAuthority, string clientId, string? referrerUri = null)
+    public void Logout(string? returnTo = null) => navigator.NavigateToLogout(Route.Logout, returnTo ?? Route.Root);
+
+    public void Register(string? returnTo = null)
     {
-        var refUri = referrerUri ?? ReturnUrl;
-        var url = $"{realmAuthority}/account?referrer={HttpUtility.UrlEncode(clientId)}&referrer_uri={HttpUtility.UrlEncode(refUri)}";
-        await js.InvokeVoidAsync("open", url, "_blank");
+        var options = new InteractiveRequestOptions
+        {
+            Interaction = InteractionType.SignIn,
+            ReturnUrl = returnTo ?? CurrentPath
+        };
+
+        options.TryAddAdditionalParameter("prompt", "create");
+        navigator.NavigateToLogin(Route.Login, options);
     }
 
-    public void Logout(string? returnUrl = null)
-        => navigator.NavigateTo($"authentication/logout?returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}");
+    public string Profile(string authority, string client, string? returnTo = null)
+    {
+        var parameters = new Dictionary<string, string>
+        {
+            { "referrer", client },
+            { "referrer_uri", returnTo ?? CurrentPath },
+        };
+
+        var builder = new UriBuilder(authority.TrimEnd('/'));
+        builder.Path += "/account";
+        builder.Query = string.Join('&', parameters.Select(pair => $"{pair.Key}={pair.Value}"));
+
+        return builder.ToString();
+    }
 }
