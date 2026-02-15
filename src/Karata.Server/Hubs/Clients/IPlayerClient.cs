@@ -14,13 +14,13 @@ public interface IPlayerClient
     Task EndGame();
     
     // Moves cards from deck to current player's hand.
-    Task MoveCardsFromDeckToHand(UserData user, List<Card> cards);
+    Task MoveCardsFromDeckToHand(long handId, List<Card> cards);
     
     // Moves cards from deck to the pile. 
     Task MoveCardsFromDeckToPile(List<Card> cards);
     
     // Moves cards from hand to the pile. 
-    Task MoveCardsFromHandToPile(UserData user, List<Card> cards, bool visible);
+    Task MoveCardsFromHandToPile(long handId, List<Card> cards, bool visible);
 
     // Notifies the current user's client that the turn has been processed - so the UI can clean up and state.
     Task NotifyTurnProcessed();
@@ -47,7 +47,7 @@ public interface IPlayerClient
     Task RemoveFromRoom();
     
     // Removes another player from the room
-    Task RemoveHandFromRoom(UserData user);
+    Task RemoveHandFromRoom(long handId);
     
     // Sets the current card request
     Task SetCurrentRequest(Card? request);
@@ -59,7 +59,7 @@ public interface IPlayerClient
     Task UpdateGameStatus(GameStatus status);
     
     // Removes another player from the room
-    Task UpdateHandStatus(UserData user, HandStatus status);
+    Task UpdateHandStatus(long handId, HandStatus status);
     
     // Updates the current pick value
     Task UpdatePick(uint num);

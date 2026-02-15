@@ -27,12 +27,12 @@ public sealed class BotSessionManager(
     /// If the game state hasn't hydrated yet, returns a placeholder with <see cref="HandStatus.Away"/> and empty cards,
     /// using the session's <see cref="AccessTokenProvider.CurrentUser"/> if available.
     /// </summary>
-    public Task<HandData> StartAsync(IBotStrategy strategy, Guid room, string? password, CancellationToken ct = default)
+    public async Task<HandData> StartAsync(IBotStrategy strategy, Guid room, string? password, CancellationToken ct = default)
     {
-        if (_sessions.TryGetValue(room, out var existing)) return Task.FromResult(Snapshot(existing));
+        if (_sessions.TryGetValue(room, out var existing)) return Snapshot(existing);
 
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        var session = bots.Create(strategy, tokens.CurrentUser!, room, password);
+        var session = bots.Create(strategy, (await tokens.GetCurrentUser())!, room, password);
         var runner = Task.Run(async () =>
         {
             try
@@ -65,7 +65,7 @@ public sealed class BotSessionManager(
 
         var entry = new Entry(room, DateTimeOffset.UtcNow, cancellation, runner, session);
         _ = _sessions.TryAdd(room, entry);
-        return Task.FromResult(Snapshot(_sessions[room]));
+        return Snapshot(_sessions[room]);
     }
 
     /// <summary>
@@ -107,5 +107,5 @@ public sealed class BotSessionManager(
     public async ValueTask DisposeAsync() =>
         await Task.WhenAll(from key in _sessions.Keys select StopAsync(key, CancellationToken.None));
 
-    private HandData Snapshot(Entry e) => e.Session.CurrentHand;
+    private HandData Snapshot(Entry e) => e.Session.CurrentHand!;
 }

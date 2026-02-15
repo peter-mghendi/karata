@@ -24,17 +24,17 @@ public sealed class ReplaySessionRunner(
             switch (turn.Type)
             {
                 case TurnType.Deal:
-                    await replayer.MoveCardsFromDeckToHand(turn.Hand.Player, turn.CardsPicked);
+                    await replayer.MoveCardsFromDeckToHand(turn.Hand.Id, turn.CardsPicked);
                     break;
                 case TurnType.Fail:
                     await replayer.ReceiveSystemMessage(new SystemMessage { Text = turn.Metadata.Problem!.Message, Type = Error });
                     break;
                 case TurnType.Play:
                     await replayer.SetCurrentRequest(turn.GameSnapshot!.Request);
-                    await replayer.MoveCardsFromHandToPile(turn.Hand.Player, turn.Delta!.Cards, false);
+                    await replayer.MoveCardsFromHandToPile(turn.Hand.Id, turn.Delta!.Cards, false);
 
                     if (turn.ReclaimedPile) await replayer.ReclaimPile();
-                    if (turn.CardsPicked.Count > 0) await replayer.MoveCardsFromDeckToHand(turn.Hand.Player, turn.CardsPicked);
+                    if (turn.CardsPicked.Count > 0) await replayer.MoveCardsFromDeckToHand(turn.Hand.Id, turn.CardsPicked);
                     if (turn.GameResult is not null) await replayer.ReceiveSystemMessage(Messages.GameOver(turn.GameResult.ToData()));
                     if (turn.IsCardless) await replayer.ReceiveSystemMessage(Messages.Cardless(turn.Hand.Player));
                     if (turn.IsLastCard) await replayer.ReceiveSystemMessage(Messages.LastCard(turn.Hand.Player));

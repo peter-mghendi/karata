@@ -10,7 +10,7 @@ public partial class RoomMembershipService
 {
     public async Task JoinAsync(string connection)
     {
-        var player = (await context.Users.FindAsync(CurrentPlayerId))!;
+        var player = (await context.Users.FindAsync(CallerPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
 
         bool authorized;
@@ -26,18 +26,18 @@ public partial class RoomMembershipService
                 joined.Status = Online;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(EnrichRoomDataForUser(room, player));
-                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-                    .UpdateHandStatus(joined.Player.ToData(), joined.Status);
-                await RoomSpectators.UpdateHandStatus(joined.Player.ToData(), joined.Status);
+                await Me.AddToRoom(EnrichRoomDataForUser(room, joined));
+                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId))
+                    .UpdateHandStatus(joined.Id, joined.Status);
+                await RoomSpectators.UpdateHandStatus(joined.Id, joined.Status);
                 break;
             case GameStatus.Lobby:
                 var hand = new Hand { Player = player, Status = Online };
                 room.Game.Hands.Add(hand);
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(EnrichRoomDataForUser(room, player));
-                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
+                await Me.AddToRoom(EnrichRoomDataForUser(room, hand));
+                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId))
                     .AddHandToRoom(hand.Id, hand.Player.ToData(), hand.Status);
                 await RoomSpectators.AddHandToRoom(hand.Id, hand.Player.ToData(), hand.Status);
                 break;
@@ -46,10 +46,10 @@ public partial class RoomMembershipService
                 rejoined.Status = Online;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(EnrichRoomDataForUser(room, player));
-                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-                    .UpdateHandStatus(rejoined.Player.ToData(), rejoined.Status);
-                await RoomSpectators.UpdateHandStatus(rejoined.Player.ToData(), rejoined.Status);
+                await Me.AddToRoom(EnrichRoomDataForUser(room, rejoined));
+                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId))
+                    .UpdateHandStatus(rejoined.Id, rejoined.Status);
+                await RoomSpectators.UpdateHandStatus(rejoined.Id, rejoined.Status);
                 break;
             case GameStatus.Over:
                 break;

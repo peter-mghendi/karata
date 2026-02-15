@@ -94,7 +94,7 @@ public class PlayerHub(
         }
     }
 
-    public async Task VoidTurn([FromServices] VoidTurnServiceFactory factory, string roomId, string voideeId)
+    public async Task VoidTurn([FromServices] VoidTurnServiceFactory factory, string roomId, long voideeId)
     {
         try
         {
@@ -108,7 +108,7 @@ public class PlayerHub(
         }
     }
 
-    public async Task SetAway([FromServices] SetAwayServiceFactory factory, string roomId, string voideeId)
+    public async Task SetAway([FromServices] SetAwayServiceFactory factory, string roomId, long voideeId)
     {
         try
         {

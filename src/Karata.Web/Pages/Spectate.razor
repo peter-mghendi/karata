@@ -4,7 +4,9 @@
 @using System.Reactive.Disposables.Fluent
 @using System.Reactive.Linq
 @using Karata.Kit.Application.Client
-@using Karata.Kit.Application.State
+@using Karata.Kit.Application.Client.Connection
+@using Karata.Kit.Application.Client.State
+@using Karata.Kit.Application.Store
 @using Karata.Pebble.Interceptors
 @using Karata.Web.Support
 @using Microsoft.AspNetCore.Components.WebAssembly.Hosting
@@ -46,16 +48,16 @@
                                 </MudListItem>
                             }
                             <MudListItem IconColor="@Color.Info" Icon="@Icons.Material.Rounded.Person">
-                                Current player: @_store.State.Game.CurrentHand.Player.Username
+                                Current player: @_store.State.Game.CurrentHand.Username
                             </MudListItem>
                         </MudList>
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudList Color="Color.Info" SelectedValue="@_store.State.Game.CurrentHand.Player">
+                        <MudList Color="Color.Info" SelectedValue="@_store.State.Game.CurrentHand.Id">
                             <MudListSubheader>Players</MudListSubheader>
                             @foreach (var hand in _store.State.Game.Hands)
                             {
-                                <HandDisplay Hand="hand" IsAdministrator="@(hand.Player == _store.State.Administrator)"/>
+                                <HandDisplay Hand="hand" IsAdministrator="@(hand.Player.Id == _store.State.Administrator.Id)"/>
                             }
                         </MudList>
                     </MudItem>
@@ -70,7 +72,7 @@
                     @foreach (var turn in _turns)
                     {
                         <MudListItem Value="@turn">
-                            <MudText Typo="Typo.caption">@(turn.Hand.Player.Username)</MudText>
+                            <MudText Typo="Typo.caption">@(turn.Hand.Username)</MudText>
                             <MudText Typo="Typo.body1" Class="gray-text">@GetDescription(turn)</MudText>
                         </MudListItem>
                     }
@@ -87,7 +89,7 @@
     [Inject] public required IClipboard Clipboard { get; set; }
 
     private SpectatorRoomConnection? _connection;
-    private RoomState? _store;
+    private RoomStore? _store;
     private List<TurnData>? _turns;
     private readonly CompositeDisposable _subscriptions = new();
 
@@ -106,7 +108,7 @@
 
         _connection.Events.AddToRoom.Subscribe(room =>
         {
-            _store = new RoomState(room, [new LoggingInterceptor<RoomData>(LoggerFactory), new TimingInterceptor<RoomData>(LoggerFactory)]);
+            _store = new RoomStore(room, [new LoggingInterceptor<RoomData>(LoggerFactory), new TimingInterceptor<RoomData>(LoggerFactory)]);
             _store.Changes.Subscribe(OnStoreChanged);
 
             _connection.Events.BindRoomState(_store).DisposeWith(_subscriptions);
@@ -142,7 +144,11 @@
             .DisposeWith(_subscriptions);
 
         _connection.Events.RemoveHandFromRoom
-            .Subscribe(user => Snackbar.Add($"{user.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text))
+            .Subscribe(handId =>
+            {
+                var hand = _store!.State.Game.Hands.Find(h => h.Id == handId)!;
+                Snackbar.Add($"{hand.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+            })
             .DisposeWith(_subscriptions);
 
         _connection.Events.UpdateGameStatus
@@ -151,15 +157,16 @@
 
         _connection.Events.UpdateHandStatus.Subscribe(data =>
         {
-            var (user, status) = data;
-            Snackbar.Add($"{user.Username} has {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+            var (handId, status) = data;
+            var hand = _store!.State.Game.Hands.Find(h => h.Id == handId)!;
+            Snackbar.Add($"{hand.Username} has {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         }).DisposeWith(_subscriptions);
 
         _connection.Events.UpdateTurn
-            .Subscribe(turn => { Snackbar.Add($"It is now {_store!.State.Game.Hands[turn].Player.Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text); })
+            .Subscribe(turn => { Snackbar.Add($"It is now {_store!.State.Game.Hands[turn].Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text); })
             .DisposeWith(_subscriptions);
 
-        await _connection.StartAsync();
+        await _connection.StartAsync(new SpectatorRoomConnection.StartParameters());
     }
 
     private static string GetIcon(Card card) => card.Suit switch
@@ -190,7 +197,7 @@
                 }.Where(x => x != null)
                 .DefaultIfEmpty("Took no action")
                 .Aggregate((a, b) => a + " and " + b?.ToLower()) + ".",
-            _ => $"{turn.Hand.Player.Username} performed an unknown action."
+            _ => $"{turn.Hand.Username} performed an unknown action."
         };
 
         string CardCount(int num) => $"{num} {(num == 1 ? "card" : "cards")}";

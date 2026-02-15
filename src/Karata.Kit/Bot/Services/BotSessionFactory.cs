@@ -1,4 +1,5 @@
 using Karata.Kit.Application.Client;
+using Karata.Kit.Application.Client.Connection;
 using Karata.Kit.Bot.Infrastructure.Security;
 using Karata.Kit.Bot.Strategy;
 using Karata.Kit.Domain.Models;

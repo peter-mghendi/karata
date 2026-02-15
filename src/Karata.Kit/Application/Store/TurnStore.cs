@@ -4,9 +4,9 @@ using Karata.Pebble;
 using Karata.Pebble.Interceptors;
 using Karata.Pebble.StateActions;
 
-namespace Karata.Kit.Application.State;
+namespace Karata.Kit.Application.Store;
 
-public class TurnState(ImmutableList<Card> turn, ImmutableArray<Interceptor<ImmutableList<Card>>> interceptors)
+public class TurnStore(ImmutableList<Card> turn, ImmutableArray<Interceptor<ImmutableList<Card>>> interceptors)
     : Store<ImmutableList<Card>>(turn, interceptors)
 {
     public record Insert((Card Card, int Position) Info) : StateAction<ImmutableList<Card>>

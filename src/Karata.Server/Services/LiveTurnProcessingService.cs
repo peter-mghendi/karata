@@ -41,7 +41,7 @@ public class LiveTurnProcessingService(
 
     public async Task ExecuteAsync(List<Card> cards)
     {
-        var player = (await context.Users.FindAsync(CurrentPlayerId))!;
+        var player = (await context.Users.FindAsync(CallerPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
 
         try
@@ -61,13 +61,13 @@ public class LiveTurnProcessingService(
                 Metadata = new TurnMetadata { Engine = _details }
                 
             };
-            logger.LogDebug("User {User} performed turn {Turn}.", CurrentPlayerId, JsonSerializer.Serialize(turn));
+            logger.LogDebug("User {User} performed turn {Turn}.", CallerPlayerId, JsonSerializer.Serialize(turn));
 
             await DetermineCardRequest(room, turn);
             ApplyTurnDelta(room, turn);
 
-            await NotifyClientsOfGameState(room, player, turn);
-            await EnsurePendingCardsPicked(room, player, turn);
+            await NotifyClientsOfGameState(room, turn);
+            await EnsurePendingCardsPicked(room, turn);
             await CheckRemainingCards(room, player, turn);
 
             turn.GameSnapshot = CaptureSnapshot(room.Game);
@@ -154,7 +154,7 @@ public class LiveTurnProcessingService(
         if (room.Game.Status is Lobby) throw new GameNotStartedException();
         if (room.Game.Status is Over) throw new GameOverException();
         if (room.Game.Hands.Count(hand => hand.Status is Online or Offline) < 2) throw new NotEnoughPlayersException();
-        if (room.Game.CurrentHand.Player.Id != CurrentPlayerId) throw new InvalidTurnException();
+        if (room.Game.CurrentHand.Player.Id != CallerPlayerId) throw new InvalidTurnException();
         if (!room.Game.CurrentHand.Cards.ToHashSet().IsSupersetOf(cards) || cards.Distinct().Count() != cards.Count) 
             throw new SuspiciousCardsException();
     }
@@ -196,16 +196,16 @@ public class LiveTurnProcessingService(
         (room.Game.Give, room.Game.Pick) = (turn.Delta!.Give, turn.Delta!.Pick);
     }
 
-    private async Task NotifyClientsOfGameState(Room room, User player, Turn turn)
+    private async Task NotifyClientsOfGameState(Room room, Turn turn)
     {
         await Me.NotifyTurnProcessed();
 
-        await Me.MoveCardsFromHandToPile(player, turn.Delta!.Cards, true);
-        await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).MoveCardsFromHandToPile(player, turn.Delta!.Cards, false);
-        await RoomSpectators.MoveCardsFromHandToPile(player, turn.Delta!.Cards, false);
+        await Me.MoveCardsFromHandToPile(room.Game.CurrentHand.Id, turn.Delta!.Cards, true);
+        await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).MoveCardsFromHandToPile(room.Game.CurrentHand.Id, turn.Delta!.Cards, false);
+        await RoomSpectators.MoveCardsFromHandToPile(room.Game.CurrentHand.Id, turn.Delta!.Cards, false);
     }
 
-    private async Task EnsurePendingCardsPicked(Room room, User player, Turn turn)
+    private async Task EnsurePendingCardsPicked(Room room, Turn turn)
     {
         if (room.Game.Pick <= 0) return;
 
@@ -232,9 +232,9 @@ public class LiveTurnProcessingService(
 
         var dummies = Enumerable.Repeat(new Card(), dealt.Count).ToList();
 
-        await Me.MoveCardsFromDeckToHand(player, dealt);
-        await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).MoveCardsFromDeckToHand(player, dummies);
-        await RoomSpectators.MoveCardsFromDeckToHand(player, dummies);
+        await Me.MoveCardsFromDeckToHand(room.Game.CurrentHand.Id, dealt);
+        await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).MoveCardsFromDeckToHand(room.Game.CurrentHand.Id, dummies);
+        await RoomSpectators.MoveCardsFromDeckToHand(room.Game.CurrentHand.Id, dummies);
     }
 
     private async Task CheckRemainingCards(Room room, User player, Turn turn)
@@ -250,7 +250,7 @@ public class LiveTurnProcessingService(
             throw new EndGameException(GameResultData.Win(winner: player));
 
         turn.IsCardless = true;
-        await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).ReceiveSystemMessage(Messages.Cardless(player));
+        await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).ReceiveSystemMessage(Messages.Cardless(player));
         await RoomSpectators.ReceiveSystemMessage(Messages.Cardless(player));
     }
 
@@ -262,7 +262,7 @@ public class LiveTurnProcessingService(
             if (turn.IsLastCard)
             {
                 room.Game.CurrentHand.IsLastCard = true;
-                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId)).ReceiveSystemMessage(Messages.LastCard(player));
+                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).ReceiveSystemMessage(Messages.LastCard(player));
                 await RoomSpectators.ReceiveSystemMessage(Messages.LastCard(player));
             }
         }

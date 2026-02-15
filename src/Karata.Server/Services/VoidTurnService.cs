@@ -18,11 +18,11 @@ public class VoidTurnService(
     string player
 ) : LiveRoomAwareService(players, spectators, room, player)
 {
-    public async Task ExecuteAsync(string voideeId)
+    public async Task ExecuteAsync(long voideeId)
     {
         var room = (await context.Rooms.FindAsync(RoomId))!;
-        if (room.Administrator.Id != CurrentPlayerId) throw new UnauthorizedActionException();
-        if (room.Game.CurrentHand.Player.Id != voideeId) throw new InvalidTurnException();
+        if (room.Game.CurrentHand.Player.Id != room.Administrator.Id) throw new UnauthorizedActionException();
+        if (room.Game.CurrentHand.Id != voideeId) throw new InvalidTurnException();
             
         room.Game.CurrentHand.Turns.Add(new Turn
         {

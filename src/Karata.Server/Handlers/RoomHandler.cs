@@ -48,9 +48,9 @@ public static class RoomHandler
         try
         {
             var user = await currentUserService.RequireAsync();
-
+            var hand = new Hand { Player = user, Status = HandStatus.Offline };
             var room = new Room { Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow };
-            room.Game.Hands.Add(new Hand { Player = user, Status = HandStatus.Offline });
+            room.Game.Hands.Add(hand);
 
             if (!string.IsNullOrWhiteSpace(request.Password))
             {

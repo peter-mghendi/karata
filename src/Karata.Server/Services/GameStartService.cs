@@ -30,22 +30,20 @@ public class GameStartService(
     
     private void ValidateGameState(Room room)
     {
-        var game = room.Game;
-        
         // Check caller role
-        if (room.Administrator.Id != CurrentPlayerId)
+        if (room.Administrator.Id != CallerPlayerId)
         {
             throw new UnauthorizedActionException();
         }
 
         // Check game status
-        if (game.Status == GameStatus.Ongoing)
+        if (room.Game.Status == GameStatus.Ongoing)
         {
             throw new GameOngoingException();
         }
 
         // Check player number
-        if (game.Hands.Count is < 2 or > 4)
+        if (room.Game.Hands.Count is < 2 or > 4)
         {
             throw new NotEnoughPlayersException();
         }
@@ -80,9 +78,9 @@ public class GameStartService(
             hand.Turns.Add(turn);
             hand.Cards.AddRange(dealt);
 
-            await Hand(hand).MoveCardsFromDeckToHand(hand.Player.ToData(), dealt);
-            await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).MoveCardsFromDeckToHand(hand.Player.ToData(), dummies);
-            await RoomSpectators.MoveCardsFromDeckToHand(hand.Player.ToData(), dummies);
+            await Hand(hand).MoveCardsFromDeckToHand(hand.Id, dealt);
+            await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).MoveCardsFromDeckToHand(hand.Id, dummies);
+            await RoomSpectators.MoveCardsFromDeckToHand(hand.Id, dummies);
         }
 
         logger.LogDebug("Finished dealing cards.");

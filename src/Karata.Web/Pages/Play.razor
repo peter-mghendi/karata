@@ -4,8 +4,9 @@
 @using System.Reactive.Disposables
 @using System.Reactive.Disposables.Fluent
 @using System.Reactive.Linq
-@using Karata.Kit.Application.Client
-@using Karata.Kit.Application.State
+@using Karata.Kit.Application.Client.Connection
+@using Karata.Kit.Application.Client.State
+@using Karata.Kit.Application.Store
 @using Karata.Pebble.Interceptors
 @using Karata.Surface.Components
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
@@ -40,18 +41,18 @@
                                     <CardTableGameInterface Game="_room.State.Game"
                                                             Hand="CurrentHand"
                                                             Turn="_turn.State"
-                                                            OnAddCardToTurn="info => _turn.Mutate(new TurnState.Insert(info))"
-                                                            OnReorderCardInTurn="info => _turn.Mutate(new TurnState.Reorder(info))"
-                                                            OnRemoveCardFromTurn="card => _turn.Mutate(new TurnState.Remove(card))"/>
+                                                            OnAddCardToTurn="info => _turn.Mutate(new TurnStore.Insert(info))"
+                                                            OnReorderCardInTurn="info => _turn.Mutate(new TurnStore.Reorder(info))"
+                                                            OnRemoveCardFromTurn="card => _turn.Mutate(new TurnStore.Remove(card))"/>
                                 }
                                 else
                                 {
                                     <CardListGameInterface Game="_room.State.Game"
                                                            Hand="CurrentHand"
                                                            Turn="_turn.State"
-                                                           OnAddCardToTurn="info => _turn.Mutate(new TurnState.Insert(info))"
-                                                           OnReorderCardInTurn="info => _turn.Mutate(new TurnState.Reorder(info))"
-                                                           OnRemoveCardFromTurn="card => _turn.Mutate(new TurnState.Remove(card))"/>
+                                                           OnAddCardToTurn="info => _turn.Mutate(new TurnStore.Insert(info))"
+                                                           OnReorderCardInTurn="info => _turn.Mutate(new TurnStore.Reorder(info))"
+                                                           OnRemoveCardFromTurn="card => _turn.Mutate(new TurnStore.Remove(card))"/>
                                 }
                             }
                             else
@@ -153,11 +154,11 @@
                                 <InformationPanel Room="_room!.State"/>
                             </MudExpansionPanel>
                             <MudExpansionPanel Text="Players" Class="px-4">
-                                <PlayersPanel Me="CurrentHand.Player" Room="_room.State" Controls="IsAdministrator"
+                                <PlayersPanel Me="CurrentHand.Id" Room="_room.State" Controls="IsAdministrator"
                                               OnSetAway="SetAway" OnVoidTurn="VoidTurn"/>
                             </MudExpansionPanel>
                             <MudExpansionPanel Text="Chat" MaxHeight="480" Class="overflow-y-auto px-4">
-                                <ChatPanel Room="_room!.State" Me="CurrentHand.Player" OnSend="Send"/>
+                                <ChatPanel Room="_room!.State" CurrentUserId="@CurrentHand.Player.Id" OnSend="Send"/>
                             </MudExpansionPanel>
                         </MudExpansionPanels>
                     </MudItem>
@@ -177,13 +178,13 @@
     private bool _table;
 
     private PlayerRoomConnection? _connection;
-    private RoomState? _room;
-    private TurnState _turn = new([], []);
+    private RoomStore? _room;
+    private TurnStore _turn = new([], []);
     private string? _username;
     private readonly CompositeDisposable _subscriptions = new();
 
-    private HandData CurrentHand => _room!.State.Game.Hands.Single(h => h.Player.Username == _username);
-    private bool IsAdministrator => CurrentHand.Player == _room?.State.Administrator;
+    private HandData CurrentHand => _room!.State.Game.Hands.Single(h => h.Username == _username);
+    private bool IsAdministrator => CurrentHand.Player.Id == _room?.State.Administrator.Id;
 
     private void OnStoreChanged<T>(T data) where T : class => StateHasChanged();
 
@@ -227,11 +228,11 @@
 
         _connection.Events.AddToRoom.Subscribe(room =>
         {
-            _room = new RoomState(room, [
+            _room = new RoomStore(room, [
                 new LoggingInterceptor<RoomData>(LoggerFactory),
                 new TimingInterceptor<RoomData>(LoggerFactory)
             ]);
-            _turn = new TurnState([], [
+            _turn = new TurnStore([], [
                 new LoggingInterceptor<ImmutableList<Card>>(LoggerFactory),
                 new TimingInterceptor<ImmutableList<Card>>(LoggerFactory)
             ]);
@@ -257,7 +258,7 @@
             .Subscribe()
             .DisposeWith(_subscriptions);
 
-        _connection.Events.NotifyTurnProcessed.Subscribe(_ => _turn.Mutate(new TurnState.Clear())).DisposeWith(_subscriptions);
+        _connection.Events.NotifyTurnProcessed.Subscribe(_ => _turn.Mutate(new TurnStore.Clear())).DisposeWith(_subscriptions);
 
         _connection.Events.ReceiveChat.Subscribe(message =>
         {
@@ -305,25 +306,30 @@
             .Subscribe()
             .DisposeWith(_subscriptions);
 
-        _connection.Events.RemoveHandFromRoom.Subscribe(user => { Snackbar.Add($"{user.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text); }).DisposeWith(_subscriptions);
+        _connection.Events.RemoveHandFromRoom.Subscribe(handId =>
+        {
+            var hand = _room!.State.Game.Hands.Find(h => h.Id == handId)!;
+            Snackbar.Add($"{hand.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+        }).DisposeWith(_subscriptions);
 
         _connection.Events.UpdateGameStatus.Subscribe(status => { Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text); }).DisposeWith(_subscriptions);
 
         _connection.Events.UpdateHandStatus.Subscribe(data =>
         {
-            var (user, status) = data;
-            Snackbar.Add($"{user.Username} is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+            var (handId, status) = data;
+            var hand = _room!.State.Game.Hands.Find(h => h.Id == handId)!;
+            Snackbar.Add($"{hand.Username} is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         }).DisposeWith(_subscriptions);
 
         _connection.Events.UpdateTurn.Subscribe(turn =>
         {
-            var current = _room!.State.Game.Hands[turn].Player.Username;
+            var current = _room!.State.Game.Hands[turn].Username;
             var possessive = current == _username ? "your" : $"{current}'s";
             Snackbar.Add($"It is now {possessive} turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         }).DisposeWith(_subscriptions);
 
-        await _connection.StartAsync(
-            onRequestCard: async specific =>
+        var parameters = new PlayerRoomConnection.StartParameters(
+            OnRequestCard: async specific =>
             {
                 var parameters = new DialogParameters { { nameof(CardRequestModal.Specific), specific } };
                 var dialog = await DialogService.ShowAsync<CardRequestModal>("Request a card", parameters);
@@ -331,13 +337,14 @@
 
                 return result?.Data as Card;
             },
-            onRequestLastCard: async () =>
+            OnRequestLastCard: async () =>
             {
                 const string blurb = "Declare <b>last card</b> if you have a card or cards that you can legally finish the game with in the next turn.";
                 var dialog = DialogService.ShowMessageBox("Last Card?", new MarkupString(blurb), "Yes!", "No");
                 return await dialog ?? false;
             }
         );
+        await _connection.StartAsync(parameters);
     }
 
     async Task LeaveRoom() => await _connection!.LeaveRoom();
@@ -352,9 +359,9 @@
 
     async Task Send(string message) => await _connection!.SendChat(message);
 
-    async Task SetAway(string playerId) => await _connection!.SetAway(playerId);
+    async Task SetAway(long handId) => await _connection!.SetAway(handId);
 
-    async Task VoidTurn(string playerId) => await _connection!.VoidTurn(playerId);
+    async Task VoidTurn(long handId) => await _connection!.VoidTurn(handId);
 
     private async Task CopyRoomId()
     {

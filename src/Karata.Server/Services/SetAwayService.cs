@@ -19,26 +19,25 @@ public class SetAwayService(
     string player
 ) : LiveRoomAwareService(players, spectators, room, player)
 {
-    public async Task ExecuteAsync(string voideeId)
+    public async Task ExecuteAsync(long voideeId)
     {
         var room = (await context.Rooms.FindAsync(RoomId))!;
-        var voidee = (await context.Users.FindAsync(voideeId))!;
-        var hand = room.Game.Hands.Single(h => h.Player.Id == voidee.Id);
+        var hand = room.Game.Hands.Single(h => h.Id == voideeId);
         
-        if (room.Administrator.Id != CurrentPlayerId) throw new UnauthorizedActionException();
+        if (CallerPlayerId != room.Administrator.Id) throw new UnauthorizedActionException();
 
         hand.Status = Away;
-        await RecomputeTurn(room, voidee);
-        await RedelegateAdministration(room,  hand);
+        await RecomputeTurn(room, hand);
+        await RedelegateAdministration(room, hand.Player);
 
-        await RoomPlayers.UpdateHandStatus(hand.Player.ToData(), hand.Status);
-        await RoomSpectators.UpdateHandStatus(hand.Player.ToData(), hand.Status);
+        await RoomPlayers.UpdateHandStatus(hand.Id, hand.Status);
+        await RoomSpectators.UpdateHandStatus(hand.Id, hand.Status);
         await context.SaveChangesAsync();
     }
 
-    private async Task RecomputeTurn(Room room, User player)
+    private async Task RecomputeTurn(Room room, Hand player)
     {
-        if (room.Game.CurrentHand.Player.Id != player.Id) return;
+        if (room.Game.CurrentHand.Id != player.Id) return;
         if (room.Game.Hands.Count(hand => hand.Status is Online or Offline) <= 1) return;
         
         room.Game.CurrentHand.Turns.Add(new Turn
@@ -53,13 +52,13 @@ public class SetAwayService(
         await RoomSpectators.UpdateTurn(room.Game.CurrentTurn);
     }
 
-    private async Task RedelegateAdministration(Room room, Hand hand)
+    private async Task RedelegateAdministration(Room room, User user)
     {
-        if (room.Administrator.Id != hand.Player.Id) return;
+        if (room.Administrator.Id != user.Id) return;
         if (room.NextEligibleAdministrator is not {} administrator) return;
         
         room.Administrator = administrator;
-        await RoomPlayers.UpdateAdministrator(room.Administrator.ToData());
-        await RoomSpectators.UpdateAdministrator(room.Administrator.ToData());
+        await RoomPlayers.UpdateAdministrator(room.Administrator);
+        await RoomSpectators.UpdateAdministrator(room.Administrator);
     }
 }

@@ -18,7 +18,7 @@
                     </MudChip>
                 }
 
-                @if (message.Sender == Me)
+                @if (message.Sender.Id == CurrentUserId)
                 {
                     <MudChip Value="@("You")" Icon="@Icons.Material.Rounded.AccountCircle" Variant="Variant.Text" Color="Color.Info"
                              Size="Size.Small">
@@ -34,7 +34,7 @@
 
 @code
 {
-    [Parameter] public UserData Me { get; set; } = null!;
+    [Parameter] public string CurrentUserId { get; set; } = null!;
 
     [Parameter] public RoomData Room { get; set; } = null!;
 
