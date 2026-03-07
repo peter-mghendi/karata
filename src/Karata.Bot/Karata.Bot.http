@@ -1,9 +1,13 @@
-POST {{Karata.Bot.Host}}/api/hands
+### Introspect Bot
+GET {{Karata.Bot.Host}}/api/bots/{{Karata.Bot.Slug}}
+Accept: application/json
+
+### Invite Bot
+POST {{Karata.Bot.Host}}/api/bots/{{Karata.Bot.Slug}}/games
 Accept: application/json
 Content-Type: application/json
 
 { 
-  "room": "01996469-9a7d-7e18-b93f-e15f294f880e",
-  "password": "password",
-  "host": "00000000-0000-0000-0000-000000000000"
+  "room": "019cd439-c7db-7649-adbc-d3f9174faeb0",
+  "password": null
 }

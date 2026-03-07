@@ -1,10 +1,10 @@
 using System.Collections.Immutable;
+using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 using Karata.Cards;
 using Karata.Cards.Extensions;
-using Karata.Kit.Application.Client;
 using Karata.Kit.Application.Client.Connection;
 using Karata.Kit.Application.Client.State;
 using Karata.Kit.Application.Store;
@@ -19,7 +19,7 @@ using static Karata.Kit.Domain.Models.GameStatus;
 namespace Karata.Kit.Bot.Services;
 
 public sealed class BotSession(
-    UserData player,
+    UserData bot,
     PlayerRoomConnection connection,
     IBotStrategy strategy,
     IKarataEngine engine,
@@ -31,19 +31,14 @@ public sealed class BotSession(
 
     private RoomStore? _room;
     private TurnStore _turn = new([], []);
-
-    private UserData Player { get; } = player;
-
-    // public HandData? CurrentHand => _room?.State.Game.Hands.FirstOrDefault(h => h.Player.Id == Player.Id);
-    public HandData CurrentHand => new() { Id = -1, Player = Player, Cards = [], Status = HandStatus.Away };
+    private HandData? BotHand => _room?.State.Game.Hands.FirstOrDefault(h => h.Player.Id == bot.Id);
 
     public async Task StartAsync(CancellationToken cancellation)
     {
+        _log.LogInformation("I'm alive! Initializing...");
         connection.Events.AddToRoom
             .Subscribe(r =>
             {
-                _log.LogInformation("I'm joining room {Room} as {Player}. Ready to bring the pain.", r.Id,
-                    CurrentHand.Username);
                 _room = new RoomStore(r, [
                     new LoggingInterceptor<RoomData>(loggers),
                     new TimingInterceptor<RoomData>(loggers)
@@ -54,6 +49,7 @@ public sealed class BotSession(
                 ]);
 
                 connection.Events.BindRoomState(_room).DisposeWith(_subscriptions);
+                _log.LogInformation("I've joined room {Room} as {Player}. Ready to bring the pain.", r.Id, BotHand!.Username);
             })
             .DisposeWith(_subscriptions);
 
@@ -64,54 +60,51 @@ public sealed class BotSession(
             .Subscribe()
             .DisposeWith(_subscriptions);
 
-        connection.Events.AddToRoom
-            .Where(_ => _room?.State.Game.Status is Ongoing && _room.State.Game.CurrentHand.Player.Id == Player.Id)
-            .Select(_ => Observable.FromAsync(async _ => await PlayTurnSafeAsync(CancellationToken.None)))
-            .Concat()
-            .Subscribe()
-            .DisposeWith(_subscriptions);
-
-        connection.Events.NotifyTurnProcessed.Subscribe(_ => _turn.Mutate(new TurnStore.Clear()))
-            .DisposeWith(_subscriptions);
-
-        connection.Events.UpdateGameStatus
-            .Where(_ => _room?.State.Game.Status is Ongoing && _room.State.Game.CurrentHand.Player.Id == Player.Id)
-            .Select(_ => Observable.FromAsync(async _ => await PlayTurnSafeAsync(CancellationToken.None)))
-            .Concat()
-            .Subscribe()
-            .DisposeWith(_subscriptions);
-
-        connection.Events.ReceiveChat
-            .Where(_ => _room?.State.Game.Status is Ongoing && _room.State.Game.CurrentHand.Player.Id == Player.Id)
-            .Select(_ => Observable.FromAsync(async _ => await PlayTurnSafeAsync(CancellationToken.None)))
-            .Concat()
-            .Subscribe()
-            .DisposeWith(_subscriptions);
-
-        connection.Events.UpdateTurn
-            .Where(_ => _room?.State.Game.Status is Ongoing && _room.State.Game.CurrentHand.Player.Id == Player.Id)
-            .Select(_ => Observable.FromAsync(async _ => await PlayTurnSafeAsync(CancellationToken.None)))
-            .Concat()
-            .Subscribe()
+        connection.Events.NotifyTurnProcessed
+            .Subscribe(_ => _turn.Mutate(new TurnStore.Clear()))
             .DisposeWith(_subscriptions);
 
         connection.Events.ReceiveSystemMessage
-            .Subscribe(message => _log.LogInformation("{Message}", message))
+            .Subscribe(message => _log.LogInformation("System: {Message}", message))
+            .DisposeWith(_subscriptions);
+
+        Observable
+            .Merge(
+                connection.Events.AddToRoom.Select(_ => Unit.Default),
+                connection.Events.UpdateGameStatus.Select(_ => Unit.Default),
+                connection.Events.ReceiveChat.Select(_ => Unit.Default),
+                connection.Events.UpdateTurn.Select(_ => Unit.Default)
+            )
+            .Where(_ => CanPlay())
+            .Select(_ => _room!.State.Game.CurrentHand.Player.Id)
+            .DistinctUntilChanged()
+            .Where(player => player == bot.Id)
+            .Select(_ => Observable.FromAsync(PlayTurnSafeAsync))
+            .Concat()
+            .Subscribe()
             .DisposeWith(_subscriptions);
 
         var parameters = new PlayerRoomConnection.StartParameters(
             OnRequestCard: specific =>
             {
-                var request = strategy.Request(_room!.State, CurrentHand.Cards, specific);
+                var request = strategy.Request(_room!.State, BotHand!.Cards, specific);
 
                 _log.LogInformation("I have to request a card. I will request {Card}.", request);
                 return Task.FromResult(request);
             },
             OnRequestLastCard: () => Task.FromResult(true)
         );
+        
+        _log.LogInformation("Nearly there...");
         await connection.StartAsync(parameters, cancellation);
         await connection.SendChat("hi guys", cancellation);
+        
+        _log.LogInformation("Done");
     }
+
+    private bool CanPlay() =>
+        _room?.State.Game.Status is Ongoing &&
+        _room.State.Game.CurrentHand.Player.Id == bot.Id;
 
     private async Task PlayTurnSafeAsync(CancellationToken ct)
     {
@@ -119,30 +112,40 @@ public sealed class BotSession(
         {
             await PlayTurnAsync(ct);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _ = e;
+            _log.LogError(ex, "Could not perform turn.");
         }
     }
 
     private async Task PlayTurnAsync(CancellationToken ct)
     {
-        var cards = CurrentHand.Cards;
-        _log.LogInformation("It's my turn. I have {Cards}.", string.Join(", ", cards.Select(card => card.Name)));
+        _log.LogInformation("It's my turn. I have {Cards}.", string.Join(", ", BotHand!.Cards.Select(card => card.Name)));
 
         var room = _room!.State;
-        var move = strategy.Decide(room, cards);
-        _log.LogInformation("I'm thinking of playing {Move}.", string.Join(", ", move.Select(card => card.Name)));
+        var move = strategy.Decide(room, BotHand!.Cards);
+        _log.LogInformation("I will play {Move}.", string.Join(", ", move.Select(card => card.Name)));
 
         try
         {
+            // Pre-validate turn, discard delta.
             _ = engine.EvaluateTurn(room.Game, move);
+
             await connection.PerformTurn(move, ct);
             await connection.SendChat("get rekt", ct);
+
+            _log.LogInformation("I have played {Move}.", string.Join(", ", move.Select(card => card.Name)));
         }
         catch (KarataEngineException)
         {
+            // Fallback in case the strategy returns an invalid move.
+            // TODO: Make this less punitive. Give bot chance to try again?
             await connection.PerformTurn([], ct);
+            _log.LogInformation("I have played a blank turn.");
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Could not perform turn {Cards}.", string.Join(',', move));
         }
     }
 

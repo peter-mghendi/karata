@@ -20,7 +20,7 @@ public static class BotEndpoints
 
             bot.MapGet("", () => HandleDetails(strategy));
             bot.MapPost(
-                "/hands",
+                "/games",
                 async (
                     [FromServices] BotSessionManager bots,
                     [FromServices] KarataClient karata,
@@ -41,7 +41,7 @@ public static class BotEndpoints
     {
         if (await karata.Rooms.GetAsync(invitation.Room) is not { } room) return TypedResults.NotFound();
 
-        var hand = await bots.StartAsync(strategy, room.Id, invitation.Password);
-        return TypedResults.Accepted($"/api/hands/{hand.Id}");
+        await bots.StartAsync(strategy, room.Id, invitation.Password);
+        return TypedResults.Accepted($"/api/games/{room.Id}");
     }
 }

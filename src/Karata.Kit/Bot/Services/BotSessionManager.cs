@@ -3,6 +3,8 @@ using Karata.Kit.Bot.Infrastructure.Security;
 using Karata.Kit.Bot.Strategy;
 using Karata.Kit.Domain.Models;
 using Microsoft.Extensions.Logging;
+using static System.Threading.CancellationToken;
+using static System.Threading.Tasks.Task;
 
 namespace Karata.Kit.Bot.Services;
 
@@ -27,56 +29,49 @@ public sealed class BotSessionManager(
     /// If the game state hasn't hydrated yet, returns a placeholder with <see cref="HandStatus.Away"/> and empty cards,
     /// using the session's <see cref="AccessTokenProvider.CurrentUser"/> if available.
     /// </summary>
-    public async Task<HandData> StartAsync(IBotStrategy strategy, Guid room, string? password, CancellationToken ct = default)
+    public async Task StartAsync(IBotStrategy strategy, Guid room, string? password, CancellationToken ct = default)
     {
-        if (_sessions.TryGetValue(room, out var existing)) return Snapshot(existing);
+        if (_sessions.TryGetValue(room, out _)) return;
 
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var session = bots.Create(strategy, (await tokens.GetCurrentUser())!, room, password);
-        var runner = Task.Run(async () =>
-        {
-            try
-            {
-                // Keep the session alive; it reacts to SignalR events internally.
-                // We don't spin a busy loop; this awaits cancellation cooperatively.
-                await session.StartAsync(cancellation.Token).ConfigureAwait(false);
-                await Task.Delay(Timeout.InfiniteTimeSpan, cancellation.Token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException ex)
-            {
-                log.LogError(ex, "Shutting down bot session for room {RoomId}", room);
-            }
-            catch (Exception ex)
-            {
-                log.LogError(ex, "Bot session crashed for room {RoomId}", room);
-            }
-            finally
-            {
-                try
-                {
-                    await session.DisposeAsync();
-                }
-                catch
-                {
-                    // ignored
-                }
-            }
-        }, CancellationToken.None);
+        var runner = Run(() => StartBotSession(room, session, cancellation.Token), cancellation.Token);
 
         var entry = new Entry(room, DateTimeOffset.UtcNow, cancellation, runner, session);
         _ = _sessions.TryAdd(room, entry);
-        return Snapshot(_sessions[room]);
     }
 
-    /// <summary>
-    /// Lists current HandData snapshots for all active sessions.
-    /// </summary>
-    public IReadOnlyList<HandData> List() => _sessions.Values.Select(Snapshot).ToList();
-
-    /// <summary>
-    /// Gets the current HandData snapshot for a single room, if running.
-    /// </summary>
-    public HandData? Get(Guid room) => _sessions.TryGetValue(room, out var e) ? Snapshot(e) : null;
+    private async Task StartBotSession(Guid room, BotSession session, CancellationToken cancellation)
+    {
+        try
+        {
+            log.LogInformation("Starting bot session for room {RoomId}", room);
+            
+            // Keep the session alive; it reacts to SignalR events internally.
+            // We don't spin a busy loop; this awaits cancellation cooperatively.
+            await session.StartAsync(cancellation).ConfigureAwait(false);
+            await Delay(Timeout.InfiniteTimeSpan, cancellation).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException ex)
+        {
+            log.LogError(ex, "Shutting down bot session for room {RoomId}", room);
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex, "Bot session crashed for room {RoomId}", room);
+        }
+        finally
+        {
+            try
+            {
+                await session.DisposeAsync();
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+    }
 
     /// <summary>
     /// Stops a running session for a room.
@@ -104,8 +99,5 @@ public sealed class BotSessionManager(
         return true;
     }
 
-    public async ValueTask DisposeAsync() =>
-        await Task.WhenAll(from key in _sessions.Keys select StopAsync(key, CancellationToken.None));
-
-    private HandData Snapshot(Entry e) => e.Session.CurrentHand!;
+    public async ValueTask DisposeAsync() => await WhenAll(from key in _sessions.Keys select StopAsync(key, None));
 }

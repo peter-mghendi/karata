@@ -2,27 +2,18 @@ type: http_request
 model: http_request
 id: rq_37yQ8omeMU
 createdAt: 2025-10-28T08:17:30.313371087
-updatedAt: 2025-10-28T08:20:24.266408438
+updatedAt: 2026-03-07T17:36:19.071946974
 workspaceId: wk_DXsTB3LLeB
 folderId: fl_6xVtScbvqz
 authentication: {}
 authenticationType: null
 body:
-  text: |-
-    {
-        "room": "0199859a-0cc9-786c-882e-ab6ddd5d0f58",
-        "password": null,
-        "host": "2f183dd3-5852-4663-a1c9-5163d3ecc038" // player
-    }
-bodyType: application/json
+  text: ''
+bodyType: null
 description: ''
-headers:
-- enabled: true
-  name: Content-Type
-  value: application/json
-  id: 8AGUUUdcen
-method: POST
-name: Invite
+headers: []
+method: GET
+name: Introspect Bot
 sortPriority: 0.0
-url: ${[ karata_bot_address ]}/api/hands
+url: ${[ karata_bot_address ]}/api/bots/bail
 urlParameters: []
