@@ -12,9 +12,9 @@ public class Turn
     public bool IsLastCard { get; set; }
     public bool ReclaimedPile { get; set; }
     public bool DeckExhausted { get; set; }
-    public TurnDelta? Delta { get; init; }
+    public TurnDelta? Delta { get; set; }
     public GameResult? GameResult { get; set; }
-    public required TurnType Type { get; init; }
+    public required TurnType Type { get; set; }
     public required DateTimeOffset CreatedAt { get; init; }
     public GameData? GameSnapshot { get; set; }
     public TurnMetadata Metadata { get; init; } = new();

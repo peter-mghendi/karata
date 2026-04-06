@@ -1,7 +1,6 @@
 using Karata.Kit.Core.Exceptions;
 using Karata.Server.Data;
 using Karata.Server.Hubs.Clients;
-using Karata.Server.Support;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Server.Hubs;
@@ -33,7 +32,7 @@ public class SpectatorHub(ILogger<SpectatorHub> logger, KarataContext context) :
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+            await Clients.Caller.SystemMessage(exception.SystemMessage);
         }
     }
 
@@ -49,7 +48,7 @@ public class SpectatorHub(ILogger<SpectatorHub> logger, KarataContext context) :
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+            await Clients.Caller.SystemMessage(exception.SystemMessage);
         }
     }
 }

@@ -4,7 +4,6 @@ using Karata.Server.Data;
 using Karata.Server.Hubs.Clients;
 using Karata.Server.Infrastructure.Security;
 using Karata.Server.Services;
-using Karata.Server.Support;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -44,7 +43,7 @@ public class PlayerHub(
         var chat = new Chat { Text = text, Sender = user, SentAt = DateTimeOffset.UtcNow };
 
         room.Chats.Add(chat);
-        await Clients.Group(roomId).ReceiveChat(chat);
+        await Clients.Group(roomId).Chat(chat);
         await context.SaveChangesAsync();
     }
 
@@ -58,7 +57,7 @@ public class PlayerHub(
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+            await Clients.Caller.SystemMessage(exception.SystemMessage);
         }
     }
 
@@ -75,7 +74,7 @@ public class PlayerHub(
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+            await Clients.Caller.SystemMessage(exception.SystemMessage);
         }
     }
 
@@ -89,8 +88,8 @@ public class PlayerHub(
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
-            await Clients.Caller.NotifyTurnProcessed();
+            await Clients.Caller.SystemMessage(exception.SystemMessage);
+            await Clients.Caller.TurnAccepted();
         }
     }
 
@@ -104,7 +103,7 @@ public class PlayerHub(
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+            await Clients.Caller.SystemMessage(exception.SystemMessage);
         }
     }
 
@@ -118,7 +117,7 @@ public class PlayerHub(
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+            await Clients.Caller.SystemMessage(exception.SystemMessage);
         }
     }
 
@@ -132,7 +131,7 @@ public class PlayerHub(
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+            await Clients.Caller.SystemMessage(exception.SystemMessage);
         }
     }
 }

@@ -18,6 +18,12 @@ public class RoomStore(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
             return state with { Game = state.Game with { Hands = [..state.Game.Hands, hand] } };
         }
     }
+    
+    public record TurnCommitted(TurnResolution Resolution) : CompositeStateAction<RoomData>([
+        new SetCurrentRequest(Resolution.CurrentRequest),
+        new UpdatePick(Resolution.PendingPick),
+        new UpdateTurn(Resolution.CurrentTurn)
+    ]);
 
     public record MoveCardsFromDeckToHand(long HandId, List<Card> Cards) : StateAction<RoomData>
     {
@@ -64,9 +70,9 @@ public class RoomStore(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         }
     }
 
-    public record ReceiveChat(ChatData Chat) : StateAction<RoomData>
+    public record Chat(ChatData ChatData) : StateAction<RoomData>
     {
-        public override RoomData Apply(RoomData state) => state with { Chats = [..state.Chats, Chat] };
+        public override RoomData Apply(RoomData state) => state with { Chats = [..state.Chats, ChatData] };
     }
 
     public record ReclaimPile : StateAction<RoomData>
@@ -94,7 +100,7 @@ public class RoomStore(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         }
     }
 
-    public record SetCurrentRequest(Card Card) : StateAction<RoomData>
+    private record SetCurrentRequest(Card? Card) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state) => state with { Game = state.Game with { Request = Card } };
     }
@@ -123,7 +129,7 @@ public class RoomStore(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         }
     }
 
-    public record UpdatePick(uint Pick) : StateAction<RoomData>
+    private record UpdatePick(uint Pick) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state) => state with
         {
@@ -131,7 +137,7 @@ public class RoomStore(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         };
     }
 
-    public record UpdateTurn(int Turn) : StateAction<RoomData>
+    private record UpdateTurn(int Turn) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state) => state with
         {

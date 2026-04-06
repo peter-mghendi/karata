@@ -28,11 +28,12 @@ public sealed class ReplayerRoomConnection(Uri host, Guid roomId) : IRoomConnect
 
         Hub.On<RoomData>(nameof(Events.AddToRoom), room => Events.OnAddToRoom(room));
         Hub.On<long, UserData, HandStatus>(nameof(Events.AddHandToRoom), (handId, user, status) => Events.OnAddHandToRoom(handId, user, status));
-        Hub.On(nameof(Events.EndGame), () => Events.OnEndGame());
+        Hub.On<TurnResolution>(nameof(Events.TurnCommitted), resolution => Events.OnTurnCommitted(resolution));
+        Hub.On<GameResultData>(nameof(Events.EndGame), result => Events.OnEndGame(result));
         Hub.On<long, List<Card>>(nameof(Events.MoveCardsFromDeckToHand), (handId, cards) => Events.OnMoveCardsFromDeckToHand(handId, cards));
         Hub.On<List<Card>>(nameof(Events.MoveCardsFromDeckToPile), cards => Events.OnMoveCardsFromDeckToPile(cards));
         Hub.On<long, List<Card>, bool>(nameof(Events.MoveCardsFromHandToPile), (handId, cards, visible) => Events.OnMoveCardsFromHandToPile(handId, cards, visible));
-        Hub.On<SystemMessage>(nameof(Events.ReceiveSystemMessage), m => Events.OnReceiveSystemMessage(m));
+        Hub.On<SystemMessage>(nameof(Events.SystemMessage), m => Events.OnSystemMessage(m));
         Hub.On(nameof(Events.ReclaimPile), () => Events.OnReclaimPile());
         Hub.On(nameof(Events.RemoveFromRoom), () => Events.OnRemoveFromRoom());
         Hub.On<long>(nameof(Events.RemoveHandFromRoom), handId => Events.OnRemoveHandFromRoom(handId));

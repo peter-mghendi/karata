@@ -1,4 +1,5 @@
 using System.Text;
+using Karata.Kit.Core.Exceptions;
 using Karata.Kit.Domain.Models;
 using Karata.Server.Support;
 using Karata.Server.Support.Exceptions;
@@ -74,7 +75,7 @@ public partial class RoomMembershipService
         }
         catch (PasswordException exception)
         {
-            await Me.ReceiveSystemMessage(Messages.Exception(exception));
+            await Me.SystemMessage(exception.SystemMessage);
             return false;
         }
     }

@@ -11,7 +11,7 @@ public interface IPlayerClient
     Task AddToRoom(RoomData room);
     
     // Ends the game
-    Task EndGame();
+    Task EndGame(GameResultData result);
     
     // Moves cards from deck to current player's hand.
     Task MoveCardsFromDeckToHand(long handId, List<Card> cards);
@@ -23,7 +23,10 @@ public interface IPlayerClient
     Task MoveCardsFromHandToPile(long handId, List<Card> cards, bool visible);
 
     // Notifies the current user's client that the turn has been processed - so the UI can clean up and state.
-    Task NotifyTurnProcessed();
+    Task TurnAccepted();
+    
+    // Advance the turn
+    Task TurnCommitted(TurnResolution resolution);
     
     // Prompts for the user to select a card request.
     Task<Card?> PromptCardRequest(bool specific);
@@ -35,10 +38,10 @@ public interface IPlayerClient
     Task<string?> PromptPasscode();
     
     // Receives a chat message sent by another player.
-    Task ReceiveChat(ChatData message);
+    Task Chat(ChatData message);
     
     // Receives a system message.
-    Task ReceiveSystemMessage(SystemMessage message);
+    Task SystemMessage(SystemMessage message);
     
     // Reclaims the pile and adds cards to the deck
     Task ReclaimPile();
@@ -49,9 +52,6 @@ public interface IPlayerClient
     // Removes another player from the room
     Task RemoveHandFromRoom(long handId);
     
-    // Sets the current card request
-    Task SetCurrentRequest(Card? request);
-    
     // Updates the room administrator
     Task UpdateAdministrator(UserData administrator);
     
@@ -60,10 +60,4 @@ public interface IPlayerClient
     
     // Removes another player from the room
     Task UpdateHandStatus(long handId, HandStatus status);
-    
-    // Updates the current pick value
-    Task UpdatePick(uint num);
-    
-    // Updates the current turn
-    Task UpdateTurn(int turn);
 }

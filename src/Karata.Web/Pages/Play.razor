@@ -248,9 +248,11 @@
         }).DisposeWith(_subscriptions);
 
         _connection.Events.EndGame
-            .Select(_ => Observable.FromAsync(async _ =>
+            .Select(result => Observable.FromAsync(async cancellation =>
                 {
-                    await _connection.StopAsync();
+                    ShowMessage(new SystemMessage { Text = result.Reason, Type = result.ReasonType });
+                    
+                    await _connection.StopAsync(cancellation);
                     Navigator.NavigateTo($"/game/{_room!.State.Id.ToString()}/over");
                 }
             ))
@@ -258,9 +260,7 @@
             .Subscribe()
             .DisposeWith(_subscriptions);
 
-        _connection.Events.NotifyTurnProcessed.Subscribe(_ => _turn.Mutate(new TurnStore.Clear())).DisposeWith(_subscriptions);
-
-        _connection.Events.ReceiveChat.Subscribe(message =>
+        _connection.Events.Chat.Subscribe(message =>
         {
             if (message.Sender.Username != _username)
             {
@@ -275,18 +275,7 @@
             }
         }).DisposeWith(_subscriptions);
 
-        _connection.Events.ReceiveSystemMessage.Subscribe(message =>
-        {
-            var severity = message.Type switch
-            {
-                MessageType.Error => Severity.Error,
-                MessageType.Info => Severity.Info,
-                MessageType.Success => Severity.Success,
-                MessageType.Warning => Severity.Warning,
-                _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
-            };
-            Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
-        }).DisposeWith(_subscriptions);
+        _connection.Events.SystemMessage.Subscribe(ShowMessage).DisposeWith(_subscriptions);
 
         _connection.Events.RemoveFromRoom
             .Select(_ => Observable.FromAsync(async _ =>
@@ -310,6 +299,20 @@
         {
             var hand = _room!.State.Game.Hands.Find(h => h.Id == handId)!;
             Snackbar.Add($"{hand.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+        }).DisposeWith(_subscriptions);
+
+        _connection.Events.TurnAccepted.Subscribe(_ => _turn.Mutate(new TurnStore.Clear())).DisposeWith(_subscriptions);
+        
+        _connection.Events.TurnCommitted.Subscribe(resolution =>
+        {
+            if (resolution.IsCardless)
+            {
+                ShowMessage(new() { Text = $"{resolution.Player.Username} is cardless.", Type = MessageType.Info });
+            }
+            if (resolution.IsLastCard)
+            {
+                ShowMessage(new() { Text = $"{resolution.Player.Username} is on their last card.", Type = MessageType.Warning });
+            }
         }).DisposeWith(_subscriptions);
 
         _connection.Events.UpdateGameStatus.Subscribe(status => { Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text); }).DisposeWith(_subscriptions);
@@ -373,6 +376,19 @@
     {
         await Clipboard.SetTextAsync(Navigator.Uri);
         Snackbar.Add("Copied to clipboard.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+    }
+    
+    private void ShowMessage(SystemMessage message)
+    {
+        var severity = message.Type switch
+        {
+            MessageType.Error => Severity.Error,
+            MessageType.Info => Severity.Info,
+            MessageType.Success => Severity.Success,
+            MessageType.Warning => Severity.Warning,
+            _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
+        };
+        Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
     }
 
     public void Dispose()

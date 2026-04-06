@@ -115,19 +115,24 @@
             OnStoreChanged(room);
         }).DisposeWith(_subscriptions);
         
-        _connection.Events.ReceiveSystemMessage.Subscribe(message =>
-        {
-            var severity = message.Type switch
-            {
-                MessageType.Error => Severity.Error,
-                MessageType.Info => Severity.Info,
-                MessageType.Success => Severity.Success,
-                MessageType.Warning => Severity.Warning,
-                _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
-            };
-            Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
-        }).DisposeWith(_subscriptions);
+        _connection.Events.EndGame
+            .Subscribe(result => ShowMessage(new SystemMessage { Text = result.Reason, Type = result.ReasonType }))
+            .DisposeWith(_subscriptions);
+        
+        _connection.Events.SystemMessage.Subscribe(ShowMessage).DisposeWith(_subscriptions);
 
+        _connection.Events.TurnCommitted.Subscribe(resolution =>
+        {
+            if (resolution.IsCardless)
+            {
+                ShowMessage(new() { Text = $"{resolution.Player.Username} is cardless.", Type = MessageType.Info });
+            }
+            if (resolution.IsLastCard)
+            {
+                ShowMessage(new() { Text = $"{resolution.Player.Username} is on their last card.", Type = MessageType.Warning });
+            }
+        }).DisposeWith(_subscriptions);
+        
         _connection.Events.RemoveFromRoom
             .Select(_ => Observable.FromAsync(async _ =>
             {
@@ -201,6 +206,19 @@
         };
 
         string CardCount(int num) => $"{num} {(num == 1 ? "card" : "cards")}";
+    }
+    
+    private void ShowMessage(SystemMessage message)
+    {
+        var severity = message.Type switch
+        {
+            MessageType.Error => Severity.Error,
+            MessageType.Info => Severity.Info,
+            MessageType.Success => Severity.Success,
+            MessageType.Warning => Severity.Warning,
+            _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
+        };
+        Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
     }
 
     public void Dispose()

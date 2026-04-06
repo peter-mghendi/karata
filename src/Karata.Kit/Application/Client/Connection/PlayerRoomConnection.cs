@@ -31,15 +31,16 @@ public sealed class PlayerRoomConnection(Uri host, Guid roomId) : IRoomConnectio
         Hub.On<RoomData>(nameof(Events.AddToRoom), room => Events.OnAddToRoom(room));
         Hub.On<long, UserData, HandStatus>(nameof(Events.AddHandToRoom),
             (handId, user, status) => Events.OnAddHandToRoom(handId, user, status));
-        Hub.On(nameof(Events.EndGame), () => Events.OnEndGame());
+        Hub.On<TurnResolution>(nameof(Events.TurnCommitted), resolution => Events.OnTurnCommitted(resolution));
+        Hub.On<GameResultData>(nameof(Events.EndGame), result => Events.OnEndGame(result));
         Hub.On<long, IReadOnlyList<Card>>(nameof(Events.MoveCardsFromDeckToHand),
             (handId, cards) => Events.OnMoveCardsFromDeckToHand(handId, cards));
         Hub.On<List<Card>>(nameof(Events.MoveCardsFromDeckToPile), c => Events.OnMoveCardsFromDeckToPile(c));
         Hub.On<long, List<Card>, bool>(nameof(Events.MoveCardsFromHandToPile),
             (handId, cards, visible) => Events.OnMoveCardsFromHandToPile(handId, cards, visible));
-        Hub.On(nameof(Events.NotifyTurnProcessed), () => Events.OnNotifyTurnProcessed());
-        Hub.On<ChatData>(nameof(Events.ReceiveChat), chat => Events.OnReceiveChat(chat));
-        Hub.On<SystemMessage>(nameof(Events.ReceiveSystemMessage), message => Events.OnReceiveSystemMessage(message));
+        Hub.On(nameof(Events.TurnAccepted), () => Events.OnTurnAccepted());
+        Hub.On<ChatData>(nameof(Events.Chat), chat => Events.OnChat(chat));
+        Hub.On<SystemMessage>(nameof(Events.SystemMessage), message => Events.OnSystemMessage(message));
         Hub.On(nameof(Events.ReclaimPile), () => Events.OnReclaimPile());
         Hub.On(nameof(Events.RemoveFromRoom), () => Events.OnRemoveFromRoom());
         Hub.On<long>(nameof(Events.RemoveHandFromRoom), handId => Events.OnRemoveHandFromRoom(handId));
@@ -54,6 +55,24 @@ public sealed class PlayerRoomConnection(Uri host, Guid roomId) : IRoomConnectio
         Hub.On<string?>("PromptPasscode", RoomPasswordProvider);
         Hub.On<bool, Card?>("PromptCardRequest", parameters.OnRequestCard);
         Hub.On<bool>("PromptLastCardRequest", parameters.OnRequestLastCard);
+        
+        Hub.Reconnecting += ex =>
+        {
+            Console.WriteLine("SignalR reconnecting: " + ex?.Message);
+            return Task.CompletedTask;
+        };
+
+        Hub.Reconnected += id =>
+        {
+            Console.WriteLine("SignalR reconnected");
+            return Task.CompletedTask;
+        };
+
+        Hub.Closed += ex =>
+        {
+            Console.WriteLine("SignalR closed: " + ex?.Message);
+            return Task.CompletedTask;
+        };
 
         await Hub.StartAsync(ct);
         await JoinRoom(ct);

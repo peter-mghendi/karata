@@ -13,18 +13,16 @@ public static class RoomEventsStateBindings
         {
             var actions = Observable.Merge<StateAction<RoomData>>(
                 events.AddHandToRoom.Select(data => new RoomStore.AddHandToRoom(data.Id, data.User, data.Status)),
+                events.TurnCommitted.Select(resolution => new RoomStore.TurnCommitted(resolution)),
                 events.MoveCardsFromDeckToHand.Select(data => new RoomStore.MoveCardsFromDeckToHand(data.HandId, [..data.Cards])),
                 events.MoveCardsFromDeckToPile.Select(cards => new RoomStore.MoveCardsFromDeckToPile([..cards])),
                 events.MoveCardsFromHandToPile.Select(data => new RoomStore.MoveCardsFromHandToPile(data.HandId, [..data.Cards], data.Visible)),
-                events.ReceiveChat.Select(chat => new RoomStore.ReceiveChat(chat)),
+                events.Chat.Select(chat => new RoomStore.Chat(chat)),
                 events.ReclaimPile.Select(_ => new RoomStore.ReclaimPile()),
                 events.RemoveHandFromRoom.Select(user => new RoomStore.RemoveHandFromRoom(user)),
-                events.SetCurrentRequest.Select(card => new RoomStore.SetCurrentRequest(card)),
                 events.UpdateAdministrator.Select(administrator => new RoomStore.UpdateAdministrator(administrator)),
                 events.UpdateGameStatus.Select(status => new RoomStore.UpdateGameStatus(status)),
-                events.UpdateHandStatus.Select(data => new RoomStore.UpdateHandStatus(data.HandId, data.Status)),
-                events.UpdatePick.Select(pick => new RoomStore.UpdatePick(pick)),
-                events.UpdateTurn.Select(turn => new RoomStore.UpdateTurn(turn))
+                events.UpdateHandStatus.Select(data => new RoomStore.UpdateHandStatus(data.HandId, data.Status))
             );
 
             return actions.Subscribe(room.Mutate);

@@ -27,15 +27,28 @@ public class SetAwayService(
         if (CallerPlayerId != room.Administrator.Id) throw new UnauthorizedActionException();
 
         hand.Status = Away;
-        await RecomputeTurn(room, hand);
-        await RedelegateAdministration(room, hand.Player);
-
+        RecomputeTurn(room, hand);
+        RedelegateAdministration(room, hand.Player);
+        
+        await context.SaveChangesAsync();
+        var resolution = new TurnResolution(
+            room.Game.CurrentTurn,
+            room.Game.CurrentHand.Player,
+            room.Game.Request,
+            room.Game.Give,
+            false,
+            false
+        );
+        
+        await RoomPlayers.TurnCommitted(resolution);
+        await RoomSpectators.TurnCommitted(resolution);
+        await RoomPlayers.UpdateAdministrator(room.Administrator);
+        await RoomSpectators.UpdateAdministrator(room.Administrator);
         await RoomPlayers.UpdateHandStatus(hand.Id, hand.Status);
         await RoomSpectators.UpdateHandStatus(hand.Id, hand.Status);
-        await context.SaveChangesAsync();
     }
 
-    private async Task RecomputeTurn(Room room, Hand player)
+    private void RecomputeTurn(Room room, Hand player)
     {
         if (room.Game.CurrentHand.Id != player.Id) return;
         if (room.Game.Hands.Count(hand => hand.Status is Online or Offline) <= 1) return;
@@ -48,17 +61,13 @@ public class SetAwayService(
         });
         
         GameTurns.Advance(room.Game);
-        await RoomPlayers.UpdateTurn(room.Game.CurrentTurn);
-        await RoomSpectators.UpdateTurn(room.Game.CurrentTurn);
     }
 
-    private async Task RedelegateAdministration(Room room, User user)
+    private void RedelegateAdministration(Room room, User user)
     {
         if (room.Administrator.Id != user.Id) return;
         if (room.NextEligibleAdministrator is not {} administrator) return;
         
         room.Administrator = administrator;
-        await RoomPlayers.UpdateAdministrator(room.Administrator);
-        await RoomSpectators.UpdateAdministrator(room.Administrator);
     }
 }

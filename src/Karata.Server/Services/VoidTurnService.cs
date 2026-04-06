@@ -31,10 +31,19 @@ public class VoidTurnService(
             CreatedAt = DateTimeOffset.UtcNow
         });
             
-        GameTurns.Advance(room.Game);
-
+        room.Game.AdvanceTurn();
         await context.SaveChangesAsync();
-        await RoomPlayers.UpdateTurn(room.Game.CurrentTurn);
-        await RoomSpectators.UpdateTurn(room.Game.CurrentTurn);
+        
+        var resolution = new TurnResolution(
+            room.Game.CurrentTurn,
+            room.Game.CurrentHand.Player,
+            room.Game.Request,
+            room.Game.Give,
+            false,
+            false
+        );
+        
+        await RoomPlayers.TurnCommitted(resolution);
+        await RoomSpectators.TurnCommitted(resolution);
     }
 }

@@ -2,7 +2,6 @@ using Karata.Kit.Core.Exceptions;
 using Karata.Server.Data;
 using Karata.Server.Hubs.Clients;
 using Karata.Server.Services;
-using Karata.Server.Support;
 using Karata.Server.Support.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -35,7 +34,7 @@ public class ReplayerHub(ILogger<SpectatorHub> logger, KarataContext context, Re
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+            await Clients.Caller.SystemMessage(exception.SystemMessage);
         }
     }
 
@@ -65,7 +64,7 @@ public class ReplayerHub(ILogger<SpectatorHub> logger, KarataContext context, Re
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+            await Clients.Caller.SystemMessage(exception.SystemMessage);
         }
     }
 
@@ -80,7 +79,7 @@ public class ReplayerHub(ILogger<SpectatorHub> logger, KarataContext context, Re
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+            await Clients.Caller.SystemMessage(exception.SystemMessage);
         }
     }
 }

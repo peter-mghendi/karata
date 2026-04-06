@@ -1,9 +1,7 @@
-using System.Collections.Immutable;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
-using Karata.Cards;
 using Karata.Cards.Extensions;
 using Karata.Kit.Application.Client.Connection;
 using Karata.Kit.Application.Client.State;
@@ -30,7 +28,6 @@ public sealed class BotSession(
     private readonly CompositeDisposable _subscriptions = new();
 
     private RoomStore? _room;
-    private TurnStore _turn = new([], []);
     private HandData? BotHand => _room?.State.Game.Hands.FirstOrDefault(h => h.Player.Id == bot.Id);
 
     public async Task StartAsync(CancellationToken cancellation)
@@ -43,45 +40,32 @@ public sealed class BotSession(
                     new LoggingInterceptor<RoomData>(loggers),
                     new TimingInterceptor<RoomData>(loggers)
                 ]);
-                _turn = new TurnStore([], [
-                    new LoggingInterceptor<ImmutableList<Card>>(loggers),
-                    new TimingInterceptor<ImmutableList<Card>>(loggers)
-                ]);
-
+                
                 connection.Events.BindRoomState(_room).DisposeWith(_subscriptions);
-                _log.LogInformation("I've joined room {Room} as {Player}. Ready to bring the pain.", r.Id, BotHand!.Username);
+                connection.Events.AddToRoom.Select(_ => Unit.Default)
+                    .Merge(connection.Events.TurnCommitted.Select(_ => Unit.Default))
+                    .WithLatestFrom(_room!.Changes, (_, room) => room)
+                    .Where(room => room.Game.Status is Ongoing)
+                    .Where(room => room.Game.CurrentHand.Player.Id == bot.Id)
+                    .Select(_ => Observable.FromAsync(PlayTurnSafeAsync))
+                    .Concat()
+                    .Subscribe()
+                    .DisposeWith(_subscriptions);
+                
+                _room.Changes
+                    .Where(room => room.Game.Status is Ongoing)
+                    .Take(1)
+                    .Select(_ => Observable.FromAsync(async _ => await connection.SendChat("gg", cancellation)))
+                    .Concat()
+                    .Subscribe()
+                    .DisposeWith(_subscriptions);
+
+                _log.LogInformation("I've joined room {Room} as {Player}. Ready to bring the pain.", r.Id, BotHand!.Username);  
             })
             .DisposeWith(_subscriptions);
 
-        connection.Events.UpdateGameStatus
-            .Where(_ => _room?.State.Game.Status is Ongoing)
-            .Select(_ => Observable.FromAsync(async _ => await connection.SendChat("gg", cancellation)))
-            .Concat()
-            .Subscribe()
-            .DisposeWith(_subscriptions);
-
-        connection.Events.NotifyTurnProcessed
-            .Subscribe(_ => _turn.Mutate(new TurnStore.Clear()))
-            .DisposeWith(_subscriptions);
-
-        connection.Events.ReceiveSystemMessage
-            .Subscribe(message => _log.LogInformation("System: {Message}", message))
-            .DisposeWith(_subscriptions);
-
-        Observable
-            .Merge(
-                connection.Events.AddToRoom.Select(_ => Unit.Default),
-                connection.Events.UpdateGameStatus.Select(_ => Unit.Default),
-                connection.Events.ReceiveChat.Select(_ => Unit.Default),
-                connection.Events.UpdateTurn.Select(_ => Unit.Default)
-            )
-            .Where(_ => CanPlay())
-            .Select(_ => _room!.State.Game.CurrentHand.Player.Id)
-            .DistinctUntilChanged()
-            .Where(player => player == bot.Id)
-            .Select(_ => Observable.FromAsync(PlayTurnSafeAsync))
-            .Concat()
-            .Subscribe()
+        connection.Events.SystemMessage
+            .Subscribe(message => _log.LogInformation("SYSTEM: {Message}", message))
             .DisposeWith(_subscriptions);
 
         var parameters = new PlayerRoomConnection.StartParameters(
@@ -92,7 +76,7 @@ public sealed class BotSession(
                 _log.LogInformation("I have to request a card. I will request {Card}.", request);
                 return Task.FromResult(request);
             },
-            OnRequestLastCard: () => Task.FromResult(true)
+            OnRequestLastCard: () => Task.FromResult(true) 
         );
         
         _log.LogInformation("Nearly there...");
@@ -102,9 +86,7 @@ public sealed class BotSession(
         _log.LogInformation("Done");
     }
 
-    private bool CanPlay() =>
-        _room?.State.Game.Status is Ongoing &&
-        _room.State.Game.CurrentHand.Player.Id == bot.Id;
+    private bool CanPlay() => _room?.State.Game.Status is Ongoing && _room.State.Game.CurrentHand.Player.Id == bot.Id;
 
     private async Task PlayTurnSafeAsync(CancellationToken ct)
     {

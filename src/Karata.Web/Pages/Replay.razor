@@ -113,19 +113,10 @@
         }).DisposeWith(_subscriptions);
 
         _connection.Events.EndGame
-            .Select(_ => Observable.FromAsync(async _ =>
-                {
-                    await _connection.StopAsync();
-                    Navigator.NavigateTo($"/game/{_room!.State.Id.ToString()}/over");
-                }
-            ))
-            .Concat()
-            .Subscribe()
+            .Subscribe(result => ShowMessage(new SystemMessage { Text = result.Reason, Type = result.ReasonType }))
             .DisposeWith(_subscriptions);
 
-        _connection.Events.NotifyTurnProcessed.Subscribe(_ => _turn.Mutate(new TurnStore.Clear())).DisposeWith(_subscriptions);
-
-        _connection.Events.ReceiveChat.Subscribe(message =>
+        _connection.Events.Chat.Subscribe(message =>
         {
             if (message.Sender.Username != _username)
             {
@@ -140,17 +131,20 @@
             }
         }).DisposeWith(_subscriptions);
 
-        _connection.Events.ReceiveSystemMessage.Subscribe(message =>
+        _connection.Events.SystemMessage.Subscribe(ShowMessage).DisposeWith(_subscriptions);
+
+        _connection.Events.TurnAccepted.Subscribe(_ => _turn.Mutate(new TurnStore.Clear())).DisposeWith(_subscriptions);
+        
+        _connection.Events.TurnCommitted.Subscribe(resolution =>
         {
-            var severity = message.Type switch
+            if (resolution.IsCardless)
             {
-                MessageType.Error => Severity.Error,
-                MessageType.Info => Severity.Info,
-                MessageType.Success => Severity.Success,
-                MessageType.Warning => Severity.Warning,
-                _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
-            };
-            Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
+                ShowMessage(new() { Text = $"{resolution.Player.Username} is cardless.", Type = MessageType.Info });
+            }
+            if (resolution.IsLastCard)
+            {
+                ShowMessage(new() { Text = $"{resolution.Player.Username} is on their last card.", Type = MessageType.Warning });
+            }
         }).DisposeWith(_subscriptions);
 
         _connection.Events.RemoveFromRoom
@@ -194,6 +188,19 @@
         }).DisposeWith(_subscriptions);
 
         await _connection.StartAsync(new ReplayerRoomConnection.StartParameters(Interval: TimeSpan.FromSeconds(3)));
+    }
+    
+    private void ShowMessage(SystemMessage message)
+    {
+        var severity = message.Type switch
+        {
+            MessageType.Error => Severity.Error,
+            MessageType.Info => Severity.Info,
+            MessageType.Success => Severity.Success,
+            MessageType.Warning => Severity.Warning,
+            _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
+        };
+        Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
     }
 
     public void Dispose()

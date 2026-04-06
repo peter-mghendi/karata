@@ -10,6 +10,12 @@ public interface IReplayerClient
     // Adds the current spectator to a room
     Task AddToRoom(RoomData room);
     
+    // Advance the turn
+    Task TurnCommitted(TurnResolution resolution);
+    
+    // Ends the game
+    Task EndGame(GameResultData result);
+    
     // Moves n cards from deck to a player's hand. 
     Task MoveCardsFromDeckToHand(long handId, List<Card> cards);
     
@@ -20,7 +26,7 @@ public interface IReplayerClient
     Task MoveCardsFromHandToPile(long handId, List<Card> cards, bool visible);
     
     // Receives a system message.
-    Task ReceiveSystemMessage(SystemMessage message);
+    Task SystemMessage(SystemMessage message);
     
     // Reclaims the pile and adds cards to the deck
     Task ReclaimPile();
@@ -31,9 +37,6 @@ public interface IReplayerClient
     // Removes a player from the room
     Task RemoveHandFromRoom(long handId);
     
-    // Sets the current card request
-    Task SetCurrentRequest(Card? request);
-    
     // Updates the room administrator
     Task UpdateAdministrator(UserData administrator);
     
@@ -42,10 +45,4 @@ public interface IReplayerClient
     
     // Updates hand status
     Task UpdateHandStatus(long handId, HandStatus status);
-    
-    // Updates the current pick value
-    Task UpdatePick(uint num);
-    
-    // Updates the current turn
-    Task UpdateTurn(int turn);
 }
