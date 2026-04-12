@@ -5,59 +5,59 @@ namespace Karata.Server.Hubs.Clients;
 public interface IPlayerClient
 {
     // Adds another user to the current room
-    Task AddHandToRoom(long id, UserData user, HandStatus status);
+    Task AddHandToRoom(Guid roomId, long id, UserData user, HandStatus status);
     
     // Adds the current user to a room
-    Task AddToRoom(RoomData room);
+    Task AddToRoom(Guid roomId, RoomData room);
     
     // Ends the game
-    Task EndGame(GameResultData result);
+    Task EndGame(Guid roomId, GameResultData result);
     
     // Moves cards from deck to current player's hand.
-    Task MoveCardsFromDeckToHand(long handId, List<Card> cards);
+    Task MoveCardsFromDeckToHand(Guid roomId, long handId, List<Card> cards);
     
     // Moves cards from deck to the pile. 
-    Task MoveCardsFromDeckToPile(List<Card> cards);
+    Task MoveCardsFromDeckToPile(Guid roomId, List<Card> cards);
     
     // Moves cards from hand to the pile. 
-    Task MoveCardsFromHandToPile(long handId, List<Card> cards, bool visible);
+    Task MoveCardsFromHandToPile(Guid roomId, long handId, List<Card> cards, bool visible);
 
     // Notifies the current user's client that the turn has been processed - so the UI can clean up and state.
-    Task TurnAccepted();
+    Task TurnAcknowledged(Guid roomId);
     
     // Advance the turn
-    Task TurnCommitted(TurnResolution resolution);
+    Task TurnCommitted(Guid roomId, TurnResolution resolution);
     
     // Prompts for the user to select a card request.
-    Task<Card?> PromptCardRequest(bool specific);
+    Task<Card?> PromptCardRequest(Guid roomId, bool specific);
     
     // Prompts the user to declare last card status
-    Task<bool> PromptLastCardRequest();
+    Task<bool> PromptLastCardRequest(Guid roomId);
     
     // Prompts the user for a passcode.
-    Task<string?> PromptPasscode();
+    Task<string?> PromptPasscode(Guid roomId);
     
     // Receives a chat message sent by another player.
-    Task Chat(ChatData message);
+    Task Chat(Guid roomId, ChatData message);
     
     // Receives a system message.
-    Task SystemMessage(SystemMessage message);
+    Task SystemMessage(Guid roomId, SystemMessage message);
     
     // Reclaims the pile and adds cards to the deck
-    Task ReclaimPile();
+    Task ReclaimPile(Guid roomId);
     
     // Removes the current player from the room
-    Task RemoveFromRoom();
+    Task RemoveFromRoom(Guid roomId);
     
     // Removes another player from the room
-    Task RemoveHandFromRoom(long handId);
+    Task RemoveHandFromRoom(Guid roomId, long handId);
     
     // Updates the room administrator
-    Task UpdateAdministrator(UserData administrator);
+    Task UpdateAdministrator(Guid roomId, UserData administrator);
     
     // Updates the game status
-    Task UpdateGameStatus(GameStatus status);
+    Task UpdateGameStatus(Guid roomId, GameStatus status);
     
     // Removes another player from the room
-    Task UpdateHandStatus(long handId, HandStatus status);
+    Task UpdateHandStatus(Guid roomId, long handId, HandStatus status);
 }

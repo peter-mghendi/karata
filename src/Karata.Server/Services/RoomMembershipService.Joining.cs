@@ -1,7 +1,6 @@
 using System.Text;
 using Karata.Kit.Core.Exceptions;
 using Karata.Kit.Domain.Models;
-using Karata.Server.Support;
 using Karata.Server.Support.Exceptions;
 using static Karata.Kit.Domain.Models.HandStatus;
 
@@ -27,30 +26,27 @@ public partial class RoomMembershipService
                 joined.Status = Online;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(EnrichRoomDataForUser(room, joined));
-                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId))
-                    .UpdateHandStatus(joined.Id, joined.Status);
-                await RoomSpectators.UpdateHandStatus(joined.Id, joined.Status);
+                await Me.AddToRoom(RoomId, EnrichRoomDataForUser(room, joined));
+                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, joined.Id, joined.Status);
+                await RoomSpectators.UpdateHandStatus(RoomId, joined.Id, joined.Status);
                 break;
             case GameStatus.Lobby:
                 var hand = new Hand { Player = player, Status = Online };
                 room.Game.Hands.Add(hand);
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(EnrichRoomDataForUser(room, hand));
-                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId))
-                    .AddHandToRoom(hand.Id, hand.Player.ToData(), hand.Status);
-                await RoomSpectators.AddHandToRoom(hand.Id, hand.Player.ToData(), hand.Status);
+                await Me.AddToRoom(RoomId, EnrichRoomDataForUser(room, hand));
+                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
+                await RoomSpectators.AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
                 break;
             case GameStatus.Ongoing:
                 var rejoined = room.Game.Hands.Single(h => h.Player.Id == player.Id);
                 rejoined.Status = Online;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(EnrichRoomDataForUser(room, rejoined));
-                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId))
-                    .UpdateHandStatus(rejoined.Id, rejoined.Status);
-                await RoomSpectators.UpdateHandStatus(rejoined.Id, rejoined.Status);
+                await Me.AddToRoom(RoomId, EnrichRoomDataForUser(room, rejoined));
+                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, rejoined.Id, rejoined.Status);
+                await RoomSpectators.UpdateHandStatus(RoomId, rejoined.Id, rejoined.Status);
                 break;
             case GameStatus.Over:
                 break;
@@ -66,7 +62,7 @@ public partial class RoomMembershipService
             if (room.Hash is null) return true;
             if (room.Game.Hands.Any(h => h.Player.Id == player.Id)) return true;
 
-            if (await PlayerConnection(connection).PromptPasscode() is not [_, ..] password)
+            if (await PlayerConnection(connection).PromptPasscode(RoomId) is not [_, ..] password)
                 throw new PasswordRequiredException();
             if (!passwords.VerifyPassword(Encoding.UTF8.GetBytes(password), room.Salt!, room.Hash))
                 throw new IncorrectPasswordException();
@@ -75,7 +71,7 @@ public partial class RoomMembershipService
         }
         catch (PasswordException exception)
         {
-            await Me.SystemMessage(exception.SystemMessage);
+            await Me.SystemMessage(RoomId, exception.SystemMessage);
             return false;
         }
     }

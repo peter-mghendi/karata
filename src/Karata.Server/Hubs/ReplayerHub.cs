@@ -1,3 +1,4 @@
+using Humanizer;
 using Karata.Kit.Core.Exceptions;
 using Karata.Server.Data;
 using Karata.Server.Hubs.Clients;
@@ -10,51 +11,45 @@ using static Karata.Kit.Domain.Models.GameStatus;
 namespace Karata.Server.Hubs;
 
 [Authorize]
-public class ReplayerHub(ILogger<SpectatorHub> logger, KarataContext context, ReplayProcessor processor) : Hub<IReplayerClient>
+public partial class ReplayerHub(ILogger<SpectatorHub> logger, KarataContext context, ReplayProcessor processor) : Hub<IReplayerClient>
 {
     private static readonly TimeSpan MinimumInterval = TimeSpan.FromMilliseconds(50);
-    
-    public override async Task OnDisconnectedAsync(Exception? exception)
-    {
-        await base.OnDisconnectedAsync(exception);
 
-        await Clients.Client(Context.ConnectionId).RemoveFromRoom();
-    }
-
-    public async Task JoinRoom(string roomId)
+    public async Task JoinRoom(Guid roomId)
     {
         try
         {
-            logger.LogDebug("Spectator {Connection} is joining room {Room}.", Context.ConnectionId, roomId);
-            if (await context.Rooms.FindAsync(Guid.Parse(roomId)) is not { } room) return;
+            LogSpectatorAction(logger, Context.ConnectionId, "joining", roomId);
+            if (await context.Rooms.FindAsync(roomId) is not { } room) return;
             if (room.Game.Status is Lobby or Ongoing) throw new GameOngoingException();
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-            await Clients.Client(Context.ConnectionId).AddToRoom(room.ToData());
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
+            await Clients.Client(Context.ConnectionId).AddToRoom(roomId, room.ToData());
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.SystemMessage(exception.SystemMessage);
+            await Clients.Caller.SystemMessage(roomId, exception.SystemMessage);
         }
     }
 
-    public async Task Start(string roomId, TimeSpan interval)
+    public async Task Start(Guid roomId, TimeSpan interval)
     {
         try
         {
-            if (interval < MinimumInterval) throw new KarataException("Interval too small");
-
-            if (!Guid.TryParse(roomId, out var roomGuid)) throw new KarataException("Invalid Room ID");
+            if (interval < MinimumInterval)
+                throw new KarataException($"Interval must be greater than {MinimumInterval.Humanize()}");
             
-            if (await context.Rooms.FindAsync(roomGuid) is not { } room) throw new KarataException("Room not found");
+            if (await context.Rooms.FindAsync(roomId) is not { } room)
+                throw new KarataException("Room not found");
 
-            if (room.Game.Status is not Over) throw new GameOngoingException();
+            if (room.Game.Status is not Over)
+                throw new GameOngoingException();
 
             if (room.Game.Hands.All(hand => hand.Player.Id != Context.UserIdentifier))
                 throw new KarataException("You cannot access this replay");
 
             var request = new ReplayRequest(
-                RoomId: roomGuid,
+                RoomId: roomId,
                 UserId: Context.UserIdentifier!,
                 Interval: interval,
                 StartTurn: 0
@@ -64,22 +59,25 @@ public class ReplayerHub(ILogger<SpectatorHub> logger, KarataContext context, Re
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.SystemMessage(exception.SystemMessage);
+            await Clients.Caller.SystemMessage(roomId, exception.SystemMessage);
         }
     }
 
-    public async Task LeaveRoom(string roomId)
+    public async Task LeaveRoom(Guid roomId)
     {
         try
         {
-            logger.LogDebug("Spectator {Connection} is leaving room {Room}.", Context.ConnectionId, roomId);
+            LogSpectatorAction(logger, Context.ConnectionId, "leaving", roomId);
             
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
-            await Clients.Client(Context.ConnectionId).RemoveFromRoom();
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId.ToString());
+            await Clients.Client(Context.ConnectionId).RemoveFromRoom(roomId);
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.SystemMessage(exception.SystemMessage);
+            await Clients.Caller.SystemMessage(roomId, exception.SystemMessage);
         }
     }
+
+    [LoggerMessage(LogLevel.Debug, "Spectator {spectator} is {action} room {room}.")]
+    private static partial void LogSpectatorAction(ILogger<SpectatorHub> logger, string spectator, string action, Guid room);
 }

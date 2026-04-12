@@ -15,14 +15,10 @@ public sealed class BotSessionFactory(IServiceProvider services, IConfiguration 
     public BotSession Create(IBotStrategy strategy, UserData player, Guid roomId, string? password)
     {
         var url = new Uri(config["Karata:Host"]!);
-        var subscriber = new PlayerRoomConnection(url, roomId)
-        {
-            AccessTokenProvider = async () => await tokens.GetAccessTokenAsync(),
-            RoomPasswordProvider = () => Task.FromResult(password)
-        };
-
         var engine = services.GetRequiredService<IKarataEngine>();
         var loggers = services.GetRequiredService<ILoggerFactory>();
+        
+        var subscriber = new PlayerConnection(url) { AccessTokenProvider = async () => await tokens.GetAsync() };
         return new BotSession(player, subscriber, strategy, engine, loggers);
     }
 }

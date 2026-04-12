@@ -34,37 +34,37 @@ public sealed class BotSessionManager(
         if (_sessions.TryGetValue(room, out _)) return;
 
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        var session = bots.Create(strategy, (await tokens.GetCurrentUser())!, room, password);
-        var runner = Run(() => StartBotSession(room, session, cancellation.Token), cancellation.Token);
+        var session = bots.Create(strategy, (await tokens.CurrentUser())!, room, password);
+        var runner = Run(() => StartBotSession(room, password, session, cancellation.Token), cancellation.Token);
 
         var entry = new Entry(room, DateTimeOffset.UtcNow, cancellation, runner, session);
         _ = _sessions.TryAdd(room, entry);
     }
 
-    private async Task StartBotSession(Guid room, BotSession session, CancellationToken cancellation)
+    private async Task StartBotSession(Guid roomId, string? password, BotSession session, CancellationToken cancellation)
     {
         try
         {
-            log.LogInformation("Starting bot session for room {RoomId}", room);
+            log.LogInformation("Starting bot session for room {RoomId}", roomId);
             
             // Keep the session alive; it reacts to SignalR events internally.
             // We don't spin a busy loop; this awaits cancellation cooperatively.
-            await session.StartAsync(cancellation).ConfigureAwait(false);
+            await session.StartAsync(roomId, password, cancellation).ConfigureAwait(false);
             await Delay(Timeout.InfiniteTimeSpan, cancellation).ConfigureAwait(false);
         }
         catch (OperationCanceledException ex)
         {
-            log.LogError(ex, "Shutting down bot session for room {RoomId}", room);
+            log.LogError(ex, "Shutting down bot session for room {RoomId}", roomId);
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Bot session crashed for room {RoomId}", room);
+            log.LogError(ex, "Bot session crashed for room {RoomId}", roomId);
         }
         finally
         {
             try
             {
-                await session.DisposeAsync();
+                session.Dispose();
             }
             catch
             {

@@ -15,9 +15,9 @@ public class SetAwayService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     KarataContext context,
-    Guid room,
+    Guid roomId,
     string player
-) : LiveRoomAwareService(players, spectators, room, player)
+) : LiveRoomAwareService(players, spectators, roomId, player)
 {
     public async Task ExecuteAsync(long voideeId)
     {
@@ -40,12 +40,12 @@ public class SetAwayService(
             false
         );
         
-        await RoomPlayers.TurnCommitted(resolution);
-        await RoomSpectators.TurnCommitted(resolution);
-        await RoomPlayers.UpdateAdministrator(room.Administrator);
-        await RoomSpectators.UpdateAdministrator(room.Administrator);
-        await RoomPlayers.UpdateHandStatus(hand.Id, hand.Status);
-        await RoomSpectators.UpdateHandStatus(hand.Id, hand.Status);
+        await RoomPlayers.TurnCommitted(RoomId, resolution);
+        await RoomSpectators.TurnCommitted(RoomId, resolution);
+        await RoomPlayers.UpdateAdministrator(RoomId, room.Administrator);
+        await RoomSpectators.UpdateAdministrator(RoomId, room.Administrator);
+        await RoomPlayers.UpdateHandStatus(RoomId, hand.Id, hand.Status);
+        await RoomSpectators.UpdateHandStatus(RoomId, hand.Id, hand.Status);
     }
 
     private void RecomputeTurn(Room room, Hand player)

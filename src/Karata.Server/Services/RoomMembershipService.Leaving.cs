@@ -27,27 +27,27 @@ public partial class RoomMembershipService
                 presence.RemovePresence(CallerPlayerId, room.Id.ToString());
                 
                 await AddToRoom(connection);
-                await Me.RemoveFromRoom();
-                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).RemoveHandFromRoom(hand.Id);
-                await RoomSpectators.RemoveHandFromRoom(hand.Id);
+                await Me.RemoveFromRoom(RoomId);
+                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).RemoveHandFromRoom(RoomId, hand.Id);
+                await RoomSpectators.RemoveHandFromRoom(RoomId, hand.Id);
                 break;
             case GameStatus.Ongoing:
                 hand.Status = intent;
                 presence.RemovePresence(CallerPlayerId, room.Id.ToString());
 
                 await AddToRoom(connection);
-                await Me.RemoveFromRoom();
-                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(hand.Id, hand.Status);
-                await RoomSpectators.RemoveHandFromRoom(hand.Id);
+                await Me.RemoveFromRoom(RoomId);
+                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, hand.Id, hand.Status);
+                await RoomSpectators.RemoveHandFromRoom(RoomId, hand.Id);
                 break;
             case GameStatus.Over:
                 hand.Status = Away;
                 presence.RemovePresence(CallerPlayerId, room.Id.ToString());
 
                 await AddToRoom(connection);
-                await Me.RemoveFromRoom();
-                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(hand.Id, hand.Status);
-                await RoomSpectators.RemoveHandFromRoom(hand.Id);
+                await Me.RemoveFromRoom(RoomId);
+                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, hand.Id, hand.Status);
+                await RoomSpectators.RemoveHandFromRoom(RoomId, hand.Id);
                 break;
         }
         

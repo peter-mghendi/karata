@@ -5,44 +5,44 @@ namespace Karata.Server.Hubs.Clients;
 public interface ISpectatorClient
 {
     // Adds a user to the current room
-    Task AddHandToRoom(long id, UserData user, HandStatus status);
+    Task AddHandToRoom(Guid roomId, long id, UserData user, HandStatus status);
 
     // Adds the current spectator to a room
-    Task AddToRoom(RoomData room);
+    Task AddToRoom(Guid roomId, RoomData room);
     
     // Advance the turn
-    Task TurnCommitted(TurnResolution resolution);
+    Task TurnCommitted(Guid roomId, TurnResolution resolution);
     
     // Ends the game
-    Task EndGame(GameResultData result);
+    Task EndGame(Guid roomId, GameResultData result);
     
     // Moves n cards from deck to a player's hand. 
-    Task MoveCardsFromDeckToHand(long handId, List<Card> cards);
+    Task MoveCardsFromDeckToHand(Guid roomId, long handId, List<Card> cards);
     
     // Moves cards from deck to the pile. 
-    Task MoveCardsFromDeckToPile(List<Card> cards);
+    Task MoveCardsFromDeckToPile(Guid roomId, List<Card> cards);
     
     // Moves cards from hand to the pile. 
-    Task MoveCardsFromHandToPile(long handId, List<Card> cards, bool visible);
+    Task MoveCardsFromHandToPile(Guid roomId, long handId, List<Card> cards, bool visible);
     
     // Receives a system message.
-    Task SystemMessage(SystemMessage message);
+    Task SystemMessage(Guid roomId, SystemMessage message);
     
     // Reclaims the pile and adds cards to the deck
-    Task ReclaimPile();
+    Task ReclaimPile(Guid roomId);
     
     // Removes the current spectator from the room
-    Task RemoveFromRoom();
-    
+    Task RemoveFromRoom(Guid roomId);
+
     // Removes a player from the room
-    Task RemoveHandFromRoom(long handId);
+    Task RemoveHandFromRoom(Guid roomId, long handId);
     
     // Updates the room administrator
-    Task UpdateAdministrator(UserData administrator);
+    Task UpdateAdministrator(Guid roomId, UserData administrator);
     
     // Updates the game status
-    Task UpdateGameStatus(GameStatus status);
+    Task UpdateGameStatus(Guid roomId, GameStatus status);
     
     // Updates hand status
-    Task UpdateHandStatus(long handId, HandStatus status);
+    Task UpdateHandStatus(Guid roomId, long handId, HandStatus status);
 }

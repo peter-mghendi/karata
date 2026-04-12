@@ -33,91 +33,91 @@ public class PlayerHub(
         var ids = rooms.Select(Parse);
         foreach (var room in await context.Rooms.Where(r => ids.Contains(r.Id)).ToListAsync()) await Disconnect(membership, room.Id, HandStatus.Offline);
     }
-
-    public async Task SendChat(string roomId, string text)
+    
+    public async Task SendChat(Guid roomId, string text)
     {
         var user = await currentUser.RequireAsync();
-        if (await context.Rooms.FindAsync(Parse(roomId)) is not { } room)
+        if (await context.Rooms.FindAsync(roomId) is not { } room)
             throw new Exception("Room not found.");
 
         var chat = new Chat { Text = text, Sender = user, SentAt = DateTimeOffset.UtcNow };
 
         room.Chats.Add(chat);
-        await Clients.Group(roomId).Chat(chat);
+        await Clients.Group(roomId.ToString()).Chat(roomId, chat);
         await context.SaveChangesAsync();
     }
 
-    public async Task JoinRoom([FromServices] RoomMembershipServiceFactory factory, string roomId)
+    public async Task JoinRoom([FromServices] RoomMembershipServiceFactory factory, Guid roomId)
     {
         try
         {
             var user = await currentUser.RequireAsync();
             logger.LogDebug("User {User} is joining room {Room}.", user.Id, roomId);
-            await factory.Create(Parse(roomId), user.Id).JoinAsync(Context.ConnectionId);
+            await factory.Create(roomId, user.Id).JoinAsync(Context.ConnectionId);
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.SystemMessage(exception.SystemMessage);
+            await Clients.Caller.SystemMessage(roomId, exception.SystemMessage);
         }
     }
 
-    public async Task LeaveRoom([FromServices] RoomMembershipServiceFactory factory, string roomId) =>
-        await Disconnect(factory, Parse(roomId), HandStatus.Away);
+    public async Task LeaveRoom([FromServices] RoomMembershipServiceFactory factory, Guid roomId) =>
+        await Disconnect(factory, roomId, HandStatus.Away);
 
-    public async Task StartGame([FromServices] GameStartServiceFactory factory, string roomId)
+    public async Task StartGame([FromServices] GameStartServiceFactory factory, Guid roomId)
     {
         try
         {
             var user = await currentUser.RequireAsync();
             logger.LogDebug("User {User} is starting the game in room {Room}.", user.Id, roomId);
-            await factory.Create(Parse(roomId), user.Id).ExecuteAsync();
+            await factory.Create(roomId, user.Id).ExecuteAsync();
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.SystemMessage(exception.SystemMessage);
+            await Clients.Caller.SystemMessage(roomId, exception.SystemMessage);
         }
     }
 
-    public async Task PerformTurn([FromServices] TurnProcessingServiceFactory factory, string roomId, List<Card> cards)
+    public async Task PerformTurn([FromServices] TurnProcessingServiceFactory factory, Guid roomId, List<Card> cards)
     {
         try
         {
             var user = await currentUser.RequireAsync();
             logger.LogDebug("User {User} is performing a turn in room {Room}. Cards: {Cards}", user.Id, roomId, string.Join(", ", cards));
-            await factory.Create(Parse(roomId), user.Id, Context.ConnectionId).ExecuteAsync(cards);
+            await factory.Create(roomId, user.Id, Context.ConnectionId).ExecuteAsync(cards);
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.SystemMessage(exception.SystemMessage);
-            await Clients.Caller.TurnAccepted();
+            await Clients.Caller.SystemMessage(roomId, exception.SystemMessage);
+            await Clients.Caller.TurnAcknowledged(roomId);
         }
     }
 
-    public async Task VoidTurn([FromServices] VoidTurnServiceFactory factory, string roomId, long voideeId)
+    public async Task VoidTurn([FromServices] VoidTurnServiceFactory factory, Guid roomId, long voideeId)
     {
         try
         {
             var user = await currentUser.RequireAsync();
             logger.LogDebug("User {User} is voiding a turn in room {Room}. Player: {Player}", user.Id, roomId, voideeId);
-            await factory.Create(Parse(roomId), user.Id).ExecuteAsync(voideeId);
+            await factory.Create(roomId, user.Id).ExecuteAsync(voideeId);
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.SystemMessage(exception.SystemMessage);
+            await Clients.Caller.SystemMessage(roomId, exception.SystemMessage);
         }
     }
 
-    public async Task SetAway([FromServices] SetAwayServiceFactory factory, string roomId, long voideeId)
+    public async Task SetAway([FromServices] SetAwayServiceFactory factory, Guid roomId, long voideeId)
     {
         try
         {
             var user = await currentUser.RequireAsync();
             logger.LogDebug("User {User} is setting player - {Player} as away in room {Room}.", user.Id, voideeId, roomId);
-            await factory.Create(Parse(roomId), user.Id).ExecuteAsync(voideeId);
+            await factory.Create(roomId, user.Id).ExecuteAsync(voideeId);
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.SystemMessage(exception.SystemMessage);
+            await Clients.Caller.SystemMessage(roomId, exception.SystemMessage);
         }
     }
 
@@ -131,7 +131,7 @@ public class PlayerHub(
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.SystemMessage(exception.SystemMessage);
+            await Clients.Caller.SystemMessage(roomId, exception.SystemMessage);
         }
     }
 }

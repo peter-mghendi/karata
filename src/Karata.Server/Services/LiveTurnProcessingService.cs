@@ -83,7 +83,7 @@ public sealed class LiveTurnProcessingService(
         }
 
         room.Game.CurrentHand.Turns.Add(turn);
-        await Me.TurnAccepted();
+        await Me.TurnAcknowledged(RoomId);
 
         try
         {
@@ -121,11 +121,11 @@ public sealed class LiveTurnProcessingService(
 
             await context.SaveChangesAsync();
 
-            await Me.TurnAccepted();
-            await RoomPlayers.UpdateGameStatus(room.Game.Status);
-            await RoomSpectators.UpdateGameStatus(room.Game.Status);
-            await RoomPlayers.EndGame(exception.Result);
-            await RoomSpectators.EndGame(exception.Result);
+            await Me.TurnAcknowledged(RoomId);
+            await RoomPlayers.UpdateGameStatus(RoomId, room.Game.Status);
+            await RoomSpectators.UpdateGameStatus(RoomId, room.Game.Status);
+            await RoomPlayers.EndGame(RoomId, exception.Result);
+            await RoomSpectators.EndGame(RoomId, exception.Result);
         }
 
         turn.GameSnapshot = room.Game;
@@ -147,6 +147,8 @@ public sealed class LiveTurnProcessingService(
 
     private async Task<Card?> DetermineCardRequest(Room room, Turn turn)
     {
+        logger.LogDebug("Determining request for {Game}.", room.Id);
+        
         var request = room.Game.RequestLevel switch
         {
             CardRequest when turn.Delta!.RemoveRequestLevels is 1 => None.Of(room.Game.Request!.Suit),
@@ -158,18 +160,20 @@ public sealed class LiveTurnProcessingService(
         var level = turn.Delta!.RequestLevel;
         if (level is NoRequest)
         {
-            logger.LogDebug("No card request for level {RequestLevel} in room {Room}.", level, room.Id);
+            logger.LogDebug("Kept request {Request} for level {RequestLevel} in room {Room}.", request, level, room.Id);
             return request;
         }
 
-        request = await PlayerConnection(connection).PromptCardRequest(specific: level is CardRequest);
+        request = await PlayerConnection(connection).PromptCardRequest(RoomId, specific: level is CardRequest);
         logger.LogDebug("Requested {Request} for level {RequestLevel} in room {Room}.", request, level, room.Id);
 
         return request;
     }
 
-    private static void EnsureTurnApplied(Room room, Turn turn, out List<Card> dealt)
+    private void EnsureTurnApplied(Room room, Turn turn, out List<Card> dealt)
     {
+        logger.LogDebug("Applying turn for {Game}.", room.Id);
+        
         room.Game.CurrentHand.Cards.RemoveAll(turn.Delta!.Cards.Contains);
         turn.Delta!.Cards.ForEach(room.Game.Pile.Push);
 
@@ -201,36 +205,43 @@ public sealed class LiveTurnProcessingService(
 
     private async Task UpdateTableState(Room room, Turn turn, List<Card> dealt)
     {
-        await Me.MoveCardsFromHandToPile(room.Game.CurrentHand.Id, turn.Delta!.Cards, true);
+        logger.LogDebug("Updating table state for {Game}.", room.Id);
+        
+        await Me.MoveCardsFromHandToPile(RoomId, room.Game.CurrentHand.Id, turn.Delta!.Cards, true);
         await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId))
-            .MoveCardsFromHandToPile(room.Game.CurrentHand.Id, turn.Delta!.Cards, false);
-        await RoomSpectators.MoveCardsFromHandToPile(room.Game.CurrentHand.Id, turn.Delta!.Cards, false);
+            .MoveCardsFromHandToPile(RoomId, room.Game.CurrentHand.Id, turn.Delta!.Cards, false);
+        await RoomSpectators.MoveCardsFromHandToPile(RoomId, room.Game.CurrentHand.Id, turn.Delta!.Cards, false);
 
         if (turn.ReclaimedPile)
         {
-            await RoomPlayers.ReclaimPile();
-            await RoomSpectators.ReclaimPile();
+            await RoomPlayers.ReclaimPile(RoomId);
+            await RoomSpectators.ReclaimPile(RoomId);
         }
 
-        await Me.MoveCardsFromDeckToHand(room.Game.CurrentHand.Id, dealt);
+        await Me.MoveCardsFromDeckToHand(RoomId, room.Game.CurrentHand.Id, dealt);
 
         var dummies = Enumerable.Repeat(new Card(), dealt.Count).ToList();
-        await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId))
-            .MoveCardsFromDeckToHand(room.Game.CurrentHand.Id, dummies);
-        await RoomSpectators.MoveCardsFromDeckToHand(room.Game.CurrentHand.Id, dummies);
+        await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).MoveCardsFromDeckToHand(RoomId, room.Game.CurrentHand.Id, dummies);
+        await RoomSpectators.MoveCardsFromDeckToHand(RoomId, room.Game.CurrentHand.Id, dummies);
     }
 
     private async Task CheckWinConditions(Room room, User player, Turn turn)
     {
+        logger.LogDebug("Checking win for player {Player} in {Game}.", player, room.Id);
+        
         if (room.Game.CurrentHand.Cards.Count > 0)
         {
+            logger.LogDebug("Requesting last card status for player {Player} in {Game}.", player, room.Id);
+            
             try
             {
-                turn.IsLastCard = await PlayerConnection(connection).PromptLastCardRequest();
+                turn.IsLastCard = await PlayerConnection(connection).PromptLastCardRequest(RoomId);
+                logger.LogInformation("User {User} last card status is {Status} in Game {Game}", player.Id, turn.IsLastCard, room.Game.CurrentHand);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 turn.IsLastCard = false;
+                logger.LogError(ex, "Failed to request last card status for {User} in {Game}", player.Id, room.Id);
             }
             finally
             {
@@ -257,7 +268,7 @@ public sealed class LiveTurnProcessingService(
             turn.IsLastCard
         );
 
-        await RoomPlayers.TurnCommitted(resolution);
-        await RoomSpectators.TurnCommitted(resolution);
+        await RoomPlayers.TurnCommitted(RoomId, resolution);
+        await RoomSpectators.TurnCommitted(RoomId, resolution);
     }
 }

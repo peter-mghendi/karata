@@ -16,9 +16,9 @@ public sealed class AccessTokenProvider(HttpClient http, IConfiguration configur
     private string? _token;
     private DateTimeOffset _expiresAt = DateTimeOffset.MinValue;
 
-    public async Task<UserData?> GetCurrentUser()
+    public async Task<UserData?> CurrentUser()
     {
-        if (await GetAccessTokenAsync() is not { } token) return null;
+        if (await GetAsync() is not { } token) return null;
         var handler = new JwtSecurityTokenHandler();
         var jwt = handler.ReadJwtToken(token);
 
@@ -29,7 +29,7 @@ public sealed class AccessTokenProvider(HttpClient http, IConfiguration configur
         };
     }
 
-    public async Task<string> GetAccessTokenAsync(CancellationToken ct = default)
+    public async Task<string> GetAsync(CancellationToken ct = default)
     {
         if (_token is [_, ..] && DateTimeOffset.UtcNow < _expiresAt) return _token;
 

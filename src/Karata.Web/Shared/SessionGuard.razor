@@ -1,8 +1,8 @@
 @using Karata.Kit.Application.Client.Connection
 @using static Microsoft.AspNetCore.SignalR.Client.HubConnectionState
 
-<CascadingValue Value="Connection">
-    @if (Connection?.Hub?.State is not Connected)
+<CascadingValue Value="Session">
+    @if (Session?.Hub?.State is not Connected)
     {
         <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full">
             <MudText Typo="Typo.h5" Class="pa-4 my-4">You are not connected to a server.</MudText>
@@ -18,7 +18,7 @@
 </CascadingValue>
 
 @code {
-    [Parameter] public IRoomConnection? Connection { get; set; }
+    [Parameter] public IUserConnection.ISession? Session { get; set; }
 
     [Parameter] public RenderFragment ChildContent { get; set; } = null!;
 }

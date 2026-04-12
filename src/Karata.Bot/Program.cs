@@ -15,7 +15,7 @@ builder.Services.AddKarataCore(karata =>
     karata.TokenProvider = async (services, cancellation) =>
     {
         var provider = services.GetRequiredService<AccessTokenProvider>();
-        return await provider.GetAccessTokenAsync(cancellation);
+        return await provider.GetAsync(cancellation);
     };
 });
 

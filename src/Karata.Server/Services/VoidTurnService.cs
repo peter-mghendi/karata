@@ -14,9 +14,9 @@ public class VoidTurnService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     KarataContext context,
-    Guid room,
+    Guid roomId,
     string player
-) : LiveRoomAwareService(players, spectators, room, player)
+) : LiveRoomAwareService(players, spectators, roomId, player)
 {
     public async Task ExecuteAsync(long voideeId)
     {
@@ -43,7 +43,7 @@ public class VoidTurnService(
             false
         );
         
-        await RoomPlayers.TurnCommitted(resolution);
-        await RoomSpectators.TurnCommitted(resolution);
+        await RoomPlayers.TurnCommitted(RoomId, resolution);
+        await RoomSpectators.TurnCommitted(RoomId, resolution);
     }
 }

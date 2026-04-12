@@ -23,6 +23,7 @@ public static class Endpoints
             turns.MapGet("", TurnHandler.ListTurns).WithName(nameof(TurnHandler.ListTurns)).RequireAuthorization();
         }
 
+        // TODO: [Legacy] Use MessagePack
         public void MapHubs()
         {
             endpoints.MapHub<PlayerHub>("/hubs/game/play", options => options.AllowStatefulReconnects = true);

@@ -20,7 +20,7 @@
 @inject NavigationManager Navigator
 @inject IWebAssemblyHostEnvironment Environment
 
-<GameConnectionGuard Connection="_connection">
+<SessionGuard Session="_session">
     <MudLoading Loading="@(_store is null)" Text="Please wait..." Class="mud-height-full pa-0">
         <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full pa-0">
             @if (_store is not null)
@@ -80,7 +80,7 @@
             }
         </MudContainer>
     </MudLoading>
-</GameConnectionGuard>
+</SessionGuard>
 
 @code
 {
@@ -88,7 +88,7 @@
 
     [Inject] public required IClipboard Clipboard { get; set; }
 
-    private SpectatorRoomConnection? _connection;
+    private SpectatorConnection.Session? _session;
     private RoomStore? _store;
     private List<TurnData>? _turns;
     private readonly CompositeDisposable _subscriptions = new();
@@ -98,30 +98,33 @@
     protected override async Task OnInitializedAsync()
     {
         _turns = await KarataClient.Turns.ListAsync(Id);
-        _connection = new SpectatorRoomConnection(new Uri(Environment.BaseAddress), Id);
 
-        _connection.Events.AddHandToRoom.Subscribe(data =>
+        var connection = new SpectatorConnection(new Uri(Environment.BaseAddress));
+        await connection.StartAsync();
+        
+        _session = connection.Spawn(Id, new SpectatorConnection.SessionParameters());
+        _session.Events.AddHandToRoom.Subscribe(data =>
         {
             var (_, user, _) = data;
             Snackbar.Add($"{user.Username} has joined the room", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         }).DisposeWith(_subscriptions);
 
-        _connection.Events.AddToRoom.Subscribe(room =>
+        _session.Events.AddToRoom.Subscribe(room =>
         {
             _store = new RoomStore(room, [new LoggingInterceptor<RoomData>(LoggerFactory), new TimingInterceptor<RoomData>(LoggerFactory)]);
             _store.Changes.Subscribe(OnStoreChanged);
 
-            _connection.Events.BindRoomState(_store).DisposeWith(_subscriptions);
+            _session.Events.BindRoomState(_store).DisposeWith(_subscriptions);
             OnStoreChanged(room);
         }).DisposeWith(_subscriptions);
         
-        _connection.Events.EndGame
+        _session.Events.EndGame
             .Subscribe(result => ShowMessage(new SystemMessage { Text = result.Reason, Type = result.ReasonType }))
             .DisposeWith(_subscriptions);
         
-        _connection.Events.SystemMessage.Subscribe(ShowMessage).DisposeWith(_subscriptions);
+        _session.Events.SystemMessage.Subscribe(ShowMessage).DisposeWith(_subscriptions);
 
-        _connection.Events.TurnCommitted.Subscribe(resolution =>
+        _session.Events.TurnCommitted.Subscribe(resolution =>
         {
             if (resolution.IsCardless)
             {
@@ -133,45 +136,44 @@
             }
         }).DisposeWith(_subscriptions);
         
-        _connection.Events.RemoveFromRoom
+        _session.Events.RemoveFromRoom
             .Select(_ => Observable.FromAsync(async _ =>
             {
+                _session.Dispose();
                 _store!.Dispose();
-                _store = null;
 
                 StateHasChanged();
 
-                await _connection.StopAsync();
                 Navigator.NavigateTo("/game/join");
             }))
             .Concat()
             .Subscribe()
             .DisposeWith(_subscriptions);
 
-        _connection.Events.RemoveHandFromRoom
+        _session.Events.RemoveHandFromRoom
             .Subscribe(handId =>
             {
                 var hand = _store!.State.Game.Hands.Find(h => h.Id == handId)!;
                 Snackbar.Add($"{hand.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
             })
             .DisposeWith(_subscriptions);
+        
+        _session.Events.TurnCommitted
+            .Subscribe(resolution => { Snackbar.Add($"It is now {_store!.State.Game.Hands[resolution.CurrentTurn].Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text); })
+            .DisposeWith(_subscriptions);
 
-        _connection.Events.UpdateGameStatus
+        _session.Events.UpdateGameStatus
             .Subscribe(status => Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text))
             .DisposeWith(_subscriptions);
 
-        _connection.Events.UpdateHandStatus.Subscribe(data =>
+        _session.Events.UpdateHandStatus.Subscribe(data =>
         {
             var (handId, status) = data;
             var hand = _store!.State.Game.Hands.Find(h => h.Id == handId)!;
             Snackbar.Add($"{hand.Username} has {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         }).DisposeWith(_subscriptions);
 
-        _connection.Events.UpdateTurn
-            .Subscribe(turn => { Snackbar.Add($"It is now {_store!.State.Game.Hands[turn].Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text); })
-            .DisposeWith(_subscriptions);
-
-        await _connection.StartAsync(new SpectatorRoomConnection.StartParameters());
+        await _session.JoinRoom();
     }
 
     private static string GetIcon(Card card) => card.Suit switch

@@ -30,7 +30,7 @@ public sealed class ReplayProcessor(IServiceScopeFactory factory, IHubContext<Re
         var turns = room!.Game.Hands.SelectMany(hand => hand.Turns).OrderBy(turn => turn.CreatedAt);
         
         var cts = new CancellationTokenSource();
-        var runner = new ReplaySessionRunner([..turns], replayer, request.Interval, cts.Token);
+        var runner = new ReplaySessionRunner(request.RoomId, [..turns], replayer, request.Interval, cts.Token);
         var task = Task.Run(() => runner.RunAsync(), cts.Token);
 
         _sessions[key] = new ReplaySessionHandle(task, cts);

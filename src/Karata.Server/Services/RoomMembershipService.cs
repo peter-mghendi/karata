@@ -5,11 +5,12 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Server.Services;
 
-public partial class RoomMembershipService (
+public partial class RoomMembershipService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     IPasswordService passwords,
     KarataContext context,
     PresenceService presence,
-    Guid room,
-    string player) : LiveRoomAwareService(players, spectators, room, player);
+    Guid roomId,
+    string player
+) : LiveRoomAwareService(players, spectators, roomId, player);

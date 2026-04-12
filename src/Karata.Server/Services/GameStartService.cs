@@ -12,9 +12,9 @@ public class GameStartService(
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILogger<GameStartService> logger,
     KarataContext context,
-    Guid room,
+    Guid roomId,
     string player
-) : LiveRoomAwareService(players, spectators, room, player)
+) : LiveRoomAwareService(players, spectators, roomId, player)
 {
     private const int DealCount = 4;
     
@@ -61,8 +61,8 @@ public class GameStartService(
         logger.LogDebug("Top card is {Card}.", top);
 
         game.Pile.Push(top);
-        await RoomPlayers.MoveCardsFromDeckToPile([top]);
-        await RoomSpectators.MoveCardsFromDeckToPile([top]);
+        await RoomPlayers.MoveCardsFromDeckToPile(RoomId, [top]);
+        await RoomSpectators.MoveCardsFromDeckToPile(RoomId, [top]);
 
         logger.LogDebug("Start dealing cards to {Count} players.", game.Hands.Count);
 
@@ -78,9 +78,9 @@ public class GameStartService(
             hand.Turns.Add(turn);
             hand.Cards.AddRange(dealt);
 
-            await Hand(hand).MoveCardsFromDeckToHand(hand.Id, dealt);
-            await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).MoveCardsFromDeckToHand(hand.Id, dummies);
-            await RoomSpectators.MoveCardsFromDeckToHand(hand.Id, dummies);
+            await Hand(hand).MoveCardsFromDeckToHand(RoomId, hand.Id, dealt);
+            await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).MoveCardsFromDeckToHand(RoomId, hand.Id, dummies);
+            await RoomSpectators.MoveCardsFromDeckToHand(RoomId, hand.Id, dummies);
         }
 
         logger.LogDebug("Finished dealing cards.");
@@ -89,6 +89,6 @@ public class GameStartService(
     private async Task UpdateGameState(Room room)
     {
         room.Game.Status = GameStatus.Ongoing;
-        await RoomPlayers.UpdateGameStatus(room.Game.Status);
+        await RoomPlayers.UpdateGameStatus(RoomId, room.Game.Status);
     }
 }
