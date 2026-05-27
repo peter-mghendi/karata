@@ -19,7 +19,7 @@ public abstract class LiveRoomAwareService(
     protected readonly Guid RoomId = room;
     protected readonly string CallerPlayerId = player;
 
-    protected IPlayerClient Me => players.Clients.User(CallerPlayerId);
+    protected IPlayerClient Caller => players.Clients.User(CallerPlayerId);
     protected IPlayerClient RoomPlayers => players.Clients.Group(RoomId.ToString());
     protected ISpectatorClient RoomSpectators => spectators.Clients.Group(RoomId.ToString());
 

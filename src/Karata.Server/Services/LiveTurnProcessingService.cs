@@ -79,11 +79,12 @@ public sealed class LiveTurnProcessingService(
             room.Game.CurrentHand.Turns.Add(turn);
 
             await context.SaveChangesAsync();
-            throw;
+            await Caller.TurnRejected(RoomId, exception.Problem);
+            return;
         }
 
         room.Game.CurrentHand.Turns.Add(turn);
-        await Me.TurnAcknowledged(RoomId);
+        await Caller.TurnAcknowledged(RoomId);
 
         try
         {
@@ -121,7 +122,7 @@ public sealed class LiveTurnProcessingService(
 
             await context.SaveChangesAsync();
 
-            await Me.TurnAcknowledged(RoomId);
+            await Caller.TurnAcknowledged(RoomId);
             await RoomPlayers.UpdateGameStatus(RoomId, room.Game);
             await RoomSpectators.UpdateGameStatus(RoomId, room.Game);
             await RoomPlayers.EndGame(RoomId, exception.Result);
@@ -211,7 +212,7 @@ public sealed class LiveTurnProcessingService(
     {
         logger.LogDebug("Updating table state for {Game}.", room.Id);
 
-        await Me.MoveCardsFromHandToPile(RoomId, room.Game.CurrentHand.Id, turn.Delta!.Cards, true);
+        await Caller.MoveCardsFromHandToPile(RoomId, room.Game.CurrentHand.Id, turn.Delta!.Cards, true);
         await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId))
             .MoveCardsFromHandToPile(RoomId, room.Game.CurrentHand.Id, turn.Delta!.Cards, false);
         await RoomSpectators.MoveCardsFromHandToPile(RoomId, room.Game.CurrentHand.Id, turn.Delta!.Cards, false);
@@ -222,7 +223,7 @@ public sealed class LiveTurnProcessingService(
             await RoomSpectators.ReclaimPile(RoomId);
         }
 
-        await Me.MoveCardsFromDeckToHand(RoomId, room.Game.CurrentHand.Id, dealt);
+        await Caller.MoveCardsFromDeckToHand(RoomId, room.Game.CurrentHand.Id, dealt);
 
         var dummies = Enumerable.Repeat(new Card(), dealt.Count).ToList();
         await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId))

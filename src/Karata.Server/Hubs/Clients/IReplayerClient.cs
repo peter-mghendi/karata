@@ -22,9 +22,6 @@ public interface IReplayerClient
     // Moves cards from hand to the pile. 
     Task MoveCardsFromHandToPile(Guid roomId, long handId, List<Card> cards, bool visible);
     
-    // Receives a system message.
-    Task SystemMessage(Guid roomId, SystemMessage message);
-    
     // Reclaims the pile and adds cards to the deck
     Task ReclaimPile(Guid roomId);
     
@@ -33,6 +30,9 @@ public interface IReplayerClient
     
     // Removes a player from the room
     Task RemoveHandFromRoom(Guid roomId, long handId);
+    
+    // Receives a system message.
+    Task SystemMessage(Guid roomId, SystemMessage message);
     
     // Advance the turn
     Task TurnCommitted(Guid roomId, GameData game);

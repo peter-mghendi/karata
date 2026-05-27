@@ -10,6 +10,9 @@ public interface IPlayerClient
     // Adds the current user to a room
     Task AddToRoom(Guid roomId, RoomData room);
     
+    // Receives a chat message sent by another player.
+    Task Chat(Guid roomId, ChatData message);
+    
     // Ends the game
     Task EndGame(Guid roomId, GameResultData result);
     
@@ -21,12 +24,6 @@ public interface IPlayerClient
     
     // Moves cards from hand to the pile. 
     Task MoveCardsFromHandToPile(Guid roomId, long handId, List<Card> cards, bool visible);
-
-    // Notifies the current user's client that the turn has been processed - so the UI can clean up and state.
-    Task TurnAcknowledged(Guid roomId);
-    
-    // Advance the turn
-    Task TurnCommitted(Guid roomId, GameData game);
     
     // Prompts for the user to select a card request.
     Task<Card?> PromptCardRequest(Guid roomId, bool specific);
@@ -37,12 +34,6 @@ public interface IPlayerClient
     // Prompts the user for a passcode.
     Task<string?> PromptPasscode(Guid roomId);
     
-    // Receives a chat message sent by another player.
-    Task Chat(Guid roomId, ChatData message);
-    
-    // Receives a system message.
-    Task SystemMessage(Guid roomId, SystemMessage message);
-    
     // Reclaims the pile and adds cards to the deck
     Task ReclaimPile(Guid roomId);
     
@@ -51,6 +42,18 @@ public interface IPlayerClient
     
     // Removes another player from the room
     Task RemoveHandFromRoom(Guid roomId, long handId);
+    
+    // Receives a system message.
+    Task SystemMessage(Guid roomId, SystemMessage message);
+
+    // Notifies the current user's client that the turn has been processed - so the UI can clean up and state.
+    Task TurnAcknowledged(Guid roomId);
+    
+    // Advance the turn
+    Task TurnCommitted(Guid roomId, GameData game);
+    
+    // Communicate rejection
+    Task TurnRejected(Guid roomId, TurnValidationProblem problem);
     
     // Updates the room administrator
     Task UpdateAdministrator(Guid roomId, UserData administrator);

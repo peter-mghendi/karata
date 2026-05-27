@@ -8,6 +8,6 @@ Accept: application/json
 Content-Type: application/json
 
 { 
-  "room": "019e697b-2e2e-7c75-b553-d277089ebcd3",
+  "room": "019e69be-d5c6-7e89-9a66-d257c0a67c46",
   "password": null
 }

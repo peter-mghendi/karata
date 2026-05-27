@@ -27,7 +27,7 @@ public partial class RoomMembershipService
                 presence.RemovePresence(CallerPlayerId, room.Id.ToString());
                 
                 await AddToRoom(connection);
-                await Me.RemoveFromRoom(RoomId);
+                await Caller.RemoveFromRoom(RoomId);
                 await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).RemoveHandFromRoom(RoomId, hand.Id);
                 await RoomSpectators.RemoveHandFromRoom(RoomId, hand.Id);
                 break;
@@ -36,7 +36,7 @@ public partial class RoomMembershipService
                 presence.RemovePresence(CallerPlayerId, room.Id.ToString());
 
                 await AddToRoom(connection);
-                await Me.RemoveFromRoom(RoomId);
+                await Caller.RemoveFromRoom(RoomId);
                 await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, hand.Id, hand.Status);
                 await RoomSpectators.RemoveHandFromRoom(RoomId, hand.Id);
                 break;
@@ -45,7 +45,7 @@ public partial class RoomMembershipService
                 presence.RemovePresence(CallerPlayerId, room.Id.ToString());
 
                 await AddToRoom(connection);
-                await Me.RemoveFromRoom(RoomId);
+                await Caller.RemoveFromRoom(RoomId);
                 await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, hand.Id, hand.Status);
                 await RoomSpectators.RemoveHandFromRoom(RoomId, hand.Id);
                 break;

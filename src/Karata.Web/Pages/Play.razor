@@ -328,8 +328,14 @@
                 if (hand.IsLastCard) ShowMessage(new() { Text = $"{hand.Username} is on their last card.", Type = MessageType.Warning }); 
             });
         }).DisposeWith(_subscriptions);
+        
+        _session.Events.TurnRejected
+            .Subscribe(problem => Snackbar.Add(problem.Message, Severity.Error, c => c.SnackbarVariant = Variant.Text))
+            .DisposeWith(_subscriptions);
 
-        _session.Events.UpdateGameStatus.Subscribe(game => { Snackbar.Add($"The game is now {game.Status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text); }).DisposeWith(_subscriptions);
+        _session.Events.UpdateGameStatus
+            .Subscribe(game => { Snackbar.Add($"The game is now {game.Status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text); })
+            .DisposeWith(_subscriptions);
 
         _session.Events.UpdateHandStatus.Subscribe(data =>
         {
