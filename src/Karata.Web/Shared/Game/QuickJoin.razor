@@ -2,7 +2,7 @@
 <MudCard Elevation="0" Class="mb-4 pa-2">
     <MudCardHeader>
         <CardHeaderContent>
-            <MudText Typo="Typo.h5">Jump back in...</MudText>
+            <MudText Typo="Typo.h5">Quick play</MudText>
         </CardHeaderContent>
     </MudCardHeader>
     <MudCardContent>
@@ -11,18 +11,18 @@
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Rounded.Password"
                           Placeholder="ae2f0338-9762-4f07-b771-0acf5f7f2615"/>
             <MudButton Href="@JoinLink" Color="Color.Primary" Variant="Variant.Outlined">
-                <MudText>Join game</MudText>
+                <MudText>Join</MudText>
             </MudButton>
             <MudDivider Vertical FlexItem/>
-            <MudButton OnClick="CreateRoom" Color="Color.Secondary">
+            <MudButton OnClick="CreateRoom" Color="Color.Secondary" Variant="Variant.Outlined">
                 @if (_loading)
                 {
                     <MudProgressCircular Indeterminate Class="ms-n1" Size="Size.Small" />
-                    <MudText Class="ms-2">Creating game</MudText>
+                    <MudText Class="ms-2">Starting...</MudText>
                 }
                 else
                 {
-                    <MudText>Create game</MudText>
+                    <MudText>Start</MudText>
                 }
             </MudButton>
         </MudStack>

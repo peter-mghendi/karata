@@ -14,7 +14,7 @@ public static class RoomHandler
 {
     public static async Task<Ok<List<RoomData>>> ListRooms([FromServices] KarataContext context)
     {
-        // TODO: Hardcoding these conditions in for now because this endpoint is only used to find joinable games.
+        // TODO: [Legacy] Hardcoding these conditions in for now because this endpoint is only used to find joinable games.
         var rooms = await context.Rooms
             .Where(room => room.Game.Status == Lobby)
             .Where(room => room.Game.Hands.Count < 4)

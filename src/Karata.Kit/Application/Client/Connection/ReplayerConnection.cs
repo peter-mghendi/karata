@@ -10,13 +10,11 @@ namespace Karata.Kit.Application.Client.Connection;
 public sealed partial class ReplayerConnection(Uri host) 
     : IUserConnection<ReplayerConnection.SessionParameters, ReplayerConnection.Session>
 {
-    public sealed record SessionParameters : IUserConnection.ISessionParameters;
-    
     private const string HubPath = "/hubs/game/replay";
 
     public HubConnection? Hub { get; private set; }
-    public ConcurrentDictionary<Guid, Session> _sessions { get; } = new();
     public required Func<Task<string?>> AccessTokenProvider { get; init; }
+    private ConcurrentDictionary<Guid, Session> Sessions { get; } = new();
 
     public async Task StartAsync(CancellationToken ct = default)
     {
@@ -67,17 +65,17 @@ public sealed partial class ReplayerConnection(Uri host)
         {
             Route(roomId, session => session.Events.OnRemoveHandFromRoom(handId));
         });
-        Hub.On<Guid, TurnResolution>(nameof(RoomEvents.TurnCommitted), (roomId, resolution) =>
+        Hub.On<Guid, GameData>(nameof(RoomEvents.TurnCommitted), (roomId, game) =>
         {
-            Route(roomId, session => session.Events.OnTurnCommitted(resolution));
+            Route(roomId, session => session.Events.OnTurnCommitted(game));
         });
         Hub.On<Guid, UserData>(nameof(RoomEvents.UpdateAdministrator), (roomId, user) =>
         {
             Route(roomId, session => session.Events.OnUpdateAdministrator(user));
         });
-        Hub.On<Guid, GameStatus>(nameof(RoomEvents.UpdateGameStatus), (roomId, status) =>
+        Hub.On<Guid, GameData>(nameof(RoomEvents.UpdateGameStatus), (roomId, game) =>
         {
-            Route(roomId, session => session.Events.OnUpdateGameStatus(status));
+            Route(roomId, session => session.Events.OnUpdateGameStatus(game));
         });
         Hub.On<Guid, long, HandStatus>(nameof(RoomEvents.UpdateHandStatus), (roomId, handId, status) =>
         {
@@ -86,19 +84,19 @@ public sealed partial class ReplayerConnection(Uri host)
 
         Hub.Reconnecting += ex =>
         {
-            Console.WriteLine("SignalR reconnecting: " + ex?.Message);
+            Console.WriteLine($"SignalR reconnecting: {ex?.Message}");
             return Task.CompletedTask;
         };
 
         Hub.Reconnected += id =>
         {
-            Console.WriteLine("SignalR reconnected");
+            Console.WriteLine($"SignalR reconnected: {id}");
             return Task.CompletedTask;
         };
 
         Hub.Closed += ex =>
         {
-            Console.WriteLine("SignalR closed: " + ex?.Message);
+            Console.WriteLine($"SignalR closed: {ex?.Message}");
             return Task.CompletedTask;
         };
 
@@ -110,7 +108,7 @@ public sealed partial class ReplayerConnection(Uri host)
         if (Hub is null) throw new InvalidOperationException("Hub not initialized");
         
         var session = new Session(roomId, Hub);
-        if (!_sessions.TryAdd(roomId, session)) throw new InvalidOperationException("Already joined");
+        if (!Sessions.TryAdd(roomId, session)) throw new InvalidOperationException("Already joined");
 
         return session;
     }
@@ -124,6 +122,6 @@ public sealed partial class ReplayerConnection(Uri host)
 
     private void Route(Guid roomId, Action<Session> action)
     {
-        if (_sessions.TryGetValue(roomId, out var session)) action(session);
+        if (Sessions.TryGetValue(roomId, out var session)) action(session);
     }
 }

@@ -1,48 +1,41 @@
 using System.Collections.Immutable;
-using Karata.Cards;
 using Karata.Cards.Extensions;
 using Karata.Kit.Domain.Models;
 using Karata.Kit.Engine;
-using Karata.Kit.Engine.Exceptions;
+using Karata.Kit.Support;
 using static Karata.Cards.Card.CardFace;
 
 namespace Karata.Kit.Bot.Strategy;
 
-public class RandomValidBotStrategy(IKarataEngine engine) : IBotStrategy
+public sealed class RandomValidBotStrategy(IKarataEngine engine) : IBotStrategy
 {
     private static readonly Random Random = new();
-    
+
     public string Name => "Random valid bot";
 
     public string Description => "A bot that plays a random valid turn.";
 
-    public ImmutableArray<Card> Decide(RoomData room, List<Card> cards) =>
-        cards
+    public Task<TurnPlan> PlanAsync(RoomData room, CancellationToken ct = default)
+    {
+        var cards = room.Game.CurrentHand.Cards;
+        var move = cards
+            .Permutations()
             .OrderBy(_ => Random.Next())
-            .FirstOrDefault(candidate => TryCard(room, candidate)) is {} card ? [card] : [];
+            .FirstOrDefault(candidates => engine.TestTurn(room.Game, [..candidates]))
+            ?.ToImmutableArray() ?? [];
 
-    public Card? Request(RoomData room, List<Card> cards, bool specific)
-    {
-        var decision = Decide(room, cards);
-        if (cards.Except(decision).FirstOrDefault() is not { } candidate) return null;
 
-        return specific switch
-        {
-            true => candidate,
-            false => None.Of(candidate.Suit),
-        };
-    }
-
-    private bool TryCard(RoomData room, Card card)
-    {
-        try
-        {
-            _ = engine.EvaluateTurn(room.Game, [card]);
-            return true;
-        }
-        catch (KarataEngineException)
-        {
-            return false;
-        }
+        return Task.FromResult(
+            new TurnPlan(
+                Move: move,
+                RequestFactory: specific => cards.Except(move).FirstOrDefault() switch
+                {
+                    { } candidate when specific => candidate,
+                    { } candidate => None.Of(candidate.Suit),
+                    null => null,
+                },
+                LastCardStatusFactory: _ => true
+            )
+        );
     }
 }

@@ -21,6 +21,19 @@ public interface IKarataEngine
     /// <returns>A <see cref="TurnDelta"/> representing the turn's effect on the game.</returns>
     TurnDelta EvaluateTurn(GameData game, ImmutableArray<Card> cards);
 
+    public bool TestTurn(GameData game, ImmutableArray<Card> cards)
+    {
+        try
+        {
+            EvaluateTurn(game, cards);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     /// <summary>
     /// Helper method to determine whether a card matches the request.
     /// </summary>

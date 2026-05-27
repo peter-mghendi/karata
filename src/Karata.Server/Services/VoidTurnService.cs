@@ -33,17 +33,9 @@ public class VoidTurnService(
             
         room.Game.AdvanceTurn();
         await context.SaveChangesAsync();
-        
-        var resolution = new TurnResolution(
-            room.Game.CurrentTurn,
-            room.Game.CurrentHand.Player,
-            room.Game.Request,
-            room.Game.Give,
-            false,
-            false
-        );
-        
-        await RoomPlayers.TurnCommitted(RoomId, resolution);
-        await RoomSpectators.TurnCommitted(RoomId, resolution);
+
+        foreach (var data in from hand in room.Game.Hands select (Hand: hand, Game: Enrich.ForUser(room.Game, hand)))
+            await Hand(data.Hand).TurnCommitted(RoomId, data.Game);
+        await RoomSpectators.TurnCommitted(RoomId, room.Game);
     }
 }

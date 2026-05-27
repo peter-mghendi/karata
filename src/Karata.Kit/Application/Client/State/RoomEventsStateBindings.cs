@@ -13,7 +13,7 @@ public static class RoomEventsStateBindings
         {
             var actions = Observable.Merge<StateAction<RoomData>>(
                 events.AddHandToRoom.Select(data => new RoomStore.AddHandToRoom(data.Id, data.User, data.Status)),
-                events.TurnCommitted.Select(resolution => new RoomStore.TurnCommitted(resolution)),
+                events.TurnCommitted.Select(game => new RoomStore.TurnCommitted(game)),
                 events.MoveCardsFromDeckToHand.Select(data => new RoomStore.MoveCardsFromDeckToHand(data.HandId, [..data.Cards])),
                 events.MoveCardsFromDeckToPile.Select(cards => new RoomStore.MoveCardsFromDeckToPile([..cards])),
                 events.MoveCardsFromHandToPile.Select(data => new RoomStore.MoveCardsFromHandToPile(data.HandId, [..data.Cards], data.Visible)),
@@ -21,7 +21,7 @@ public static class RoomEventsStateBindings
                 events.ReclaimPile.Select(_ => new RoomStore.ReclaimPile()),
                 events.RemoveHandFromRoom.Select(user => new RoomStore.RemoveHandFromRoom(user)),
                 events.UpdateAdministrator.Select(administrator => new RoomStore.UpdateAdministrator(administrator)),
-                events.UpdateGameStatus.Select(status => new RoomStore.UpdateGameStatus(status)),
+                events.UpdateGameStatus.Select(game => new RoomStore.UpdateGameStatus(game)),
                 events.UpdateHandStatus.Select(data => new RoomStore.UpdateHandStatus(data.HandId, data.Status))
             );
 

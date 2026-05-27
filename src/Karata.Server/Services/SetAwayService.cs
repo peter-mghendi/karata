@@ -31,24 +31,17 @@ public class SetAwayService(
         RedelegateAdministration(room, hand.Player);
         
         await context.SaveChangesAsync();
-        var resolution = new TurnResolution(
-            room.Game.CurrentTurn,
-            room.Game.CurrentHand.Player,
-            room.Game.Request,
-            room.Game.Give,
-            false,
-            false
-        );
         
-        await RoomPlayers.TurnCommitted(RoomId, resolution);
-        await RoomSpectators.TurnCommitted(RoomId, resolution);
+        foreach (var data in from each in room.Game.Hands select (Hand: hand, Game: Enrich.ForUser(room.Game, hand)))
+            await Hand(data.Hand).TurnCommitted(RoomId, data.Game);
+        await RoomSpectators.TurnCommitted(RoomId, room.Game);
         await RoomPlayers.UpdateAdministrator(RoomId, room.Administrator);
         await RoomSpectators.UpdateAdministrator(RoomId, room.Administrator);
         await RoomPlayers.UpdateHandStatus(RoomId, hand.Id, hand.Status);
         await RoomSpectators.UpdateHandStatus(RoomId, hand.Id, hand.Status);
     }
 
-    private void RecomputeTurn(Room room, Hand player)
+    private static void RecomputeTurn(Room room, Hand player)
     {
         if (room.Game.CurrentHand.Id != player.Id) return;
         if (room.Game.Hands.Count(hand => hand.Status is Online or Offline) <= 1) return;

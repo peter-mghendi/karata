@@ -58,13 +58,10 @@ public class GameStartService(
         do deck.ShuffleInPlace(); while (deck.Peek().IsSpecial);
 
         var top = deck.Deal();
-        logger.LogDebug("Top card is {Card}.", top);
 
         game.Pile.Push(top);
         await RoomPlayers.MoveCardsFromDeckToPile(RoomId, [top]);
         await RoomSpectators.MoveCardsFromDeckToPile(RoomId, [top]);
-
-        logger.LogDebug("Start dealing cards to {Count} players.", game.Hands.Count);
 
         // Deal player cards
         foreach (var hand in game.Hands)
@@ -76,7 +73,8 @@ public class GameStartService(
             logger.LogDebug("Dealing {Count} cards to {User}. Cards: {Cards}.", DealCount, hand.Player.Username, string.Join(", ", dealt));
             
             hand.Turns.Add(turn);
-            hand.Cards.AddRange(dealt);
+            foreach (var card in dealt) 
+                hand.Cards.Add(card);
 
             await Hand(hand).MoveCardsFromDeckToHand(RoomId, hand.Id, dealt);
             await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).MoveCardsFromDeckToHand(RoomId, hand.Id, dummies);
@@ -89,6 +87,8 @@ public class GameStartService(
     private async Task UpdateGameState(Room room)
     {
         room.Game.Status = GameStatus.Ongoing;
-        await RoomPlayers.UpdateGameStatus(RoomId, room.Game.Status);
+        foreach (var data in from hand in room.Game.Hands select (Hand: hand, Game: Enrich.ForUser(room.Game, hand)))
+            await Hand(data.Hand).UpdateGameStatus(RoomId, data.Game);
+        await RoomSpectators.UpdateGameStatus(RoomId, room.Game);
     }
 }

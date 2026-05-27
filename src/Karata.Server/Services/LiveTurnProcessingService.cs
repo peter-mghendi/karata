@@ -43,7 +43,7 @@ public sealed class LiveTurnProcessingService(
         var player = (await context.Users.FindAsync(CallerPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
 
-        EnsureTurnIsValid(room, cards);
+        _ = EnsureTurnIsValid(room, cards);
         var turn = new Turn
         {
             CardsPlayed = [..cards],
@@ -122,8 +122,8 @@ public sealed class LiveTurnProcessingService(
             await context.SaveChangesAsync();
 
             await Me.TurnAcknowledged(RoomId);
-            await RoomPlayers.UpdateGameStatus(RoomId, room.Game.Status);
-            await RoomSpectators.UpdateGameStatus(RoomId, room.Game.Status);
+            await RoomPlayers.UpdateGameStatus(RoomId, room.Game);
+            await RoomSpectators.UpdateGameStatus(RoomId, room.Game);
             await RoomPlayers.EndGame(RoomId, exception.Result);
             await RoomSpectators.EndGame(RoomId, exception.Result);
         }
@@ -132,23 +132,26 @@ public sealed class LiveTurnProcessingService(
         room.Game.AdvanceTurn();
 
         await context.SaveChangesAsync();
-        await BroadcastTurn(room, player, turn);
+        await BroadcastTurnCommitted(room.Game);
     }
 
-    private void EnsureTurnIsValid(Room room, List<Card> cards)
+    private bool EnsureTurnIsValid(Room room, List<Card> cards) => room.Game switch
     {
-        if (room.Game.Status is Lobby) throw new GameNotStartedException();
-        if (room.Game.Status is Over) throw new GameOverException();
-        if (room.Game.Hands.Count(hand => hand.Status is Online or Offline) < 2) throw new NotEnoughPlayersException();
-        if (room.Game.CurrentHand.Player.Id != CallerPlayerId) throw new InvalidTurnException();
-        if (!room.Game.CurrentHand.Cards.ToHashSet().IsSupersetOf(cards) || cards.Distinct().Count() != cards.Count)
-            throw new SuspiciousCardsException();
-    }
+        { Status: Lobby } => throw new GameNotStartedException(),
+        { Status: Over } => throw new GameOverException(),
+        { Hands: var hands } when hands.Count(hand => hand.Status is Online or Offline) < 2 =>
+            throw new NotEnoughPlayersException(),
+        { CurrentHand.Player: var currentPlayer } when currentPlayer.Id != CallerPlayerId =>
+            throw new InvalidTurnException(),
+        // { CurrentHand.Cards: var held } when held.IsSupersetOf(cards) => throw new SuspiciousCardsException(),
+        // not null when cards.Distinct().Count() != cards.Count => throw new SuspiciousCardsException(),
+        _ => true
+    };
 
     private async Task<Card?> DetermineCardRequest(Room room, Turn turn)
     {
         logger.LogDebug("Determining request for {Game}.", room.Id);
-        
+
         var request = room.Game.RequestLevel switch
         {
             CardRequest when turn.Delta!.RemoveRequestLevels is 1 => None.Of(room.Game.Request!.Suit),
@@ -173,8 +176,8 @@ public sealed class LiveTurnProcessingService(
     private void EnsureTurnApplied(Room room, Turn turn, out List<Card> dealt)
     {
         logger.LogDebug("Applying turn for {Game}.", room.Id);
-        
-        room.Game.CurrentHand.Cards.RemoveAll(turn.Delta!.Cards.Contains);
+
+        room.Game.CurrentHand.Cards.RemoveWhere(turn.Delta!.Cards.Contains);
         turn.Delta!.Cards.ForEach(room.Game.Pile.Push);
 
         room.Game.IsReversed ^= turn.Delta!.Reverse;
@@ -199,14 +202,15 @@ public sealed class LiveTurnProcessingService(
         }
 
         room.Game.Pick = 0;
-        room.Game.CurrentHand.Cards.AddRange(dealt);
         turn.CardsPicked = dealt;
+        foreach (var card in dealt) 
+            room.Game.CurrentHand.Cards.Add(card);
     }
 
     private async Task UpdateTableState(Room room, Turn turn, List<Card> dealt)
     {
         logger.LogDebug("Updating table state for {Game}.", room.Id);
-        
+
         await Me.MoveCardsFromHandToPile(RoomId, room.Game.CurrentHand.Id, turn.Delta!.Cards, true);
         await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId))
             .MoveCardsFromHandToPile(RoomId, room.Game.CurrentHand.Id, turn.Delta!.Cards, false);
@@ -221,22 +225,24 @@ public sealed class LiveTurnProcessingService(
         await Me.MoveCardsFromDeckToHand(RoomId, room.Game.CurrentHand.Id, dealt);
 
         var dummies = Enumerable.Repeat(new Card(), dealt.Count).ToList();
-        await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).MoveCardsFromDeckToHand(RoomId, room.Game.CurrentHand.Id, dummies);
+        await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId))
+            .MoveCardsFromDeckToHand(RoomId, room.Game.CurrentHand.Id, dummies);
         await RoomSpectators.MoveCardsFromDeckToHand(RoomId, room.Game.CurrentHand.Id, dummies);
     }
 
     private async Task CheckWinConditions(Room room, User player, Turn turn)
     {
         logger.LogDebug("Checking win for player {Player} in {Game}.", player, room.Id);
-        
+
         if (room.Game.CurrentHand.Cards.Count > 0)
         {
             logger.LogDebug("Requesting last card status for player {Player} in {Game}.", player, room.Id);
-            
+
             try
             {
                 turn.IsLastCard = await PlayerConnection(connection).PromptLastCardRequest(RoomId);
-                logger.LogInformation("User {User} last card status is {Status} in Game {Game}", player.Id, turn.IsLastCard, room.Game.CurrentHand);
+                logger.LogInformation("User {User} last card status is {Status} in Game {Game}", player.Id,
+                    turn.IsLastCard, room.Game.CurrentHand);
             }
             catch (Exception ex)
             {
@@ -256,19 +262,11 @@ public sealed class LiveTurnProcessingService(
 
         turn.IsCardless = true;
     }
-    
-    private async Task BroadcastTurn(Room room, User player, Turn turn)
-    {
-        var resolution = new TurnResolution(
-            room.Game.CurrentTurn,
-            player,
-            room.Game.Request,
-            room.Game.Give,
-            turn.IsCardless,
-            turn.IsLastCard
-        );
 
-        await RoomPlayers.TurnCommitted(RoomId, resolution);
-        await RoomSpectators.TurnCommitted(RoomId, resolution);
+    private async Task BroadcastTurnCommitted(Game game)
+    {
+        foreach (var data in from hand in game.Hands select (Hand: hand, Game: Enrich.ForUser(game, hand)))
+            await Hand(data.Hand).TurnCommitted(RoomId, data.Game);
+        await RoomSpectators.TurnCommitted(RoomId, game);
     }
 }

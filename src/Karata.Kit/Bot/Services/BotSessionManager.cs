@@ -34,7 +34,7 @@ public sealed class BotSessionManager(
         if (_sessions.TryGetValue(room, out _)) return;
 
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        var session = bots.Create(strategy, (await tokens.CurrentUser())!, room, password);
+        var session = bots.Create((await tokens.CurrentUser())!, strategy); // TODO: [Legacy] Inject CurrentUser
         var runner = Run(() => StartBotSession(room, password, session, cancellation.Token), cancellation.Token);
 
         var entry = new Entry(room, DateTimeOffset.UtcNow, cancellation, runner, session);

@@ -137,16 +137,16 @@
 
         _session.Events.TurnAcknowledged.Subscribe(_ => _turn.Mutate(new TurnStore.Clear())).DisposeWith(_subscriptions);
         
-        _session.Events.TurnCommitted.Subscribe(resolution =>
+        _session.Events.TurnCommitted.Subscribe(game =>
         {
-            if (resolution.IsCardless)
+            var current = game.CurrentHand.Username == _username ? "your" : $"{game.CurrentHand.Username}'s";
+            Snackbar.Add($"It is now {current} turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+
+            game.Hands.ForEach(hand =>
             {
-                ShowMessage(new() { Text = $"{resolution.Player.Username} is cardless.", Type = MessageType.Info });
-            }
-            if (resolution.IsLastCard)
-            {
-                ShowMessage(new() { Text = $"{resolution.Player.Username} is on their last card.", Type = MessageType.Warning });
-            }
+                if (hand.Cards.Count == 0) ShowMessage(new() { Text = $"{hand.Username} is cardless.", Type = MessageType.Info }); 
+                if (hand.IsLastCard) ShowMessage(new() { Text = $"{hand.Username} is on their last card.", Type = MessageType.Warning }); 
+            });
         }).DisposeWith(_subscriptions);
 
         _session.Events.RemoveFromRoom
@@ -177,7 +177,7 @@
             Snackbar.Add($"It is now {possessive} turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
         }).DisposeWith(_subscriptions);
 
-        _session.Events.UpdateGameStatus.Subscribe(status => { Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text); }).DisposeWith(_subscriptions);
+        _session.Events.UpdateGameStatus.Subscribe(game => { Snackbar.Add($"The game is now {game.Status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text); }).DisposeWith(_subscriptions);
 
         _session.Events.UpdateHandStatus.Subscribe(data =>
         {

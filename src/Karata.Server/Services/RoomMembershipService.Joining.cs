@@ -26,7 +26,7 @@ public partial class RoomMembershipService
                 joined.Status = Online;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(RoomId, EnrichRoomDataForUser(room, joined));
+                await Me.AddToRoom(RoomId, Enrich.ForUser(room, joined));
                 await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, joined.Id, joined.Status);
                 await RoomSpectators.UpdateHandStatus(RoomId, joined.Id, joined.Status);
                 break;
@@ -35,7 +35,7 @@ public partial class RoomMembershipService
                 room.Game.Hands.Add(hand);
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(RoomId, EnrichRoomDataForUser(room, hand));
+                await Me.AddToRoom(RoomId, Enrich.ForUser(room, hand));
                 await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
                 await RoomSpectators.AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
                 break;
@@ -44,7 +44,7 @@ public partial class RoomMembershipService
                 rejoined.Status = Online;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(RoomId, EnrichRoomDataForUser(room, rejoined));
+                await Me.AddToRoom(RoomId, Enrich.ForUser(room, rejoined));
                 await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, rejoined.Id, rejoined.Status);
                 await RoomSpectators.UpdateHandStatus(RoomId, rejoined.Id, rejoined.Status);
                 break;

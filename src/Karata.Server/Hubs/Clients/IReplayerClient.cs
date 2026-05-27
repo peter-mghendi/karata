@@ -10,9 +10,6 @@ public interface IReplayerClient
     // Adds the current spectator to a room
     Task AddToRoom(Guid roomId, RoomData room);
     
-    // Advance the turn
-    Task TurnCommitted(Guid roomId, TurnResolution resolution);
-    
     // Ends the game
     Task EndGame(Guid roomId, GameResultData result);
     
@@ -36,6 +33,9 @@ public interface IReplayerClient
     
     // Removes a player from the room
     Task RemoveHandFromRoom(Guid roomId, long handId);
+    
+    // Advance the turn
+    Task TurnCommitted(Guid roomId, GameData game);
     
     // Updates the room administrator
     Task UpdateAdministrator(Guid roomId, UserData administrator);

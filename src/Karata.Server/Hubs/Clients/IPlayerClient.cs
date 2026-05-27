@@ -26,7 +26,7 @@ public interface IPlayerClient
     Task TurnAcknowledged(Guid roomId);
     
     // Advance the turn
-    Task TurnCommitted(Guid roomId, TurnResolution resolution);
+    Task TurnCommitted(Guid roomId, GameData game);
     
     // Prompts for the user to select a card request.
     Task<Card?> PromptCardRequest(Guid roomId, bool specific);
@@ -56,7 +56,7 @@ public interface IPlayerClient
     Task UpdateAdministrator(Guid roomId, UserData administrator);
     
     // Updates the game status
-    Task UpdateGameStatus(Guid roomId, GameStatus status);
+    Task UpdateGameStatus(Guid roomId, GameData data);
     
     // Removes another player from the room
     Task UpdateHandStatus(Guid roomId, long handId, HandStatus status);

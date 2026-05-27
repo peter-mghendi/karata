@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
 
 namespace Karata.BotFramework.Endpoints;
 
@@ -23,9 +24,10 @@ public static class BotEndpoints
                 "/games",
                 async (
                     [FromServices] BotSessionManager bots,
+                    [FromServices] IConfiguration configuration,
                     [FromServices] KarataClient karata,
                     [FromBody] BotInvitation invitation
-                ) => await HandleInvitationAsync(bots, karata, invitation, strategy)
+                ) => await HandleInvitationAsync(bots, configuration, karata, invitation, strategy)
             );
         }
     }
@@ -34,6 +36,7 @@ public static class BotEndpoints
 
     private static async Task<Results<Accepted, NotFound>> HandleInvitationAsync(
         BotSessionManager bots,
+        IConfiguration configuration,
         KarataClient karata,
         BotInvitation invitation,
         IBotStrategy strategy
@@ -42,6 +45,6 @@ public static class BotEndpoints
         if (await karata.Rooms.GetAsync(invitation.Room) is not { } room) return TypedResults.NotFound();
 
         await bots.StartAsync(strategy, room.Id, invitation.Password);
-        return TypedResults.Accepted($"/api/games/{room.Id}");
+        return TypedResults.Accepted($"/api/rooms/{room.Id}");
     }
 }

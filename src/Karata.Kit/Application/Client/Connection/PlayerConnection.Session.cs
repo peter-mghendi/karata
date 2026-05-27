@@ -7,10 +7,20 @@ namespace Karata.Kit.Application.Client.Connection;
 
 public sealed partial class PlayerConnection
 {
-    public sealed class Session(Guid roomId, HubConnection hub) : IUserConnection.ISession
+    public sealed record SessionParameters(
+        Func<Task<string?>> OnRequestPassword,
+        Func<bool, Task<Card?>> OnRequestCard,
+        Func<Task<bool>> OnRequestLastCard
+    ) : IUserConnection.ISessionParameters;
+    
+    public sealed class Session(Guid roomId, HubConnection hub, SessionParameters parameters) : IUserConnection.ISession
     {
         public HubConnection Hub { get; } = hub;
         public RoomEvents Events { get; init; } = new();
+            
+        public readonly Func<Task<string?>> OnRequestPassword = parameters.OnRequestPassword;
+        public readonly Func<bool, Task<Card?>> OnRequestCard = parameters.OnRequestCard;
+        public readonly Func<Task<bool>> OnRequestLastCard = parameters.OnRequestLastCard;
         
         public async Task JoinRoom(CancellationToken ct = default) =>
             await Hub.SendAsync(nameof(JoinRoom), roomId, cancellationToken: ct);
@@ -33,9 +43,6 @@ public sealed partial class PlayerConnection
         public async Task VoidTurn(long handId, CancellationToken ct = default) =>
             await Hub.SendAsync(nameof(VoidTurn), roomId, handId, cancellationToken: ct);
 
-        public void Dispose()
-        {
-            Events.Dispose();
-        }
+        public void Dispose() => Events.Dispose();
     }
 }

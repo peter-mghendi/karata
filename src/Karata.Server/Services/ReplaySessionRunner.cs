@@ -35,17 +35,8 @@ public sealed class ReplaySessionRunner(
                     if (turn.ReclaimedPile) await replayer.ReclaimPile(roomId);
                     if (turn.CardsPicked.Count > 0) await replayer.MoveCardsFromDeckToHand(roomId, turn.Hand.Id, turn.CardsPicked);
                     if (turn.GameResult is not null) await replayer.EndGame(roomId, turn.GameResult.ToData());
-                    
-                    var resolution = new TurnResolution(
-                        turn.GameSnapshot!.CurrentTurn,
-                        turn.Hand.Player,
-                        turn.GameSnapshot!.Request,
-                        turn.GameSnapshot.Give,
-                        turn.IsCardless,
-                        turn.IsLastCard
-                    );
-                    
-                    await replayer.TurnCommitted(roomId, resolution);
+
+                    await replayer.TurnCommitted(roomId, turn.GameSnapshot!);
                     break;
                 case TurnType.Skip:
                     await replayer.SystemMessage(roomId, new SystemMessage { Text = $"{username} was skipped.", Type = Info });

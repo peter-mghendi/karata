@@ -25,6 +25,8 @@ builder.Services.AddKeyedTransient<IBotStrategy, RandomValidBotStrategy>(nameof(
 
 var app = builder.Build();
 
+await app.InitializeKarataBotAsync();
+
 app.MapHealthChecks("/health");
 app.MapBotStrategy("bail", app.Services.GetRequiredKeyedService<IBotStrategy>(nameof(BailBotStrategy)));
 app.MapBotStrategy("random", app.Services.GetRequiredKeyedService<IBotStrategy>(nameof(RandomValidBotStrategy)));

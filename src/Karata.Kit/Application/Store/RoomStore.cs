@@ -14,16 +14,15 @@ public class RoomStore(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
     {
         public override RoomData Apply(RoomData state)
         {
-            var hand = new HandData { Id = Id, Player = User, Cards = [], Status = Status };
+            var hand = new HandData { Id = Id, Player = User, Cards = [], Status = Status, IsLastCard = false };
             return state with { Game = state.Game with { Hands = [..state.Game.Hands, hand] } };
         }
     }
-    
-    public record TurnCommitted(TurnResolution Resolution) : CompositeStateAction<RoomData>([
-        new SetCurrentRequest(Resolution.CurrentRequest),
-        new UpdatePick(Resolution.PendingPick),
-        new UpdateTurn(Resolution.CurrentTurn)
-    ]);
+
+    public record TurnCommitted(GameData Game) : StateAction<RoomData>
+    {
+        public override RoomData Apply(RoomData state) => state with { Game = Game };
+    }
 
     public record MoveCardsFromDeckToHand(long HandId, List<Card> Cards) : StateAction<RoomData>
     {
@@ -100,19 +99,14 @@ public class RoomStore(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         }
     }
 
-    private record SetCurrentRequest(Card? Card) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state) => state with { Game = state.Game with { Request = Card } };
-    }
-
     public record UpdateAdministrator(UserData Administrator) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state) => state with { Administrator = Administrator };
     }
 
-    public record UpdateGameStatus(GameStatus Status) : StateAction<RoomData>
+    public record UpdateGameStatus(GameData Game) : StateAction<RoomData>
     {
-        public override RoomData Apply(RoomData state) => state with { Game = state.Game with { Status = Status } };
+        public override RoomData Apply(RoomData state) => state with { Game = Game };
     }
 
     public record UpdateHandStatus(long HandId, HandStatus Status) : StateAction<RoomData>
@@ -127,21 +121,5 @@ public class RoomStore(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
                 }
             };
         }
-    }
-
-    private record UpdatePick(uint Pick) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state) => state with
-        {
-            Game = state.Game with { Pick = Pick }
-        };
-    }
-
-    private record UpdateTurn(int Turn) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state) => state with
-        {
-            Game = state.Game with { CurrentTurn = Turn }
-        };
     }
 }

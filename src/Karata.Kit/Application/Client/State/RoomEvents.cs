@@ -13,7 +13,7 @@ public sealed class RoomEvents : IDisposable
     private readonly ISubject<(long Id, UserData User, HandStatus Status)> _addHandToRoom =
         Subject.Synchronize(new Subject<(long, UserData, HandStatus)>());
 
-    private readonly ISubject<TurnResolution> _turnCommitted = Subject.Synchronize(new Subject<TurnResolution>());
+    private readonly ISubject<GameData> _turnCommitted = Subject.Synchronize(new Subject<GameData>());
     private readonly ISubject<GameResultData> _endGame = Subject.Synchronize(new Subject<GameResultData>());
 
     private readonly ISubject<(long HandId, IReadOnlyList<Card> Cards)> _moveCardsFromDeckToHand =
@@ -32,14 +32,14 @@ public sealed class RoomEvents : IDisposable
     private readonly ISubject<Unit> _removeFromRoom = Subject.Synchronize(new Subject<Unit>());
     private readonly ISubject<long> _removeHandFromRoom = Subject.Synchronize(new Subject<long>());
     private readonly ISubject<UserData> _updateAdministrator = Subject.Synchronize(new Subject<UserData>());
-    private readonly ISubject<GameStatus> _updateGameStatus = Subject.Synchronize(new Subject<GameStatus>());
+    private readonly ISubject<GameData> _updateGameStatus = Subject.Synchronize(new Subject<GameData>());
 
     private readonly ISubject<(long HandId, HandStatus Status)> _updateHandStatus =
         Subject.Synchronize(new Subject<(long, HandStatus)>());
 
     public IObservable<RoomData> AddToRoom => _addToRoom.AsObservable();
     public IObservable<(long Id, UserData User, HandStatus Status)> AddHandToRoom => _addHandToRoom.AsObservable();
-    public IObservable<TurnResolution> TurnCommitted => _turnCommitted.AsObservable();
+    public IObservable<GameData> TurnCommitted => _turnCommitted.AsObservable();
     public IObservable<GameResultData> EndGame => _endGame.AsObservable();
     public IObservable<(long HandId, IReadOnlyList<Card> Cards)> MoveCardsFromDeckToHand => _moveCardsFromDeckToHand.AsObservable();
     public IObservable<IReadOnlyList<Card>> MoveCardsFromDeckToPile => _moveCardsFromDeckToPile.AsObservable();
@@ -51,14 +51,14 @@ public sealed class RoomEvents : IDisposable
     public IObservable<Unit> RemoveFromRoom => _removeFromRoom.AsObservable();
     public IObservable<long> RemoveHandFromRoom => _removeHandFromRoom.AsObservable();
     public IObservable<UserData> UpdateAdministrator => _updateAdministrator.AsObservable();
-    public IObservable<GameStatus> UpdateGameStatus => _updateGameStatus.AsObservable();
+    public IObservable<GameData> UpdateGameStatus => _updateGameStatus.AsObservable();
     public IObservable<(long HandId, HandStatus Status)> UpdateHandStatus => _updateHandStatus.AsObservable();
 
     internal void OnAddToRoom(RoomData r) => _addToRoom.OnNext(r);
 
     internal void OnAddHandToRoom(long id, UserData user, HandStatus status) => _addHandToRoom.OnNext((id, user, status));
 
-    internal void OnTurnCommitted(TurnResolution resolution) => _turnCommitted.OnNext(resolution);
+    internal void OnTurnCommitted(GameData game) => _turnCommitted.OnNext(game);
     internal void OnEndGame(GameResultData result) => _endGame.OnNext(result);
 
     internal void OnMoveCardsFromDeckToHand(long handId, IReadOnlyList<Card> cards) => _moveCardsFromDeckToHand.OnNext((handId, cards));
@@ -82,7 +82,7 @@ public sealed class RoomEvents : IDisposable
 
     internal void OnUpdateAdministrator(UserData user) => _updateAdministrator.OnNext(user);
 
-    internal void OnUpdateGameStatus(GameStatus status) => _updateGameStatus.OnNext(status);
+    internal void OnUpdateGameStatus(GameData game) => _updateGameStatus.OnNext(game);
 
     internal void OnUpdateHandStatus(long handId, HandStatus status) => _updateHandStatus.OnNext((handId, status));
     

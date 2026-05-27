@@ -2,7 +2,6 @@
 
 @using System.Reactive.Disposables
 @using System.Reactive.Disposables.Fluent
-@using System.Reactive.Linq
 @using Karata.Kit.Application.Client
 @using Karata.Kit.Application.Client.Connection
 @using Karata.Kit.Application.Client.State
@@ -10,7 +9,6 @@
 @using Karata.Pebble.Interceptors
 @using Karata.Web.Support
 @using Microsoft.AspNetCore.Components.WebAssembly.Hosting
-@using TextCopy
 
 @implements IDisposable
 
@@ -86,8 +84,6 @@
 {
     [Parameter] public Guid Id { get; set; }
 
-    [Inject] public required IClipboard Clipboard { get; set; }
-
     private SpectatorConnection.Session? _session;
     private RoomStore? _store;
     private List<TurnData>? _turns;
@@ -123,21 +119,21 @@
             .DisposeWith(_subscriptions);
         
         _session.Events.SystemMessage.Subscribe(ShowMessage).DisposeWith(_subscriptions);
-
-        _session.Events.TurnCommitted.Subscribe(resolution =>
+        
+        _session.Events.TurnCommitted.Subscribe(game =>
         {
-            if (resolution.IsCardless)
+            Snackbar.Add($"It is now {game.CurrentHand.Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+
+            game.Hands.ForEach(hand =>
             {
-                ShowMessage(new() { Text = $"{resolution.Player.Username} is cardless.", Type = MessageType.Info });
-            }
-            if (resolution.IsLastCard)
-            {
-                ShowMessage(new() { Text = $"{resolution.Player.Username} is on their last card.", Type = MessageType.Warning });
-            }
+                if (hand.Cards.Count == 0) ShowMessage(new() { Text = $"{hand.Username} is cardless.", Type = MessageType.Info }); 
+                if (hand.IsLastCard) ShowMessage(new() { Text = $"{hand.Username} is on their last card.", Type = MessageType.Warning }); 
+            });
         }).DisposeWith(_subscriptions);
+
         
         _session.Events.RemoveFromRoom
-            .Select(_ => Observable.FromAsync(async _ =>
+            .Subscribe(_ =>
             {
                 _session.Dispose();
                 _store!.Dispose();
@@ -145,9 +141,7 @@
                 StateHasChanged();
 
                 Navigator.NavigateTo("/game/join");
-            }))
-            .Concat()
-            .Subscribe()
+            })
             .DisposeWith(_subscriptions);
 
         _session.Events.RemoveHandFromRoom
@@ -163,7 +157,7 @@
             .DisposeWith(_subscriptions);
 
         _session.Events.UpdateGameStatus
-            .Subscribe(status => Snackbar.Add($"The game is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text))
+            .Subscribe(game => Snackbar.Add($"The game is now {game.Status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text))
             .DisposeWith(_subscriptions);
 
         _session.Events.UpdateHandStatus.Subscribe(data =>

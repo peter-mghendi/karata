@@ -31,22 +31,4 @@ public abstract class LiveRoomAwareService(
 
     protected async Task RemoveFromRoom(string connection) =>
         await players.Groups.RemoveFromGroupAsync(connection, RoomId.ToString());
-
-    protected static RoomData EnrichRoomDataForUser(Room room, Hand me)
-    {
-        var data = room.ToData();
-        return data with
-        {
-            Game = data.Game with
-            {
-                Hands =
-                [
-                    ..from hand in data.Game.Hands
-                    select hand.Id == me.Id
-                        ? hand with { Cards = room.Game.Hands.Single(h => h.Id == hand.Id).Cards }
-                        : hand
-                ]
-            }
-        };
-    }
 }

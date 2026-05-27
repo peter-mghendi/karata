@@ -9,18 +9,12 @@ namespace Karata.Kit.Application.Client.Connection;
 
 public sealed partial class PlayerConnection(Uri host) : IUserConnection<PlayerConnection.SessionParameters, PlayerConnection.Session>
 {
-    public sealed record SessionParameters(
-        Func<Task<string?>> OnRequestPassword,
-        Func<bool, Task<Card?>> OnRequestCard,
-        Func<Task<bool>> OnRequestLastCard
-    ) : IUserConnection.ISessionParameters;
-
     private const string HubPath = "/hubs/game/play";
 
     public HubConnection? Hub { get; private set; }
-
-    public ConcurrentDictionary<Guid, Session> _sessions { get; } = new();
     public required Func<Task<string?>> AccessTokenProvider { get; init; }
+
+    private ConcurrentDictionary<Guid, Session> Sessions { get; } = new();
 
     public async Task StartAsync(CancellationToken ct = default)
     {
@@ -78,38 +72,57 @@ public sealed partial class PlayerConnection(Uri host) : IUserConnection<PlayerC
         {
             session.Events.OnTurnAcknowledged();
         }));
-        Hub.On<Guid, TurnResolution>(nameof(RoomEvents.TurnCommitted), (roomId, resolution) =>
+        Hub.On<Guid, GameData>(nameof(RoomEvents.TurnCommitted), (roomId, game) =>
         {
-            Route(roomId, session => session.Events.OnTurnCommitted(resolution));
+            Route(roomId, session => session.Events.OnTurnCommitted(game));
         });
         Hub.On<Guid, UserData>(nameof(RoomEvents.UpdateAdministrator), (roomId, user) =>
         {
             Route(roomId, session => session.Events.OnUpdateAdministrator(user));
         });
-        Hub.On<Guid, GameStatus>(nameof(RoomEvents.UpdateGameStatus), (roomId, status) =>
+        Hub.On<Guid, GameData>(nameof(RoomEvents.UpdateGameStatus), (roomId, game) =>
         {
-            Route(roomId, session => session.Events.OnUpdateGameStatus(status));
+            Route(roomId, session => session.Events.OnUpdateGameStatus(game));
         });
         Hub.On<Guid, long, HandStatus>(nameof(RoomEvents.UpdateHandStatus), (roomId, handId, status) =>
         {
             Route(roomId, session => session.Events.OnUpdateHandStatus(handId, status));
         });
-
+        Hub.On<Guid, string?>("PromptPasscode", async roomId =>
+        {
+            Console.WriteLine($"PromptPasscode: {roomId}");
+            if (!Sessions.TryGetValue(roomId, out var session)) return null;
+            return await session.OnRequestPassword();
+        });
+        Hub.On<Guid, bool, Card?>("PromptCardRequest", async (roomId, specific) =>
+        {
+            Console.WriteLine($"PromptCardRequest: {roomId}");
+            if (!Sessions.TryGetValue(roomId, out var session)) return null;
+            return await session.OnRequestCard(specific);
+        });
+        Hub.On<Guid, bool>("PromptLastCardRequest", async roomId =>
+        {
+            Console.WriteLine($"PromptLastCardRequest: {roomId}");
+            if (!Sessions.TryGetValue(roomId, out var session)) return false;
+            var sessionOnRequestLastCard = await session.OnRequestLastCard();
+            return sessionOnRequestLastCard;
+        });
+        
         Hub.Reconnecting += ex =>
         {
-            Console.WriteLine("SignalR reconnecting: " + ex?.Message);
+            Console.WriteLine($"SignalR reconnecting: {ex?.Message}");
             return Task.CompletedTask;
         };
 
         Hub.Reconnected += id =>
         {
-            Console.WriteLine("SignalR reconnected");
+            Console.WriteLine($"SignalR reconnected: {id}");
             return Task.CompletedTask;
         };
 
         Hub.Closed += ex =>
         {
-            Console.WriteLine("SignalR closed: " + ex?.Message);
+            Console.WriteLine($"SignalR closed: {ex?.Message}");
             return Task.CompletedTask;
         };
 
@@ -120,16 +133,8 @@ public sealed partial class PlayerConnection(Uri host) : IUserConnection<PlayerC
     {
         if (Hub is null) throw new InvalidOperationException("Hub not initialized");
         
-        var session = new Session(roomId, Hub);
-        if (!_sessions.TryAdd(roomId, session)) throw new InvalidOperationException("Already joined");
-        
-        
-        // TODO: [Regression] Scope this to session
-        Hub.On<string?>("PromptPasscode", parameters.OnRequestPassword);
-        Hub.On<bool, Card?>("PromptCardRequest", parameters.OnRequestCard);
-        Hub.On<bool>("PromptLastCardRequest", parameters.OnRequestLastCard);
-        
-        return session;
+        var session = new Session(roomId, Hub, parameters);
+        return !Sessions.TryAdd(roomId, session) ? throw new InvalidOperationException("Already joined") : session;
     }
 
     public async Task StopAsync(CancellationToken ct = default)
@@ -141,6 +146,6 @@ public sealed partial class PlayerConnection(Uri host) : IUserConnection<PlayerC
 
     private void Route(Guid roomId, Action<Session> action)
     {
-        if (_sessions.TryGetValue(roomId, out var session)) action(session);
+        if (Sessions.TryGetValue(roomId, out var session)) action(session);
     }
 }
