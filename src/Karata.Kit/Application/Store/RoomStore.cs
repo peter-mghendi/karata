@@ -5,26 +5,31 @@ using Karata.Pebble;
 using Karata.Pebble.Interceptors;
 using Karata.Pebble.StateActions;
 
-namespace Karata.Kit.Application.State;
+namespace Karata.Kit.Application.Store;
 
-public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> interceptors)
+public class RoomStore(RoomData data, ImmutableArray<Interceptor<RoomData>> interceptors)
     : Store<RoomData>(data, interceptors)
 {
     public record AddHandToRoom(long Id, UserData User, HandStatus Status) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state)
         {
-            var hand = new HandData { Id = Id, Player = User, Cards = [], Status = Status };
+            var hand = new HandData { Id = Id, Player = User, Cards = [], Status = Status, IsLastCard = false };
             return state with { Game = state.Game with { Hands = [..state.Game.Hands, hand] } };
         }
     }
 
-    public record MoveCardsFromDeckToHand(UserData User, List<Card> Cards) : StateAction<RoomData>
+    public record TurnCommitted(GameData Game) : StateAction<RoomData>
+    {
+        public override RoomData Apply(RoomData state) => state with { Game = Game };
+    }
+
+    public record MoveCardsFromDeckToHand(long HandId, List<Card> Cards) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state)
         {
             var hands = state.Game.Hands
-                .Select(h => h.Player == User ? h with { Cards = [..h.Cards, ..Cards] } : h);
+                .Select(h => h.Id == HandId ? h with { Cards = [..h.Cards, ..Cards] } : h);
 
             return state with
             {
@@ -47,14 +52,14 @@ public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         }
     }
 
-    public record MoveCardsFromHandToPile(UserData User, List<Card> Cards, bool Visible) : StateAction<RoomData>
+    public record MoveCardsFromHandToPile(long HandId, List<Card> Cards, bool Visible) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state)
         {
             var hands = Visible switch
             {
-                true => state.Game.Hands.Select(h => h.Player == User ? h with { Cards = [..h.Cards.Except(Cards)] } : h),
-                false => state.Game.Hands.Select(h => h.Player == User ? h with { Cards = h.Cards[Cards.Count..] } : h)
+                true => state.Game.Hands.Select(h => h.Id == HandId ? h with { Cards = [..h.Cards.Except(Cards)] } : h),
+                false => state.Game.Hands.Select(h => h.Id == HandId ? h with { Cards = h.Cards[Cards.Count..] } : h)
             };
 
             var pile = state.Game.Pile;
@@ -64,9 +69,9 @@ public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         }
     }
 
-    public record ReceiveChat(ChatData Chat) : StateAction<RoomData>
+    public record Chat(ChatData ChatData) : StateAction<RoomData>
     {
-        public override RoomData Apply(RoomData state) => state with { Chats = [..state.Chats, Chat] };
+        public override RoomData Apply(RoomData state) => state with { Chats = [..state.Chats, ChatData] };
     }
 
     public record ReclaimPile : StateAction<RoomData>
@@ -86,17 +91,12 @@ public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         }
     }
 
-    public record RemoveHandFromRoom(UserData User) : StateAction<RoomData>
+    public record RemoveHandFromRoom(long HandId) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state)
         {
-            return state with { Game = state.Game with { Hands = [..state.Game.Hands.Where(h => h.Player != User)] } };
+            return state with { Game = state.Game with { Hands = [..state.Game.Hands.Where(h => h.Id != HandId)] } };
         }
-    }
-
-    public record SetCurrentRequest(Card Card) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state) => state with { Game = state.Game with { Request = Card } };
     }
 
     public record UpdateAdministrator(UserData Administrator) : StateAction<RoomData>
@@ -104,12 +104,12 @@ public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         public override RoomData Apply(RoomData state) => state with { Administrator = Administrator };
     }
 
-    public record UpdateGameStatus(GameStatus Status) : StateAction<RoomData>
+    public record UpdateGameStatus(GameData Game) : StateAction<RoomData>
     {
-        public override RoomData Apply(RoomData state) => state with { Game = state.Game with { Status = Status } };
+        public override RoomData Apply(RoomData state) => state with { Game = Game };
     }
 
-    public record UpdateHandStatus(UserData User, HandStatus Status) : StateAction<RoomData>
+    public record UpdateHandStatus(long HandId, HandStatus Status) : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state)
         {
@@ -117,25 +117,9 @@ public class RoomState(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
             {
                 Game = state.Game with
                 {
-                    Hands = [..state.Game.Hands.Select(h => h.Player == User ? h with { Status = Status } : h)]
+                    Hands = [..state.Game.Hands.Select(h => h.Id == HandId ? h with { Status = Status } : h)]
                 }
             };
         }
-    }
-
-    public record UpdatePick(uint Pick) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state) => state with
-        {
-            Game = state.Game with { Pick = Pick }
-        };
-    }
-
-    public record UpdateTurn(int Turn) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state) => state with
-        {
-            Game = state.Game with { CurrentTurn = Turn }
-        };
     }
 }

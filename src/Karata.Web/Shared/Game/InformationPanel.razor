@@ -24,10 +24,10 @@
         <MudText Typo="Typo.caption">Room Creator</MudText>
         <MudText Typo="Typo.body1" Class="gray-text">@Room.Creator.Username</MudText>
     </MudListItem>
-    <MudListItem Value="@(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.Player.Username : "---")">
+    <MudListItem Value="@(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.Username : "---")">
         <MudText Typo="Typo.caption">Current Turn</MudText>
         <MudText Typo="Typo.body1" Class="gray-text">
-            @(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.Player.Username : "---")
+            @(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.Username : "---")
         </MudText>
     </MudListItem>
     <MudListItem Value="@Game.Hands.Count.ToString()">

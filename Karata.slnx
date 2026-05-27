@@ -23,7 +23,6 @@
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Karata.Cards.Tests/Karata.Cards.Tests.csproj" />
-    <Project Path="test/Karata.Server.Tests/Karata.Server.Tests.csproj" />
     <Project Path="test/Karata.Kit.Tests/Karata.Kit.Tests.csproj" />
   </Folder>
 </Solution>

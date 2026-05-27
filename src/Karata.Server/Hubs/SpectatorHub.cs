@@ -1,7 +1,6 @@
 using Karata.Kit.Core.Exceptions;
 using Karata.Server.Data;
 using Karata.Server.Hubs.Clients;
-using Karata.Server.Support;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Server.Hubs;
@@ -10,46 +9,34 @@ namespace Karata.Server.Hubs;
 // Do not depend on Context.UserIdentifier being present.
 public class SpectatorHub(ILogger<SpectatorHub> logger, KarataContext context) : Hub<ISpectatorClient>
 {
-    private static readonly HashSet<string> ConnectedSpectators = [];
-
-    public override async Task OnDisconnectedAsync(Exception? exception)
-    {
-        await base.OnDisconnectedAsync(exception);
-
-        await Clients.Client(Context.ConnectionId).RemoveFromRoom();
-        ConnectedSpectators.Remove(Context.ConnectionId);
-    }
-
-    public async Task JoinRoom(string roomId)
+    public async Task JoinRoom(Guid roomId)
     {
         try
         {
             logger.LogDebug("Spectator {Connection} is joining room {Room}.", Context.ConnectionId, roomId);
-            if (await context.Rooms.FindAsync(Guid.Parse(roomId)) is not { } room) return;
+            if (await context.Rooms.FindAsync(roomId) is not { } room) return;
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-            await Clients.Client(Context.ConnectionId).AddToRoom(room.ToData());
-            ConnectedSpectators.Add(Context.ConnectionId);
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
+            await Clients.Client(Context.ConnectionId).AddToRoom(roomId, room.ToData());
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+            await Clients.Caller.SystemMessage(roomId, exception.SystemMessage);
         }
     }
 
-    public async Task LeaveRoom(string roomId)
+    public async Task LeaveRoom(Guid roomId)
     {
         try
         {
             logger.LogDebug("Spectator {Connection} is leaving room {Room}.", Context.ConnectionId, roomId);
             
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
-            await Clients.Client(Context.ConnectionId).RemoveFromRoom();
-            ConnectedSpectators.Remove(Context.ConnectionId);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId.ToString());
+            await Clients.Client(Context.ConnectionId).RemoveFromRoom(roomId);
         }
         catch (KarataException exception)
         {
-            await Clients.Caller.ReceiveSystemMessage(Messages.Exception(exception));
+            await Clients.Caller.SystemMessage(roomId, exception.SystemMessage);
         }
     }
 }

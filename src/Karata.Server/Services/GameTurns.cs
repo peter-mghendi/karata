@@ -5,6 +5,11 @@ namespace Karata.Server.Services;
 
 public static class GameTurns
 {
+    extension(Game game)
+    {
+        public void AdvanceTurn() => Advance(game);
+    }
+    
     /// <summary>
     ///  Encapsulates logic to determine the next playable turn in a game.
     /// </summary>

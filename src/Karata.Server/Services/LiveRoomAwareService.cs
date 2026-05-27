@@ -17,9 +17,9 @@ public abstract class LiveRoomAwareService(
 )
 {
     protected readonly Guid RoomId = room;
-    protected readonly string CurrentPlayerId = player;
+    protected readonly string CallerPlayerId = player;
 
-    protected IPlayerClient Me => players.Clients.User(CurrentPlayerId);
+    protected IPlayerClient Caller => players.Clients.User(CallerPlayerId);
     protected IPlayerClient RoomPlayers => players.Clients.Group(RoomId.ToString());
     protected ISpectatorClient RoomSpectators => spectators.Clients.Group(RoomId.ToString());
 
@@ -31,22 +31,4 @@ public abstract class LiveRoomAwareService(
 
     protected async Task RemoveFromRoom(string connection) =>
         await players.Groups.RemoveFromGroupAsync(connection, RoomId.ToString());
-
-    protected static RoomData EnrichRoomDataForUser(Room room, User me)
-    {
-        var data = room.ToData();
-        return data with
-        {
-            Game = data.Game with
-            {
-                Hands =
-                [
-                    ..from hand in data.Game.Hands
-                    select hand.Player.Id == me.Id
-                        ? hand with { Cards = room.Game.Hands.Single(h => h.Player.Id == hand.Player.Id).Cards }
-                        : hand
-                ]
-            }
-        };
-    }
 }

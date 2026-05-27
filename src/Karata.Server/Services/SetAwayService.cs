@@ -15,30 +15,35 @@ public class SetAwayService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     KarataContext context,
-    Guid room,
+    Guid roomId,
     string player
-) : LiveRoomAwareService(players, spectators, room, player)
+) : LiveRoomAwareService(players, spectators, roomId, player)
 {
-    public async Task ExecuteAsync(string voideeId)
+    public async Task ExecuteAsync(long voideeId)
     {
         var room = (await context.Rooms.FindAsync(RoomId))!;
-        var voidee = (await context.Users.FindAsync(voideeId))!;
-        var hand = room.Game.Hands.Single(h => h.Player.Id == voidee.Id);
+        var hand = room.Game.Hands.Single(h => h.Id == voideeId);
         
-        if (room.Administrator.Id != CurrentPlayerId) throw new UnauthorizedActionException();
+        if (CallerPlayerId != room.Administrator.Id) throw new UnauthorizedActionException();
 
         hand.Status = Away;
-        await RecomputeTurn(room, voidee);
-        await RedelegateAdministration(room,  hand);
-
-        await RoomPlayers.UpdateHandStatus(hand.Player.ToData(), hand.Status);
-        await RoomSpectators.UpdateHandStatus(hand.Player.ToData(), hand.Status);
+        RecomputeTurn(room, hand);
+        RedelegateAdministration(room, hand.Player);
+        
         await context.SaveChangesAsync();
+        
+        foreach (var data in from each in room.Game.Hands select (Hand: hand, Game: Enrich.ForUser(room.Game, hand)))
+            await Hand(data.Hand).TurnCommitted(RoomId, data.Game);
+        await RoomSpectators.TurnCommitted(RoomId, room.Game);
+        await RoomPlayers.UpdateAdministrator(RoomId, room.Administrator);
+        await RoomSpectators.UpdateAdministrator(RoomId, room.Administrator);
+        await RoomPlayers.UpdateHandStatus(RoomId, hand.Id, hand.Status);
+        await RoomSpectators.UpdateHandStatus(RoomId, hand.Id, hand.Status);
     }
 
-    private async Task RecomputeTurn(Room room, User player)
+    private static void RecomputeTurn(Room room, Hand player)
     {
-        if (room.Game.CurrentHand.Player.Id != player.Id) return;
+        if (room.Game.CurrentHand.Id != player.Id) return;
         if (room.Game.Hands.Count(hand => hand.Status is Online or Offline) <= 1) return;
         
         room.Game.CurrentHand.Turns.Add(new Turn
@@ -49,17 +54,13 @@ public class SetAwayService(
         });
         
         GameTurns.Advance(room.Game);
-        await RoomPlayers.UpdateTurn(room.Game.CurrentTurn);
-        await RoomSpectators.UpdateTurn(room.Game.CurrentTurn);
     }
 
-    private async Task RedelegateAdministration(Room room, Hand hand)
+    private void RedelegateAdministration(Room room, User user)
     {
-        if (room.Administrator.Id != hand.Player.Id) return;
+        if (room.Administrator.Id != user.Id) return;
         if (room.NextEligibleAdministrator is not {} administrator) return;
         
         room.Administrator = administrator;
-        await RoomPlayers.UpdateAdministrator(room.Administrator.ToData());
-        await RoomSpectators.UpdateAdministrator(room.Administrator.ToData());
     }
 }

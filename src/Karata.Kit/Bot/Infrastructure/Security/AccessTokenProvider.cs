@@ -14,21 +14,29 @@ public sealed class AccessTokenProvider(HttpClient http, IConfiguration configur
 
     private readonly SemaphoreSlim _gate = new(1, 1);
     private string? _token;
-    private UserData? _user;
     private DateTimeOffset _expiresAt = DateTimeOffset.MinValue;
 
-    private string? CachedToken => _token is [_, ..] && DateTimeOffset.UtcNow < _expiresAt ? _token : null;
-
-    public UserData? CurrentUser => CachedToken is null ? null : _user;
-
-    public async Task<string> GetAccessTokenAsync(CancellationToken ct = default)
+    public async Task<UserData?> CurrentUser()
     {
-        if (CachedToken is [_, ..]) return CachedToken;
+        if (await GetAsync() is not { } token) return null;
+        var handler = new JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(token);
+
+        return new UserData
+        {
+            Id = jwt.Claims.FirstOrDefault(c => c.Type == "sub")!.Value,
+            Username = jwt.Claims.FirstOrDefault(c => c.Type == "preferred_username")!.Value
+        };
+    }
+
+    public async Task<string> GetAsync(CancellationToken ct = default)
+    {
+        if (_token is [_, ..] && DateTimeOffset.UtcNow < _expiresAt) return _token;
 
         await _gate.WaitAsync(ct);
         try
         {
-            if (CachedToken is [_, ..]) return CachedToken;
+            if (_token is [_, ..] && DateTimeOffset.UtcNow < _expiresAt) return _token;
 
             var tokenEndpoint = $"{_authority}/protocol/openid-connect/token";
             var parameters = new Dictionary<string, string>
@@ -52,15 +60,7 @@ public sealed class AccessTokenProvider(HttpClient http, IConfiguration configur
             var expiresIn = json.RootElement.GetProperty("expires_in").GetInt32();
             _expiresAt = DateTimeOffset.UtcNow.AddSeconds(Math.Max(10, expiresIn - 30));
             _token = json.RootElement.GetProperty("access_token").GetString()!;
-
-            var handler = new JwtSecurityTokenHandler();
-            var jwt = handler.ReadJwtToken(_token);
-
-            _user = new UserData
-            {
-                Id = jwt.Claims.FirstOrDefault(c => c.Type == "sub")!.Value,
-                Username = jwt.Claims.FirstOrDefault(c => c.Type == "preferred_username")!.Value
-            };
+            
 
             return _token!;
         }

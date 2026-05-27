@@ -15,7 +15,7 @@ builder.Services.AddKarataCore(karata =>
     karata.TokenProvider = async (services, cancellation) =>
     {
         var provider = services.GetRequiredService<AccessTokenProvider>();
-        return await provider.GetAccessTokenAsync(cancellation);
+        return await provider.GetAsync(cancellation);
     };
 });
 
@@ -24,6 +24,8 @@ builder.Services.AddKeyedTransient<IBotStrategy, BailBotStrategy>(nameof(BailBot
 builder.Services.AddKeyedTransient<IBotStrategy, RandomValidBotStrategy>(nameof(RandomValidBotStrategy));
 
 var app = builder.Build();
+
+await app.InitializeKarataBotAsync();
 
 app.MapHealthChecks("/health");
 app.MapBotStrategy("bail", app.Services.GetRequiredKeyedService<IBotStrategy>(nameof(BailBotStrategy)));

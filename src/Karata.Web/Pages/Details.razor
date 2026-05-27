@@ -27,7 +27,7 @@
                 @if (_room.Game.Status is GameStatus.Over)
                 {
                     <MudButton Variant="Variant.Outlined" Href="@($"/game/{_room.Id}/replay")" Class="ml-2"
-                               Disabled="_room.Game.Hands.All(hand => hand.Player.Username != _username)">
+                               Disabled="_room.Game.Hands.All(hand => hand.Username != _username)">
                         Replay
                     </MudButton>
                 }

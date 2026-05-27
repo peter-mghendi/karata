@@ -12,9 +12,9 @@ public class GameStartService(
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILogger<GameStartService> logger,
     KarataContext context,
-    Guid room,
+    Guid roomId,
     string player
-) : LiveRoomAwareService(players, spectators, room, player)
+) : LiveRoomAwareService(players, spectators, roomId, player)
 {
     private const int DealCount = 4;
     
@@ -30,22 +30,20 @@ public class GameStartService(
     
     private void ValidateGameState(Room room)
     {
-        var game = room.Game;
-        
         // Check caller role
-        if (room.Administrator.Id != CurrentPlayerId)
+        if (room.Administrator.Id != CallerPlayerId)
         {
             throw new UnauthorizedActionException();
         }
 
         // Check game status
-        if (game.Status == GameStatus.Ongoing)
+        if (room.Game.Status == GameStatus.Ongoing)
         {
             throw new GameOngoingException();
         }
 
         // Check player number
-        if (game.Hands.Count is < 2 or > 4)
+        if (room.Game.Hands.Count is < 2 or > 4)
         {
             throw new NotEnoughPlayersException();
         }
@@ -60,13 +58,10 @@ public class GameStartService(
         do deck.ShuffleInPlace(); while (deck.Peek().IsSpecial);
 
         var top = deck.Deal();
-        logger.LogDebug("Top card is {Card}.", top);
 
         game.Pile.Push(top);
-        await RoomPlayers.MoveCardsFromDeckToPile([top]);
-        await RoomSpectators.MoveCardsFromDeckToPile([top]);
-
-        logger.LogDebug("Start dealing cards to {Count} players.", game.Hands.Count);
+        await RoomPlayers.MoveCardsFromDeckToPile(RoomId, [top]);
+        await RoomSpectators.MoveCardsFromDeckToPile(RoomId, [top]);
 
         // Deal player cards
         foreach (var hand in game.Hands)
@@ -78,11 +73,12 @@ public class GameStartService(
             logger.LogDebug("Dealing {Count} cards to {User}. Cards: {Cards}.", DealCount, hand.Player.Username, string.Join(", ", dealt));
             
             hand.Turns.Add(turn);
-            hand.Cards.AddRange(dealt);
+            foreach (var card in dealt) 
+                hand.Cards.Add(card);
 
-            await Hand(hand).MoveCardsFromDeckToHand(hand.Player.ToData(), dealt);
-            await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).MoveCardsFromDeckToHand(hand.Player.ToData(), dummies);
-            await RoomSpectators.MoveCardsFromDeckToHand(hand.Player.ToData(), dummies);
+            await Hand(hand).MoveCardsFromDeckToHand(RoomId, hand.Id, dealt);
+            await Hands(room.Game.HandsExceptPlayerId(hand.Player.Id)).MoveCardsFromDeckToHand(RoomId, hand.Id, dummies);
+            await RoomSpectators.MoveCardsFromDeckToHand(RoomId, hand.Id, dummies);
         }
 
         logger.LogDebug("Finished dealing cards.");
@@ -91,6 +87,8 @@ public class GameStartService(
     private async Task UpdateGameState(Room room)
     {
         room.Game.Status = GameStatus.Ongoing;
-        await RoomPlayers.UpdateGameStatus(room.Game.Status);
+        foreach (var data in from hand in room.Game.Hands select (Hand: hand, Game: Enrich.ForUser(room.Game, hand)))
+            await Hand(data.Hand).UpdateGameStatus(RoomId, data.Game);
+        await RoomSpectators.UpdateGameStatus(RoomId, room.Game);
     }
 }

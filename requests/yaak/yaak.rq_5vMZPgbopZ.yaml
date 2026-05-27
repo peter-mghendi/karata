@@ -1,0 +1,27 @@
+type: http_request
+model: http_request
+id: rq_5vMZPgbopZ
+createdAt: 2025-12-24T13:25:24.896936388
+updatedAt: 2026-03-07T17:36:35.733221355
+workspaceId: wk_DXsTB3LLeB
+folderId: fl_6xVtScbvqz
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+        "room": "019b5081-9fc2-7828-aec2-7f785c2111c2",
+        "password": null,
+    }
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: 8AGUUUdcen
+method: POST
+name: Invite Bot
+sortPriority: 0.001
+url: ${[ karata_bot_address ]}/api/bots/bail/games
+urlParameters: []

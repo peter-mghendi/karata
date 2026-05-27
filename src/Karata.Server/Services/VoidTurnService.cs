@@ -14,15 +14,15 @@ public class VoidTurnService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     KarataContext context,
-    Guid room,
+    Guid roomId,
     string player
-) : LiveRoomAwareService(players, spectators, room, player)
+) : LiveRoomAwareService(players, spectators, roomId, player)
 {
-    public async Task ExecuteAsync(string voideeId)
+    public async Task ExecuteAsync(long voideeId)
     {
         var room = (await context.Rooms.FindAsync(RoomId))!;
-        if (room.Administrator.Id != CurrentPlayerId) throw new UnauthorizedActionException();
-        if (room.Game.CurrentHand.Player.Id != voideeId) throw new InvalidTurnException();
+        if (room.Game.CurrentHand.Player.Id != room.Administrator.Id) throw new UnauthorizedActionException();
+        if (room.Game.CurrentHand.Id != voideeId) throw new InvalidTurnException();
             
         room.Game.CurrentHand.Turns.Add(new Turn
         {
@@ -31,10 +31,11 @@ public class VoidTurnService(
             CreatedAt = DateTimeOffset.UtcNow
         });
             
-        GameTurns.Advance(room.Game);
-
+        room.Game.AdvanceTurn();
         await context.SaveChangesAsync();
-        await RoomPlayers.UpdateTurn(room.Game.CurrentTurn);
-        await RoomSpectators.UpdateTurn(room.Game.CurrentTurn);
+
+        foreach (var data in from hand in room.Game.Hands select (Hand: hand, Game: Enrich.ForUser(room.Game, hand)))
+            await Hand(data.Hand).TurnCommitted(RoomId, data.Game);
+        await RoomSpectators.TurnCommitted(RoomId, room.Game);
     }
 }

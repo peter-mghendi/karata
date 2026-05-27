@@ -4,9 +4,9 @@ using Karata.Pebble;
 using Karata.Pebble.Interceptors;
 using Karata.Pebble.StateActions;
 
-namespace Karata.Kit.Application.State;
+namespace Karata.Kit.Application.Store;
 
-public class TurnState(ImmutableList<Card> turn, ImmutableArray<Interceptor<ImmutableList<Card>>> interceptors)
+public class TurnStore(ImmutableList<Card> turn, ImmutableArray<Interceptor<ImmutableList<Card>>> interceptors)
     : Store<ImmutableList<Card>>(turn, interceptors)
 {
     public record Insert((Card Card, int Position) Info) : StateAction<ImmutableList<Card>>
@@ -24,6 +24,8 @@ public class TurnState(ImmutableList<Card> turn, ImmutableArray<Interceptor<Immu
         public override ImmutableList<Card> Apply(ImmutableList<Card> state) => state.Remove(Card);
     }
 
-    public record Reorder((Card Card, int Position) Info)
-        : CompositeStateAction<ImmutableList<Card>>([new Remove(Info.Card), new Insert(Info)]);
+    public record Reorder((Card Card, int Position) Info) : CompositeStateAction<ImmutableList<Card>>([
+        new Remove(Info.Card),
+        new Insert(Info)
+    ]);
 }

@@ -1,6 +1,6 @@
 using System.Text;
+using Karata.Kit.Core.Exceptions;
 using Karata.Kit.Domain.Models;
-using Karata.Server.Support;
 using Karata.Server.Support.Exceptions;
 using static Karata.Kit.Domain.Models.HandStatus;
 
@@ -10,7 +10,7 @@ public partial class RoomMembershipService
 {
     public async Task JoinAsync(string connection)
     {
-        var player = (await context.Users.FindAsync(CurrentPlayerId))!;
+        var player = (await context.Users.FindAsync(CallerPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
 
         bool authorized;
@@ -26,30 +26,27 @@ public partial class RoomMembershipService
                 joined.Status = Online;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(EnrichRoomDataForUser(room, player));
-                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-                    .UpdateHandStatus(joined.Player.ToData(), joined.Status);
-                await RoomSpectators.UpdateHandStatus(joined.Player.ToData(), joined.Status);
+                await Caller.AddToRoom(RoomId, Enrich.ForUser(room, joined));
+                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, joined.Id, joined.Status);
+                await RoomSpectators.UpdateHandStatus(RoomId, joined.Id, joined.Status);
                 break;
             case GameStatus.Lobby:
                 var hand = new Hand { Player = player, Status = Online };
                 room.Game.Hands.Add(hand);
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(EnrichRoomDataForUser(room, player));
-                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-                    .AddHandToRoom(hand.Id, hand.Player.ToData(), hand.Status);
-                await RoomSpectators.AddHandToRoom(hand.Id, hand.Player.ToData(), hand.Status);
+                await Caller.AddToRoom(RoomId, Enrich.ForUser(room, hand));
+                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
+                await RoomSpectators.AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
                 break;
             case GameStatus.Ongoing:
                 var rejoined = room.Game.Hands.Single(h => h.Player.Id == player.Id);
                 rejoined.Status = Online;
 
                 await AddToRoom(connection);
-                await Me.AddToRoom(EnrichRoomDataForUser(room, player));
-                await Hands(room.Game.HandsExceptPlayerId(CurrentPlayerId))
-                    .UpdateHandStatus(rejoined.Player.ToData(), rejoined.Status);
-                await RoomSpectators.UpdateHandStatus(rejoined.Player.ToData(), rejoined.Status);
+                await Caller.AddToRoom(RoomId, Enrich.ForUser(room, rejoined));
+                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, rejoined.Id, rejoined.Status);
+                await RoomSpectators.UpdateHandStatus(RoomId, rejoined.Id, rejoined.Status);
                 break;
             case GameStatus.Over:
                 break;
@@ -65,7 +62,7 @@ public partial class RoomMembershipService
             if (room.Hash is null) return true;
             if (room.Game.Hands.Any(h => h.Player.Id == player.Id)) return true;
 
-            if (await PlayerConnection(connection).PromptPasscode() is not [_, ..] password)
+            if (await PlayerConnection(connection).PromptPasscode(RoomId) is not [_, ..] password)
                 throw new PasswordRequiredException();
             if (!passwords.VerifyPassword(Encoding.UTF8.GetBytes(password), room.Salt!, room.Hash))
                 throw new IncorrectPasswordException();
@@ -74,7 +71,7 @@ public partial class RoomMembershipService
         }
         catch (PasswordException exception)
         {
-            await Me.ReceiveSystemMessage(Messages.Exception(exception));
+            await Caller.SystemMessage(RoomId, exception.SystemMessage);
             return false;
         }
     }
