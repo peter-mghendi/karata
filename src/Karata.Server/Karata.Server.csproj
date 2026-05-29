@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <UserSecretsId>Karata.Server-645e4e3b-a87e-4a2b-aa8f-239ea9c9b8f8</UserSecretsId>
-    <AssemblyName>karata</AssemblyName>
+    <AssemblyName>karata-server</AssemblyName>
+    <ContainerRepository>peter-mghendi/karata-server</ContainerRepository>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Karata.Web\Karata.Web.csproj" />
+    <ProjectReference Include="..\Karata.Kit\Karata.Kit.csproj" />
     <ProjectReference Include="..\Karata.ServiceDefaults\Karata.ServiceDefaults.csproj" />
   </ItemGroup>
 </Project>
