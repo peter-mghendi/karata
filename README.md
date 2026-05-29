@@ -19,10 +19,11 @@ There is also a custom cards library [here](https://github.com/sixpeteunder/kara
 - [x] Player disconnection/reconnection handling.
 - [x] Resumable games.
 - [ ] Configurable rules.
-- [ ] Game replays.
+- [x] Game replays.
 - [ ] Friend system.
 - [ ] Tournaments/Knockouts.
 - [ ] Fines for illegal moves.
+- [x] Bots
 
 ## Rules
 
@@ -42,7 +43,7 @@ None of the sources I consulted could agree on a canonical set of rules (as they
 
 ### Aces
 
-![Ace of Spades](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/AceSpades.svg)
+![Ace of Spades](src/Karata.Web/wwwroot/img/cards/AceSpades.svg)
 
 - Ace of Spades equals two regular Aces.
 - One Ace can be used to request a suit.
@@ -54,9 +55,9 @@ None of the sources I consulted could agree on a canonical set of rules (as they
 
 ### "Bombs" - Twos, Threes and Jokers
 
-![Two of Spades](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/TwoSpades.svg)
-![Three of Spades](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/ThreeSpades.svg)
-![Black Joker](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/BlackJoker.svg)
+![Two of Spades](src/Karata.Web/wwwroot/img/cards/TwoSpades.svg)
+![Three of Spades](src/Karata.Web/wwwroot/img/cards/ThreeSpades.svg)
+![Black Joker](src/Karata.Web/wwwroot/img/cards/BlackJoker.svg)
 
 - Two, three and joker cards cause the next player to pick two, three or five cards respectively.
 - Two and three cards can be countered by jokers or "bomb" cards of the same face or suit.
@@ -69,7 +70,7 @@ None of the sources I consulted could agree on a canonical set of rules (as they
 
 ### "Jumps" - Jacks
 
-![Jack of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/JackHearts.svg)
+![Jack of Hearts](src/Karata.Web/wwwroot/img/cards/JackHearts.svg)
 
 - A Jack played will "jump" the next player (two Jacks played in succession will jump two players, etc.).
 - A Jack must be played on top of a card of the same face(Jack) or suit.
@@ -77,8 +78,8 @@ None of the sources I consulted could agree on a canonical set of rules (as they
 
 ### "Questions" - Queens and Eights
 
-![Queen of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/QueenHearts.svg)
-![Eight of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/EightHearts.svg)
+![Queen of Hearts](src/Karata.Web/wwwroot/img/cards/QueenHearts.svg)
+![Eight of Hearts](src/Karata.Web/wwwroot/img/cards/EightHearts.svg)
 
 - Queen and Eight cards are "Question" cards which require an "Answer".
 - A Queen or Eight must be played on top of a card of the same face or suit.
@@ -87,7 +88,7 @@ None of the sources I consulted could agree on a canonical set of rules (as they
 
 ### "Kickbacks" - Kings
 
-![Kind of Hearts](https://github.com/sixpeteunder/karata/blob/main/src/Karata.Client/wwwroot/img/cards/KingHearts.svg)
+![Kind of Hearts](src/Karata.Web/wwwroot/img/cards/KingHearts.svg)
 
 - A King will cause the direction of the game to reverse.
 - A King must be played on top of a card of the same face(King) or suit.
