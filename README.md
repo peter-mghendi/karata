@@ -1,4 +1,6 @@
-[![Build + Test](https://github.com/sixpeteunder/karata/actions/workflows/dotnet.yml/badge.svg)](https://github.com/sixpeteunder/karata/actions/workflows/dotnet.yml)
+[![Test Solution](https://github.com/peter-mghendi/karata/actions/workflows/test-solution.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/test-solution.yml)
+[![Publish Karata.Server project](https://github.com/peter-mghendi/karata/actions/workflows/publish-server.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-server.yml)
+[![Publish Karata.Web project](https://github.com/peter-mghendi/karata/actions/workflows/publish-web.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-web.yml)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/0b4734fe-7614-4aac-99ca-fafa54e2f942/deploy-status)](https://app.netlify.com/projects/karata/deploys)
 
 # karata
