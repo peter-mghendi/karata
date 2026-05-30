@@ -14,7 +14,11 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5            
+        uses: actions/checkout@v5
+
+      - name: Set version
+        id: params
+        run: echo "version=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT  
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -35,7 +39,20 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}  
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish
-        run: dotnet publish --configuration Release -p PublishProfile=DefaultContainer -p ContainerRegistry=ghcr.io src/Karata.Server/Karata.Server.csproj
+        run:  dotnet publish --configuration Release -p PublishProfile=DefaultContainer -p ContainerRegistry=ghcr.io src/Karata.Server/Karata.Server.csproj
+
+      - name: Publish
+        run: |
+          dotnet publish --configuration Release -o publish src/Karata.Server/Karata.Server.csproj
+          cp publish/karata-server karata-server-linux-x64
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          make_latest: true
+          tag_name: ${{ steps.params.outputs.version }}
+          generate_release_notes: true
+          files: karata-server-linux-x64

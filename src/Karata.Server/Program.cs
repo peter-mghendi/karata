@@ -63,7 +63,6 @@ app.UseForwardedHeaders(new() { ForwardedHeaders = ForwardedHeaders.XForwardedFo
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
-    app.UseWebAssemblyDebugging();
 }
 else
 {
@@ -82,7 +81,5 @@ app.UseAuthorization();
 
 app.MapHubs();
 app.MapEndpoints();
-app.MapStaticAssets();
-app.MapFallbackToFile("index.html");
 
 app.Run();
