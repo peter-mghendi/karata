@@ -45,7 +45,16 @@ jobs:
 
       - name: Publish
         run: dotnet publish --configuration Release -o dist src/Karata.Web/Karata.Web.csproj
-
+      
+      - name: Deploy to releases-karata-web
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: releases-karata-web
+          commit-message: "Release ${{ steps.params.outputs.version }}"
+          folder: dist/wwwroot
+          force: true
+          single-commit: true
+        
       - name: Create archive
         run: tar -czf karata-web.tar.gz dist/wwwroot
         
