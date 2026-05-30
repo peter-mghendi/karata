@@ -42,7 +42,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish
-        run:  dotnet publish --configuration Release -p PublishProfile=DefaultContainer -p ContainerRegistry=ghcr.io src/Karata.Server/Karata.Server.csproj
+        run:  dotnet publish --configuration Release -p PublishProfile=DefaultContainer -p ContainerImageTags=${{ steps.params.outputs.version }};latest -p ContainerRegistry=ghcr.io src/Karata.Server/Karata.Server.csproj
 
       - name: Publish
         run: |
