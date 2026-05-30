@@ -41,10 +41,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish
-        run:  dotnet publish --configuration Release -p PublishProfile=DefaultContainer -p ContainerImageTags=${{ steps.params.outputs.version }};latest -p ContainerRegistry=ghcr.io src/Karata.Server/Karata.Server.csproj
+      - name: Publish containers
+        env:
+          version: ${{ steps.params.outputs.version }}
+        run:  dotnet publish --configuration Release -p PublishProfile=DefaultContainer -p ContainerImageTags="$version;latest" -p ContainerRegistry=ghcr.io src/Karata.Server/Karata.Server.csproj
 
-      - name: Publish
+      - name: Publish binaries
         run: |
           dotnet publish --configuration Release -o publish src/Karata.Server/Karata.Server.csproj
           cp publish/karata-server karata-server-linux-x64
