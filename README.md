@@ -1,4 +1,5 @@
 [![Build + Test](https://github.com/sixpeteunder/karata/actions/workflows/dotnet.yml/badge.svg)](https://github.com/sixpeteunder/karata/actions/workflows/dotnet.yml)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/0b4734fe-7614-4aac-99ca-fafa54e2f942/deploy-status)](https://app.netlify.com/projects/karata/deploys)
 
 # karata
 
@@ -24,6 +25,95 @@ There is also a custom cards library [here](https://github.com/sixpeteunder/kara
 - [ ] Tournaments/Knockouts.
 - [ ] Fines for illegal moves.
 - [x] Bots
+
+## Installation
+
+### Karata.Server
+
+"Karata.Server" is the supported server runtime.
+
+#### Docker (recommended)
+
+The latest server image is published to GitHub Container Registry:
+
+Pull
+
+```shell
+docker pull ghcr.io/peter-mghendi/karata-server:latest
+```
+
+Run:
+
+```shell
+docker run -d \
+  --name karata-server \
+  --env-file path/to/your/.env \
+  -p 5000:5000 \
+  ghcr.io/peter-mghendi/karata-server:latest
+```
+
+A PostgreSQL-compatible database is required.
+
+#### Pre-built binary
+
+Pre-built server binaries are attached to GitHub Releases.
+
+Builds are currently available for:
+
+- `linux-x64`
+
+```
+chmod +x karata-server-linux-x64
+source path/to/your/.env ./karata-server-linux-x64
+```
+
+The server expects its configuration to be supplied via environment variables.
+
+#### Building from source
+
+Build from source:
+
+```shell
+git clone https://github.com/peter-mghendi/karata.git
+cd karata
+
+dotnet publish src/Karata.Server -c Release
+```
+
+---
+
+### Karata.Web
+
+"Karata.Web" is the browser client.
+
+#### Release Artifact
+
+Compiled frontend assets are attached to GitHub Releases as `karata-web.tar.gz`.
+
+Extract the archive and serve the resulting files using any static web server.
+
+```shell
+tar -xzf karata-web.tar.gz
+```
+
+#### Published Assets Branch
+
+The latest generated frontend assets are also available in the `releases-karata-web` branch.
+
+This branch contains build output only and may be used directly with static hosting providers.
+
+#### Building from source
+
+Build from source:
+
+```shell
+git clone https://github.com/sixpeteunder/karata.git
+cd karata
+
+dotnet publish src/Karata.Web -c Release
+```
+
+---
 
 ## Rules
 
