@@ -1,4 +1,4 @@
-name: Release
+name: Publish Karata.Web project
 
 on:
   push:
@@ -7,22 +7,22 @@ on:
 jobs:
   release:
     permissions:
-      contents: read
-      packages: write
+      contents: write
 
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5            
+        uses: actions/checkout@v5      
+        
+      - name: Set version
+        id: params
+        run: echo "version=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT  
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-
-      - name: Install Android workload
-        run: dotnet workload install android
 
       - name: Install Webassembly workload
         run: dotnet workload install wasm-tools
@@ -44,4 +44,15 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}  
 
       - name: Publish
-        run: dotnet publish --configuration Release -p PublishProfile=DefaultContainer -p ContainerRegistry=ghcr.io src/Karata.Server/Karata.Server.csproj
+        run: dotnet publish --configuration Release -o dist src/Karata.Web/Karata.Web.csproj
+
+      - name: Create archive
+        run: tar -czf karata-web.tar.gz dist/wwwroot
+        
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          make_latest: true
+          tag_name: ${{ steps.params.outputs.version }}
+          generate_release_notes: true
+          files: karata-web.tar.gz
