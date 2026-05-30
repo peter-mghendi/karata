@@ -4,6 +4,9 @@
     <UserSecretsId>Karata.Server-645e4e3b-a87e-4a2b-aa8f-239ea9c9b8f8</UserSecretsId>
     <AssemblyName>karata-server</AssemblyName>
     <ContainerRepository>peter-mghendi/karata-server</ContainerRepository>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,7 +16,6 @@
     </PackageReference>
     <PackageReference Include="Keycloak.AuthServices.Authentication" />
     <PackageReference Include="Konscious.Security.Cryptography.Argon2" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
