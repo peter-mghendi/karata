@@ -1,4 +1,4 @@
-name: Publish Karata.Web project
+name: Publish Karata.Web
 
 on:
   push:

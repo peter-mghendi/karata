@@ -1,4 +1,4 @@
-name: Publish Karata.Server project
+name: Publish Karata.Server
 
 on:
   push:
@@ -41,15 +41,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish containers
+      - name: Publish OCI container
         env:
           ContainerImageTags: "${{ steps.params.outputs.version }};latest"
         run:  dotnet publish --configuration Release -p PublishProfile=DefaultContainer -p ContainerRegistry=ghcr.io src/Karata.Server/Karata.Server.csproj
 
-      - name: Publish binaries
+      - name: Publish arm64 binaries
         run: |
-          dotnet publish --configuration Release -o publish src/Karata.Server/Karata.Server.csproj
-          cp publish/karata-server karata-server-linux-x64
+          dotnet publish --configuration Release --runtime linux-arm64 --output publish/arm64 src/Karata.Server/Karata.Server.csproj
+          tar -czf karata-server-linux-arm64.tar.gz publish/arm64/karata-server
+
+      - name: Publish x64 binaries
+        run: |
+          dotnet publish --configuration Release --runtime linux-x64 --output publish/x64 src/Karata.Server/Karata.Server.csproj
+          tar -czf karata-server-linux-x64.tar.gz publish/x64/karata-server
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -57,4 +62,6 @@ jobs:
           make_latest: true
           tag_name: ${{ steps.params.outputs.version }}
           generate_release_notes: true
-          files: karata-server-linux-x64
+          files: |
+            karata-server-linux-arm64.tar.gz
+            karata-server-linux-x64.tar.gz
