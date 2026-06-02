@@ -27,13 +27,14 @@ builder.Services.AddOidcAuthentication(options =>
     options.UserOptions.RoleClaim = "roles";
     options.UserOptions.ScopeClaim = "scope";
 });
+
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.InjectClipboard();
 builder.Services.AddMudServices();
 builder.Services.AddMudExtensions();
 builder.Services.AddKarataCore(karata =>
 {
-    karata.Host = new Uri(builder.HostEnvironment.BaseAddress);
+    karata.Host = new Uri(Configuration.Server[builder.HostEnvironment.Environment].Host);
     karata.TokenProvider = async (services, _) =>
     {
         using var scope = services.CreateScope();
