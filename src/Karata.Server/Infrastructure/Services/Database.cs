@@ -44,10 +44,7 @@ public static class Database
         public async Task MaintainDatabaseAsync()
         {
             using var scope = app.Services.CreateScope();
-            var services = scope.ServiceProvider;
-            var context = services.GetRequiredService<KarataContext>();
-
-            await context.Database.MigrateAsync();
+            await scope.ServiceProvider.GetRequiredService<KarataContext>().Database.MigrateAsync();
         }
     }
 }

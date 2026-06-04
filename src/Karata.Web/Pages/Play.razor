@@ -214,7 +214,7 @@
 
                     if (result?.Data is string passcode) return passcode;
 
-                    var back = DialogService.ShowMessageBox("Go back?", "Exit to 'Join Game' screen?", "Exit", "Try again");
+                    var back = DialogService.ShowMessageBoxAsync("Go back?", "Exit to 'Join Game' screen?", "Exit", "Try again");
                     repeat = await back is false;
                 } while (repeat);
 
@@ -232,7 +232,7 @@
             OnRequestLastCard: async () =>
             {
                 const string blurb = "Declare <b>last card</b> if you have a card or cards that you can legally finish the game with in the next turn.";
-                var dialog = DialogService.ShowMessageBox("Last Card?", new MarkupString(blurb), "Yes!", "No");
+                var dialog = DialogService.ShowMessageBoxAsync("Last Card?", new MarkupString(blurb), "Yes!", "No");
                 return await dialog ?? false;
             }
         );

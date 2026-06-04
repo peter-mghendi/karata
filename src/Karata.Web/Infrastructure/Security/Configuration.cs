@@ -14,7 +14,7 @@ public static class Configuration
     
     public static readonly Dictionary<string, ServerConfiguration> Server = new()
     {
-        ["Development"] = new(Host: "http://localhost:5000"),
+        ["Development"] = new(Host: "https://localhost:7240"),
         ["Production"] = new(Host: "https://server.karata.app")
     };
 }
