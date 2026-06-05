@@ -2,6 +2,10 @@
 
     <PropertyGroup>
         <InvariantGlobalization>true</InvariantGlobalization>
+        <AssemblyName>karata-bot</AssemblyName>
+        <ContainerRepository>peter-mghendi/karata-bot</ContainerRepository>
+        <PublishSingleFile>true</PublishSingleFile>
+        <SelfContained>true</SelfContained>
     </PropertyGroup>
 
     <ItemGroup>
