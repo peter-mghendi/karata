@@ -4,13 +4,14 @@
 @using System.Reactive.Disposables
 @using System.Reactive.Disposables.Fluent
 @using System.Reactive.Linq
+@using Karata.Kit.Application
 @using Karata.Kit.Application.Client.Connection
 @using Karata.Kit.Application.Client.State
 @using Karata.Kit.Application.Store
+@using Karata.Kit.Bot.Interface
 @using Karata.Pebble.Interceptors
 @using Karata.Surface.Components
-@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-@using Microsoft.AspNetCore.Components.WebAssembly.Hosting
+@using Microsoft.Extensions.Options
 @using TextCopy
 
 @attribute [Authorize]
@@ -18,12 +19,12 @@
 @implements IDisposable
 
 @inject AuthenticationStateProvider Authenticator
-@inject IAccessTokenProvider Provider
+@inject BotInterface BotInterface
 @inject IDialogService DialogService
 @inject ILoggerFactory LoggerFactory
+@inject IOptions<KarataClientOptions> ClientOptions
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigator
-@inject IWebAssemblyHostEnvironment Environment
 
 <SessionGuard Session="_session">
     <MudLoading Loading="@(_room is null)" Text="Please wait..." Class="mud-height-full pa-0">
@@ -73,7 +74,7 @@
                                     </MudText>
                                     <MudText Align="Align.Center" Typo="Typo.body1" Class="mb-2">
                                         @_room.State.Id
-                                        <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.ContentCopy"
+                                        <MudIconButton Size="Size.Small" Icon="@Icons.Material.Rounded.ContentCopy"
                                                        Color="Color.Primary" OnClick="@CopyRoomId"/>
                                     </MudText>
                                     <MudText Align="Align.Center" Typo="Typo.body2" Class="gray-text">
@@ -81,7 +82,7 @@
                                     </MudText>
                                     <MudText Align="Align.Center" Typo="Typo.body2" Class="mb-8">
                                         @Navigator.Uri
-                                        <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.ContentCopy"
+                                        <MudIconButton Size="Size.Small" Icon="@Icons.Material.Rounded.ContentCopy"
                                                        Color="Color.Primary" OnClick="@CopyRoomLink"/>
                                     </MudText>
                                     <MudGrid Spacing="2" Justify="Justify.Center">
@@ -122,28 +123,69 @@
                                 </MudTooltip>
                             </MudToolBar>
                         </MudPaper>
-
-                        <MudPaper Class="pa-4 mb-4" Elevation="0">
-                            <div class="mb-2">
-                                <MudSwitch @bind-Value="_table" Color="Color.Primary"
-                                           Label="Table interface (Experimental)"
-                                           Disabled="@(_room!.State.Game.Status is not GameStatus.Ongoing)"/>
-                            </div>
-                            <MudText Typo="Typo.caption" Class="text-gray">
-                                The table interface is still under development and, as such, may contain bugs.
-                            </MudText>
-                        </MudPaper>
-
-                        <MudPaper Class="pa-4 mb-4" Elevation="0">
-                            <div class="mb-2">
-                                <MudSwitch @bind-Value="_learner" Color="Color.Primary"
-                                           Label="Learner mode (Experimental)"
-                                           Disabled="@(_room!.State.Game.Status is not GameStatus.Ongoing)"/>
-                            </div>
-                            <MudText Typo="Typo.caption" Class="text-gray">Shows hints.</MudText>
-                        </MudPaper>
-
+                        
                         <MudExpansionPanels Outlined="false" Elevation="0" Class="mb-4">
+                            <MudExpansionPanel Text="Experimental Features" Class="px-4">
+                                <MudList Dense ReadOnly T="string" Gutters="false">
+                                    <MudListItem>
+                                        <ChildContent>
+                                            <MudStack Spacing="0">
+                                                <MudStack Row AlignItems="AlignItems.Center">
+                                                    <MudSwitch @bind-Value="_table" Color="Color.Primary" Label="Table interface"/>
+                                                    <MudChip T="string" Icon="@Icons.Material.Rounded.Palette" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">Appearance</MudChip>
+                                                    <MudSpacer/>
+                                                </MudStack>
+                                                <MudText Typo="Typo.caption" Class="text-gray">
+                                                    The table interface is still under development and, as such, may contain bugs.
+                                                </MudText>
+                                            </MudStack>
+                                        </ChildContent>
+                                    </MudListItem>
+                                    <MudListItem>
+                                        <ChildContent>
+                                            <MudStack Spacing="0">
+                                                <MudStack Row AlignItems="AlignItems.Center">
+                                                    <MudSwitch @bind-Value="_learner" Color="Color.Primary" Label="Learner mode"/>
+                                                    <MudChip T="string" Icon="@Icons.Material.Rounded.Help" Variant="Variant.Text" Color="Color.Info" Size="Size.Small">Assistance</MudChip>
+                                                    <MudSpacer/>
+                                                </MudStack>
+                                                <MudText Typo="Typo.caption" Class="text-gray">Shows hints.</MudText>
+                                            </MudStack>
+                                        </ChildContent>            
+                                    </MudListItem>
+                                    <MudListItem>
+                                        <ChildContent>
+                                            <MudStack Spacing="0">
+                                                <MudStack Row AlignItems="AlignItems.Center">
+                                                    <MudText>Karata.Bot</MudText>
+                                                    <MudChip T="string" Icon="@Icons.Material.Rounded.SmartToy" Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small">
+                                                        Bot
+                                                    </MudChip>
+                                                    <MudSpacer/>
+                                                    <MudButton Variant="Variant.Text" Color="Color.Info" OnClick="@InviteBot" Disabled="!CanInviteBot">
+                                                        @if (CanInviteBot)
+                                                        {
+                                                            <span>Invite</span>    
+                                                        }
+                                                        else if (_room.State.Game.Hands.Any(hand => hand is { Player.Username: "service-account-karata-bot" }))
+                                                        {
+                                                            <span>Invited</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Room full</span>
+                                                        }
+                                                    </MudButton>
+                                                </MudStack>
+                                                <MudText Typo="Typo.caption">
+                                                    Karata.Bot is an experimental AI player that participates in games using the same information and actions available to players.
+                                                </MudText>
+                                            </MudStack>
+                                        </ChildContent>              
+                                    </MudListItem>
+                                </MudList>
+                            </MudExpansionPanel>
+                            
                             @if (_learner && _room!.State.Game.Status is GameStatus.Ongoing)
                             {
                                 <MudExpansionPanel Text="Learner mode" Class="px-4">
@@ -183,6 +225,7 @@
     private string? _username;
     private readonly CompositeDisposable _subscriptions = new();
 
+    private bool CanInviteBot => _room!.State.Game.Hands.Count < 4 && _room.State.Game.Hands.All(h => h.Username != "service-account-karata-bot");
     private HandData CurrentHand => _room!.State.Game.Hands.Single(h => h.Username == _username);
     private bool IsAdministrator => CurrentHand.Player.Id == _room?.State.Administrator.Id;
 
@@ -193,14 +236,9 @@
         var auth = await Authenticator.GetAuthenticationStateAsync();
         _username = auth.User.Identity!.Name!;
 
-        var connection = new PlayerConnection(new Uri(Environment.BaseAddress))
+        var connection = new PlayerConnection(ClientOptions.Value.Host)
         {
-            AccessTokenProvider = async () =>
-            {
-                var result = await Provider.RequestAccessToken();
-                result.TryGetToken(out var token);
-                return token!.Value;
-            }
+            AccessTokenProvider = ClientOptions.Value.TokenProvider
         };
 
         var parameters = new PlayerConnection.SessionParameters(
@@ -347,6 +385,8 @@
         await _session.JoinRoom();
     }
 
+    async Task InviteBot() => await BotInterface.InviteAsync(bot: "random", invitation: new BotInvitation(Room: Id, Password: null));
+    
     async Task LeaveRoom() => await _session!.LeaveRoom();
 
     async Task StartGame() => await _session!.StartGame();

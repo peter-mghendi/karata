@@ -2,21 +2,22 @@
 
 @using System.Reactive.Disposables
 @using System.Reactive.Disposables.Fluent
+@using Karata.Kit.Application
 @using Karata.Kit.Application.Client
 @using Karata.Kit.Application.Client.Connection
 @using Karata.Kit.Application.Client.State
 @using Karata.Kit.Application.Store
 @using Karata.Pebble.Interceptors
 @using Karata.Web.Support
-@using Microsoft.AspNetCore.Components.WebAssembly.Hosting
+@using Microsoft.Extensions.Options
 
 @implements IDisposable
 
 @inject ILoggerFactory LoggerFactory
+@inject IOptions<KarataClientOptions> ClientOptions
 @inject ISnackbar Snackbar
 @inject KarataClient KarataClient
 @inject NavigationManager Navigator
-@inject IWebAssemblyHostEnvironment Environment
 
 <SessionGuard Session="_session">
     <MudLoading Loading="@(_store is null)" Text="Please wait..." Class="mud-height-full pa-0">
@@ -95,7 +96,7 @@
     {
         _turns = await KarataClient.Turns.ListAsync(Id);
 
-        var connection = new SpectatorConnection(new Uri(Environment.BaseAddress));
+        var connection = new SpectatorConnection(ClientOptions.Value.Host);
         await connection.StartAsync();
         
         _session = connection.Spawn(Id, new SpectatorConnection.SessionParameters());

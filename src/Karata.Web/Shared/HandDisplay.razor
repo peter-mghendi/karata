@@ -20,15 +20,15 @@
     <NestedList>
         @if (Controls)
         {
-            <MudListItem Icon="@Icons.Material.Filled.SkipNext" Value="@("Skip turn")" OnClick="VoidTurn"
+            <MudListItem Icon="@Icons.Material.Rounded.SkipNext" Value="@("Skip turn")" OnClick="VoidTurn"
                          Disabled="!IsCurrent">
                 Skip turn
             </MudListItem>
-            <MudListItem Icon="@Icons.Material.Filled.PersonOff" Value="@("Mark as Away")" OnClick="SetAway">
+            <MudListItem Icon="@Icons.Material.Rounded.PersonOff" Value="@("Mark as Away")" OnClick="SetAway">
                 Mark as Away
             </MudListItem>
         }
-        <MudListItem Icon="@Icons.Material.Filled.Person" Value="@("Person")" Disabled>
+        <MudListItem Icon="@Icons.Material.Rounded.Person" Value="@("Person")" Disabled>
             Show profile (coming soon)
         </MudListItem>
     </NestedList>

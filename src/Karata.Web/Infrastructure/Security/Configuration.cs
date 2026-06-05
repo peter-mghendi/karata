@@ -17,4 +17,10 @@ public static class Configuration
         ["Development"] = new(Host: "https://localhost:7240"),
         ["Production"] = new(Host: "https://server.karata.app")
     };
+    
+    public static readonly Dictionary<string, BotInterfaceConfiguration> BotInterface = new()
+    {
+        ["Development"] = new(Host: "https://localhost:7242"),
+        ["Production"] = new(Host: "https://bot.karata.app")
+    };
 }

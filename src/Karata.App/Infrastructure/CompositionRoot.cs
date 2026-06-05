@@ -49,11 +49,7 @@ public static class CompositionRoot
             services.AddKarataCore(karata =>
             {
                 karata.Host = new Uri("https://localhost:7240");
-                karata.TokenProvider = async (sp, cancellation) =>
-                {
-                    var auth = sp.GetRequiredService<AuthService>();
-                    return await auth.GetAccessTokenAsync(cancellation);
-                };
+                karata.TokenProvider = async () => await services.BuildServiceProvider().GetRequiredService<AuthService>().GetAccessTokenAsync();
             });
             
             services.AddSingleton<IScreen, ShellViewModel>();
