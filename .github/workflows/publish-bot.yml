@@ -53,7 +53,7 @@ jobs:
 
       - name: Publish x64 binaries
         run: |
-          dotnet publish --configuration Release --runtime linux-x64 --output publish/x64 src/Karata.Server/Karata.Server.csproj
+          dotnet publish --configuration Release --runtime linux-x64 --output publish/x64 src/Karata.Bot/Karata.Bot.csproj
           tar -czf karata-bot-linux-x64.tar.gz publish/x64/karata-bot
 
       - name: Create release
