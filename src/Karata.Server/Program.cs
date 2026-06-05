@@ -3,7 +3,6 @@ using Karata.Server.Endpoints;
 using Karata.Server.Infrastructure.Security;
 using Karata.Server.Infrastructure.Services;
 using Karata.Server.Services;
-using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -46,9 +45,6 @@ builder.Services.AddResponseCompression(compression =>
 {
     compression.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/octet-stream"]);
 });
-
-// builder.Services.AddControllersWithViews();
-// builder.Services.AddRazorPages();
 
 if (int.TryParse(Environment.GetEnvironmentVariable("PORT"), out var port))
 {

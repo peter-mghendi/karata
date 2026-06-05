@@ -1,0 +1,67 @@
+name: Publish Karata.Bot
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  release:
+    permissions:
+      contents: write
+      packages: write
+
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set version
+        id: params
+        run: echo "version=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT  
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore Karata.slnf
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore Karata.slnf
+
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --verbosity normal Karata.slnf
+        
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish OCI container
+        env:
+          ContainerImageTags: "${{ steps.params.outputs.version }};latest"
+        run:  dotnet publish --configuration Release -p PublishProfile=DefaultContainer -p ContainerRegistry=ghcr.io src/Karata.Bot/Karata.Bot.csproj
+
+      - name: Publish arm64 binaries
+        run: |
+          dotnet publish --configuration Release --runtime linux-arm64 --output publish/arm64 src/Karata.Bot/Karata.Bot.csproj
+          tar -czf karata-bot-linux-arm64.tar.gz publish/arm64/karata-bot
+
+      - name: Publish x64 binaries
+        run: |
+          dotnet publish --configuration Release --runtime linux-x64 --output publish/x64 src/Karata.Server/Karata.Server.csproj
+          tar -czf karata-bot-linux-x64.tar.gz publish/x64/karata-bot
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          make_latest: true
+          tag_name: ${{ steps.params.outputs.version }}
+          generate_release_notes: true
+          files: |
+            karata-bot-linux-arm64.tar.gz
+            karata-bot-linux-x64.tar.gz

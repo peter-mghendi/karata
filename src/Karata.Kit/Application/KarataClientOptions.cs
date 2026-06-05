@@ -4,5 +4,5 @@ public sealed class KarataClientOptions
 {
     public required Uri Host { get; set; }
 
-    public required Func<IServiceProvider, CancellationToken, Task<string?>> TokenProvider { get; set; }
+    public required Func<Task<string?>> TokenProvider { get; set; }
 }

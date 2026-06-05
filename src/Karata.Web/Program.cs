@@ -1,5 +1,6 @@
 using Blazored.LocalStorage;
 using Karata.Kit.Application;
+using Karata.Kit.Bot;
 using Karata.Web;
 using Karata.Web.Infrastructure.Security;
 using Microsoft.AspNetCore.Components.Web;
@@ -35,15 +36,15 @@ builder.Services.AddMudExtensions();
 builder.Services.AddKarataCore(karata =>
 {
     karata.Host = new Uri(Configuration.Server[builder.HostEnvironment.Environment].Host);
-    karata.TokenProvider = async (services, _) =>
+    karata.TokenProvider = async () =>
     {
-        using var scope = services.CreateScope();
-        var provider = scope.ServiceProvider.GetRequiredService<IAccessTokenProvider>();
-        var result = await provider.RequestAccessToken();
+        using var scope = builder.Services.BuildServiceProvider().CreateScope();
+        var result = await scope.ServiceProvider.GetRequiredService<IAccessTokenProvider>().RequestAccessToken();
 
         return result.TryGetToken(out var token) ? token.Value : null;
     };
 });
+builder.Services.AddKarataBotInterface(new  Uri(Configuration.BotInterface[builder.HostEnvironment.Environment].Host));
 builder.Services.AddScoped<AuthenticationHelper>();
 
 await builder.Build().RunAsync();

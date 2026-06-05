@@ -1,4 +1,5 @@
 [![Test Solution](https://github.com/peter-mghendi/karata/actions/workflows/test-solution.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/test-solution.yml)
+[![Publish Karata.Bot](https://github.com/peter-mghendi/karata/actions/workflows/publish-bot.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-bot.yml)
 [![Publish Karata.Server](https://github.com/peter-mghendi/karata/actions/workflows/publish-server.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-server.yml)
 [![Publish Karata.Web](https://github.com/peter-mghendi/karata/actions/workflows/publish-web.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-web.yml)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/0b4734fe-7614-4aac-99ca-fafa54e2f942/deploy-status)](https://app.netlify.com/projects/karata/deploys)
@@ -32,7 +33,7 @@ There is also a custom cards library [here](https://github.com/sixpeteunder/kara
 
 ### Karata.Server
 
-"Karata.Server" is the supported server runtime.
+`Karata.Server` is the supported server runtime.
 
 #### Docker (recommended)
 
@@ -62,6 +63,7 @@ Pre-built server binaries are attached to GitHub Releases.
 
 Builds are currently available for:
 
+- `linux-arm64`
 - `linux-x64`
 
 ```
@@ -86,7 +88,8 @@ dotnet publish src/Karata.Server -c Release
 
 ### Karata.Web
 
-"Karata.Web" is the browser client.
+`Karata.Web` is the official browser client built completely on public, documented APIs,
+the `Karata.Kit` SDK and the `Karata.Surface` UI kit.
 
 #### Release Artifact
 
@@ -113,6 +116,62 @@ git clone https://github.com/sixpeteunder/karata.git
 cd karata
 
 dotnet publish src/Karata.Web -c Release
+```
+
+---
+
+### Karata.Bot
+
+`Karata.Bot` is a reference bot implementation built on the `Karata.BotFramework` library,
+which in turn builds on primitives defined in `Karata.Kit`.
+
+#### Docker (recommended)
+
+The latest bot image is published to GitHub Container Registry:
+
+Pull
+
+```shell
+docker pull ghcr.io/peter-mghendi/karata-bot:latest
+```
+
+Run:
+
+```shell
+docker run -d \
+  --name karata-bot \
+  --env-file path/to/your/.env \
+  -p 5000:5000 \
+  ghcr.io/peter-mghendi/karata-bot:latest
+```
+
+A PostgreSQL-compatible database is required.
+
+#### Pre-built binary
+
+Pre-built bot binaries are attached to GitHub Releases.
+
+Builds are currently available for:
+
+- `linux-arm64`
+- `linux-x64`
+
+```
+chmod +x karata-bot-linux-x64
+source path/to/your/.env ./karata-bot-linux-x64
+```
+
+The bot expects its configuration to be supplied via environment variables.
+
+#### Building from source
+
+Build from source:
+
+```shell
+git clone https://github.com/peter-mghendi/karata.git
+cd karata
+
+dotnet publish src/Karata.Bot -c Release
 ```
 
 ---

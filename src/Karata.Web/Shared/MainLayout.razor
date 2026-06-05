@@ -33,7 +33,7 @@
                     Hi, @context.User.Identity!.Name!
                 </MudLink>
                 <MudLink OnClick="@(() => Authenticator.Logout())" Typo="Typo.body2" Class="me-4">
-                    <MudIcon Icon="@Icons.Material.Filled.Logout" />
+                    <MudIcon Icon="@Icons.Material.Rounded.Logout" />
                 </MudLink>
             </Authorized>
             <NotAuthorized>
@@ -65,8 +65,8 @@
 
     private string ThemeToggleIcon => _dark switch 
     {
-        true => Icons.Material.Filled.LightMode,
-        false => Icons.Material.Filled.DarkMode,
+        true => Icons.Material.Rounded.LightMode,
+        false => Icons.Material.Rounded.DarkMode,
     };
     
     protected override async Task OnAfterRenderAsync(bool firstRender)

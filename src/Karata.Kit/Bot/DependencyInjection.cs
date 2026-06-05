@@ -1,5 +1,6 @@
 using Karata.Kit.Application.Client.Connection;
 using Karata.Kit.Bot.Infrastructure.Security;
+using Karata.Kit.Bot.Interface;
 using Karata.Kit.Bot.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,12 @@ public static class DependencyInjection
             
             services.AddSingleton<BotSessionFactory>();
             services.AddSingleton<BotSessionManager>();
+            return services;
+        }
+
+        public IServiceCollection AddKarataBotInterface(Uri host)
+        {
+            services.AddSingleton<BotInterface>(_ => new BotInterface(host));
             return services;
         }
     }
