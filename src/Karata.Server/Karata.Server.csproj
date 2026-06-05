@@ -6,7 +6,6 @@
     <ContainerRepository>peter-mghendi/karata-server</ContainerRepository>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
-    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
