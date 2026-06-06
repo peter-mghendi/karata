@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" class="mud-height-full">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Karata</title>
+    <base href="/" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="Karata.Web.styles.css" rel="stylesheet" />
+
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Karata" />
+    <link rel="manifest" href="/manifest.json" />
+    
+<!--    <link href="manifest.json" rel="manifest" />-->
+</head>
+
+<body class="mud-height-full" style="background-color: var(--mud-palette-background-gray);">
+    <div id="app" class="mud-height-full">
+        <div class="d-flex mud-height-full mud-width-full" style="background-color: rgba(39,39,47,1);">
+            <div class="d-flex flex-column mx-auto my-auto">
+                <span class="loading mb-12 mx-auto"></span>
+                <span class="loading-text">Loading</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script>navigator.serviceWorker.register('service-worker.js', { updateViaCache: "none" });</script>
+</body>
+
+</html>

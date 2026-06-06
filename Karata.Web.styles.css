@@ -1,0 +1,71 @@
+/* /Shared/Game/CardComponent.razor.rz.scp.css */
+.card[b-ht4z2cgytl] {
+    width: 70px;
+    float: left;
+    border: solid gray 1px;
+}
+
+.card:not(:first-child)[b-ht4z2cgytl] {
+    margin-left: -55px;
+}
+    
+/* /Shared/Game/CardTableGameInterface.razor.rz.scp.css */
+#table[b-cdfy1nlt9l] {
+    --center-offset: 43.5%;
+    --edge-offset-vertical: 16px;
+    --edge-offset-horizontal: 8px;
+}
+
+/*noinspection CssInvalidPseudoSelector*/
+[b-cdfy1nlt9l] #bottom .card{
+    position: relative;
+    transition-duration: 250ms;
+}
+
+/*noinspection CssInvalidPseudoSelector*/
+[b-cdfy1nlt9l] #bottom .card:hover {
+    z-index: 10;
+    box-shadow:  2px 2px 3px gray;
+    margin-top: -10px;
+}
+
+#top[b-cdfy1nlt9l] {
+    left: var(--center-offset);
+    top: var(--edge-offset-vertical);
+    transform: rotate(180deg);
+}
+
+#bottom[b-cdfy1nlt9l] {
+    right: var(--center-offset);
+    bottom: var(--edge-offset-vertical);
+    transform: rotate(0);
+}
+
+#left[b-cdfy1nlt9l] {
+    bottom: var(--center-offset);
+    left: var(--edge-offset-horizontal);
+    transform: rotate(90deg);
+}
+
+#right[b-cdfy1nlt9l] {
+    top: var(--center-offset);
+    right: var(--edge-offset-horizontal);
+    transform: rotate(270deg);
+}
+
+#deck[b-cdfy1nlt9l] {
+    top: 30%;
+    left: 40%;
+    width: 70px;
+}
+
+#pile[b-cdfy1nlt9l] {
+    top: 30%;
+    right: 40%;
+    width: 70px;
+}
+
+#turn[b-cdfy1nlt9l] {
+    bottom: 27.5%;
+    right: 43.5%;
+}
