@@ -60,7 +60,7 @@ public sealed class AccessTokenProvider(HttpClient http, IConfiguration configur
             var expiresIn = json.RootElement.GetProperty("expires_in").GetInt32();
             _expiresAt = DateTimeOffset.UtcNow.AddSeconds(Math.Max(10, expiresIn - 30));
             _token = json.RootElement.GetProperty("access_token").GetString()!;
-            
+            Console.WriteLine(_token);
 
             return _token!;
         }

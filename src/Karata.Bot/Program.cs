@@ -6,6 +6,9 @@ using Karata.Kit.Bot.Infrastructure.Security;
 using Karata.Kit.Bot.Strategy;
 
 var builder = WebApplication.CreateBuilder(args);
+var host = builder.Configuration["Karata:Host"];
+
+Console.WriteLine($"Karata Host: {host}");
 
 builder.Services.AddCors(cors => cors.AddPolicy(nameof(CrossOrigin.AllowAll), CrossOrigin.AllowAll));
 builder.Services.AddHealthChecks();
@@ -13,7 +16,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton<AccessTokenProvider>();
 builder.Services.AddKarataCore((karata, services) =>
 {
-    karata.Host = new Uri(builder.Configuration["Karata:Host"]!);
+    karata.Host = new Uri(host!);
     karata.TokenProvider = async () => await services.GetRequiredService<AccessTokenProvider>().GetAsync();
 });
 
