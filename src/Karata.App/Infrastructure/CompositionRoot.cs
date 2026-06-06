@@ -46,7 +46,7 @@ public static class CompositionRoot
                 });
             });
             services.AddSingleton<AuthService>();
-            services.AddKarataCore(karata =>
+            services.AddKarataCore((karata, _) =>
             {
                 karata.Host = new Uri("https://localhost:7240");
                 karata.TokenProvider = async () => await services.BuildServiceProvider().GetRequiredService<AuthService>().GetAccessTokenAsync();

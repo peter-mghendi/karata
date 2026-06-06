@@ -9,7 +9,7 @@ public static class DependencyInjection
 {
     extension(IServiceCollection services)
     {
-        public IServiceCollection AddKarataCore(Action<KarataClientOptions> configure)
+        public IServiceCollection AddKarataCore(Action<KarataClientOptions, IServiceProvider> configure)
         {
             services.AddOptions<KarataClientOptions>().Configure(configure);
             services.AddSingleton<KarataClient>(sp =>

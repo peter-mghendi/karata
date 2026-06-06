@@ -33,7 +33,7 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.InjectClipboard();
 builder.Services.AddMudServices();
 builder.Services.AddMudExtensions();
-builder.Services.AddKarataCore(karata =>
+builder.Services.AddKarataCore((karata, _) =>
 {
     karata.Host = new Uri(Configuration.Server[builder.HostEnvironment.Environment].Host);
     karata.TokenProvider = async () =>

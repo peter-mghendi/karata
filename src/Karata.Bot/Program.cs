@@ -11,10 +11,10 @@ builder.Services.AddCors(cors => cors.AddPolicy(nameof(CrossOrigin.AllowAll), Cr
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<AccessTokenProvider>();
-builder.Services.AddKarataCore(karata =>
+builder.Services.AddKarataCore((karata, services) =>
 {
     karata.Host = new Uri(builder.Configuration["Karata:Host"]!);
-    karata.TokenProvider = async () => await builder.Services.BuildServiceProvider().GetRequiredService<AccessTokenProvider>().GetAsync();
+    karata.TokenProvider = async () => await services.GetRequiredService<AccessTokenProvider>().GetAsync();
 });
 
 builder.Services.AddKarataBot();
