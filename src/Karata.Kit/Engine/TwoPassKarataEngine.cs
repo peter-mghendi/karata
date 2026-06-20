@@ -1,12 +1,12 @@
 using System.Collections.Immutable;
 using System.Diagnostics.Contracts;
-using Karata.Cards;
-using Karata.Cards.Extensions;
 using Karata.Kit.Domain.Models;
 using Karata.Kit.Engine.Exceptions;
+using Karata.Pips;
+using Karata.Pips.Extensions;
 using Microsoft.Extensions.Logging;
-using static Karata.Cards.Card.CardFace;
 using static Karata.Kit.Domain.Models.CardRequestLevel;
+using static Karata.Pips.Card.CardFace;
 
 namespace Karata.Kit.Engine;
 

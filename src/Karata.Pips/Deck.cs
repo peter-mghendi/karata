@@ -1,10 +1,10 @@
-using Karata.Cards.Extensions;
-using static Karata.Cards.Card;
-using static Karata.Cards.Card.CardColor;
-using static Karata.Cards.Card.CardFace;
-using static Karata.Cards.Card.CardSuit;
+using Karata.Pips.Extensions;
+using static Karata.Pips.Card;
+using static Karata.Pips.Card.CardColor;
+using static Karata.Pips.Card.CardFace;
+using static Karata.Pips.Card.CardSuit;
 
-namespace Karata.Cards;
+namespace Karata.Pips;
 
 public class Deck : Stack<Card>
 {
@@ -22,10 +22,10 @@ public class Deck : Stack<Card>
         get
         {
             var deck = new Deck();
-            foreach (var suit in Enum.GetValues<CardSuit>())
+            foreach (var suit in Enum.GetValues<Card.CardSuit>())
             {
                 if (suit is BlackJoker or RedJoker) continue;
-                foreach (var face in Enum.GetValues<CardFace>())
+                foreach (var face in Enum.GetValues<Card.CardFace>())
                 {
                     if (face is None or Joker) continue;
                     deck.Push(face.Of(suit));

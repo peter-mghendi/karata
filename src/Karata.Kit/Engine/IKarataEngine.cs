@@ -1,9 +1,9 @@
 using System.Collections.Immutable;
-using Karata.Cards;
-using Karata.Cards.Extensions;
 using Karata.Kit.Domain.Models;
 using Karata.Kit.Engine.Exceptions;
-using static Karata.Cards.Card.CardFace;
+using Karata.Pips;
+using Karata.Pips.Extensions;
+using static Karata.Pips.Card.CardFace;
 
 namespace Karata.Kit.Engine;
 

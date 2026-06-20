@@ -1,11 +1,11 @@
-using Karata.Cards.Extensions;
+using Karata.Pips.Extensions;
 using Xunit;
-using static Karata.Cards.Card;
-using static Karata.Cards.Card.CardColor;
-using static Karata.Cards.Card.CardFace;
-using static Karata.Cards.Card.CardSuit;
+using static Karata.Pips.Card;
+using static Karata.Pips.Card.CardColor;
+using static Karata.Pips.Card.CardFace;
+using static Karata.Pips.Card.CardSuit;
 
-namespace Karata.Cards.Tests.Extensions;
+namespace Karata.Pips.Tests.Extensions;
 
 public class CardExtensionsTest
 {

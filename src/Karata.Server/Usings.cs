@@ -1,3 +1,3 @@
-global using Karata.Cards;
-global using Karata.Cards.Extensions;
+global using Karata.Pips;
+global using Karata.Pips.Extensions;
 global using Karata.Server.Models;

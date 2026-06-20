@@ -1,4 +1,4 @@
-using Karata.Cards;
+using Karata.Pips;
 using static Karata.Kit.Domain.Models.CardRequestLevel;
 
 namespace Karata.Kit.Domain.Models;

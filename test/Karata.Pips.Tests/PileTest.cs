@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Karata.Cards.Tests;
+namespace Karata.Pips.Tests;
 
 public class PileTest
 {

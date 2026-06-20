@@ -655,7 +655,7 @@ namespace Karata.Server.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsOne("Karata.Cards.Card", "Request", b1 =>
+                    b.OwnsOne("Karata.Pips.Card", "Request", b1 =>
                         {
                             b1.Property<int>("GameId")
                                 .HasColumnType("integer");
@@ -706,7 +706,7 @@ namespace Karata.Server.Data.Migrations
                         .WithMany("Hands")
                         .HasForeignKey("PlayerId");
 
-                    b.OwnsMany("Karata.Cards.Card", "Cards", b1 =>
+                    b.OwnsMany("Karata.Pips.Card", "Cards", b1 =>
                         {
                             b1.Property<int>("HandId")
                                 .HasColumnType("integer");
@@ -795,7 +795,7 @@ namespace Karata.Server.Data.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("TurnId");
 
-                            b1.OwnsMany("Karata.Cards.Card", "Cards", b2 =>
+                            b1.OwnsMany("Karata.Pips.Card", "Cards", b2 =>
                                 {
                                     b2.Property<int>("GameDeltaTurnId")
                                         .HasColumnType("integer");
@@ -821,7 +821,7 @@ namespace Karata.Server.Data.Migrations
                             b1.Navigation("Cards");
                         });
 
-                    b.OwnsMany("Karata.Cards.Card", "Cards", b1 =>
+                    b.OwnsMany("Karata.Pips.Card", "Cards", b1 =>
                         {
                             b1.Property<int>("TurnId")
                                 .HasColumnType("integer");
@@ -846,7 +846,7 @@ namespace Karata.Server.Data.Migrations
                                 .HasForeignKey("TurnId");
                         });
 
-                    b.OwnsMany("Karata.Cards.Card", "Picked", b1 =>
+                    b.OwnsMany("Karata.Pips.Card", "Picked", b1 =>
                         {
                             b1.Property<int>("TurnId")
                                 .HasColumnType("integer");
@@ -871,7 +871,7 @@ namespace Karata.Server.Data.Migrations
                                 .HasForeignKey("TurnId");
                         });
 
-                    b.OwnsOne("Karata.Cards.Card", "Request", b1 =>
+                    b.OwnsOne("Karata.Pips.Card", "Request", b1 =>
                         {
                             b1.Property<int>("TurnId")
                                 .HasColumnType("integer");

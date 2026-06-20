@@ -1,18 +1,18 @@
-using static Karata.Cards.Card;
-using static Karata.Cards.Card.CardColor;
-using static Karata.Cards.Card.CardFace;
-using static Karata.Cards.Card.CardSuit;
+using static Karata.Pips.Card;
+using static Karata.Pips.Card.CardColor;
+using static Karata.Pips.Card.CardFace;
+using static Karata.Pips.Card.CardSuit;
 
-namespace Karata.Cards.Extensions
+namespace Karata.Pips.Extensions
 {
     public static class CardExtensions
     {
-        extension(CardFace face)
+        extension(Card.CardFace face)
         {
-            public Card Of(CardSuit suit) => new() { Face = face, Suit = suit };
+            public Card Of(Card.CardSuit suit) => new() { Face = face, Suit = suit };
         }
 
-        extension(CardColor color)
+        extension(Card.CardColor color)
         {
             public Card Joker => !Enum.IsDefined(color)
                 ? throw new ArgumentException("Invalid color", nameof(color))
@@ -30,7 +30,7 @@ namespace Karata.Cards.Extensions
                     ? throw new ArgumentException("Invalid face", nameof(card))
                     : (uint)card.Face;
 
-            public CardColor Color =>
+            public Card.CardColor Color =>
                 card.Suit switch
                 {
                     Spades or Clubs or BlackJoker => Black,

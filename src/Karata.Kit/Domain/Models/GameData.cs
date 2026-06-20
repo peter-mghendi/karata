@@ -1,6 +1,6 @@
-using Karata.Cards;
-using static Karata.Cards.Card.CardFace;
+using Karata.Pips;
 using static Karata.Kit.Domain.Models.CardRequestLevel;
+using static Karata.Pips.Card.CardFace;
 
 namespace Karata.Kit.Domain.Models;
 

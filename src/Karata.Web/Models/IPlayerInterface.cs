@@ -1,8 +1,8 @@
 #pragma warning disable BL0007
 
 using System.Collections.Immutable;
-using Karata.Cards;
 using Karata.Kit.Domain.Models;
+using Karata.Pips;
 using Microsoft.AspNetCore.Components;
 
 namespace Karata.Web.Models;

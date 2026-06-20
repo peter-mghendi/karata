@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Karata.Cards\Karata.Cards.csproj" />
+    <ProjectReference Include="..\..\src\Karata.Pips\Karata.Pips.csproj" />
   </ItemGroup>
 
 </Project>

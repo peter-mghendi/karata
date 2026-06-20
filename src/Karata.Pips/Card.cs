@@ -1,4 +1,4 @@
-namespace Karata.Cards;
+namespace Karata.Pips;
 
 public partial record Card 
 {

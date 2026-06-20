@@ -7,11 +7,11 @@ using Karata.Server.Hubs;
 using Karata.Server.Hubs.Clients;
 using Karata.Server.Support.Exceptions;
 using Microsoft.AspNetCore.SignalR;
-using static Karata.Cards.Card.CardFace;
 using static Karata.Kit.Domain.Models.CardRequestLevel;
 using static Karata.Kit.Domain.Models.GameStatus;
 using static Karata.Kit.Domain.Models.HandStatus;
 using static Karata.Kit.Domain.Models.TurnType;
+using static Karata.Pips.Card.CardFace;
 
 namespace Karata.Server.Services;
 

@@ -12,7 +12,7 @@ Real-time Kenyan street poker over ASP.NET Core SignalR/websockets.
 
 The game is currently playable and implements all game logic.
 
-There is also a custom cards library [here](https://github.com/sixpeteunder/karata/tree/main/src/Karata.Cards) (with a complete test suite).
+There is also a custom [cards library](https://github.com/sixpeteunder/karata/tree/main/src/Karata.Pips) with a complete [test suite](https://github.com/sixpeteunder/karata/tree/main/tests/Karata.Pips.Tests).
 
 ## Features
 - [x] Real-time in-game chat.

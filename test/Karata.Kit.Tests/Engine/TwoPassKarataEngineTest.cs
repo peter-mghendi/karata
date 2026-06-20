@@ -1,17 +1,17 @@
-using Karata.Cards;
-using Karata.Cards.Extensions;
 using Karata.Kit.Domain.Models;
 using Karata.Kit.Engine;
 using Karata.Kit.Engine.Exceptions;
+using Karata.Pips;
+using Karata.Pips.Extensions;
 using Microsoft.Extensions.Logging.Abstractions;
-using static Karata.Cards.Card.CardColor;
-using static Karata.Cards.Card.CardFace;
-using static Karata.Cards.Card.CardSuit;
 using static Karata.Kit.Domain.Models.CardRequestLevel;
+using static Karata.Pips.Card.CardColor;
+using static Karata.Pips.Card.CardFace;
+using static Karata.Pips.Card.CardSuit;
 using TestCase = (
     int Identifier,
     Karata.Kit.Domain.Models.GameData Game,
-    System.Collections.Generic.List<Karata.Cards.Card> Cards,
+    System.Collections.Generic.List<Karata.Pips.Card> Cards,
     bool ExpectedValid,
     Karata.Kit.Domain.Models.TurnDelta ExpectedDelta
     );
