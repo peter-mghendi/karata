@@ -1,6 +1,6 @@
 [![Test Solution](https://github.com/peter-mghendi/karata/actions/workflows/test-solution.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/test-solution.yml)
 [![Publish Karata.Bot](https://github.com/peter-mghendi/karata/actions/workflows/publish-bot.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-bot.yml)
-[![Publish Karata.Server](https://github.com/peter-mghendi/karata/actions/workflows/publish-server.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-server.yml)
+[![Publish Karata.Cards](https://github.com/peter-mghendi/karata/actions/workflows/publish-server.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-server.yml)
 [![Publish Karata.Web](https://github.com/peter-mghendi/karata/actions/workflows/publish-web.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-web.yml)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/0b4734fe-7614-4aac-99ca-fafa54e2f942/deploy-status)](https://app.netlify.com/projects/karata/deploys)
 
@@ -31,9 +31,9 @@ There is also a custom [cards library](https://github.com/sixpeteunder/karata/tr
 
 ## Installation
 
-### Karata.Server
+### Karata.Cards
 
-`Karata.Server` is the supported server runtime.
+`Karata.Cards` is the supported game server runtime.
 
 #### Docker (recommended)
 
@@ -81,7 +81,7 @@ Build from source:
 git clone https://github.com/peter-mghendi/karata.git
 cd karata
 
-dotnet publish src/Karata.Server -c Release
+dotnet publish src/Karata.Cards -c Release
 ```
 
 ---

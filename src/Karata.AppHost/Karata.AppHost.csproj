@@ -2,7 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Karata.Bot\Karata.Bot.csproj" />
-    <ProjectReference Include="..\Karata.Server\Karata.Server.csproj" />
+    <ProjectReference Include="..\Karata.Cards\Karata.Cards.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

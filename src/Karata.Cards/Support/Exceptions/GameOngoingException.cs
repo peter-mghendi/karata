@@ -1,0 +1,6 @@
+namespace Karata.Cards.Support.Exceptions;
+
+public class GameOngoingException : KarataGameException
+{
+    public override string Message => "This game is ongoing.";
+}
