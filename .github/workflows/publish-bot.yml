@@ -26,13 +26,13 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore dependencies
-        run: dotnet restore Karata.slnf
+        run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore Karata.slnf
+        run: dotnet build --configuration Release --no-restore
 
       - name: Run tests
-        run: dotnet test --configuration Release --no-build --verbosity normal Karata.slnf
+        run: dotnet test --configuration Release --no-build --verbosity normal
         
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4

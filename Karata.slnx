@@ -5,14 +5,9 @@
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/src/">
-    <Project Path="src/Karata.Android/Karata.Android.csproj" />
-    <Project Path="src/Karata.App/Karata.App.csproj" />
     <Project Path="src/Karata.AppHost/Karata.AppHost.csproj" />
     <Project Path="src/Karata.Bot/Karata.Bot.csproj" />
     <Project Path="src/Karata.BotFramework/Karata.BotFramework.csproj" />
-    <Project Path="src/Karata.Browser/Karata.Browser.csproj" />
-    <Project Path="src/Karata.Desktop/Karata.Desktop.csproj" />
-    <Project Path="src/Karata.iOS/Karata.iOS.csproj" />
     <Project Path="src/Karata.Kit/Karata.Kit.csproj" />
     <Project Path="src/Karata.Pebble/Karata.Pebble.csproj" />
     <Project Path="src/Karata.Pips/Karata.Pips.csproj" />
