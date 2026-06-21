@@ -14,7 +14,7 @@
                 <MudText>Join</MudText>
             </MudButton>
             <MudDivider Vertical FlexItem/>
-            <MudButton OnClick="CreateRoom" Color="Color.Secondary" Variant="Variant.Outlined">
+            <MudButton OnClick="@CreateRoom" Color="Color.Secondary" Variant="Variant.Outlined">
                 @if (_loading)
                 {
                     <MudProgressCircular Indeterminate Class="ms-n1" Size="Size.Small" />

@@ -25,7 +25,7 @@
         }
     </MudSelect>
 
-    <MudButton OnClick="SubmitForm">Request this card</MudButton>
+    <MudButton OnClick="@SubmitForm">Request this card</MudButton>
 
     @if (Specific)
     {
@@ -37,12 +37,12 @@
 
         <MudGrid Class="mb-4" Spacing="4">
             <MudItem xs="6">
-                <MudButton Variant="Variant.Outlined" Color="Color.Dark" OnClick="() => RequestJoker(Black)">
+                <MudButton Variant="Variant.Outlined" Color="Color.Dark" OnClick="@(() => RequestJoker(Black))">
                     Black Joker
                 </MudButton>
             </MudItem>
             <MudItem xs="6">
-                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => RequestJoker(Red)">
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => RequestJoker(Red))">
                     Red Joker
                 </MudButton>
             </MudItem>
@@ -65,6 +65,4 @@
     }
 
     private void SubmitForm() => MudDialog.Close(Face.Of(Suit));
-
-    private void Cancel() => MudDialog.Close();
 }

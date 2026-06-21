@@ -1,7 +1,7 @@
 using Karata.Kit.Application.Security;
-using Karata.Web.Support;
+using Karata.Surface.Models;
 
-namespace Karata.Web.Infrastructure.Security;
+namespace Karata.Desktop;
 
 // Karata.Web is a public client - there is no client secret since it uses the Authorization Code grant.
 public static class Configuration

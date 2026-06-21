@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 
-namespace Karata.Web.Infrastructure.Security;
+namespace Karata.Surface.Security;
 
 file sealed class Route
 {

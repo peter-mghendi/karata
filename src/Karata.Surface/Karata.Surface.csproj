@@ -5,8 +5,21 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Blazored.LocalStorage"/>
+        <PackageReference Include="CodeBeam.MudBlazor.Extensions" />
+        <PackageReference Include="GitInfo">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.AspNetCore.Components.Web"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" />
+        <PackageReference Include="MudBlazor" />
         <PackageReference Include="QRCoder" />
+        <PackageReference Include="TextCopy" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Karata.Kit\Karata.Kit.csproj" />
     </ItemGroup>
 
 </Project>

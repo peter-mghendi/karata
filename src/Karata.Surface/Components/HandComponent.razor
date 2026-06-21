@@ -2,7 +2,7 @@
 
 @foreach (var card in Cards)
 {
-    <CardComponent Card="@card" FaceUp="@FaceUp" OnClick="SelectCard" />
+    <CardComponent Card="@card" FaceUp="@FaceUp" OnClick="@SelectCard" />
 }
 
 @code

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <Platforms>AnyCPU</Platforms>
-    <ApplicationIcon>favicon.ico</ApplicationIcon>
+<!--    <ApplicationIcon>favicon.ico</ApplicationIcon>-->
   </PropertyGroup>
 
   <ItemGroup>

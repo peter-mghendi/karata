@@ -1,6 +1,6 @@
 @using System.Collections.Immutable
 
-@implements Karata.Web.Models.IPlayerInterface
+@implements Karata.Surface.Models.IPlayerInterface
 
 <div id="table" class="mud-width-full mud-height-full relative teal rounded mud-elevation-1">
     @* Me *@
@@ -69,8 +69,6 @@
         : $"img/cards/{card.Face.ToString()}{card.Suit.ToString()}.svg";
 
     private async Task AddCardToTurn(Card card) => await OnAddCardToTurn.InvokeAsync((card, Turn.Count));
-
-    private async Task ReorderCard(Card card, int index) => await OnReorderCardInTurn.InvokeAsync((card, index));
 
     private async Task RemoveCardFromTurn(Card card) => await OnRemoveCardFromTurn.InvokeAsync(card);
 }

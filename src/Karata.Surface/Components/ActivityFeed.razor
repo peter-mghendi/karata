@@ -1,0 +1,19 @@
+@if (Feed is null)
+{
+    for (var i = 0; i < 10; i++)
+    {
+        <ActivitySkeleton/>
+    }
+}
+else
+{
+    foreach (var activity in Feed)
+    {
+        <ActivityCard Activity="activity"/>
+    }
+}
+
+@code
+{
+    [Parameter] public required List<ActivityData>? Feed { get; set; }
+}

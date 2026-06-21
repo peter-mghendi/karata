@@ -26,9 +26,9 @@ file static class RestClientOptionsExtensions
     }
 } 
 
-public class KarataClient(Uri host, Func<Task<string?>> token)
+public class KarataClient(KarataClientOptions options)
 {
-    private readonly RestClient _client = new(new Uri(host, "/api"), options => options.WithBearerInterceptor(token));
+    private readonly RestClient _client = new(new Uri(options.Host, "/api"), rest => rest.WithBearerInterceptor(options.TokenProvider));
 
     public ActivityService Activity => new(_client);
 

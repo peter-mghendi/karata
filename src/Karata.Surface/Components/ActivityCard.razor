@@ -1,0 +1,23 @@
+<MudCard Elevation="0" Class="mb-4 pa-2">
+    <MudCardHeader>
+        <CardHeaderAvatar>
+            <MudAvatar Color="Color.Secondary">@Activity.Actor.Username.ToUpper().First()</MudAvatar>
+        </CardHeaderAvatar>
+        <CardHeaderContent>
+            <MudText Typo="Typo.body1">@Activity.Actor.Username</MudText>
+            <MudText Typo="Typo.body2">@Activity.CreatedAt.ToLocalTime().ToString()</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudText>@Activity.Text</MudText>
+    </MudCardContent>
+    <MudCardActions>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" Href="@Activity.Link">
+            @Activity.Action
+        </MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    [Parameter] public required ActivityData Activity { get; set; }
+}

@@ -1,4 +1,4 @@
-﻿@using Blazored.LocalStorage
+@using Blazored.LocalStorage
 @using Karata.Surface.Security
 
 @inherits LayoutComponentBase
@@ -9,7 +9,7 @@
 
 @code {
     static string Authority => "http://localhost:8080/realms/karata";
-    static string ClientId  => "karata-web";
+    static string ClientId  => "karata-desktop";
 }
 
 <MudThemeProvider @ref="_themer" @bind-IsDarkMode="@_dark" Theme="_theme"/>

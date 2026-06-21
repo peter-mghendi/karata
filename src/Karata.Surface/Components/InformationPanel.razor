@@ -8,7 +8,7 @@
         <MudListSubheader>Game Details</MudListSubheader>
     }
 
-    <MudListItem Value="@Room.Id.ToString()" OnClick="CopyInviteLink">
+    <MudListItem Value="@Room.Id.ToString()" OnClick="@CopyInviteLink">
         <MudText Typo="Typo.caption">Room ID (Click to Copy)</MudText>
         <MudText Typo="Typo.body1" Class="gray-text">@Room.Id</MudText>
     </MudListItem>

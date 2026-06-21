@@ -5,7 +5,7 @@ using Karata.Kit.Domain.Models;
 using Karata.Pips;
 using Microsoft.AspNetCore.Components;
 
-namespace Karata.Web.Models;
+namespace Karata.Surface.Models;
 
 public interface IPlayerInterface
 {

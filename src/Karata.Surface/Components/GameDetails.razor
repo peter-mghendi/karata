@@ -1,0 +1,32 @@
+<MudLoading Loading="@(Room is null)" Text="Please wait..." Class="mud-height-full pa-0">
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full py-4">
+        @if (Room is not null)
+        {
+            <MudPaper Class="pa-4 mb-4">
+                <InformationPanel Subheader Room="Room"/>
+                <PlayersPanel Subheader Room="Room"/>
+                <MudDivider Class="my-2"/>
+
+                @if (Room.Game.Status is GameStatus.Lobby or GameStatus.Ongoing)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/game/{Room.Id}/play")">
+                        Join
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Href="@($"/game/{Room.Id}/spectate")" Class="ml-2">
+                        Spectate
+                    </MudButton>
+                }
+                @if (Room.Game.Status is GameStatus.Over)
+                {
+                    <MudButton Variant="Variant.Outlined" Href="@($"/game/{Room.Id}/replay")" Class="ml-2">
+                        Replay
+                    </MudButton>
+                }
+            </MudPaper>
+        }
+    </MudContainer>
+</MudLoading>
+
+@code {
+    [Parameter] public RoomData? Room { get; set; }
+}

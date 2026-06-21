@@ -3,7 +3,6 @@ using Karata.Kit.Engine;
 using Karata.Kit.Engine.Exceptions;
 using Karata.Pips;
 using Karata.Pips.Extensions;
-using Microsoft.Extensions.Logging.Abstractions;
 using static Karata.Kit.Domain.Models.CardRequestLevel;
 using static Karata.Pips.Card.CardColor;
 using static Karata.Pips.Card.CardFace;
@@ -14,7 +13,7 @@ using TestCase = (
     System.Collections.Generic.List<Karata.Pips.Card> Cards,
     bool ExpectedValid,
     Karata.Kit.Domain.Models.TurnDelta ExpectedDelta
-    );
+);
 
 namespace Karata.Kit.Tests.Engine;
 
@@ -32,7 +31,7 @@ public class TwoPassKarataEngineTest
         TurnDelta expectedDelta
     )
     {
-        var engine = new TwoPassKarataEngine(NullLogger<TwoPassKarataEngine>.Instance);
+        var engine = new TwoPassKarataEngine();
 
         if (expectedValidity)
         {
