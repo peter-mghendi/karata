@@ -56,12 +56,11 @@ jobs:
           dotnet publish --configuration Release --runtime linux-x64 --output publish/x64 src/Karata.Cards/Karata.Cards.csproj
           tar -czf karata-server-linux-x64.tar.gz publish/x64/karata-server
 
-      - name: Create release
+      - name: Attach assets to release
         uses: softprops/action-gh-release@v2
         with:
-          make_latest: true
+          generate_release_notes: false
           tag_name: ${{ steps.params.outputs.version }}
-          generate_release_notes: true
           files: |
             karata-server-linux-arm64.tar.gz
             karata-server-linux-x64.tar.gz

@@ -32,7 +32,8 @@ class Program
 
         var app = builder.Build();
         app.MainWindow
-            .SetIconFile("favicon.ico")
+            // TODO: [Desktop] Use icon without compressed PNG layers for compatibility
+            // .SetIconFile("favicon.ico")
             .SetTitle("Karata Desktop");
 
         AppDomain.CurrentDomain.UnhandledException += (sender, error) =>
