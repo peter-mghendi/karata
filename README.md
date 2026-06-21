@@ -28,8 +28,11 @@ There is also a custom [cards library](https://github.com/sixpeteunder/karata/tr
 - [ ] Tournaments/Knockouts.
 - [ ] Fines for illegal moves.
 - [x] Bots
+- [o] Desktop app (Experimental)
 
 ## Installation
+
+> The easiest way to run everything is to run the [Aspire AppHost](https://github.com/peter-mghendi/karata/blob/main/src/Karata.AppHost/AppHost.cs).
 
 ### Karata.Cards
 
@@ -67,8 +70,8 @@ Builds are currently available for:
 - `linux-x64`
 
 ```
-chmod +x karata-server-linux-x64
-source path/to/your/.env ./karata-server-linux-x64
+chmod +x karata-server
+source path/to/your/.env ./karata-server
 ```
 
 The server expects its configuration to be supplied via environment variables.
@@ -157,8 +160,8 @@ Builds are currently available for:
 - `linux-x64`
 
 ```
-chmod +x karata-bot-linux-x64
-source path/to/your/.env ./karata-bot-linux-x64
+chmod +x karata-bot
+source path/to/your/.env ./karata-bot
 ```
 
 The bot expects its configuration to be supplied via environment variables.
@@ -172,6 +175,40 @@ git clone https://github.com/peter-mghendi/karata.git
 cd karata
 
 dotnet publish src/Karata.Bot -c Release
+```
+
+---
+
+### Karata.Desktop
+
+`Karata.Desktop` is a multiplatform [Photino](https://www.tryphotino.io/) desktop app built completely on public, documented APIs,
+the `Karata.Kit` SDK and the `Karata.Surface` UI kit.
+
+#### Pre-built binary  (recommended)
+
+Pre-built desktop binaries are attached to GitHub Releases.
+
+Builds are currently available for:
+
+- `linux-arm64`
+- `linux-x64`
+
+```
+chmod +x karata-desktop
+source path/to/your/.env ./karata-dektop
+```
+
+The bot expects its configuration to be supplied via environment variables.
+
+#### Building from source
+
+Build from source:
+
+```shell
+git clone https://github.com/peter-mghendi/karata.git
+cd karata
+
+dotnet publish src/Karata.Dektop -c Release
 ```
 
 ---
