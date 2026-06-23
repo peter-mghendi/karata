@@ -12,7 +12,7 @@ Real-time Kenyan street poker over ASP.NET Core SignalR/websockets.
 
 The game is currently playable and implements all game logic.
 
-There is also a custom [cards library](https://github.com/sixpeteunder/karata/tree/main/src/Karata.Pips) with a complete [test suite](https://github.com/sixpeteunder/karata/tree/main/tests/Karata.Pips.Tests).
+There is also a custom [cards library](https://github.com/sixpeteunder/karata/tree/main/src/Karata.Pips) with a complete [test suite](https://github.com/sixpeteunder/karata/tree/main/test/Karata.Pips.Tests).
 
 ## Features
 - [x] Real-time in-game chat.
@@ -45,17 +45,17 @@ The latest server image is published to GitHub Container Registry:
 Pull
 
 ```shell
-docker pull ghcr.io/peter-mghendi/karata-server:latest
+docker pull ghcr.io/peter-mghendi/karata-cards:latest
 ```
 
 Run:
 
 ```shell
 docker run -d \
-  --name karata-server \
+  --name karata-cards \
   --env-file path/to/your/.env \
   -p 5000:5000 \
-  ghcr.io/peter-mghendi/karata-server:latest
+  ghcr.io/peter-mghendi/karata-cards:latest
 ```
 
 A PostgreSQL-compatible database is required.
