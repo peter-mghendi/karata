@@ -49,12 +49,12 @@ jobs:
       - name: Publish arm64 binaries
         run: |
           dotnet publish --configuration Release --runtime linux-arm64 --output publish/arm64 src/Karata.Cards/Karata.Cards.csproj
-          tar -czf karata-server-linux-arm64.tar.gz publish/arm64/karata-server
+          tar -czf karata-cards-linux-arm64.tar.gz publish/arm64/karata-cards
 
       - name: Publish x64 binaries
         run: |
           dotnet publish --configuration Release --runtime linux-x64 --output publish/x64 src/Karata.Cards/Karata.Cards.csproj
-          tar -czf karata-server-linux-x64.tar.gz publish/x64/karata-server
+          tar -czf karata-cards-linux-x64.tar.gz publish/x64/karata-cards
 
       - name: Attach assets to release
         uses: softprops/action-gh-release@v2
@@ -62,5 +62,5 @@ jobs:
           generate_release_notes: false
           tag_name: ${{ steps.params.outputs.version }}
           files: |
-            karata-server-linux-arm64.tar.gz
-            karata-server-linux-x64.tar.gz
+            karata-cards-linux-arm64.tar.gz
+            karata-cards-linux-x64.tar.gz
