@@ -1,5 +1,5 @@
 using System.Collections.Immutable;
-using Karata.Cards;
+using Karata.Pips;
 
 namespace Karata.Kit.Domain.Models;
 

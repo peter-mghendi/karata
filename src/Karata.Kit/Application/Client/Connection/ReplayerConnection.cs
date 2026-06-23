@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
-using Karata.Cards;
 using Karata.Kit.Application.Client.State;
 using Karata.Kit.Domain.Models;
+using Karata.Pips;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 

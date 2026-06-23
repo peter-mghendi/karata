@@ -2,6 +2,8 @@
 
 @using Karata.Kit.Application.Client
 
+@attribute [AllowAnonymous]
+
 @inject KarataClient KarataClient
 @inject NavigationManager Navigator
 
@@ -15,61 +17,7 @@
         </NotAuthorized>
     </AuthorizeView>
     <QuickJoin KarataClient="KarataClient" Navigator="Navigator"/>
-
-
-    @if (_activities is [_, ..])
-    {
-        @foreach (var activity in _activities)
-        {
-            <MudCard Elevation="0" Class="mb-4 pa-2">
-                <MudCardHeader>
-                    <CardHeaderAvatar>
-                        <MudAvatar Color="Color.Secondary">@activity.Actor.Username.ToUpper().First()</MudAvatar>
-                    </CardHeaderAvatar>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.body1">@activity.Actor.Username</MudText>
-                        <MudText Typo="Typo.body2">@activity.CreatedAt.ToLocalTime().ToString()</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudText>@activity.Text</MudText>
-                </MudCardContent>
-                <MudCardActions>
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="@activity.Link">
-                        @activity.Action
-                    </MudButton>
-                </MudCardActions>
-            </MudCard>
-        }
-    }
-    else
-    {
-        @for (var i = 0; i < 10; i++)
-        {
-            <MudCard Elevation="0" Class="mb-4 pa-2">
-                <MudCardHeader>
-                    <CardHeaderAvatar>
-                        <MudSkeleton SkeletonType="SkeletonType.Circle" Animation="Animation.Wave" Height="40px"
-                                     Width="40px"/>
-                    </CardHeaderAvatar>
-                    <CardHeaderContent>
-                        <MudSkeleton Animation="Animation.Wave" Width="40%"/>
-                        <MudSkeleton Animation="Animation.Wave" Width="60%"/>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudSkeleton Animation="Animation.Wave"/>
-                    <MudSkeleton Animation="Animation.Wave"/>
-                    <MudSkeleton Animation="Animation.Wave"/>
-                    <MudSkeleton Animation="Animation.Wave" Width="60%"/>
-                </MudCardContent>
-                <MudCardActions>
-                    <MudSkeleton Animation="Animation.Wave" Width="105px" Height="40px" Class="ml-3"/>
-                </MudCardActions>
-            </MudCard>
-        }
-    }
-
+    <ActivityFeed Feed="_feed" />
     <MudScrollToTop TopOffset="100">
         <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Rounded.KeyboardArrowUp"/>
     </MudScrollToTop>
@@ -77,11 +25,11 @@
 
 @code
 {
-    private List<ActivityData> _activities = [];
+    private List<ActivityData>? _feed;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        _activities = await KarataClient.Activity.ListAsync();
+        _feed = await KarataClient.Activity.ListAsync();
     }
 }

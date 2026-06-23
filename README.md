@@ -1,6 +1,6 @@
 [![Test Solution](https://github.com/peter-mghendi/karata/actions/workflows/test-solution.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/test-solution.yml)
 [![Publish Karata.Bot](https://github.com/peter-mghendi/karata/actions/workflows/publish-bot.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-bot.yml)
-[![Publish Karata.Server](https://github.com/peter-mghendi/karata/actions/workflows/publish-server.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-server.yml)
+[![Publish Karata.Cards](https://github.com/peter-mghendi/karata/actions/workflows/publish-server.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-server.yml)
 [![Publish Karata.Web](https://github.com/peter-mghendi/karata/actions/workflows/publish-web.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-web.yml)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/0b4734fe-7614-4aac-99ca-fafa54e2f942/deploy-status)](https://app.netlify.com/projects/karata/deploys)
 
@@ -12,7 +12,7 @@ Real-time Kenyan street poker over ASP.NET Core SignalR/websockets.
 
 The game is currently playable and implements all game logic.
 
-There is also a custom cards library [here](https://github.com/sixpeteunder/karata/tree/main/src/Karata.Cards) (with a complete test suite).
+There is also a custom [cards library](https://github.com/sixpeteunder/karata/tree/main/src/Karata.Pips) with a complete [test suite](https://github.com/sixpeteunder/karata/tree/main/tests/Karata.Pips.Tests).
 
 ## Features
 - [x] Real-time in-game chat.
@@ -28,12 +28,15 @@ There is also a custom cards library [here](https://github.com/sixpeteunder/kara
 - [ ] Tournaments/Knockouts.
 - [ ] Fines for illegal moves.
 - [x] Bots
+- [o] Desktop app (Experimental)
 
 ## Installation
 
-### Karata.Server
+> The easiest way to run everything is to run the [Aspire AppHost](https://github.com/peter-mghendi/karata/blob/main/src/Karata.AppHost/AppHost.cs).
 
-`Karata.Server` is the supported server runtime.
+### Karata.Cards
+
+`Karata.Cards` is the supported game server runtime.
 
 #### Docker (recommended)
 
@@ -67,8 +70,8 @@ Builds are currently available for:
 - `linux-x64`
 
 ```
-chmod +x karata-server-linux-x64
-source path/to/your/.env ./karata-server-linux-x64
+chmod +x karata-server
+source path/to/your/.env ./karata-server
 ```
 
 The server expects its configuration to be supplied via environment variables.
@@ -81,7 +84,7 @@ Build from source:
 git clone https://github.com/peter-mghendi/karata.git
 cd karata
 
-dotnet publish src/Karata.Server -c Release
+dotnet publish src/Karata.Cards -c Release
 ```
 
 ---
@@ -157,8 +160,8 @@ Builds are currently available for:
 - `linux-x64`
 
 ```
-chmod +x karata-bot-linux-x64
-source path/to/your/.env ./karata-bot-linux-x64
+chmod +x karata-bot
+source path/to/your/.env ./karata-bot
 ```
 
 The bot expects its configuration to be supplied via environment variables.
@@ -172,6 +175,40 @@ git clone https://github.com/peter-mghendi/karata.git
 cd karata
 
 dotnet publish src/Karata.Bot -c Release
+```
+
+---
+
+### Karata.Desktop
+
+`Karata.Desktop` is a multiplatform [Photino](https://www.tryphotino.io/) desktop app built completely on public, documented APIs,
+the `Karata.Kit` SDK and the `Karata.Surface` UI kit.
+
+#### Pre-built binary  (recommended)
+
+Pre-built desktop binaries are attached to GitHub Releases.
+
+Builds are currently available for:
+
+- `linux-arm64`
+- `linux-x64`
+
+```
+chmod +x karata-desktop
+source path/to/your/.env ./karata-dektop
+```
+
+The bot expects its configuration to be supplied via environment variables.
+
+#### Building from source
+
+Build from source:
+
+```shell
+git clone https://github.com/peter-mghendi/karata.git
+cd karata
+
+dotnet publish src/Karata.Dektop -c Release
 ```
 
 ---

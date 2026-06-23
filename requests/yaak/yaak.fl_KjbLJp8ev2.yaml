@@ -16,5 +16,5 @@ authentication:
 authenticationType: oauth2
 description: ''
 headers: []
-name: Karata.Server
+name: Karata.Cards
 sortPriority: -1761639400000.0

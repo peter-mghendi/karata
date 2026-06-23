@@ -1,0 +1,54 @@
+name: Publish Karata.Desktop
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  release:
+    permissions:
+      contents: write
+      packages: write
+
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set version
+        id: params
+        run: echo "version=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT  
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: Publish arm64 binaries
+        run: |
+          dotnet publish --configuration Release --runtime linux-arm64 --output publish/arm64 src/Karata.Desktop/Karata.Desktop.csproj
+          tar -czf karata-desktop-linux-arm64.tar.gz publish/arm64/karata-desktop
+
+      - name: Publish x64 binaries
+        run: |
+          dotnet publish --configuration Release --runtime linux-x64 --output publish/x64 src/Karata.Desktop/Karata.Desktop.csproj
+          tar -czf karata-desktop-linux-x64.tar.gz publish/x64/karata-desktop
+
+      - name: Attach assets to release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: false
+          tag_name: ${{ steps.params.outputs.version }}
+          files: |
+            karata-desktop-linux-arm64.tar.gz
+            karata-desktop-linux-x64.tar.gz

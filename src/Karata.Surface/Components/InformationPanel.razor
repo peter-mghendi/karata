@@ -1,0 +1,68 @@
+@using TextCopy
+
+@inject ISnackbar Snackbar 
+
+<MudList T="string">
+    @if (Subheader)
+    {
+        <MudListSubheader>Game Details</MudListSubheader>
+    }
+
+    <MudListItem Value="@Room.Id.ToString()" OnClick="@CopyInviteLink">
+        <MudText Typo="Typo.caption">Room ID (Click to Copy)</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Room.Id</MudText>
+    </MudListItem>
+    <MudListItem Value="@Room.CreatedAt.ToLocalTime().ToString()">
+        <MudText Typo="Typo.caption">Created At</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Room.CreatedAt.ToLocalTime()</MudText>
+    </MudListItem>
+    <MudListItem Value="@Room.Administrator.Username">
+        <MudText Typo="Typo.caption">Room Admin</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Room.Administrator.Username</MudText>
+    </MudListItem>
+    <MudListItem Value="@Room.Creator.Username">
+        <MudText Typo="Typo.caption">Room Creator</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Room.Creator.Username</MudText>
+    </MudListItem>
+    <MudListItem Value="@(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.Username : "---")">
+        <MudText Typo="Typo.caption">Current Turn</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">
+            @(Game.Status == GameStatus.Ongoing ? Game.CurrentHand.Username : "---")
+        </MudText>
+    </MudListItem>
+    <MudListItem Value="@Game.Hands.Count.ToString()">
+        <MudText Typo="Typo.caption">Players</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Game.Hands.Count</MudText>
+    </MudListItem>
+    <MudListItem Value="@Game.Status.ToString()">
+        <MudText Typo="Typo.caption">Status</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Game.Status</MudText>
+    </MudListItem>
+    @if (Room.Game.Status is GameStatus.Over && Room.Game.Result!.ResultType is GameResultType.Win)
+    {
+        <MudListItem Value="@Room.CreatedAt.ToLocalTime().ToString()">
+            <MudText Typo="Typo.caption">Winner</MudText>
+            <MudText Typo="Typo.body1" Class="gray-text">@Room.Game.Result!.Winner!.Username</MudText>
+        </MudListItem>
+    }
+</MudList>
+
+@code
+{
+    [Parameter]
+    public bool Subheader { get; set; }
+
+    [Parameter]
+    public RoomData Room { get; set; } = null!;
+    
+    [Inject]
+    public IClipboard Clipboard { get; set; } = null!;
+
+    private GameData Game => Room.Game;
+
+    private async Task CopyInviteLink()
+    {
+        await Clipboard.SetTextAsync(Room.Id.ToString());
+        Snackbar.Add("Copied to clipboard.", Severity.Info, c => c.SnackbarVariant = Variant.Text);   
+    }
+}

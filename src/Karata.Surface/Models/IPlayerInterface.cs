@@ -1,0 +1,31 @@
+#pragma warning disable BL0007
+
+using System.Collections.Immutable;
+using Karata.Kit.Domain.Models;
+using Karata.Pips;
+using Microsoft.AspNetCore.Components;
+
+namespace Karata.Surface.Models;
+
+public interface IPlayerInterface
+{
+    [Parameter]
+    public GameData Game { get; set; }
+
+    [Parameter]
+    public HandData Hand { get; set; }
+
+    [Parameter]
+    public ImmutableList<Card> Turn { get; set; }
+
+    [Parameter]
+    public EventCallback<ValueTuple<Card, int>> OnAddCardToTurn { get; set; }
+    
+    [Parameter]
+    public EventCallback<ValueTuple<Card, int>> OnReorderCardInTurn { get; set; }
+
+    [Parameter]
+    public EventCallback<Card> OnRemoveCardFromTurn { get; set; }
+}
+
+

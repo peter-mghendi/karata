@@ -1,0 +1,33 @@
+@page "/"
+
+@using Karata.Kit.Application.Client
+
+@inject KarataClient KarataClient
+@inject NavigationManager Navigator
+
+@layout MainLayout
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="pt-4">
+    <MudText Typo="Typo.h6" Class="mb-8">Welcome back, friend.</MudText>
+    <QuickJoin KarataClient="KarataClient" Navigator="Navigator"/>
+    <ActivityFeed Feed="_feed" />
+    <MudScrollToTop TopOffset="100">
+        <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Rounded.KeyboardArrowUp"/>
+    </MudScrollToTop>
+</MudContainer>
+
+@code
+{
+    private List<ActivityData>? _feed;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if (firstRender)
+        {
+            _feed = await KarataClient.Activity.ListAsync();
+            StateHasChanged();
+        }
+    }
+}

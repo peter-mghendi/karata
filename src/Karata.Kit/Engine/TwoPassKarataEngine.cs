@@ -1,19 +1,18 @@
 using System.Collections.Immutable;
 using System.Diagnostics.Contracts;
-using Karata.Cards;
-using Karata.Cards.Extensions;
 using Karata.Kit.Domain.Models;
 using Karata.Kit.Engine.Exceptions;
-using Microsoft.Extensions.Logging;
-using static Karata.Cards.Card.CardFace;
+using Karata.Pips;
+using Karata.Pips.Extensions;
 using static Karata.Kit.Domain.Models.CardRequestLevel;
+using static Karata.Pips.Card.CardFace;
 
 namespace Karata.Kit.Engine;
 
 /// This is an implementation of an <see cref="IKarataEngine"/> that performs two steps internally:
 /// 1. A first pass that validates that the sequence of cards proposed is valid in the context of the game.
 /// 2. A second pass that determines the impact of the cards by looking for known patterns in the proposed cards.
-public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataEngine
+public class TwoPassKarataEngine : IKarataEngine
 {
     public string Name => nameof(TwoPassKarataEngine);
     
@@ -22,10 +21,7 @@ public class TwoPassKarataEngine(ILogger<TwoPassKarataEngine> logger) : IKarataE
     public TurnDelta EvaluateTurn(GameData game, ImmutableArray<Card> cards)
     {
         EnsureTurnIsValid(game, cards);
-        var delta = GenerateTurnDelta(game, cards);
-        
-        logger.LogDebug("Game: {Game}, Cards: {Cards}, Delta: {Delta}", game, cards, delta);
-        return delta;
+        return GenerateTurnDelta(game, cards);
     }
 
     /// <summary>

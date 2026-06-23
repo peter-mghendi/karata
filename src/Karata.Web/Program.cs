@@ -1,50 +1,22 @@
-using Blazored.LocalStorage;
 using Karata.Kit.Application;
 using Karata.Kit.Bot;
+using Karata.Surface;
+using Karata.Surface.Security;
 using Karata.Web;
-using Karata.Web.Infrastructure.Security;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using MudBlazor.Services;
-using MudExtensions.Services;
-using TextCopy;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
-
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
-
-builder.Services.AddOidcAuthentication(options =>
-{
-    var configuration = Configuration.Client[builder.HostEnvironment.Environment];
-
-    // options.ProviderOptions.DefaultScopes.Add("Audience");
-    options.ProviderOptions.Authority = configuration.Authority;
-    options.ProviderOptions.ClientId = configuration.Client;
-    options.ProviderOptions.MetadataUrl = $"{configuration.Authority}/.well-known/openid-configuration";
-    options.ProviderOptions.ResponseType = "id_token token";
-    options.UserOptions.NameClaim = "preferred_username";
-    options.UserOptions.RoleClaim = "roles";
-    options.UserOptions.ScopeClaim = "scope";
-});
-
-builder.Services.AddBlazoredLocalStorage();
-builder.Services.InjectClipboard();
-builder.Services.AddMudServices();
-builder.Services.AddMudExtensions();
-builder.Services.AddKarataCore((karata, _) =>
-{
-    karata.Host = new Uri(Configuration.Server[builder.HostEnvironment.Environment].Host);
-    karata.TokenProvider = async () =>
+builder.Services
+    .AddKarataOidc(Configuration.Client[builder.HostEnvironment.Environment])
+    .AddKarataCore((karata, services) =>
     {
-        using var scope = builder.Services.BuildServiceProvider().CreateScope();
-        var result = await scope.ServiceProvider.GetRequiredService<IAccessTokenProvider>().RequestAccessToken();
-
-        return result.TryGetToken(out var token) ? token.Value : null;
-    };
-});
-builder.Services.AddKarataBotInterface(new  Uri(Configuration.BotInterface[builder.HostEnvironment.Environment].Host));
-builder.Services.AddScoped<AuthenticationHelper>();
+        karata.Host = new Uri(Configuration.Server[builder.HostEnvironment.Environment].Host);
+        karata.TokenProvider = async () => await TokenProvider.ProvideAsync(services);
+    })
+    .AddKarataSurface()
+    .AddKarataBotInterface(new Uri(Configuration.BotInterface[builder.HostEnvironment.Environment].Host));
 
 await builder.Build().RunAsync();

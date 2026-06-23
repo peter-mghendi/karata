@@ -18,17 +18,14 @@ jobs:
       with:
         dotnet-version: 10.0.x
 
-    - name: Install Android workload
-      run: dotnet workload install android
-
     - name: Install Webassembly workload
       run: dotnet workload install wasm-tools
 
     - name: Restore dependencies
-      run: dotnet restore Karata.slnf
+      run: dotnet restore
 
     - name: Build
-      run: dotnet build --no-restore Karata.slnf
+      run: dotnet build --no-restore
 
     - name: Test
-      run: dotnet test --no-build --verbosity normal Karata.slnf
+      run: dotnet test --no-build --verbosity normal

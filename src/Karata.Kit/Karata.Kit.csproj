@@ -4,7 +4,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Karata.Cards\Karata.Cards.csproj" />
+    <ProjectReference Include="..\Karata.Pips\Karata.Pips.csproj" />
     <ProjectReference Include="..\Karata.Pebble\Karata.Pebble.csproj" />
   </ItemGroup>
 

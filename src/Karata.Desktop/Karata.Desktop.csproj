@@ -1,26 +1,35 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <!--If you are willing to use Windows/MacOS native APIs you will need to create 3 projects.
-    One for Windows with net9.0-windows TFM, one for MacOS with net9.0-macos and one with net9.0 TFM for Linux.-->
-    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-  </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <OutputType>Exe</OutputType>
+    <Platforms>AnyCPU</Platforms>
+    
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AssemblyName>karata-desktop</AssemblyName>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+
+    <!--    <ApplicationIcon>favicon.ico</ApplicationIcon>-->
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia.Desktop" />
-    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Include="Avalonia.Diagnostics">
-      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
-      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
-    </PackageReference>
+    <Content Update="wwwroot\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Karata.App\Karata.App.csproj" />
-    <ProjectReference Include="..\Karata.ServiceDefaults\Karata.ServiceDefaults.csproj" />
+    <None Update="favicon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Photino.Blazor" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Karata.Surface\Karata.Surface.csproj" />
+  </ItemGroup>
+
 </Project>

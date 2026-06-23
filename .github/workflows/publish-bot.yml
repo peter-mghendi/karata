@@ -26,13 +26,13 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore dependencies
-        run: dotnet restore Karata.slnf
+        run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore Karata.slnf
+        run: dotnet build --configuration Release --no-restore
 
       - name: Run tests
-        run: dotnet test --configuration Release --no-build --verbosity normal Karata.slnf
+        run: dotnet test --configuration Release --no-build --verbosity normal
         
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -56,12 +56,11 @@ jobs:
           dotnet publish --configuration Release --runtime linux-x64 --output publish/x64 src/Karata.Bot/Karata.Bot.csproj
           tar -czf karata-bot-linux-x64.tar.gz publish/x64/karata-bot
 
-      - name: Create release
+      - name: Attach assets to release
         uses: softprops/action-gh-release@v2
         with:
-          make_latest: true
+          generate_release_notes: false
           tag_name: ${{ steps.params.outputs.version }}
-          generate_release_notes: true
           files: |
             karata-bot-linux-arm64.tar.gz
             karata-bot-linux-x64.tar.gz

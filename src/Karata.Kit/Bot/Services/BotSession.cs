@@ -1,7 +1,6 @@
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
-using Karata.Cards.Extensions;
 using Karata.Kit.Application.Client.Connection;
 using Karata.Kit.Application.Client.State;
 using Karata.Kit.Application.Store;
@@ -10,6 +9,7 @@ using Karata.Kit.Domain.Models;
 using Karata.Kit.Engine;
 using Karata.Kit.Engine.Exceptions;
 using Karata.Pebble.Interceptors;
+using Karata.Pips.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace Karata.Kit.Bot.Services;

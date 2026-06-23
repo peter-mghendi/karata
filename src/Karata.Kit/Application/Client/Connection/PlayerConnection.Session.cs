@@ -1,5 +1,5 @@
-using Karata.Cards;
 using Karata.Kit.Application.Client.State;
+using Karata.Pips;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Karata.Kit.Application.Client.Connection;

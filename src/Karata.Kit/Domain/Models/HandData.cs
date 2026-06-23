@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using Karata.Cards;
+using Karata.Pips;
 
 namespace Karata.Kit.Domain.Models;
 
