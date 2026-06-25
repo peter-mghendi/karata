@@ -1,15 +1,29 @@
+using Microsoft.AspNetCore.Http;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
+var postgres = builder.AddPostgres(
+        name: "karata-cluster",
+        userName: builder.AddParameter(name: "karata-cluster-username", secret: true),
+        password: builder.AddParameter(name: "karata-cluster-password", secret: true)
+    )
+    .WithDataVolume(isReadOnly: false);
+
+var cardsDatabase = postgres.AddDatabase("cards-db", "cards_db");
+
 var cards = builder.AddProject<Projects.Karata_Cards>("cards")
-    .WithHttpHealthCheck("/health");
+    .WaitFor(cardsDatabase)
+    .WithReference(cardsDatabase)
+    .WithEnvironment("DATABASE_URL", cardsDatabase.Resource.UriExpression)
+    .WithHttpHealthCheck("/health", StatusCodes.Status200OK);
 
 var bot = builder.AddProject<Projects.Karata_Bot>("bot")
-    .WithHttpHealthCheck("/health").WithHttpHealthCheck("/health")
+    .WithHttpHealthCheck("/health", StatusCodes.Status200OK)
     .WaitFor(cards)
     .WithReference(cards);
 
 var web = builder.AddProject<Projects.Karata_Web>("web")
-    .WithHttpHealthCheck()
+    .WithHttpHealthCheck("", StatusCodes.Status200OK)
     .WaitFor(cards)
     .WaitFor(bot)
     .WithReference(cards)

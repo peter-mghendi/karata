@@ -7,6 +7,10 @@
     <ProjectReference Include="..\Karata.Web\Karata.Web.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <UserSecretsId>2899b1a4-5385-45c4-bbc3-337ea265b692</UserSecretsId>
