@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <UserSecretsId>Karata.Cards-645e4e3b-a87e-4a2b-aa8f-239ea9c9b8f8</UserSecretsId>
     <AssemblyName>karata-cards</AssemblyName>
     <ContainerRepository>peter-mghendi/karata-cards</ContainerRepository>
     <PublishSingleFile>true</PublishSingleFile>

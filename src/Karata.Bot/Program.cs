@@ -6,7 +6,7 @@ using Karata.Kit.Bot.Infrastructure.Security;
 using Karata.Kit.Bot.Strategy;
 
 var builder = WebApplication.CreateBuilder(args);
-var host = builder.Configuration["Karata:Host"];
+var host = builder.Configuration["KARATA_HOST"] ?? throw new Exception("KARATA_HOST is not set");
 
 Console.WriteLine($"Karata Host: {host}");
 

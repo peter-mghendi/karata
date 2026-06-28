@@ -19,7 +19,7 @@ public static class DependencyInjection
                 var tokens = provider.GetRequiredService<AccessTokenProvider>();
                 var config = provider.GetRequiredService<IConfiguration>();
                 
-                return new PlayerConnection(new Uri(config["Karata:Host"]!))
+                return new PlayerConnection(new Uri(config["KARATA_HOST"]!))
                 {
                     AccessTokenProvider = async () => await tokens.GetAsync()
                 };

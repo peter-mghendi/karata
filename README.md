@@ -16,30 +16,67 @@ The game is currently playable and implements all game logic.
 There is also a custom [cards library](https://github.com/sixpeteunder/karata/tree/main/src/Karata.Pips) with a complete [test suite](https://github.com/sixpeteunder/karata/tree/main/test/Karata.Pips.Tests).
 
 ## Features
-- [x] Real-time in-game chat.
-- [x] Real-time gameplay.
-- [x] Game logic.
-- [x] Activity Feed
-- [x] Password-protected rooms.
-- [x] Player disconnection/reconnection handling.
-- [x] Resumable games.
-- [ ] Configurable rules.
-- [x] Game replays.
-- [ ] Friend system.
-- [ ] Tournaments/Knockouts.
-- [ ] Fines for illegal moves.
+- [x] Game rules
+- [x] Real-time gameplay
+- [x] Real-time in-game chat
+- [x] Activity feed
+- [x] Password-protected rooms
+- [x] Player disconnection/reconnection handling
+- [x] Resumable games
+- [ ] Configurable rules
+- [x] Game replays
+- [ ] Friend system
+- [ ] Tournaments/Knockouts
+- [ ] Fines for illegal moves
 - [x] Bots
+- [x] Learner mode
 - [x] Desktop app (Experimental)
 
-## Installation
+## How to run this
 
-> The easiest way to run everything is to run the [Aspire AppHost](https://github.com/peter-mghendi/karata/blob/main/src/Karata.AppHost/AppHost.cs).
+### .NET Aspire
 
-### Karata.Cards
+> [!NOTE]
+> This project requires both the [.NET 10 SDK](https://get.dot.net/10) and the [.NET Aspire CLI](https://aspire.dev).
+>
+> PostgreSQL and Keycloak are provisioned automatically as Docker containers by Aspire, so no separate installation is required.
 
-`Karata.Cards` is the supported game server runtime.
+The easiest way to run everything is to run the [Aspire AppHost](https://github.com/peter-mghendi/karata/blob/main/src/Karata.AppHost/AppHost.cs):
 
-#### Docker (recommended)
+```shell
+git clone https://github.com/peter-mghendi/karata.git
+cd karata
+
+aspire run
+# OR
+dotnet run --project src/Karata.AppHost/Karata.AppHost.csproj
+```
+
+This starts the follwing services:
+- A [PostgreSQL](https://www.postgresql.org/) database.
+- A [Keycloak](https://www.keycloak.org/) server
+- Karata.Cards
+- Karata.Bot
+- Karata.Web
+- Karata.Desktop
+
+> [!IMPORTANT]
+> Every application is configured as an OAuth 2.0/OpenID Connect (OIDC) client.
+>
+> Confidential clients are created with a default client secret. You can regenerate this secret at any time from the Keycloak Admin Console.
+>
+> For more information, see the Keycloak Server Administration guide:
+>
+> * [OIDC authentication flows](https://www.keycloak.org/docs/latest/server_admin/index.html#con-oidc-auth-flows_server_administration_guide)
+> * [Confidential client credentials](https://www.keycloak.org/docs/latest/server_admin/index.html#_client-credentials)
+
+### Individual Projects
+
+#### Karata.Cards
+
+`Karata.Cards` is the supported card game server runtime.
+
+##### Docker (recommended)
 
 The latest server image is published to GitHub Container Registry:
 
@@ -61,7 +98,7 @@ docker run -d \
 
 A PostgreSQL-compatible database is required.
 
-#### Pre-built binary
+##### Pre-built binary
 
 Pre-built server binaries are attached to GitHub Releases.
 
@@ -77,7 +114,7 @@ source path/to/your/.env ./karata-server
 
 The server expects its configuration to be supplied via environment variables.
 
-#### Building from source
+##### Building from source
 
 Build from source:
 
@@ -90,12 +127,12 @@ dotnet publish src/Karata.Cards -c Release
 
 ---
 
-### Karata.Web
+#### Karata.Web
 
 `Karata.Web` is the official browser client built completely on public, documented APIs,
 the `Karata.Kit` SDK and the `Karata.Surface` UI kit.
 
-#### Release Artifact
+##### Release Artifact
 
 Compiled frontend assets are attached to GitHub Releases as `karata-web.tar.gz`.
 
@@ -105,13 +142,13 @@ Extract the archive and serve the resulting files using any static web server.
 tar -xzf karata-web.tar.gz
 ```
 
-#### Published Assets Branch
+##### Published Assets Branch
 
 The latest generated frontend assets are also available in the `releases-karata-web` branch.
 
 This branch contains build output only and may be used directly with static hosting providers.
 
-#### Building from source
+##### Building from source
 
 Build from source:
 
@@ -124,12 +161,12 @@ dotnet publish src/Karata.Web -c Release
 
 ---
 
-### Karata.Bot
+#### Karata.Bot
 
 `Karata.Bot` is a reference bot implementation built on the `Karata.BotFramework` library,
 which in turn builds on primitives defined in `Karata.Kit`.
 
-#### Docker (recommended)
+##### Docker (recommended)
 
 The latest bot image is published to GitHub Container Registry:
 
@@ -151,7 +188,7 @@ docker run -d \
 
 A PostgreSQL-compatible database is required.
 
-#### Pre-built binary
+##### Pre-built binary
 
 Pre-built bot binaries are attached to GitHub Releases.
 
@@ -167,7 +204,7 @@ source path/to/your/.env ./karata-bot
 
 The bot expects its configuration to be supplied via environment variables.
 
-#### Building from source
+##### Building from source
 
 Build from source:
 
@@ -180,12 +217,12 @@ dotnet publish src/Karata.Bot -c Release
 
 ---
 
-### Karata.Desktop
+#### Karata.Desktop
 
 `Karata.Desktop` is a multiplatform [Photino](https://www.tryphotino.io/) desktop app built completely on public, documented APIs,
 the `Karata.Kit` SDK and the `Karata.Surface` UI kit.
 
-#### Pre-built binary  (recommended)
+##### Pre-built binary  (recommended)
 
 Pre-built desktop binaries are attached to GitHub Releases.
 
@@ -201,7 +238,7 @@ source path/to/your/.env ./karata-dektop
 
 The bot expects its configuration to be supplied via environment variables.
 
-#### Building from source
+##### Building from source
 
 Build from source:
 
