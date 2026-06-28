@@ -257,7 +257,7 @@ dotnet publish src/Karata.Dektop -c Release
 > This is mostly included for reference and troubleshooting the game's behaviour.
 > I should probably add these to an in-game "rules" page.
 
-None of the sources I consulted could agree on a canonical set of rules (as they should) so I implemented some sensible defaults:
+None of the sources I consulted could agree on a canonical set of rules (nor should they!) so I implemented some sensible defaults:
 
 ### Basics
 - The game can only start and end with a non-special card (any card other than those described below).
