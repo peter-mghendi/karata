@@ -9,7 +9,7 @@
   "enabled": true,
   "alwaysDisplayInConsole": false,
   "clientAuthenticatorType": "client-secret",
-  "secret": "6e72TuMOKe7j2rv6VavQSgU74I3sMUMR",
+  "secret": "00000000-0000-0000-0000-000000000000",
   "redirectUris": [
     "https://localhost:7240",
     "https://localhost:7240/*",
