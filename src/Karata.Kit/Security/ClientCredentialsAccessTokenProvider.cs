@@ -3,14 +3,14 @@ using System.Text.Json;
 using Karata.Kit.Cards.Models;
 using Microsoft.Extensions.Configuration;
 
-namespace Karata.Kit.Bot.Security;
+namespace Karata.Kit.Security;
 
-public sealed class AccessTokenProvider(HttpClient http, IConfiguration configuration) : IDisposable
+public sealed class ClientCredentialsAccessTokenProvider(HttpClient http, IConfiguration configuration) : IDisposable
 {
     private readonly string _authority = configuration["KARATA_ID_AUTHORITY"]!;
     private readonly string _client = configuration["KARATA_ID_CLIENT_ID"]!;
     private readonly string _secret = configuration["KARATA_ID_CLIENT_SECRET"]!;
-    private readonly string? _scope = configuration["KARATA_ID_SCOPE"];
+    private readonly string _scope = configuration["KARATA_ID_SCOPE"]!;
 
     private readonly SemaphoreSlim _gate = new(1, 1);
     private string? _token;
@@ -57,9 +57,10 @@ public sealed class AccessTokenProvider(HttpClient http, IConfiguration configur
             var body = await response.Content.ReadAsStringAsync(ct);
             var json = JsonDocument.Parse(body);
 
+            _token = json.RootElement.GetProperty("access_token").GetString()!;
+            
             var expiresIn = json.RootElement.GetProperty("expires_in").GetInt32();
             _expiresAt = DateTimeOffset.UtcNow.AddSeconds(Math.Max(10, expiresIn - 30));
-            _token = json.RootElement.GetProperty("access_token").GetString()!;
 
             return _token!;
         }

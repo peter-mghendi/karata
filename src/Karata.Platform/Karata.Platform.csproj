@@ -7,6 +7,8 @@
     </PropertyGroup>
     
     <ItemGroup>
+        <PackageReference Include="CmdScale.EntityFrameworkCore.TimescaleDB" />
+        <PackageReference Include="CmdScale.EntityFrameworkCore.TimescaleDB.Design" />
         <PackageReference Include="Keycloak.AuthServices.Authentication" />
         <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" />

@@ -1,7 +1,7 @@
-using Karata.Cards.Handlers;
 using Karata.Cards.Hubs;
+using Karata.Cards.Routing.Handlers;
 
-namespace Karata.Cards.Endpoints;
+namespace Karata.Cards.Routing;
 
 public static class Endpoints
 {
@@ -10,9 +10,6 @@ public static class Endpoints
         public void MapEndpoints()
         {
             var api = endpoints.MapGroup("/api");
-
-            var activity = api.MapGroup("/activity");
-            activity.MapGet("", ActivityHandler.ListActivity).WithName(nameof(ActivityHandler.ListActivity));
 
             var rooms = api.MapGroup("/rooms");
             rooms.MapGet("", RoomHandler.ListRooms).WithName(nameof(RoomHandler.ListRooms)).RequireAuthorization();

@@ -3,6 +3,7 @@ using System;
 using Karata.Platform.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Karata.Platform.Data.Migrations
 {
     [DbContext(typeof(KarataPlatformContext))]
-    partial class KarataPlatformContextModelSnapshot : ModelSnapshot
+    [Migration("20260706031653_AddActivity")]
+    partial class AddActivity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,15 +33,7 @@ namespace Karata.Platform.Data.Migrations
                     b.Property<DateTimeOffset>("OccurredAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Actions")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Application")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Metadata")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -77,6 +72,53 @@ namespace Karata.Platform.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Karata.Platform.Models.Activity", b =>
+                {
+                    b.OwnsOne("System.Collections.Generic.Dictionary<string, string>", "Metadata", b1 =>
+                        {
+                            b1.Property<Guid>("ActivityId");
+
+                            b1.Property<DateTimeOffset>("ActivityOccurredAt");
+
+                            b1.HasKey("ActivityId", "ActivityOccurredAt");
+
+                            b1.ToTable("Activity");
+
+                            b1
+                                .ToJson("Metadata")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ActivityId", "ActivityOccurredAt");
+                        });
+
+                    b.OwnsOne("System.Collections.Generic.List<Karata.Kit.Platform.Models.ActionData>", "Actions", b1 =>
+                        {
+                            b1.Property<Guid>("ActivityId");
+
+                            b1.Property<DateTimeOffset>("ActivityOccurredAt");
+
+                            b1.Property<int>("Capacity");
+
+                            b1.HasKey("ActivityId", "ActivityOccurredAt");
+
+                            b1.ToTable("Activity");
+
+                            b1
+                                .ToJson("Actions")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ActivityId", "ActivityOccurredAt");
+                        });
+
+                    b.Navigation("Actions")
+                        .IsRequired();
+
+                    b.Navigation("Metadata")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

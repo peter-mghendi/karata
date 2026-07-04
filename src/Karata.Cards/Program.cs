@@ -1,17 +1,23 @@
-using Karata.Cards.Endpoints;
 using Karata.Cards.Infrastructure;
-using Karata.Cards.Infrastructure.Security;
+using Karata.Cards.Routing;
 using Karata.Cards.Services;
+using Karata.Kit;
 using Karata.Kit.Cards.Engine;
+using Karata.Kit.Security;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
+using IncomingAccessTokenProvider = System.Func<System.Threading.Tasks.Task<string?>>;
 
 var builder = WebApplication.CreateBuilder(args);
 var db = builder.Configuration["DATABASE_URL"] ?? throw new Exception("DATABASE_URL is not set.");
+var platform = builder.Configuration["PLATFORM_URL"] ?? throw new Exception("PLATFORM_URL is not set.");
 
+builder.Services.AddHttpClient();
 builder.Services.AddOpenApi();
 builder.Services.AddDatabase(db, builder.Environment);
+builder.Services.AddMemoryCache();
 builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
 builder.Services.AddAuthorization();
 builder.Services.Configure<UserProvisioningOptions>(o => o.AutoProvisionEnabled = true);
@@ -43,6 +49,24 @@ builder.Services.AddTransient<RoomMembershipServiceFactory>();
 builder.Services.AddTransient<TurnProcessingServiceFactory>();
 builder.Services.AddTransient<VoidTurnServiceFactory>();
 builder.Services.AddTransient<SetAwayServiceFactory>();
+
+builder.Services.AddKeyedScoped<IncomingAccessTokenProvider>(nameof(IncomingAccessTokenProvider), (sp, _) => async () =>
+{
+    var accessor = sp.GetRequiredService<IHttpContextAccessor>();
+    return await accessor.HttpContext!.GetTokenAsync("access_token");
+});
+builder.Services.AddTransient<TokenExchangeAccessTokenProvider>();
+builder.Services.AddKarataPlatform((options, services) =>
+{
+    options.Host = new Uri(platform);
+    options.TokenProvider = async () =>
+    {
+        using var scope = services.CreateScope();
+        using var provider = scope.ServiceProvider.GetRequiredService<TokenExchangeAccessTokenProvider>();
+
+        return await provider.GetAsync();
+    };
+});
 builder.Services.AddResponseCompression(compression =>
 {
     compression.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/octet-stream"]);

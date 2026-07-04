@@ -110,8 +110,6 @@ public sealed class LiveTurnProcessingService(
             (room.Game.Status, room.Game.Result) = (Over, result);
             turn.GameSnapshot = room.Game;
 
-            if (exception.Result.ResultType is GameResultType.Win) context.Activities.Add(Activity.GameWon(room));
-
             await context.SaveChangesAsync();
 
             await Caller.TurnAcknowledged(RoomId);

@@ -15,5 +15,7 @@ public class Client(Client.Options options)
     
     private readonly RestClient _client = new(new Uri(options.Host, "/api"), rest => rest.WithBearerInterceptor(options.TokenProvider));
 
+    public ActivityService Activity => new(_client);
+    
     public ProfileService Profiles => new(_client);
 }

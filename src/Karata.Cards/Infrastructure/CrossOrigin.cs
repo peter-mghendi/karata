@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Cors.Infrastructure;
 
-namespace Karata.Cards.Infrastructure.Security;
+namespace Karata.Cards.Infrastructure;
 
 public static class CrossOrigin
 {

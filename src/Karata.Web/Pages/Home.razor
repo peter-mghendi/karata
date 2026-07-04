@@ -1,11 +1,11 @@
 @page "/"
 
-@using Karata.Kit.Cards
-@using Karata.Kit.Cards.Models
+@using Karata.Kit.Platform.Models
 
 @attribute [AllowAnonymous]
 
-@inject Client Cards
+@inject Kit.Cards.Client Cards
+@inject Kit.Platform.Client Platform
 @inject NavigationManager Navigator
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full pt-4">
@@ -31,6 +31,6 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        _feed = await Cards.Activity.ListAsync();
+        _feed = await Platform.Activity.ListAsync();
     }
 }

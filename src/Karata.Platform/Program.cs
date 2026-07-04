@@ -1,17 +1,12 @@
-using Karata.Kit.Platform.Models;
-using Karata.Platform.Data;
+using Karata.Platform;
 using Karata.Platform.Infrastructure;
 using Karata.Platform.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using static Microsoft.AspNetCore.Http.TypedResults;
 
 var builder = WebApplication.CreateBuilder(args);
-var db = builder.Configuration["DATABASE_URL"] ?? throw new Exception("DATABASE_URL is not set.");
+var db = builder.Configuration["DATABASE_URL"] is {} url ? new Uri(url) : throw new Exception("DATABASE_URL is not set.");
 
 builder.Services.AddOpenApi();
 builder.Services.AddDatabase(db, builder.Environment);
@@ -68,27 +63,7 @@ app.MapHealthChecks("/health");
 app.UseAuthentication();
 app.UseAuthorization();
 
-var api = app.MapGroup("/api");
-api.MapGet(
-        "/profiles",
-        async ([FromServices] KarataPlatformContext context) =>
-        {
-            var profiles = await context.Users.AsNoTracking().ToArrayAsync();
-            return Ok(profiles.Select(profile => new ProfileData(profile.Id, profile.Username, $"https://api.dicebear.com/10.x/glyphs/svg?seed={profile.Username}")));
-        })
-    .WithName("ListProfiles")
-    .RequireAuthorization();
-api.MapGet(
-        "/profiles/{username}",
-        async Task<Results<Ok<ProfileData>, NotFound>> ([FromServices] KarataPlatformContext context, string username) =>
-        {
-            var profile = await context.Users.AsNoTracking().FirstOrDefaultAsync(profile => profile.Username == username);
-            if (profile is null) return NotFound();
-            
-            return Ok(new ProfileData(profile.Id, profile.Username, $"https://api.dicebear.com/10.x/glyphs/svg?seed={profile.Username}"));
-        })
-    .WithName("GetProfile")
-    .RequireAuthorization();
+app.MapEndpoints();
 
 app.UseHttpsRedirection();
 app.Run();  

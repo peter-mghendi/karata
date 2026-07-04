@@ -1,24 +1,32 @@
-@using Karata.Kit.Cards.Models
+@using Karata.Kit.Platform.Models
+
 <MudCard Elevation="0" Class="mb-4 pa-2">
     <MudCardHeader>
         <CardHeaderAvatar>
-            <MudAvatar Color="Color.Secondary">@Activity.Actor.Username.ToUpper().First()</MudAvatar>
+            <MudAvatar Color="MudBlazor.Color.Secondary">@Activity.Actor.Username.ToUpper().First()</MudAvatar>
         </CardHeaderAvatar>
         <CardHeaderContent>
             <MudText Typo="Typo.body1">@Activity.Actor.Username</MudText>
-            <MudText Typo="Typo.body2">@Activity.CreatedAt.ToLocalTime().ToString()</MudText>
+            <MudText Typo="Typo.body2">@Activity.OccurredAt.ToLocalTime().ToString()</MudText>
         </CardHeaderContent>
     </MudCardHeader>
     <MudCardContent>
         <MudText>@Activity.Text</MudText>
     </MudCardContent>
     <MudCardActions>
-        <MudButton Variant="Variant.Text" Color="Color.Primary" Href="@Activity.Link">
-            @Activity.Action
-        </MudButton>
+        @foreach (var action in Activity.Actions)
+        {
+            <MudButton Variant="Variant.Text" Color="Color(action)" Href="@action.Href.ToString()">
+                @action.Text
+            </MudButton>
+        }
     </MudCardActions>
 </MudCard>
 
 @code {
     [Parameter] public required ActivityData Activity { get; set; }
+
+    private static Color Color(ActionData action) => Enum.TryParse<Color>(action.Type, ignoreCase: true, result: out var color) 
+        ? color 
+        : MudBlazor.Color.Default;
 }

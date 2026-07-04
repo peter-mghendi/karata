@@ -1,9 +1,9 @@
 @page "/"
 
-@using Karata.Kit.Cards
-@using Karata.Kit.Cards.Models
+@using Karata.Kit.Platform.Models
 
-@inject Client Cards
+@inject Kit.Cards.Client Cards
+@inject Kit.Platform.Client Platform
 @inject NavigationManager Navigator
 
 @layout MainLayout
@@ -27,7 +27,7 @@
 
         if (firstRender)
         {
-            _feed = await Cards.Activity.ListAsync();
+            _feed = await Platform.Activity.ListAsync();
             StateHasChanged();
         }
     }

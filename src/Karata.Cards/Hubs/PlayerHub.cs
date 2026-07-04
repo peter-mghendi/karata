@@ -1,6 +1,6 @@
 using Karata.Cards.Data;
 using Karata.Cards.Hubs.Clients;
-using Karata.Cards.Infrastructure.Security;
+using Karata.Cards.Infrastructure;
 using Karata.Cards.Services;
 using Karata.Kit.Cards.Models;
 using Karata.Kit.Support.Exceptions;

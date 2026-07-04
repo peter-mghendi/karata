@@ -37,8 +37,6 @@ public class Client(Client.Options options)
     
     private readonly RestClient _client = new(new Uri(options.Host, "/api"), rest => rest.WithBearerInterceptor(options.TokenProvider));
 
-    public ActivityService Activity => new(_client);
-
     public RoomService Rooms => new(_client);
 
     public TurnService Turns => new(_client);

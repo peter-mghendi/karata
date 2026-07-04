@@ -1,7 +1,7 @@
 using Karata.Kit.Bot.Interface;
-using Karata.Kit.Bot.Security;
 using Karata.Kit.Bot.Services;
 using Karata.Kit.Cards.Connection;
+using Karata.Kit.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,7 +16,7 @@ public static class DependencyInjection
         {
             services.AddSingleton<PlayerConnection>(provider =>
             {
-                var tokens = provider.GetRequiredService<AccessTokenProvider>();
+                var tokens = provider.GetRequiredService<ClientCredentialsAccessTokenProvider>();
                 var config = provider.GetRequiredService<IConfiguration>();
                 
                 return new PlayerConnection(new Uri(config["KARATA_CARDS_HOST"]!))

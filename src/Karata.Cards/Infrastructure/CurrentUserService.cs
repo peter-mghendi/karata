@@ -1,10 +1,9 @@
 using System.Collections.Concurrent;
 using System.Security.Claims;
 using Karata.Cards.Data;
-using Karata.Cards.Models;
 using Microsoft.Extensions.Options;
 
-namespace Karata.Cards.Infrastructure.Security;
+namespace Karata.Cards.Infrastructure;
 
 public sealed class CurrentUserService(
     IHttpContextAccessor http,

@@ -1,15 +1,16 @@
 using System.Text;
 using Karata.Cards.Data;
-using Karata.Cards.Infrastructure.Security;
-using Karata.Cards.Models;
+using Karata.Cards.Infrastructure;
 using Karata.Cards.Services;
 using Karata.Kit.Cards.Models;
+using Karata.Kit.Platform;
+using Karata.Kit.Platform.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static Karata.Kit.Cards.Models.GameStatus;
 
-namespace Karata.Cards.Handlers;
+namespace Karata.Cards.Routing.Handlers;
 
 public static class RoomHandler
 {
@@ -40,6 +41,7 @@ public static class RoomHandler
     }
 
     public static async Task<Results<CreatedAtRoute<RoomData>, UnauthorizedHttpResult>> CreateRoom(
+        [FromServices] Client platform,
         [FromServices] KarataContext context,
         [FromServices] CurrentUserService currentUserService,
         [FromServices] IPasswordService passwordService,
@@ -60,9 +62,17 @@ public static class RoomHandler
             }
 
             context.Rooms.Add(room);
-            context.Activities.Add(Activity.GameCreated(room));
-
             await context.SaveChangesAsync();
+            
+            var activity = new ActivityRequest
+            {
+                Text = $"{room.Creator.Username} has started a game.",
+                Actions = [new("Check it out!", new Uri($"https://localhost:7240/game/{room.Id}"), "primary")],
+                Metadata = new() { ["room"] = room.Id.ToString() },
+                OccurredAt = room.CreatedAt
+            };
+            await platform.Activity.CreateAsync(activity);
+
             return TypedResults.CreatedAtRoute(room.ToData(), nameof(GetRoom), new { id = room.Id });
         }
         catch (UnauthorizedAccessException)

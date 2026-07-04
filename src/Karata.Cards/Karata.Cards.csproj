@@ -15,6 +15,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
 
     <!-- To patch CVE-2026-49451: Remove when upgrading. -->
     <PackageReference Include="Microsoft.OpenApi" />

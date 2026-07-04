@@ -1,7 +1,6 @@
 using System.Security.Claims;
-using Karata.Cards.Models;
 
-namespace Karata.Cards.Infrastructure.Security;
+namespace Karata.Cards.Infrastructure;
 
 public sealed class UserProvisioningOptions
 {

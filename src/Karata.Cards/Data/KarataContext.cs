@@ -1,13 +1,12 @@
 ﻿using System.Text.Json;
-using Karata.Cards.Models;
 using Karata.Kit.Cards.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+
 namespace Karata.Cards.Data;
 
 public class KarataContext(DbContextOptions<KarataContext> options) : DbContext(options)
 {
-    public DbSet<Activity> Activities => Set<Activity>();
     public DbSet<Chat> Chats => Set<Chat>();
     public DbSet<Game> Games => Set<Game>();
     public DbSet<Hand> Hands => Set<Hand>();
@@ -134,22 +133,6 @@ public class KarataContext(DbContextOptions<KarataContext> options) : DbContext(
                 metadata => JsonSerializer.Serialize(metadata, options),
                 json => JsonSerializer.Deserialize<TurnMetadata>(json, options) ?? new TurnMetadata()
             );
-
-        // Activity
-        modelBuilder.Entity<Activity>().Property(a => a.Type).HasConversion<string>();
-        modelBuilder.Entity<Activity>().HasOne(a => a.Actor).WithMany();
-        modelBuilder.Entity<Activity>()
-            .Property(t => t.Metadata)
-            .HasConversion(
-                metadata => JsonSerializer.Serialize(metadata, options),
-                json => JsonSerializer.Deserialize<Dictionary<string, object>>(json, options) ?? new(),
-                new ValueComparer<Dictionary<string, object>>(
-                        (left, right) => left != null && right != null && JsonSerializer.Serialize(left, options) == JsonSerializer.Serialize(right, options),
-                        s => s.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                        s => s  
-                    )
-            );
-        modelBuilder.Entity<Activity>().Navigation(a => a.Actor).AutoInclude();
         
         // Chat
         modelBuilder.Entity<Chat>().Navigation(c => c.Sender).AutoInclude();
