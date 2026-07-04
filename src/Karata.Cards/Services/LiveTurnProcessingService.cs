@@ -30,15 +30,6 @@ public sealed class LiveTurnProcessingService(
     string connection
 ) : LiveRoomAwareService(players, spectators, roomId, playerId)
 {
-    private readonly EngineData _details = new()
-    {
-        Name = engine.Name,
-        Date = ThisAssembly.Git.CommitDate,
-        Branch = ThisAssembly.Git.Branch,
-        Version = ThisAssembly.Git.Sha,
-        Revision = ThisAssembly.Git.Commit,
-    };
-
     public async Task ExecuteAsync(List<Card> cards)
     {
         var player = (await context.Users.FindAsync(CallerPlayerId))!;
@@ -51,7 +42,7 @@ public sealed class LiveTurnProcessingService(
             Type = Play,
             Hand = room.Game.CurrentHand,
             CreatedAt = DateTimeOffset.UtcNow,
-            Metadata = new TurnMetadata { Engine = _details }
+            Metadata = new TurnMetadata()
         };
 
         try
