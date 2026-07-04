@@ -1,9 +1,8 @@
 using System.Text;
-using Karata.Cards.Models;
 using Karata.Cards.Support.Exceptions;
-using Karata.Kit.Core.Exceptions;
-using Karata.Kit.Domain.Models;
-using static Karata.Kit.Domain.Models.HandStatus;
+using Karata.Kit.Cards.Models;
+using Karata.Kit.Support.Exceptions;
+using static Karata.Kit.Cards.Models.HandStatus;
 
 namespace Karata.Cards.Services;
 

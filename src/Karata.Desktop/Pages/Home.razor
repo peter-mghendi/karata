@@ -1,16 +1,17 @@
 @page "/"
 
-@using Karata.Kit.Application.Client
+@using Karata.Kit.Cards
+@using Karata.Kit.Cards.Models
 
-@inject KarataClient KarataClient
+@inject Client Cards
 @inject NavigationManager Navigator
 
 @layout MainLayout
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="pt-4">
     <MudText Typo="Typo.h6" Class="mb-8">Welcome back, friend.</MudText>
-    <QuickJoin KarataClient="KarataClient" Navigator="Navigator"/>
-    <ActivityFeed Feed="_feed" />
+    <QuickJoin Cards="@Cards" Navigator="@Navigator"/>
+    <ActivityFeed Feed="@_feed" />
     <MudScrollToTop TopOffset="100">
         <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Rounded.KeyboardArrowUp"/>
     </MudScrollToTop>
@@ -26,7 +27,7 @@
 
         if (firstRender)
         {
-            _feed = await KarataClient.Activity.ListAsync();
+            _feed = await Cards.Activity.ListAsync();
             StateHasChanged();
         }
     }

@@ -1,7 +1,7 @@
-using Karata.Kit.Application.Client.Connection;
-using Karata.Kit.Bot.Infrastructure.Security;
 using Karata.Kit.Bot.Interface;
+using Karata.Kit.Bot.Security;
 using Karata.Kit.Bot.Services;
+using Karata.Kit.Cards.Connection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,7 +19,7 @@ public static class DependencyInjection
                 var tokens = provider.GetRequiredService<AccessTokenProvider>();
                 var config = provider.GetRequiredService<IConfiguration>();
                 
-                return new PlayerConnection(new Uri(config["KARATA_HOST"]!))
+                return new PlayerConnection(new Uri(config["KARATA_CARDS_HOST"]!))
                 {
                     AccessTokenProvider = async () => await tokens.GetAsync()
                 };

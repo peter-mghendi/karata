@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
-using Karata.Kit.Domain.Models;
-using static Karata.Kit.Domain.Models.CardRequestLevel;
+using Karata.Kit.Cards.Models;
+using static Karata.Kit.Cards.Models.CardRequestLevel;
 using static Karata.Pips.Card.CardFace;
 
 namespace Karata.Cards.Models;

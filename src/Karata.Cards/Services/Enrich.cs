@@ -1,5 +1,5 @@
 using Karata.Cards.Models;
-using Karata.Kit.Domain.Models;
+using Karata.Kit.Cards.Models;
 
 namespace Karata.Cards.Services;
 

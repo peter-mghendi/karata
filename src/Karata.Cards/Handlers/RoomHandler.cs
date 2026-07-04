@@ -3,11 +3,11 @@ using Karata.Cards.Data;
 using Karata.Cards.Infrastructure.Security;
 using Karata.Cards.Models;
 using Karata.Cards.Services;
-using Karata.Kit.Domain.Models;
+using Karata.Kit.Cards.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using static Karata.Kit.Domain.Models.GameStatus;
+using static Karata.Kit.Cards.Models.GameStatus;
 
 namespace Karata.Cards.Handlers;
 

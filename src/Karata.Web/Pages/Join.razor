@@ -1,11 +1,12 @@
 @page "/game/join"
 
-@using Karata.Kit.Application.Client
+@using Karata.Kit.Cards
+@using Karata.Kit.Cards.Models
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 @attribute [Authorize]
 
-@inject KarataClient KarataClient
+@inject Client Cards
 @inject NavigationManager Navigator
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full">
@@ -75,7 +76,7 @@
     {
         try
         {
-            _rooms = await KarataClient.Rooms.ListAsync();
+            _rooms = await Cards.Rooms.ListAsync();
         }
         catch (AccessTokenNotAvailableException)
         {
@@ -88,7 +89,7 @@
         try
         {
             _loading = true;
-            var room = await KarataClient.Rooms.CreateAsync(new RoomRequest { Password = _password });
+            var room = await Cards.Rooms.CreateAsync(new RoomRequest { Password = _password });
             Navigator.NavigateTo($"/game/{room.Id.ToString()}/play");
         }
         finally

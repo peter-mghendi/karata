@@ -1,0 +1,65 @@
+@page "/users/{username}"
+
+@using Karata.Kit.Platform
+@using Karata.Kit.Platform.Models
+@using Karata.Surface.Security
+
+@inject AuthenticationHelper Authenticator
+@inject Client Platform
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full pt-4">
+    @if (_user is not null)
+    {
+        <MudStack AlignItems="AlignItems.Center">
+            <MudImage Width="128" Height="128" Src="@_user.Avatar" Alt="@_user.Username" Class="rounded-circle"/>
+
+            <MudText Typo="Typo.h4">@_user.Username</MudText>
+
+            <AuthorizeView>
+                <Authorized>
+                    @if (context.User.Identity!.Name! == Username)
+                    {
+                        <MudLink Href="@Authenticator.Profile()">edit profile</MudLink>
+                    }
+                </Authorized>
+            </AuthorizeView>
+            <MudChip T="string" Size="Size.Medium" Variant="Variant.Text" Color="Color.Primary">Level --</MudChip>
+
+            <MudStack Row Class="flex" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText Typo="Typo.h5">--</MudText>
+                    <MudText Typo="Typo.body2">played</MudText>
+                </MudStack>
+                <MudDivider Vertical/>
+                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText Typo="Typo.h5">--</MudText>
+                    <MudText Typo="Typo.body2">won</MudText>
+                </MudStack>
+                <MudDivider Vertical/>
+                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText Typo="Typo.h5">--</MudText>
+                    <MudText Typo="Typo.body2">lost</MudText>
+                </MudStack>
+            </MudStack>
+
+            <MudTabs ApplyEffectsToContainer Centered KeepPanelsAlive Rounded Style="width: 100%" TabPanelsClass="pa-6">
+                <MudTabPanel Text="Activity">
+                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="width: 100%">
+                        <MudText>No activity to display</MudText>
+                    </MudStack>
+                </MudTabPanel>
+            </MudTabs>
+        </MudStack>
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public required string Username { get; init; }
+
+    private ProfileData? _user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _user = await Platform.Profiles.GetAsync(Username);
+    }
+}

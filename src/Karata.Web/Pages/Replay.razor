@@ -4,10 +4,10 @@
 @using System.Reactive.Disposables
 @using System.Reactive.Disposables.Fluent
 @using System.Reactive.Linq
-@using Karata.Kit.Application
-@using Karata.Kit.Application.Client.Connection
-@using Karata.Kit.Application.Client.State
-@using Karata.Kit.Application.Store
+@using Karata.Kit.Cards
+@using Karata.Kit.Cards.Connection
+@using Karata.Kit.Cards.Models
+@using Karata.Kit.Cards.State
 @using Karata.Pebble.Interceptors
 @using Microsoft.Extensions.Options
 
@@ -17,7 +17,7 @@
 
 @inject AuthenticationStateProvider Authenticator
 @inject ILoggerFactory LoggerFactory
-@inject IOptions<KarataClientOptions> ClientOptions
+@inject IOptions<Client.Options> ClientOptions
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigator
 

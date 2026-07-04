@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
-using Karata.Kit.Bot.Infrastructure.Security;
+using Karata.Kit.Bot.Security;
 using Karata.Kit.Bot.Strategy;
-using Karata.Kit.Domain.Models;
+using Karata.Kit.Cards.Models;
 using Microsoft.Extensions.Logging;
 using static System.Threading.CancellationToken;
 using static System.Threading.Tasks.Task;

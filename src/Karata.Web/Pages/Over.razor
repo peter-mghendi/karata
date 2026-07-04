@@ -1,8 +1,9 @@
 @page "/game/{id:guid}/over"
 
-@using Karata.Kit.Application.Client
+@using Karata.Kit.Cards
+@using Karata.Kit.Cards.Models
 
-@inject KarataClient KarataClient
+@inject Client Cards
 
 @if (_room is not null)
 {
@@ -17,6 +18,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _room = await KarataClient.Rooms.GetAsync(Id);
+        _room = await Cards.Rooms.GetAsync(Id);
     }
 }

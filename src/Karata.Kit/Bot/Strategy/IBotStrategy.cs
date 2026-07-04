@@ -1,4 +1,5 @@
-using Karata.Kit.Domain.Models;
+using Karata.Kit.Bot.Models;
+using Karata.Kit.Cards.Models;
 
 namespace Karata.Kit.Bot.Strategy;
 

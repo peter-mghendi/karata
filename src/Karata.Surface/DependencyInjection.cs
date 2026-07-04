@@ -1,5 +1,5 @@
 using Blazored.LocalStorage;
-using Karata.Kit.Application.Security;
+using Karata.Kit.Security;
 using Karata.Surface.Security;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;

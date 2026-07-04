@@ -1,8 +1,8 @@
-using Karata.Kit.Engine;
 using Karata.Cards.Endpoints;
+using Karata.Cards.Infrastructure;
 using Karata.Cards.Infrastructure.Security;
-using Karata.Cards.Infrastructure.Services;
 using Karata.Cards.Services;
+using Karata.Kit.Cards.Engine;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -10,8 +10,10 @@ using Microsoft.AspNetCore.ResponseCompression;
 var builder = WebApplication.CreateBuilder(args);
 var db = builder.Configuration["DATABASE_URL"] ?? throw new Exception("DATABASE_URL is not set.");
 
+builder.Services.AddOpenApi();
 builder.Services.AddDatabase(db, builder.Environment);
 builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration);
+builder.Services.AddAuthorization();
 builder.Services.Configure<UserProvisioningOptions>(o => o.AutoProvisionEnabled = true);
 builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, opts =>
 {
@@ -58,6 +60,7 @@ app.UseForwardedHeaders(new() { ForwardedHeaders = ForwardedHeaders.XForwardedFo
 
 if (app.Environment.IsDevelopment())
 {
+    app.MapOpenApi();
     app.UseMigrationsEndPoint();
 }
 else

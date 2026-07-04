@@ -1,5 +1,5 @@
 using Karata.Cards.Data;
-using Karata.Kit.Domain.Models;
+using Karata.Kit.Cards.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 

@@ -1,12 +1,12 @@
 using Karata.Bot;
 using Karata.BotFramework.Endpoints;
-using Karata.Kit.Application;
+using Karata.Kit;
 using Karata.Kit.Bot;
-using Karata.Kit.Bot.Infrastructure.Security;
+using Karata.Kit.Bot.Security;
 using Karata.Kit.Bot.Strategy;
 
 var builder = WebApplication.CreateBuilder(args);
-var host = builder.Configuration["KARATA_HOST"] ?? throw new Exception("KARATA_HOST is not set");
+var host = builder.Configuration["KARATA_CARDS_HOST"] ?? throw new Exception("KARATA_CARDS_HOST is not set");
 
 Console.WriteLine($"Karata Host: {host}");
 
@@ -14,10 +14,10 @@ builder.Services.AddCors(cors => cors.AddPolicy(nameof(CrossOrigin.AllowAll), Cr
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<AccessTokenProvider>();
-builder.Services.AddKarataCore((karata, services) =>
+builder.Services.AddKarataCards((cards, services) =>
 {
-    karata.Host = new Uri(host!);
-    karata.TokenProvider = async () => await services.GetRequiredService<AccessTokenProvider>().GetAsync();
+    cards.Host = new Uri(host!);
+    cards.TokenProvider = async () => await services.GetRequiredService<AccessTokenProvider>().GetAsync();
 });
 
 builder.Services.AddKarataBot();

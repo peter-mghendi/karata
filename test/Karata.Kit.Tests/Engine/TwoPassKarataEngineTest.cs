@@ -1,18 +1,18 @@
-using Karata.Kit.Domain.Models;
-using Karata.Kit.Engine;
-using Karata.Kit.Engine.Exceptions;
+using Karata.Kit.Cards.Engine;
+using Karata.Kit.Cards.Engine.Exceptions;
+using Karata.Kit.Cards.Models;
 using Karata.Pips;
 using Karata.Pips.Extensions;
-using static Karata.Kit.Domain.Models.CardRequestLevel;
+using static Karata.Kit.Cards.Models.CardRequestLevel;
 using static Karata.Pips.Card.CardColor;
 using static Karata.Pips.Card.CardFace;
 using static Karata.Pips.Card.CardSuit;
 using TestCase = (
     int Identifier,
-    Karata.Kit.Domain.Models.GameData Game,
+    Karata.Kit.Cards.Models.GameData Game,
     System.Collections.Generic.List<Karata.Pips.Card> Cards,
     bool ExpectedValid,
-    Karata.Kit.Domain.Models.TurnDelta ExpectedDelta
+    Karata.Kit.Cards.Models.TurnDelta ExpectedDelta
 );
 
 namespace Karata.Kit.Tests.Engine;

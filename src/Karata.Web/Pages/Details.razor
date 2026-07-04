@@ -1,8 +1,9 @@
 @page "/game/{id:guid}"
 
-@using Karata.Kit.Application.Client
+@using Karata.Kit.Cards
+@using Karata.Kit.Cards.Models
 
-@inject KarataClient KarataClient
+@inject Client Cards
 
 <GameDetails Room="_room" />
 
@@ -14,6 +15,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _room = await KarataClient.Rooms.GetAsync(Id);
+        _room = await Cards.Rooms.GetAsync(Id);
     }
 }

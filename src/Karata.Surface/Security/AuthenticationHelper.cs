@@ -1,16 +1,17 @@
+using Karata.Kit.Security;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 
 namespace Karata.Surface.Security;
 
-file sealed class Route
+file static class Route
 {
     public const string Login = "authentication/login";
     public const string Logout = "authentication/logout";
     public const string Root = "/";
 }
 
-public sealed class AuthenticationHelper(NavigationManager navigator)
+public sealed class AuthenticationHelper(ClientConfiguration client, NavigationManager navigator)
 {
     private string CurrentPath => navigator.ToAbsoluteUri(navigator.Uri).GetLeftPart(UriPartial.Path);
 
@@ -39,15 +40,15 @@ public sealed class AuthenticationHelper(NavigationManager navigator)
         navigator.NavigateToLogin(Route.Login, options);
     }
 
-    public string Profile(string authority, string client, string? returnTo = null)
+    public string Profile(string? returnTo = null)
     {
         var parameters = new Dictionary<string, string>
         {
-            { "referrer", client },
+            { "referrer", client.Id },
             { "referrer_uri", returnTo ?? CurrentPath },
         };
 
-        var builder = new UriBuilder(authority.TrimEnd('/'));
+        var builder = new UriBuilder(client.Authority.TrimEnd('/'));
         builder.Path += "/account";
         builder.Query = string.Join('&', parameters.Select(pair => $"{pair.Key}={pair.Value}"));
 

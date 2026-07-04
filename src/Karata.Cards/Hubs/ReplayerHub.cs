@@ -1,13 +1,12 @@
 using Humanizer;
 using Karata.Cards.Data;
 using Karata.Cards.Hubs.Clients;
-using Karata.Cards.Models;
 using Karata.Cards.Services;
 using Karata.Cards.Support.Exceptions;
-using Karata.Kit.Core.Exceptions;
+using Karata.Kit.Support.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using static Karata.Kit.Domain.Models.GameStatus;
+using static Karata.Kit.Cards.Models.GameStatus;
 
 namespace Karata.Cards.Hubs;
 
