@@ -8,8 +8,16 @@ public static class Configuration
 {
     public static readonly Dictionary<string, ClientConfiguration> Client = new()
     {
-        ["Development"] = new(Authority: "http://localhost:18080/realms/karata", Id: "karata-desktop"),
-        ["Production"] = new(Authority: "https://id.karata.app/realms/karata", Id: "karata-desktop")
+        ["Development"] = new(
+            Id: "karata-desktop",
+            Authority: "http://localhost:18080/realms/karata",
+            Audiences: ["karata-cards", "karata-platform"]
+        ),
+        ["Production"] = new(
+            Id: "karata-desktop",
+            Authority: "https://id.karata.app/realms/karata",
+            Audiences: ["karata-cards", "karata-platform"]
+        )
     };
 
     public static readonly Dictionary<string, HostConfiguration> Bot = new()

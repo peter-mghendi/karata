@@ -1,3 +1,3 @@
 namespace Karata.Kit.Security;
 
-public record ClientConfiguration(string Authority, string Id);
+public record ClientConfiguration(string Authority, string Id, string[] Audiences);

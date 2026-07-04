@@ -7,10 +7,10 @@ namespace Karata.Kit.Bot.Security;
 
 public sealed class AccessTokenProvider(HttpClient http, IConfiguration configuration) : IDisposable
 {
-    private readonly string _clientId = configuration["Keycloak:ClientId"]!;
-    private readonly string _clientSecret = configuration["Keycloak:ClientSecret"]!;
-    private readonly string _authority = configuration["Keycloak:Authority"]!;
-    private readonly string? _scope = configuration["Keycloak:Scope"];
+    private readonly string _authority = configuration["KARATA_ID_AUTHORITY"]!;
+    private readonly string _client = configuration["KARATA_ID_CLIENT_ID"]!;
+    private readonly string _secret = configuration["KARATA_ID_CLIENT_SECRET"]!;
+    private readonly string? _scope = configuration["KARATA_ID_SCOPE"];
 
     private readonly SemaphoreSlim _gate = new(1, 1);
     private string? _token;
@@ -42,8 +42,8 @@ public sealed class AccessTokenProvider(HttpClient http, IConfiguration configur
             var parameters = new Dictionary<string, string>
             {
                 ["grant_type"] = "client_credentials",
-                ["client_id"] = _clientId,
-                ["client_secret"] = _clientSecret
+                ["client_id"] = _client,
+                ["client_secret"] = _secret
             };
             if (!string.IsNullOrWhiteSpace(_scope)) parameters.Add("scope", _scope!);
             using var form = new FormUrlEncodedContent(parameters);
@@ -69,9 +69,5 @@ public sealed class AccessTokenProvider(HttpClient http, IConfiguration configur
         }
     }
 
-    public void Dispose()
-    {
-        http.Dispose();
-        _gate.Dispose();
-    }
+    public void Dispose() => _gate.Dispose();
 }

@@ -17,19 +17,24 @@ public static class DependencyInjection
             services.AddSingleton(client);
             services.AddOidcAuthentication(options =>
             {
-                // options.ProviderOptions.DefaultScopes.Add("Audience");
                 options.ProviderOptions.Authority = client.Authority;
                 options.ProviderOptions.ClientId = client.Id;
                 options.ProviderOptions.MetadataUrl = $"{client.Authority}/.well-known/openid-configuration";
-                options.ProviderOptions.ResponseType = "id_token token";
+                options.ProviderOptions.ResponseType = "code";
+
+                foreach (var audience in client.Audiences)
+                {
+                    options.ProviderOptions.DefaultScopes.Add(audience);
+                }
+
                 options.UserOptions.NameClaim = "preferred_username";
                 options.UserOptions.RoleClaim = "roles";
                 options.UserOptions.ScopeClaim = "scope";
             });
-            
+
             return services;
         }
-        
+
         public IServiceCollection AddKarataSurface()
         {
             services.AddBlazoredLocalStorage();
@@ -37,7 +42,7 @@ public static class DependencyInjection
             services.AddMudServices();
             services.AddMudExtensions();
             services.AddScoped<AuthenticationHelper>();
-            
+
             return services;
         }
     }
