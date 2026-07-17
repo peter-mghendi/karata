@@ -16,6 +16,7 @@
     <Project Path="src/Karata.Platform/Karata.Platform.csproj" />
     <Project Path="src/Karata.ServiceDefaults/Karata.ServiceDefaults.csproj" />
     <Project Path="src/Karata.Surface/Karata.Surface.csproj" />
+    <Project Path="src/Karata.Trivia/Karata.Trivia.csproj" />
     <Project Path="src/Karata.Web/Karata.Web.csproj" />
   </Folder>
   <Folder Name="/test/">

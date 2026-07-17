@@ -305,6 +305,7 @@
       "security-admin-console": [],
       "admin-cli": [],
       "account-console": [],
+      "karata-trivia": [],
       "karata-web": [],
       "synapse": [],
       "broker": [
@@ -935,6 +936,73 @@
         "organization",
         "offline_access",
         "microprofile-jwt"
+      ]
+    },
+    {
+      "id": "669c150d-e13e-49c9-8dcc-61e78c3fac78",
+      "clientId": "karata-trivia",
+      "name": "Karata Trivia",
+      "description": "Karata.Trivia",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "00000000-0000-0000-0000-000000000000",
+      "redirectUris": [
+        "https://localhost:7244",
+        "https://localhost:7244/*",
+        "http://localhost:10000"
+      ],
+      "webOrigins": [
+        "https://localhost:7244",
+        "https://localhost:7244/*"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "logout.confirmation.enabled": "false",
+        "client.secret.creation.time": "1756017383",
+        "oauth2.jwt.authorization.grant.enabled": "false",
+        "standard.token.exchange.enabled": "true",
+        "post.logout.redirect.uris": "+",
+        "frontchannel.logout.session.required": "true",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "realm_client": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "backchannel.logout.session.required": "true",
+        "display.on.consent.screen": "false",
+        "dpop.bound.access.tokens": "false"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "organization",
+        "offline_access",
+        "microprofile-jwt",
+        "karata-platform"
       ]
     },
     {
@@ -1841,6 +1909,35 @@
       ]
     },
     {
+      "id": "a7dc9534-4381-4349-b652-167dc50b3539",
+      "name": "karata-trivia",
+      "description": "karata-trivia audience",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "true",
+        "gui.order": "",
+        "consent.screen.text": "Karata Trivia data",
+        "include.in.openid.provider.metadata": "true"
+      },
+      "protocolMappers": [
+        {
+          "id": "3c4dacf8-9eaf-4105-b3db-8fcbd9a7bd77",
+          "name": "karata-trivia",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "karata-trivia",
+            "id.token.claim": "false",
+            "lightweight.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
       "id": "579e0ecc-72c8-4073-8f93-d8eb29be8115",
       "name": "saml_organization",
       "description": "Organization Membership",
@@ -1937,7 +2034,8 @@
     "microprofile-jwt",
     "organization",
     "karata-cards",
-    "karata-platform"
+    "karata-platform",
+    "karata-trivia"
   ],
   "browserSecurityHeaders": {
     "contentSecurityPolicyReportOnly": "",
@@ -2035,14 +2133,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "oidc-usermodel-property-mapper",
-            "oidc-address-mapper",
-            "oidc-full-name-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
-            "saml-role-list-mapper",
             "oidc-usermodel-attribute-mapper",
             "saml-user-property-mapper",
-            "saml-user-attribute-mapper"
+            "oidc-full-name-mapper",
+            "oidc-usermodel-property-mapper",
+            "saml-user-attribute-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
+            "oidc-address-mapper",
+            "saml-role-list-mapper"
           ]
         }
       },
@@ -2062,14 +2160,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
+            "oidc-usermodel-property-mapper",
             "oidc-address-mapper",
-            "oidc-usermodel-attribute-mapper",
-            "saml-user-property-mapper",
             "oidc-full-name-mapper",
+            "oidc-usermodel-attribute-mapper",
             "saml-role-list-mapper",
             "oidc-sha256-pairwise-sub-mapper",
-            "saml-user-attribute-mapper",
-            "oidc-usermodel-property-mapper"
+            "saml-user-property-mapper",
+            "saml-user-attribute-mapper"
           ]
         }
       },

@@ -1,4 +1,3 @@
-using Karata.Kit.Cards.Models;
 using Karata.Kit.Platform.Models;
 using RestSharp;
 

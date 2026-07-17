@@ -4,8 +4,8 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var postgres = builder.AddPostgres(
         name: "cluster",
-        userName: builder.AddParameter(name: "karata-cluster-username", secret: true),
-        password: builder.AddParameter(name: "karata-cluster-password", secret: true)
+        userName: builder.AddParameter(name: "cluster-username", secret: true),
+        password: builder.AddParameter(name: "cluster-password", secret: true)
     )
     .WithImage(image: "timescale/timescaledb-ha", tag: "pg18")
     .WithDataVolume(isReadOnly: false)
@@ -13,13 +13,14 @@ var postgres = builder.AddPostgres(
 
 var idDatabase = postgres.AddDatabase("id-db", "id_db");
 var cardsDatabase = postgres.AddDatabase("cards-db", "cards_db");
+var triviaDatabase = postgres.AddDatabase("trivia-db", "trivia_db");
 var platformDatabase = postgres.AddDatabase("platform-db", "platform_db");
 
 var keycloak = builder.AddKeycloak(
         name: "id",
         port: 18080,
-        adminUsername: builder.AddParameter(name: "karata-id-username"),
-        adminPassword: builder.AddParameter(name: "karata-id-password", secret: true)
+        adminUsername: builder.AddParameter(name: "id-username"),
+        adminPassword: builder.AddParameter(name: "id-password", secret: true)
     )
     .WithDataVolume()
     .WithLifetime(ContainerLifetime.Persistent)
@@ -60,6 +61,21 @@ var cards = builder.AddProject<Projects.Karata_Cards>("cards")
     .WithEnvironment("Keycloak__auth-server-url", keycloak.GetEndpoint("http"))
     .WithEnvironment("Keycloak__ssl-required", "none")
     .WithEnvironment("Keycloak__resource", "karata-cards")
+    .WithEnvironment("Keycloak__verify-token-audience", true.ToString())
+    .WithEnvironment("Keycloak__credentials__secret", Guid.Empty.ToString())
+    .WithEnvironment("Keycloak__confidential-port", 0.ToString())
+    .WithHttpHealthCheck("/health", StatusCodes.Status200OK);
+
+var trivia = builder.AddProject<Projects.Karata_Trivia>("trivia")
+    .WaitFor(keycloak)
+    .WaitFor(triviaDatabase)
+    .WithReference(keycloak)
+    .WithReference(triviaDatabase)
+    .WithEnvironment("DATABASE_URL", triviaDatabase.Resource.UriExpression)
+    .WithEnvironment("Keycloak__realm", "karata")
+    .WithEnvironment("Keycloak__auth-server-url", keycloak.GetEndpoint("http"))
+    .WithEnvironment("Keycloak__ssl-required", "none")
+    .WithEnvironment("Keycloak__resource", "karata-trivia")
     .WithEnvironment("Keycloak__verify-token-audience", true.ToString())
     .WithEnvironment("Keycloak__credentials__secret", Guid.Empty.ToString())
     .WithEnvironment("Keycloak__confidential-port", 0.ToString())
