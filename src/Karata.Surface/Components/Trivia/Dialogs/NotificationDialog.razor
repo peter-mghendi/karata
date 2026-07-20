@@ -1,0 +1,38 @@
+@using Karata.Kit.Trivia
+@using Karata.Kit.Trivia.Models.Response
+@inject NavigationManager Navigation
+@inject Client QuizWars
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Rounded.NotificationsActive" Class="mr-3 mb-n1"/>
+            Notification
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>@Notification.Text</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => Go(Notification))">
+            Go!
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public NotificationResponse Notification { get; set; } = null!;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Go(NotificationResponse notification)
+    {
+        await QuizWars.Notifications.MarkNotificationRead(notification.Id);
+        Navigation.NavigateTo(notification.Url);
+    }
+}

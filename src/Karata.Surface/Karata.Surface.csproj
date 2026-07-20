@@ -7,6 +7,7 @@
     <ItemGroup>
         <PackageReference Include="Blazored.LocalStorage"/>
         <PackageReference Include="CodeBeam.MudBlazor.Extensions" />
+        <PackageReference Include="Howler.Blazor" />
         <PackageReference Include="Microsoft.AspNetCore.Components.Web"/>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" />
         <PackageReference Include="MudBlazor" />
@@ -19,7 +20,28 @@
     </ItemGroup>
 
     <ItemGroup>
+      <AdditionalFiles Include="Components\Cards\CardComponent.razor" />
+      <AdditionalFiles Include="Components\Cards\CardListGameInterface.razor" />
+      <AdditionalFiles Include="Components\Cards\CardRequestModal.razor" />
+      <AdditionalFiles Include="Components\Cards\CardTableGameInterface.razor" />
+      <AdditionalFiles Include="Components\Cards\ChatPanel.razor" />
+      <AdditionalFiles Include="Components\Cards\GameDetails.razor" />
+      <AdditionalFiles Include="Components\Cards\GameOver.razor" />
+      <AdditionalFiles Include="Components\Cards\GameRules.razor" />
+      <AdditionalFiles Include="Components\Cards\HandComponent.razor" />
+      <AdditionalFiles Include="Components\Cards\HandDisplay.razor" />
+      <AdditionalFiles Include="Components\Cards\InformationPanel.razor" />
+      <AdditionalFiles Include="Components\Cards\PasswordRequestModal.razor" />
+      <AdditionalFiles Include="Components\Cards\PlayersPanel.razor" />
+      <AdditionalFiles Include="Components\Cards\QuickJoin.razor" />
+      <AdditionalFiles Include="Components\Cards\QuickResponseCode.razor" />
+      <AdditionalFiles Include="Components\Cards\SessionGuard.razor" />
+      <AdditionalFiles Include="Components\Cards\TurnEffects.razor" />
       <AdditionalFiles Include="Components\MainLayout.razor" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Components\Trivia\" />
     </ItemGroup>
 
 </Project>

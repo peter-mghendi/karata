@@ -10,13 +10,13 @@ public static class Configuration
     {
         ["Development"] = new(
             Id: "karata-web",
-            Authority: "http://localhost:18080/realms/karata",
-            Audiences: ["karata-cards", "karata-platform"]
+            Authority: "https://localhost:18080/realms/karata",
+            Audiences: ["karata-cards", "karata-platform", "karata-trivia"]
         ),
         ["Production"] = new(
             Id: "karata-web",
             Authority: "https://id.karata.app/realms/karata",
-            Audiences: ["karata-cards", "karata-platform"]
+            Audiences: ["karata-cards", "karata-platform", "karata-trivia"]
         )
     };
     
@@ -36,5 +36,11 @@ public static class Configuration
     {
         ["Development"] = new(Host: "https://localhost:7243"),
         ["Production"] = new(Host: "https://platform.karata.app")
+    };
+
+    public static readonly Dictionary<string, HostConfiguration> Trivia = new()
+    {
+        ["Development"] = new(Host: "https://localhost:7244"),
+        ["Production"] = new(Host: "https://trivia.karata.app")
     };
 }

@@ -38,7 +38,7 @@
     private bool _loading;
     private string _link = string.Empty;
 
-    private string JoinLink => $"/game/{_link}/play";
+    private string JoinLink => $"/cards/game/{_link}/play";
 
     private async Task CreateRoom()
     {
@@ -46,7 +46,7 @@
         {
             _loading = true;
             var room = await Cards.Rooms.CreateAsync(new RoomRequest { Password = string.Empty });
-            Navigator.NavigateTo($"/game/{room.Id.ToString()}/play");
+            Navigator.NavigateTo($"/cards/game/{room.Id.ToString()}/play");
         }
         finally
         {

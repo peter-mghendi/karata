@@ -1066,6 +1066,7 @@
         "organization",
         "offline_access",
         "microprofile-jwt",
+        "karata-trivia",
         "karata-platform"
       ]
     },

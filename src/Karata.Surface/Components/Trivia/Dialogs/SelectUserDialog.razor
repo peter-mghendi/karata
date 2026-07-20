@@ -1,0 +1,45 @@
+@using Karata.Kit.Cards.Models
+@using Karata.Kit.Trivia
+
+@inject Client QuizWars
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Rounded.PersonSearch" Class="mr-3 mb-n1"/>
+            Select Opponent
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudList T="UserData" SelectedValueChanged="@Challenge">
+            @foreach (var user in Users)
+            {
+                <MudListItem Text="@user.Username" Icon="@Icons.Material.Filled.Person" Value="user"/>
+            }
+        </MudList>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private List<UserData> Users { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Users = await QuizWars.Users.GetUsers();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Challenge(UserData? player)
+    {
+        if (player is null) return;
+
+        MudDialog.Close(DialogResult.Ok(player));
+    }
+
+}

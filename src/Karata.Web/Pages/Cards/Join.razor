@@ -1,4 +1,4 @@
-@page "/game/join"
+@page "/cards/game/join"
 
 @using Karata.Kit.Cards
 @using Karata.Kit.Cards.Models
@@ -69,8 +69,8 @@
     private string _password = string.Empty;
 
 
-    private string JoinLink => $"/game/{_link}/play";
-    private string SpectateLink => $"/game/{_link}/spectate";
+    private string JoinLink => $"/cards/game/{_link}/play";
+    private string SpectateLink => $"/cards/game/{_link}/spectate";
 
     protected override async Task OnInitializedAsync()
     {
@@ -90,7 +90,7 @@
         {
             _loading = true;
             var room = await Cards.Rooms.CreateAsync(new RoomRequest { Password = _password });
-            Navigator.NavigateTo($"/game/{room.Id.ToString()}/play");
+            Navigator.NavigateTo($"/cards/game/{room.Id.ToString()}/play");
         }
         finally
         {
