@@ -1,15 +1,14 @@
 using Karata.Kit.Trivia.Models.Enum;
 using Karata.Kit.Trivia.Models.Request;
 using Karata.Kit.Trivia.Models.Response;
+using Karata.Runtime.Infrastructure;
 using Karata.Trivia.Data;
 using Karata.Trivia.Extensions;
 using Karata.Trivia.Hubs;
 using Karata.Trivia.Hubs.Clients;
-using Karata.Trivia.Infrastructure;
 using Karata.Trivia.Models;
 using Karata.Trivia.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -20,47 +19,32 @@ namespace Karata.Trivia.Controllers;
 [ApiController]
 [Route("api/games/{identifier:guid}/rounds/{index:int}/responses")]
 public class ResponseController(
-    CurrentUserService current,
-    KarataTriviaContext context,
+    CurrentUserService<TriviaContext, User> current,
+    TriviaContext context,
     IHubContext<NotificationHub, INotificationHubClient> hub
 ) : ControllerBase
 {
     // POST: api/games/0085f04e-8a30-449e-91e1-38899b4d3ed5/rounds/3/responses
     [HttpPost]
     public async Task<ActionResult<IEnumerable<ResponseResponse>>> PostResponse(
-        Guid identifier,
-        int index,
+        [FromRoute] Guid identifier,
+        [FromRoute] int index,
         [FromBody] CreateResponseRequest request
     )
     {
         var game = await GetGameAsync(identifier);
-        if (game is null)
-        {
-            return NotFound();
-        }
+        if (game is null) return NotFound();
 
         var user = await current.RequireAsync();
-        if (game.Players.All(player => player.Id != user.Id))
-        {
-            return BadRequest();
-        }
+        if (game.Players.All(player => player.Id != user.Id)) return BadRequest();
 
         var round = game.Rounds.SingleOrDefault(r => r.Index == index);
-        if (round is null)
-        {
-            return BadRequest();
-        }
+        if (round is null) return BadRequest();
 
-        if (round.Responses.Any(r => r.User.Id == user.Id))
-        {
-            return Conflict();
-        }
+        if (round.Responses.Any(r => r.User.Id == user.Id)) return Conflict();
 
         var choice = round.Question.Choices.SingleOrDefault(c => c.Id == request.ChoiceId);
-        if (choice is null && request.ChoiceId is not 0)
-        {
-            return BadRequest();
-        }
+        if (choice is null && request.ChoiceId is not 0) return BadRequest();
 
         var response = new Response
         {

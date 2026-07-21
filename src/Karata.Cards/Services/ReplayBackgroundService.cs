@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Cards.Services;
 
-sealed record ReplayKey(Guid RoomId, string UserId);
+internal sealed record ReplayKey(Guid RoomId, string UserId);
 
-sealed record ReplaySessionHandle(Task Task, CancellationTokenSource Cancellation);
+internal sealed record ReplaySessionHandle(Task Task, CancellationTokenSource Cancellation);
 
 public sealed class ReplayProcessor(IServiceScopeFactory factory, IHubContext<ReplayerHub, IReplayerClient> replayers)
 {
@@ -18,7 +18,7 @@ public sealed class ReplayProcessor(IServiceScopeFactory factory, IHubContext<Re
     public async Task StartAsync(ReplayRequest request)
     {
         using var scope = factory.CreateScope();
-        await using var context = scope.ServiceProvider.GetRequiredService<KarataContext>();
+        await using var context = scope.ServiceProvider.GetRequiredService<CardsContext>();
         
         var key = new ReplayKey(request.RoomId, request.UserId);
         if (_sessions.TryRemove(key, out var existing))

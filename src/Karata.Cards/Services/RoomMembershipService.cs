@@ -9,7 +9,7 @@ public partial class RoomMembershipService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     IPasswordService passwords,
-    KarataContext context,
+    CardsContext context,
     PresenceService presence,
     Guid roomId,
     string player

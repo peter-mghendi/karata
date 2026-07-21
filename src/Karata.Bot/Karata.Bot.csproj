@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Karata.BotFramework\Karata.BotFramework.csproj" />
+      <ProjectReference Include="..\Karata.Runtime\Karata.Runtime.csproj" />
       <ProjectReference Include="..\Karata.ServiceDefaults\Karata.ServiceDefaults.csproj" />
     </ItemGroup>
 

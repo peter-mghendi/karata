@@ -11,38 +11,27 @@ namespace Karata.Trivia.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/topics")]
-public class TopicController(KarataTriviaContext context) : ControllerBase
+public class TopicController(TriviaContext context) : ControllerBase
 {
-    // GET: api/topics
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IEnumerable<TopicResponse>> GetTopics()
-    {
-        return await context.Topics.Select(t => t.AsResponse()).ToListAsync();
-    }
+    public async Task<IEnumerable<TopicResponse>> GetTopics() => await context.Topics
+        .Select(t => t.AsResponse())
+        .ToListAsync();
 
-    // GET: api/topics/5
     [HttpGet("{id:long}")]
     public async Task<ActionResult<TopicResponse>> GetTopic(long id)
     {
         var topic = await context.Topics.FindAsync(id);
-        if (topic is null)
-        {
-            return NotFound();
-        }
+        if (topic is null) return NotFound();
 
         return topic.AsResponse();
     }
 
-    // PUT: api/topics/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPut("{id:long}")]
     public async Task<IActionResult> PutTopic(long id, Topic topic)
     {
-        if (id != topic.Id)
-        {
-            return BadRequest();
-        }
+        if (id != topic.Id) return BadRequest();
 
         context.Entry(topic).State = EntityState.Modified;
 
@@ -58,8 +47,6 @@ public class TopicController(KarataTriviaContext context) : ControllerBase
         return NoContent();
     }
 
-    // POST: api/topics
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPost]
     public async Task<ActionResult<TopicResponse>> PostTopic(Topic topic)
     {
@@ -69,15 +56,11 @@ public class TopicController(KarataTriviaContext context) : ControllerBase
         return CreatedAtAction("GetTopic", new { id = topic.Id }, topic.AsResponse());
     }
 
-    // DELETE: api/topics/5
     [HttpDelete("{id:long}")]
     public async Task<IActionResult> DeleteTopic(long id)
     {
         var topic = await context.Topics.FindAsync(id);
-        if (topic == null)
-        {
-            return NotFound();
-        }
+        if (topic == null) return NotFound();
 
         context.Topics.Remove(topic);
         await context.SaveChangesAsync();
@@ -85,8 +68,5 @@ public class TopicController(KarataTriviaContext context) : ControllerBase
         return NoContent();
     }
 
-    private bool TopicExists(long id)
-    {
-        return context.Topics.Any(e => e.Id == id);
-    }
+    private bool TopicExists(long id) => context.Topics.Any(e => e.Id == id);
 }

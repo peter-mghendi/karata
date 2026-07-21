@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Karata.Cards.Data.Migrations
 {
-    [DbContext(typeof(KarataContext))]
+    [DbContext(typeof(CardsContext))]
     [Migration("20250708174928_AddStatusToHand")]
     partial class AddStatusToHand
     {

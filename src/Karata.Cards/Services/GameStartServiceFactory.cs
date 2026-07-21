@@ -9,7 +9,7 @@ public class GameStartServiceFactory(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILoggerFactory loggers,
-    KarataContext context
+    CardsContext context
 )
 {
     public GameStartService Create(Guid room, string player) => 

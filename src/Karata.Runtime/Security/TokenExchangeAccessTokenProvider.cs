@@ -1,16 +1,18 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using IncomingAccessTokenProvider = System.Func<System.Threading.Tasks.Task<string?>>;
 
-namespace Karata.Kit.Security;
+namespace Karata.Runtime.Security;
 
 public sealed class TokenExchangeAccessTokenProvider(
     HttpClient http,
-    [FromKeyedServices(nameof(IncomingAccessTokenProvider))] IncomingAccessTokenProvider token,
+    IHttpContextAccessor accessor,
     IConfiguration configuration,
     IMemoryCache cache
 ) : IDisposable
@@ -21,22 +23,20 @@ public sealed class TokenExchangeAccessTokenProvider(
     private readonly string _secret = configuration["KARATA_ID_CLIENT_SECRET"]!;
 
     private readonly SemaphoreSlim _gate = new(1, 1);
-    // private string? _token;
-    // private string? _incoming;
-    // private DateTimeOffset _expiresAt = DateTimeOffset.MinValue;
 
     public async Task<string> GetAsync(CancellationToken ct = default)
     {
-        if (await token() is not {} incoming) throw new InvalidOperationException("Incoming user access token unavailable.");
-        
+        if (await accessor.HttpContext!.GetTokenAsync("access_token") is not {} incoming)
+        {
+            throw new InvalidOperationException("Incoming user access token unavailable.");
+        }
+
         var key = Convert.ToHexString(SHA3_512.HashData(Encoding.UTF8.GetBytes(incoming)));
         if (cache.TryGetValue(key, out string? cached) && cached is [_, ..]) return cached;
-        // if (_token is [_, ..] && _incoming == incoming && _expiresAt > DateTimeOffset.UtcNow) return _token;
 
         await _gate.WaitAsync(ct);
         try
         {
-            // if (_token is [_, ..] && _incoming == incoming && _expiresAt > DateTimeOffset.UtcNow) return _token;
             if (cache.TryGetValue(key, out string? sanity) && sanity is [_, ..]) return sanity;
             
             var endpoint = $"{_authority}/protocol/openid-connect/token";

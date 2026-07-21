@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Karata.Cards.Data.Migrations
 {
-    [DbContext(typeof(KarataContext))]
+    [DbContext(typeof(CardsContext))]
     [Migration("20260705201628_RemoveActivity")]
     partial class RemoveActivity
     {

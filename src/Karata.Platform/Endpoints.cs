@@ -22,7 +22,7 @@ public static class Endpoints
             
             api.MapGet(
                     "/profiles",
-                    async ([FromServices] KarataPlatformContext context) =>
+                    async ([FromServices] PlatformContext context) =>
                     {
                         var profiles = await context.Users.AsNoTracking().ToArrayAsync();
                         return Ok(profiles.Select(profile => new ProfileData(profile.Id, profile.Username,
@@ -33,7 +33,7 @@ public static class Endpoints
             
             api.MapGet(
                     "/profiles/{username}",
-                    async Task<Results<Ok<ProfileData>, NotFound>> ([FromServices] KarataPlatformContext context,
+                    async Task<Results<Ok<ProfileData>, NotFound>> ([FromServices] PlatformContext context,
                         string username) =>
                     {
                         var profile = await context.Users.AsNoTracking()

@@ -12,7 +12,7 @@ public class GameStartService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILogger<GameStartService> logger,
-    KarataContext context,
+    CardsContext context,
     Guid roomId,
     string player
 ) : LiveRoomAwareService(players, spectators, roomId, player)

@@ -7,13 +7,13 @@
   <Folder Name="/src/">
     <Project Path="src/Karata.AppHost/Karata.AppHost.csproj" />
     <Project Path="src/Karata.Bot/Karata.Bot.csproj" />
-    <Project Path="src/Karata.BotFramework/Karata.BotFramework.csproj" />
     <Project Path="src/Karata.Cards/Karata.Cards.csproj" />
     <Project Path="src/Karata.Desktop/Karata.Desktop.csproj" />
     <Project Path="src/Karata.Kit/Karata.Kit.csproj" />
     <Project Path="src/Karata.Pebble/Karata.Pebble.csproj" />
     <Project Path="src/Karata.Pips/Karata.Pips.csproj" />
     <Project Path="src/Karata.Platform/Karata.Platform.csproj" />
+    <Project Path="src/Karata.Runtime/Karata.Runtime.csproj" />
     <Project Path="src/Karata.ServiceDefaults/Karata.ServiceDefaults.csproj" />
     <Project Path="src/Karata.Surface/Karata.Surface.csproj" />
     <Project Path="src/Karata.Trivia/Karata.Trivia.csproj" />

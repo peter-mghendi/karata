@@ -8,7 +8,7 @@ namespace Karata.Cards.Routing.Handlers;
 public static class TurnHandler
 {
     [HttpGet]
-    public static async Task<Results<Ok<List<TurnData>>, BadRequest, NotFound>> ListTurns([FromServices] KarataContext context, string id)
+    public static async Task<Results<Ok<List<TurnData>>, BadRequest, NotFound>> ListTurns([FromServices] CardsContext context, string id)
     {
         if (!Guid.TryParse(id, out var guid)) return TypedResults.BadRequest();
         if (await context.Rooms.FindAsync(guid) is not {} room) return TypedResults.NotFound();

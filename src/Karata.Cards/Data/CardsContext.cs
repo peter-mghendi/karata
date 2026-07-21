@@ -1,18 +1,18 @@
 ﻿using System.Text.Json;
 using Karata.Kit.Cards.Models;
+using Karata.Runtime.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Karata.Cards.Data;
 
-public class KarataContext(DbContextOptions<KarataContext> options) : DbContext(options)
+public class CardsContext(DbContextOptions<CardsContext> options) : KarataContext<User>(options)
 {
     public DbSet<Chat> Chats => Set<Chat>();
     public DbSet<Game> Games => Set<Game>();
     public DbSet<Hand> Hands => Set<Hand>();
     public DbSet<Room> Rooms => Set<Room>();
     public DbSet<Turn> Turns => Set<Turn>();
-    public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -113,7 +113,7 @@ public class KarataContext(DbContextOptions<KarataContext> options) : DbContext(
         modelBuilder.Entity<Turn>().OwnsOne(t => t.Delta, builder =>
         {
             builder.ToJson();
-            builder.OwnsMany<Card>(d => d.Cards);
+            builder.OwnsMany(d => d.Cards);
         });
         modelBuilder.Entity<Turn>()
             .Property(t => t.GameResult)

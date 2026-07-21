@@ -1,11 +1,10 @@
 using Karata.Kit.Trivia.Models;
 using Karata.Kit.Trivia.Models.Response;
+using Karata.Runtime.Infrastructure;
 using Karata.Trivia.Data;
 using Karata.Trivia.Extensions;
-using Karata.Trivia.Infrastructure;
 using Karata.Trivia.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,13 +13,14 @@ namespace Karata.Trivia.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/notifications")]
-public class NotificationController(CurrentUserService user, KarataTriviaContext context) : ControllerBase
+public class NotificationController(
+    CurrentUserService<TriviaContext, User> current, TriviaContext context) : ControllerBase
 {
     // GET: api/notifications
     [HttpGet]
     public async Task<ActionResult<IEnumerable<NotificationResponse>>> GetNotifications()
     {
-        var current = await user.RequireAsync();
+        var user = await current.RequireAsync();
         return await context.Notifications
             .Include(n => n.Game)
             .ThenInclude(g => g.Topic)
@@ -28,7 +28,7 @@ public class NotificationController(CurrentUserService user, KarataTriviaContext
             .ThenInclude(g => g.PlayerOne)
             .Include(n => n.Game)
             .ThenInclude(g => g.PlayerTwo)
-            .Where(n => n.Recipient.Id == current.Id)
+            .Where(n => n.Recipient.Id == user.Id)
             .OrderByDescending(n => n.ReadAt == null)
             .ThenByDescending(n => n.SentAt)
             .Select(n => n.AsResponse())
@@ -39,21 +39,18 @@ public class NotificationController(CurrentUserService user, KarataTriviaContext
     [HttpPut("subscribe")]
     public async Task<IResult> PutNotification([FromBody] NotificationSubscriptionData data)
     {
-        var current = await user.RequireAsync();
-
-        // We're storing at most one subscription per user, so delete old ones.
-        // Alternatively, I could let the user register multiple subscriptions from different browsers/devices.
-        var stale = context.NotificationSubscriptions.Where(e => e.User.Id == current.Id);
+        var user = await current.RequireAsync();
+        var stale = context.NotificationSubscriptions.Where(e => e.User.Id == user.Id);
         var subscription = new NotificationSubscription
         {
             Url = data.Url!,
             P256dh = data.P256dh!,
             Auth = data.Auth!,
-            User = current
+            User = user
         };
 
-        context.NotificationSubscriptions.Add(subscription);
         context.NotificationSubscriptions.RemoveRange(stale);
+        context.NotificationSubscriptions.Add(subscription);
         await context.SaveChangesAsync();
 
         return Results.Ok(subscription.AsResponse());

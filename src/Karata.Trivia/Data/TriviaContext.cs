@@ -1,12 +1,11 @@
+using Karata.Runtime.Data;
 using Karata.Trivia.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Karata.Trivia.Data;
 
-public class KarataTriviaContext(DbContextOptions<KarataTriviaContext> options) : DbContext(options)
+public class TriviaContext(DbContextOptions<TriviaContext> options) : KarataContext<User>(options)
 {
-    public DbSet<User> Users => Set<User>();
-
     public DbSet<Topic> Topics => Set<Topic>();
 
     public DbSet<Choice> Choices => Set<Choice>();

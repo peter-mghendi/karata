@@ -1,9 +1,9 @@
 using Karata.Cards.Data;
 using Karata.Cards.Hubs.Clients;
-using Karata.Cards.Infrastructure;
 using Karata.Cards.Services;
 using Karata.Kit.Cards.Models;
 using Karata.Kit.Support.Exceptions;
+using Karata.Runtime.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -14,9 +14,9 @@ namespace Karata.Cards.Hubs;
 
 [Authorize]
 public class PlayerHub(
-    CurrentUserService currentUser,
+    CurrentUserService<CardsContext, User> currentUser,
     ILogger<PlayerHub> logger,
-    KarataContext context,
+    CardsContext context,
     PresenceService presence,
     RoomMembershipServiceFactory membership
 ) : Hub<IPlayerClient>

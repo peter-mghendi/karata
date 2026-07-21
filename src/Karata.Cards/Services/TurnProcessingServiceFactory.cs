@@ -10,7 +10,7 @@ public class TurnProcessingServiceFactory(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILoggerFactory loggers,
-    KarataContext context,
+    CardsContext context,
     IKarataEngine engine
 )
 {

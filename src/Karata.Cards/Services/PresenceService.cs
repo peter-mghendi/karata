@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 
 namespace Karata.Cards.Services;
 
-// TODO: [Next] Look into Microsoft.Extensions.Caching.Hybrid
+// TODO: [Next] Look into Microsoft.Extensions.Caching
 public class PresenceService
 {
     private readonly ConcurrentDictionary<string, HashSet<string>> _presence = new();

@@ -10,8 +10,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Karata.Cards.Data.Migrations
 {
-    [DbContext(typeof(KarataContext))]
-    partial class KarataContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(CardsContext))]
+    partial class CardsContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {

@@ -12,7 +12,7 @@ using static System.Guid;
 
 namespace Karata.Trivia.Services;
 
-public class GameService(KarataTriviaContext context, IHubContext<NotificationHub, INotificationHubClient> hub)
+public class GameService(TriviaContext context, IHubContext<NotificationHub, INotificationHubClient> hub)
 {
     public const int GameRounds = 7;
 

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace Karata.BotFramework.Endpoints;
+namespace Karata.Runtime.Bot.Endpoints;
 
 public static class BotEndpoints
 {

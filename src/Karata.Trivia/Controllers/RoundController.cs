@@ -1,7 +1,7 @@
 using Karata.Kit.Trivia.Models.Response;
+using Karata.Runtime.Infrastructure;
 using Karata.Trivia.Data;
 using Karata.Trivia.Extensions;
-using Karata.Trivia.Infrastructure;
 using Karata.Trivia.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +12,7 @@ namespace Karata.Trivia.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/games/{identifier:guid}/rounds")]
-public class RoundController(CurrentUserService current, KarataTriviaContext context) : ControllerBase
+public class RoundController(CurrentUserService<TriviaContext, User> current, TriviaContext context) : ControllerBase
 {
     // GET: api/games/0085f04e-8a30-449e-91e1-38899b4d3ed5/rounds
     [HttpGet]
@@ -20,10 +20,7 @@ public class RoundController(CurrentUserService current, KarataTriviaContext con
     {
         var user = await current.RequireAsync();
         var game = await GetGameAsync(identifier);
-        if (game is null)
-        {
-            return BadRequest();
-        }
+        if (game is null) return BadRequest();
 
         return game.Rounds
             .Select(round => CreateObfuscatedResponse(round, user))
@@ -37,16 +34,10 @@ public class RoundController(CurrentUserService current, KarataTriviaContext con
     {
         var user = await current.RequireAsync();
         var game = await GetGameAsync(identifier);
-        if (game is null)
-        {
-            return NotFound();
-        }
+        if (game is null) return NotFound();
 
         var round = game.Rounds.SingleOrDefault(r => r.Index == index);
-        if (round is null)
-        {
-            return BadRequest();
-        }
+        if (round is null) return BadRequest();
 
         return CreateObfuscatedResponse(round, user);
     }
@@ -66,13 +57,11 @@ public class RoundController(CurrentUserService current, KarataTriviaContext con
         .ThenInclude(r => r.User)
         .SingleOrDefaultAsync(g => g.Identifier == identifier);
 
-    private RoundResponse CreateObfuscatedResponse(Round round, User user)
-    {
-        // Obfuscate correct answer if we do not have a response for this user yet.
-        // I will regret this code tomorrow
-        // UPDATE: Yep.
-        var response = round.AsResponse();
-        return round.Responses.All(r => r.User.Id != user.Id)
+    // Obfuscate correct answer if we do not have a response for this user yet.
+    // I will regret this code tomorrow
+    // UPDATE: Yep.
+    private static RoundResponse CreateObfuscatedResponse(Round round, User user) =>
+        round.AsResponse() is {} response && round.Responses.All(r => r.User.Id != user.Id)
             ? response with
             {
                 Responses = response.Responses.Select(r => r.Choice is not null
@@ -85,6 +74,5 @@ public class RoundController(CurrentUserService current, KarataTriviaContext con
                     Choices = response.Question.Choices.Select(c => c with { IsCorrect = false }).ToList()
                 }
             }
-            : response;
-    }
+            : round.AsResponse();
 }

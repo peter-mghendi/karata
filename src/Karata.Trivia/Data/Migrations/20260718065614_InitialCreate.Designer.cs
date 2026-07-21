@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Karata.Trivia.Data.Migrations
 {
-    [DbContext(typeof(KarataTriviaContext))]
+    [DbContext(typeof(TriviaContext))]
     [Migration("20260718065614_InitialCreate")]
     partial class InitialCreate
     {

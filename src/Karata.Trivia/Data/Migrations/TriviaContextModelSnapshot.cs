@@ -10,8 +10,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Karata.Trivia.Data.Migrations
 {
-    [DbContext(typeof(KarataTriviaContext))]
-    partial class KarataTriviaContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(TriviaContext))]
+    partial class TriviaContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {

@@ -8,7 +8,7 @@ namespace Karata.Cards.Services;
 public class VoidTurnServiceFactory(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
-    KarataContext context
+    CardsContext context
 )
 {
     public VoidTurnService Create(Guid room, string player) => new(players, spectators, context, room, player);

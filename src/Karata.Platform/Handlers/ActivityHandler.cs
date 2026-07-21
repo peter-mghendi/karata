@@ -11,7 +11,7 @@ namespace Karata.Platform.Handlers;
 
 public sealed class ActivityHandler
 {
-    public static async Task<Ok<List<ActivityData>>> ListActivity([FromServices] KarataPlatformContext context)
+    public static async Task<Ok<List<ActivityData>>> ListActivity([FromServices] PlatformContext context)
     {
         var activity = await context.Activity.OrderByDescending(a => a.OccurredAt)
             .Take(50)
@@ -36,7 +36,7 @@ public sealed class ActivityHandler
     public static async Task<Ok<ActivityData>> CreateActivity
     (
         [FromServices] IHttpContextAccessor http,
-        [FromServices] KarataPlatformContext context,
+        [FromServices] PlatformContext context,
         [FromBody] ActivityRequest request
     )
     {
