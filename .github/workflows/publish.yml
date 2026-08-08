@@ -1,0 +1,288 @@
+name: Publish Karata artifacts
+
+on:
+  push:
+    branches: [ "main" ]
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.params.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set version
+        id: params
+        run: echo "version=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+  
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+
+      - name: Install WebAssembly workload
+        run: dotnet workload install wasm-tools
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
+  
+  release:
+    needs: [version, verify ]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          make_latest: true
+          generate_release_notes: true
+          tag_name: ${{ needs.version.outputs.version }}
+
+  bot:
+    needs: [ version, verify, release ]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish OCI container
+        env:
+          ContainerImageTags: "${{ needs.version.outputs.version }};latest"
+        run: dotnet publish --configuration Release -p PublishProfile=DefaultContainer -p ContainerRegistry=ghcr.io src/Karata.Bot/Karata.Bot.csproj
+
+      - name: Publish arm64 binaries
+        run: |
+          dotnet publish --configuration Release --runtime linux-arm64 --output publish/arm64 src/Karata.Bot/Karata.Bot.csproj
+          tar -czf karata-bot-linux-arm64.tar.gz publish/arm64/karata-bot
+
+      - name: Publish x64 binaries
+        run: |
+          dotnet publish --configuration Release --runtime linux-x64 --output publish/x64 src/Karata.Bot/Karata.Bot.csproj
+          tar -czf karata-bot-linux-x64.tar.gz publish/x64/karata-bot
+
+      - name: Attach assets to release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: false
+          tag_name: ${{ needs.version.outputs.version }}
+          files: |
+            karata-bot-linux-arm64.tar.gz
+            karata-bot-linux-x64.tar.gz
+
+  cards:
+    needs: [ version, verify, release ]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish OCI container
+        env:
+          ContainerImageTags: "${{ needs.version.outputs.version }};latest"
+        run: dotnet publish --configuration Release -p PublishProfile=DefaultContainer -p ContainerRegistry=ghcr.io src/Karata.Cards/Karata.Cards.csproj
+
+      - name: Publish arm64 binaries
+        run: |
+          dotnet publish --configuration Release --runtime linux-arm64 --output publish/arm64 src/Karata.Cards/Karata.Cards.csproj
+          tar -czf karata-cards-linux-arm64.tar.gz publish/arm64/karata-cards
+
+      - name: Publish x64 binaries
+        run: |
+          dotnet publish --configuration Release --runtime linux-x64 --output publish/x64 src/Karata.Cards/Karata.Cards.csproj
+          tar -czf karata-cards-linux-x64.tar.gz publish/x64/karata-cards
+
+      - name: Attach assets to release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: false
+          tag_name: ${{ needs.version.outputs.version }}
+          files: |
+            karata-cards-linux-arm64.tar.gz
+            karata-cards-linux-x64.tar.gz
+
+  desktop:
+    needs: [ version, verify, release ]
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: [ linux-arm64, linux-x64 ]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+
+      - name: Publish binaries
+        run: |
+          dotnet publish --configuration Release --runtime ${{ matrix.runtime }} --output publish/${{ matrix.runtime }} src/Karata.Desktop/Karata.Desktop.csproj
+          tar -czf karata-desktop-${{ matrix.runtime }}.tar.gz publish/${{ matrix.runtime }}/karata-desktop
+
+      - name: Attach assets to release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: false
+          tag_name: ${{ needs.version.outputs.version }}
+          files: karata-desktop-${{ matrix.runtime }}.tar.gz
+  
+  platform:
+    needs: [ version, verify, release ]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish OCI container
+        env:
+          ContainerImageTags: "${{ needs.version.outputs.version }};latest"
+        run: dotnet publish --configuration Release -p PublishProfile=DefaultContainer -p ContainerRegistry=ghcr.io src/Karata.Platform/Karata.Platform.csproj
+
+      - name: Publish arm64 binaries
+        run: |
+          dotnet publish --configuration Release --runtime linux-arm64 --output publish/arm64 src/Karata.Platform/Karata.Platform.csproj
+          tar -czf karata-platform-linux-arm64.tar.gz publish/arm64/karata-platform
+
+      - name: Publish x64 binaries
+        run: |
+          dotnet publish --configuration Release --runtime linux-x64 --output publish/x64 src/Karata.Platform/Karata.Platform.csproj
+          tar -czf karata-platform-linux-x64.tar.gz publish/x64/karata-platform
+
+      - name: Attach assets to release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: false
+          tag_name: ${{ needs.version.outputs.version }}
+          files: |
+            karata-platform-linux-arm64.tar.gz
+            karata-platform-linux-x64.tar.gz
+
+  web:
+    needs: [ version, verify, release ]
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+
+      - name: Install Webassembly workload
+        run: dotnet workload install wasm-tools
+
+      - name: Publish static site
+        run: dotnet publish --configuration Release -o dist src/Karata.Web/Karata.Web.csproj
+
+      - name: Deploy to releases-web
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: releases-web
+          commit-message: "Release ${{ needs.version.outputs.version }}"
+          folder: dist/wwwroot
+          force: true
+          single-commit: true
+
+      - name: Archive releases-web branch
+        run: git archive --format tar.gz --output karata-web.tar.gz releases-web
+
+      - name: Attach assets to release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: false
+          tag_name: ${{ needs.version.outputs.version }}
+          files: karata-web.tar.gz
+          
+  
