@@ -1,8 +1,5 @@
-[![Test Solution](https://github.com/peter-mghendi/karata/actions/workflows/test-solution.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/test-solution.yml)
-[![Publish Karata.Bot](https://github.com/peter-mghendi/karata/actions/workflows/publish-bot.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-bot.yml)
-[![Publish Karata.Cards](https://github.com/peter-mghendi/karata/actions/workflows/publish-cards.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-cards.yml)
-[![Publish Karata.Desktop](https://github.com/peter-mghendi/karata/actions/workflows/publish-desktop.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-desktop.yml)
-[![Publish Karata.Web](https://github.com/peter-mghendi/karata/actions/workflows/publish-web.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish-web.yml)
+[![Verify Solution](https://github.com/peter-mghendi/karata/actions/workflows/verify.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/verify.yml)
+[![Publish Artifacts](https://github.com/peter-mghendi/karata/actions/workflows/publish.yml/badge.svg)](https://github.com/peter-mghendi/karata/actions/workflows/publish.yml)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/0b4734fe-7614-4aac-99ca-fafa54e2f942/deploy-status)](https://app.netlify.com/projects/karata/deploys)
 
 # karata
@@ -37,11 +34,11 @@ There is also a custom [cards library](https://github.com/sixpeteunder/karata/tr
 ### .NET Aspire
 
 > [!NOTE]
-> This project requires both the [.NET 10 SDK](https://get.dot.net/10) and the [.NET Aspire CLI](https://aspire.dev).
+> This method requires both the [.NET 10 SDK](https://get.dot.net/10) and the [.NET Aspire CLI](https://aspire.dev).
 >
 > PostgreSQL and Keycloak are provisioned automatically as Docker containers by Aspire, so no separate installation is required.
 
-The easiest way to run everything is to run the [Aspire AppHost](https://github.com/peter-mghendi/karata/blob/main/src/Karata.AppHost/AppHost.cs):
+The easiest way to run everything locally is to run the [Aspire AppHost](https://github.com/peter-mghendi/karata/blob/main/src/Karata.AppHost/AppHost.cs):
 
 ```shell
 git clone https://github.com/peter-mghendi/karata.git
@@ -55,7 +52,9 @@ dotnet run --project src/Karata.AppHost/Karata.AppHost.csproj
 This starts the follwing services:
 - A [PostgreSQL](https://www.postgresql.org/) database.
 - A [Keycloak](https://www.keycloak.org/) server
+- Karata.Platform
 - Karata.Cards
+- Karata.Trivia
 - Karata.Bot
 - Karata.Web
 - Karata.Desktop
@@ -72,9 +71,66 @@ This starts the follwing services:
 
 ### Individual Projects
 
+#### Karata.Platform
+
+`Karata.Platform` is mostly infrastructure, a centralized user service that currently stores user data and activity as reported by other services.
+It is built on the the `Karata.Runtime` "framework".
+
+##### Docker (recommended)
+
+The latest server image is published to GitHub Container Registry:
+
+Pull
+
+```shell
+docker pull ghcr.io/peter-mghendi/karata-platform:latest
+```
+
+Run:
+
+```shell
+docker run -d \
+  --name karata-platform \
+  --env-file path/to/your/.env \
+  -p 5000:5000 \
+  ghcr.io/peter-mghendi/karata-platform:latest
+```
+
+A PostgreSQL-compatible database is required.
+
+##### Pre-built binary
+
+Pre-built server binaries are attached to GitHub Releases.
+
+Builds are currently available for:
+
+- `linux-arm64`
+- `linux-x64`
+
+```
+chmod +x karata-server
+source path/to/your/.env ./karata-server
+```
+
+The server expects its configuration to be supplied via environment variables.
+
+##### Building from source
+
+Build from source:
+
+```shell#### Karata.Platform
+git clone https://github.com/peter-mghendi/karata.git
+cd karata
+
+dotnet publish src/Karata.Platform -c Release
+```
+
+---
+
 #### Karata.Cards
 
 `Karata.Cards` is the supported card game server runtime.
+It is built on the the `Karata.Runtime` "framework".
 
 ##### Docker (recommended)
 
@@ -118,11 +174,67 @@ The server expects its configuration to be supplied via environment variables.
 
 Build from source:
 
-```shell
+```shell#### Karata.Cards
 git clone https://github.com/peter-mghendi/karata.git
 cd karata
 
 dotnet publish src/Karata.Cards -c Release
+```
+
+---
+
+#### Karata.Trivia
+
+`Karata.Trivia` is the supported trivia game server runtime, adapted from QuizWars with support for Karata auth.
+It is built on the the `Karata.Runtime` "framework".
+
+##### Docker (recommended)
+
+The latest server image is published to GitHub Container Registry:
+
+Pull
+
+```shell
+docker pull ghcr.io/peter-mghendi/karata-trivia:latest
+```
+
+Run:
+
+```shell
+docker run -d \
+  --name karata-trivia \
+  --env-file path/to/your/.env \
+  -p 5000:5000 \
+  ghcr.io/peter-mghendi/karata-trivia:latest
+```
+
+A PostgreSQL-compatible database is required.
+
+##### Pre-built binary
+
+Pre-built server binaries are attached to GitHub Releases.
+
+Builds are currently available for:
+
+- `linux-arm64`
+- `linux-x64`
+
+```
+chmod +x karata-server
+source path/to/your/.env ./karata-server
+```
+
+The server expects its configuration to be supplied via environment variables.
+
+##### Building from source
+
+Build from source:
+
+```shell
+git clone https://github.com/peter-mghendi/karata.git
+cd karata
+
+dotnet publish src/Karata.Trivia -c Release
 ```
 
 ---
@@ -163,7 +275,7 @@ dotnet publish src/Karata.Web -c Release
 
 #### Karata.Bot
 
-`Karata.Bot` is a reference bot implementation built on the `Karata.BotFramework` library,
+`Karata.Bot` is a reference bot implementation built on the `Karata.Runtime` server "framework",
 which in turn builds on primitives defined in `Karata.Kit`.
 
 ##### Docker (recommended)
@@ -248,6 +360,16 @@ cd karata
 
 dotnet publish src/Karata.Dektop -c Release
 ```
+
+---
+
+### Included Packages
+
+- `Karata.Pips` - a .NET class library that defines some common card-game primitives - cards, suits, faces/ranks, decks and piles.
+- `Karata.Pebble` - a tiny, platform-agnostic, [Flux](https://github.com/facebookarchive/flux)-inspired state store built around `System.Reactive` [`BehaviourSubjects`](https://reactivex.io/documentation/subject.html)
+- `Karata.Kit` - an all-encompassing, platform-agnostic SDK classlib that contains the majority of client functionality for `Karata.Bot`, `Karata.Cards` (including the game rules engine), `Karata.Platform` and `Karata.Trivia`.
+- `Karata.Runtime` - a server focused lib that bootstraps functionality common to Karata servers including OAuth2/OIDC (including [RFC 8693 Token Exchange](https://datatracker.ietf.org/doc/html/rfc8693) for delegated/"on-behalf-of" auth), health checks, OpenTelemetry, SignalR, WebPush, CORS and more.
+- `Karata.Surface` - a Razor class library that contains shared frontend functionality including Razor UI Components and frontend OAuth2/OIDC auth.
 
 ---
 
