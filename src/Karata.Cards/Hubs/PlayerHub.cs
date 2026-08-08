@@ -1,10 +1,9 @@
 using Karata.Cards.Data;
 using Karata.Cards.Hubs.Clients;
-using Karata.Cards.Infrastructure.Security;
-using Karata.Cards.Models;
+using Karata.Cards.Infrastructure;
 using Karata.Cards.Services;
-using Karata.Kit.Core.Exceptions;
-using Karata.Kit.Domain.Models;
+using Karata.Kit.Cards.Models;
+using Karata.Kit.Support.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;

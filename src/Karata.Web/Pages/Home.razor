@@ -1,10 +1,11 @@
 @page "/"
 
-@using Karata.Kit.Application.Client
+@using Karata.Kit.Platform.Models
 
 @attribute [AllowAnonymous]
 
-@inject KarataClient KarataClient
+@inject Kit.Cards.Client Cards
+@inject Kit.Platform.Client Platform
 @inject NavigationManager Navigator
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full pt-4">
@@ -16,8 +17,8 @@
             <MudText Typo="Typo.h6" Class="mb-8">Welcome back, friend.</MudText>
         </NotAuthorized>
     </AuthorizeView>
-    <QuickJoin KarataClient="KarataClient" Navigator="Navigator"/>
-    <ActivityFeed Feed="_feed" />
+    <QuickJoin Cards="@Cards" Navigator="@Navigator"/>
+    <ActivityFeed Feed="@_feed" />
     <MudScrollToTop TopOffset="100">
         <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Rounded.KeyboardArrowUp"/>
     </MudScrollToTop>
@@ -30,6 +31,6 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        _feed = await KarataClient.Activity.ListAsync();
+        _feed = await Platform.Activity.ListAsync();
     }
 }

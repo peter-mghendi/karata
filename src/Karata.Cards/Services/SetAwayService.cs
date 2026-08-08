@@ -3,9 +3,9 @@ using Karata.Cards.Hubs;
 using Karata.Cards.Hubs.Clients;
 using Karata.Cards.Models;
 using Karata.Cards.Support.Exceptions;
-using Karata.Kit.Domain.Models;
+using Karata.Kit.Cards.Models;
 using Microsoft.AspNetCore.SignalR;
-using static Karata.Kit.Domain.Models.HandStatus;
+using static Karata.Kit.Cards.Models.HandStatus;
 
 namespace Karata.Cards.Services;
 

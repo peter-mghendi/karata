@@ -1,7 +1,7 @@
 using Karata.Cards.Data;
 using Karata.Cards.Hubs;
 using Karata.Cards.Hubs.Clients;
-using Karata.Kit.Engine;
+using Karata.Kit.Cards.Engine;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Cards.Services;

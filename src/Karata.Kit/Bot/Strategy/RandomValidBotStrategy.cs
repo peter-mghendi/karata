@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
-using Karata.Kit.Domain.Models;
-using Karata.Kit.Engine;
+using Karata.Kit.Cards.Engine;
+using Karata.Kit.Cards.Models;
 using Karata.Kit.Support;
 using Karata.Pips.Extensions;
 using static Karata.Pips.Card.CardFace;

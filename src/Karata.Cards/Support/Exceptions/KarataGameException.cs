@@ -1,4 +1,4 @@
-using Karata.Kit.Core.Exceptions;
+using Karata.Kit.Support.Exceptions;
 
 namespace Karata.Cards.Support.Exceptions;
 

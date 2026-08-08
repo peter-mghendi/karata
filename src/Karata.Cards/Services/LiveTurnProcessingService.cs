@@ -4,14 +4,14 @@ using Karata.Cards.Hubs;
 using Karata.Cards.Hubs.Clients;
 using Karata.Cards.Models;
 using Karata.Cards.Support.Exceptions;
-using Karata.Kit.Domain.Models;
-using Karata.Kit.Engine;
-using Karata.Kit.Engine.Exceptions;
+using Karata.Kit.Cards.Engine;
+using Karata.Kit.Cards.Engine.Exceptions;
+using Karata.Kit.Cards.Models;
 using Microsoft.AspNetCore.SignalR;
-using static Karata.Kit.Domain.Models.CardRequestLevel;
-using static Karata.Kit.Domain.Models.GameStatus;
-using static Karata.Kit.Domain.Models.HandStatus;
-using static Karata.Kit.Domain.Models.TurnType;
+using static Karata.Kit.Cards.Models.CardRequestLevel;
+using static Karata.Kit.Cards.Models.GameStatus;
+using static Karata.Kit.Cards.Models.HandStatus;
+using static Karata.Kit.Cards.Models.TurnType;
 using static Karata.Pips.Card.CardFace;
 
 namespace Karata.Cards.Services;
@@ -30,15 +30,6 @@ public sealed class LiveTurnProcessingService(
     string connection
 ) : LiveRoomAwareService(players, spectators, roomId, playerId)
 {
-    private readonly EngineData _details = new()
-    {
-        Name = engine.Name,
-        Date = ThisAssembly.Git.CommitDate,
-        Branch = ThisAssembly.Git.Branch,
-        Version = ThisAssembly.Git.Sha,
-        Revision = ThisAssembly.Git.Commit,
-    };
-
     public async Task ExecuteAsync(List<Card> cards)
     {
         var player = (await context.Users.FindAsync(CallerPlayerId))!;
@@ -51,7 +42,7 @@ public sealed class LiveTurnProcessingService(
             Type = Play,
             Hand = room.Game.CurrentHand,
             CreatedAt = DateTimeOffset.UtcNow,
-            Metadata = new TurnMetadata { Engine = _details }
+            Metadata = new TurnMetadata()
         };
 
         try
@@ -118,8 +109,6 @@ public sealed class LiveTurnProcessingService(
 
             (room.Game.Status, room.Game.Result) = (Over, result);
             turn.GameSnapshot = room.Game;
-
-            if (exception.Result.ResultType is GameResultType.Win) context.Activities.Add(Activity.GameWon(room));
 
             await context.SaveChangesAsync();
 

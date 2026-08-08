@@ -1,5 +1,5 @@
-using Karata.Kit.Domain.Models;
-using static Karata.Kit.Domain.Models.HandStatus;
+using Karata.Kit.Cards.Models;
+using static Karata.Kit.Cards.Models.HandStatus;
 
 namespace Karata.Cards.Models;
 

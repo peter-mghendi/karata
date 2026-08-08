@@ -1,7 +1,7 @@
 using Karata.Cards.Hubs.Clients;
 using Karata.Cards.Models;
-using Karata.Kit.Domain.Models;
-using static Karata.Kit.Domain.Models.MessageType;
+using Karata.Kit.Cards.Models;
+using static Karata.Kit.Cards.Models.MessageType;
 
 namespace Karata.Cards.Services;
 

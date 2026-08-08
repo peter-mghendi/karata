@@ -1,4 +1,4 @@
-using Karata.Kit.Domain.Models;
+using Karata.Kit.Bot.Models;
 using RestSharp;
 using static System.Net.HttpStatusCode;
 
@@ -10,15 +10,15 @@ public sealed class BotInterface(Uri host)
 {
     private readonly RestClient _client = new(host);
     
-    public async Task<BotData> IntrospectAsync(string bot, CancellationToken cancellation = default)
+    public async Task<BotData> IntrospectAsync(CancellationToken cancellation = default)
     {
-        var response = await _client.GetAsync<BotData>($"/api/bots/{bot}", cancellation);
-        return response ?? throw new Exception($"Unable to fetch details for bot '{bot}'.");
+        var response = await _client.GetAsync<BotData>("", cancellation);
+        return response ?? throw new Exception($"Unable to fetch details for bot '{host}'.");
     }
 
-    public async Task InviteAsync(string bot, BotInvitation invitation, CancellationToken cancellation   = default)
+    public async Task InviteAsync(BotInvitation invitation, CancellationToken cancellation   = default)
     {
-        var response = await _client.PostJsonAsync($"/api/bots/{bot}/games", invitation, cancellation);
-        if (response is not Accepted) throw new Exception($"Unable to invite bot '{bot}': {response}");
+        var response = await _client.PostJsonAsync($"/games", invitation, cancellation);
+        if (response is not Accepted) throw new Exception($"{response} - Unable to invite bot '{host}: {invitation}'");
     }
 }

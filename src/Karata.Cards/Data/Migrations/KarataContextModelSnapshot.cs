@@ -17,52 +17,10 @@ namespace Karata.Cards.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.0")
+                .HasAnnotation("ProductVersion", "10.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("Karata.Cards.Models.Activity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ActorId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Link")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Metadata")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActorId");
-
-                    b.ToTable("Activities");
-                });
 
             modelBuilder.Entity("Karata.Cards.Models.Chat", b =>
                 {
@@ -299,17 +257,6 @@ namespace Karata.Cards.Data.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Karata.Cards.Models.Activity", b =>
-                {
-                    b.HasOne("Karata.Cards.Models.User", "Actor")
-                        .WithMany()
-                        .HasForeignKey("ActorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Actor");
-                });
-
             modelBuilder.Entity("Karata.Cards.Models.Chat", b =>
                 {
                     b.HasOne("Karata.Cards.Models.Room", null)
@@ -343,7 +290,9 @@ namespace Karata.Cards.Data.Migrations
 
                             b1.ToTable("Games");
 
-                            b1.ToJson("Request");
+                            b1
+                                .ToJson("Request")
+                                .HasColumnType("jsonb");
 
                             b1.WithOwner()
                                 .HasForeignKey("GameId");
@@ -394,7 +343,9 @@ namespace Karata.Cards.Data.Migrations
 
                             b1.ToTable("Hands");
 
-                            b1.ToJson("Cards");
+                            b1
+                                .ToJson("Cards")
+                                .HasColumnType("jsonb");
 
                             b1.WithOwner()
                                 .HasForeignKey("HandId");
@@ -432,7 +383,73 @@ namespace Karata.Cards.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsOne("Karata.Kit.Domain.Models.TurnDelta", "Delta", b1 =>
+                    b.OwnsMany("Karata.Pips.Card", "CardsPicked", b1 =>
+                        {
+                            b1.Property<int>("TurnId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<int>("Face");
+
+                            b1.Property<int>("Suit");
+
+                            b1.HasKey("TurnId", "__synthesizedOrdinal");
+
+                            b1.ToTable("Turns");
+
+                            b1
+                                .ToJson("CardsPicked")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TurnId");
+                        });
+
+                    b.OwnsMany("Karata.Pips.Card", "CardsPlayed", b1 =>
+                        {
+                            b1.Property<int>("TurnId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<int>("Face");
+
+                            b1.Property<int>("Suit");
+
+                            b1.HasKey("TurnId", "__synthesizedOrdinal");
+
+                            b1.ToTable("Turns");
+
+                            b1
+                                .ToJson("CardsPlayed")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TurnId");
+                        });
+
+                    b.OwnsOne("Karata.Pips.Card", "Request", b1 =>
+                        {
+                            b1.Property<int>("TurnId");
+
+                            b1.Property<int>("Face");
+
+                            b1.Property<int>("Suit");
+
+                            b1.HasKey("TurnId");
+
+                            b1.ToTable("Turns");
+
+                            b1
+                                .ToJson("Request")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TurnId");
+                        });
+
+                    b.OwnsOne("Karata.Kit.Cards.Models.TurnDelta", "Delta", b1 =>
                         {
                             b1.Property<int>("TurnId");
 
@@ -452,7 +469,9 @@ namespace Karata.Cards.Data.Migrations
 
                             b1.ToTable("Turns");
 
-                            b1.ToJson("Delta");
+                            b1
+                                .ToJson("Delta")
+                                .HasColumnType("jsonb");
 
                             b1.WithOwner()
                                 .HasForeignKey("TurnId");
@@ -477,66 +496,6 @@ namespace Karata.Cards.Data.Migrations
                                 });
 
                             b1.Navigation("Cards");
-                        });
-
-                    b.OwnsMany("Karata.Pips.Card", "CardsPicked", b1 =>
-                        {
-                            b1.Property<int>("TurnId");
-
-                            b1.Property<int>("__synthesizedOrdinal")
-                                .ValueGeneratedOnAdd();
-
-                            b1.Property<int>("Face");
-
-                            b1.Property<int>("Suit");
-
-                            b1.HasKey("TurnId", "__synthesizedOrdinal");
-
-                            b1.ToTable("Turns");
-
-                            b1.ToJson("CardsPicked");
-
-                            b1.WithOwner()
-                                .HasForeignKey("TurnId");
-                        });
-
-                    b.OwnsMany("Karata.Pips.Card", "CardsPlayed", b1 =>
-                        {
-                            b1.Property<int>("TurnId");
-
-                            b1.Property<int>("__synthesizedOrdinal")
-                                .ValueGeneratedOnAdd();
-
-                            b1.Property<int>("Face");
-
-                            b1.Property<int>("Suit");
-
-                            b1.HasKey("TurnId", "__synthesizedOrdinal");
-
-                            b1.ToTable("Turns");
-
-                            b1.ToJson("CardsPlayed");
-
-                            b1.WithOwner()
-                                .HasForeignKey("TurnId");
-                        });
-
-                    b.OwnsOne("Karata.Pips.Card", "Request", b1 =>
-                        {
-                            b1.Property<int>("TurnId");
-
-                            b1.Property<int>("Face");
-
-                            b1.Property<int>("Suit");
-
-                            b1.HasKey("TurnId");
-
-                            b1.ToTable("Turns");
-
-                            b1.ToJson("Request");
-
-                            b1.WithOwner()
-                                .HasForeignKey("TurnId");
                         });
 
                     b.Navigation("CardsPicked");

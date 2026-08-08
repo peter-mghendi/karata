@@ -4,11 +4,12 @@
 @using System.Reactive.Disposables
 @using System.Reactive.Disposables.Fluent
 @using System.Reactive.Linq
-@using Karata.Kit.Application
-@using Karata.Kit.Application.Client.Connection
-@using Karata.Kit.Application.Client.State
-@using Karata.Kit.Application.Store
 @using Karata.Kit.Bot.Interface
+@using Karata.Kit.Bot.Models
+@using Karata.Kit.Cards
+@using Karata.Kit.Cards.Connection
+@using Karata.Kit.Cards.Models
+@using Karata.Kit.Cards.State
 @using Karata.Pebble.Interceptors
 @using Microsoft.Extensions.Options
 @using TextCopy
@@ -21,7 +22,7 @@
 @inject BotInterface BotInterface
 @inject IDialogService DialogService
 @inject ILoggerFactory LoggerFactory
-@inject IOptions<KarataClientOptions> ClientOptions
+@inject IOptions<Client.Options> ClientOptions
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigator
 
@@ -384,7 +385,7 @@
         await _session.JoinRoom();
     }
 
-    async Task InviteBot() => await BotInterface.InviteAsync(bot: "random", invitation: new BotInvitation(Room: Id, Password: null));
+    async Task InviteBot() => await BotInterface.InviteAsync(invitation: new BotInvitation(Room: Id, Password: null));
     
     async Task LeaveRoom() => await _session!.LeaveRoom();
 

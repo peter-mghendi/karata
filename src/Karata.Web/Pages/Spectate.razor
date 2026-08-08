@@ -2,11 +2,10 @@
 
 @using System.Reactive.Disposables
 @using System.Reactive.Disposables.Fluent
-@using Karata.Kit.Application
-@using Karata.Kit.Application.Client
-@using Karata.Kit.Application.Client.Connection
-@using Karata.Kit.Application.Client.State
-@using Karata.Kit.Application.Store
+@using Karata.Kit.Cards
+@using Karata.Kit.Cards.Connection
+@using Karata.Kit.Cards.Models
+@using Karata.Kit.Cards.State
 @using Karata.Pebble.Interceptors
 @using Karata.Surface.Models
 @using Microsoft.Extensions.Options
@@ -14,9 +13,9 @@
 @implements IDisposable
 
 @inject ILoggerFactory LoggerFactory
-@inject IOptions<KarataClientOptions> ClientOptions
+@inject IOptions<Client.Options> ClientOptions
 @inject ISnackbar Snackbar
-@inject KarataClient KarataClient
+@inject Client KarataCardsClient
 @inject NavigationManager Navigator
 
 <SessionGuard Session="_session">
@@ -94,7 +93,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _turns = await KarataClient.Turns.ListAsync(Id);
+        _turns = await KarataCardsClient.Turns.ListAsync(Id);
 
         var connection = new SpectatorConnection(ClientOptions.Value.Host);
         await connection.StartAsync();

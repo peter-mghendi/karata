@@ -3,7 +3,7 @@ using Karata.Cards.Hubs;
 using Karata.Cards.Hubs.Clients;
 using Karata.Cards.Models;
 using Karata.Cards.Support.Exceptions;
-using Karata.Kit.Domain.Models;
+using Karata.Kit.Cards.Models;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Cards.Services;

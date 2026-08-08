@@ -1,9 +1,8 @@
-using Karata.Kit.Domain.Models;
+using Karata.Kit.Cards.Models;
 
 namespace Karata.Cards.Models;
 
 public record TurnMetadata
 {
-    public EngineData? Engine { get; init; }
     public TurnValidationProblem? Problem { get; set; }
 }
