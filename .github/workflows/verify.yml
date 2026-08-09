@@ -17,6 +17,8 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 10.0.x
+        cache: true
+        cache-dependency-path: '**/packages.lock.json'
 
     - name: Install Webassembly workload
       run: dotnet workload install wasm-tools

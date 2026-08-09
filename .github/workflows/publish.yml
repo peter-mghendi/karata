@@ -34,6 +34,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
           cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       - name: Install WebAssembly workload
         run: dotnet workload install wasm-tools
@@ -79,6 +80,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
           cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -128,6 +130,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
           cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -181,6 +184,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
           cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       - name: Publish binaries
         run: |
@@ -211,6 +215,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
           cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -259,6 +264,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
           cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       - name: Install Webassembly workload
         run: dotnet workload install wasm-tools
