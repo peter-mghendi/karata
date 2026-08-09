@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Keycloak.AuthServices.Authentication" />
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+
+        <!-- To patch CVE-2026-49451: Remove when upgrading. -->
+        <PackageReference Include="Microsoft.OpenApi" />
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+        <PackageReference Include="WebPush" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Karata.Kit\Karata.Kit.csproj" />
+    </ItemGroup>
+</Project>

@@ -8,7 +8,7 @@ namespace Karata.Cards.Services;
 public class SetAwayServiceFactory(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
-    KarataContext context
+    CardsContext context
 )
 {
     public SetAwayService Create(Guid room, string player) => new(players, spectators, context, room, player);

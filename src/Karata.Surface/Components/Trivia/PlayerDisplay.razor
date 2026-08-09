@@ -1,0 +1,31 @@
+@using Karata.Kit.Cards.Models
+@using Karata.Kit.Trivia.Models.Response
+
+<MudPaper Class="pa-4" Elevation="0">
+    <MudStack AlignItems="AlignItems.Center">
+        <MudText>
+            @if (Player == Me)
+            {
+                <MudIcon Icon="@Icons.Material.Rounded.Person" Class="mr-2" Style="vertical-align: middle"/>
+            }
+            @Player.Username
+        </MudText>
+        <MudText Typo="Typo.h4">@(Player == Me || Responses.Count == 7 ? Points : "Waiting…")</MudText>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public required UserData Me { init; get; }
+
+    [Parameter] public required UserData Player { init; get; }
+
+    [Parameter] public List<RoundResponse> Rounds { get; set; } = [];
+
+    private List<ResponseResponse> Responses =>
+        Rounds
+            .SelectMany(r => r.Responses)
+            .Where(r => r.User.Id == Player.Id)
+            .ToList();
+
+    private int Points => Responses.Sum(r => r.Points);
+}

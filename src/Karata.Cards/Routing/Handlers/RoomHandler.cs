@@ -1,10 +1,10 @@
 using System.Text;
 using Karata.Cards.Data;
-using Karata.Cards.Infrastructure;
 using Karata.Cards.Services;
 using Karata.Kit.Cards.Models;
 using Karata.Kit.Platform;
 using Karata.Kit.Platform.Models;
+using Karata.Runtime.Infrastructure;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +14,7 @@ namespace Karata.Cards.Routing.Handlers;
 
 public static class RoomHandler
 {
-    public static async Task<Ok<List<RoomData>>> ListRooms([FromServices] KarataContext context)
+    public static async Task<Ok<List<RoomData>>> ListRooms([FromServices] CardsContext context)
     {
         // TODO: [Legacy] Hardcoding these conditions in for now because this endpoint is only used to find joinable games.
         var rooms = await context.Rooms
@@ -29,7 +29,7 @@ public static class RoomHandler
     }
 
     public static async Task<Results<Ok<RoomData>, BadRequest, NotFound>> GetRoom(
-        [FromServices] KarataContext context,
+        [FromServices] CardsContext context,
         string id
     )
     {
@@ -42,8 +42,8 @@ public static class RoomHandler
 
     public static async Task<Results<CreatedAtRoute<RoomData>, UnauthorizedHttpResult>> CreateRoom(
         [FromServices] Client platform,
-        [FromServices] KarataContext context,
-        [FromServices] CurrentUserService currentUserService,
+        [FromServices] CardsContext context,
+        [FromServices] CurrentUserService<CardsContext, User> currentUserService,
         [FromServices] IPasswordService passwordService,
         [FromBody] RoomRequest request
     )

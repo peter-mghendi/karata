@@ -22,5 +22,12 @@ public static class DependencyInjection
             services.AddSingleton<Platform.Client>(sp => new(options: sp.GetRequiredService<IOptions<Platform.Client.Options>>().Value));
             return services;
         }
+
+        public IServiceCollection AddKarataTrivia(Action<Trivia.Client.Options, IServiceProvider> configure)
+        {
+            services.AddOptions<Trivia.Client.Options>().Configure(configure);
+            services.AddSingleton<Trivia.Client>(sp => new(options: sp.GetRequiredService<IOptions<Trivia.Client.Options>>().Value));
+            return services;
+        }
     }
 }

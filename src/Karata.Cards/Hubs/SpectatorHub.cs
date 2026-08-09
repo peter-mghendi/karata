@@ -7,7 +7,7 @@ namespace Karata.Cards.Hubs;
 
 // IMPORTANT! The SpectatorHub can be accessed by unauthenticated users.
 // Do not depend on Context.UserIdentifier being present.
-public class SpectatorHub(ILogger<SpectatorHub> logger, KarataContext context) : Hub<ISpectatorClient>
+public class SpectatorHub(ILogger<SpectatorHub> logger, CardsContext context) : Hub<ISpectatorClient>
 {
     public async Task JoinRoom(Guid roomId)
     {

@@ -1,0 +1,61 @@
+@page "/inbox"
+@using Humanizer
+@using Karata.Kit.Trivia
+@using Karata.Kit.Trivia.Models.Response
+
+@attribute [Authorize]
+
+@inject NavigationManager Navigation
+@inject Client QuizWars
+
+<PageTitle>Notifications</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudStack>
+        @foreach (var notification in Notifications)
+        {
+            <MudCard>
+                <MudCardHeader>
+                    <MudBadge Color="Color.Primary"  Visible="@(!notification.IsRead)" Dot>
+                        <MudText Typo="Typo.caption">@notification.SentAt.Humanize()</MudText>
+                    </MudBadge>
+                </MudCardHeader>
+                <MudCardContent>@notification.Text</MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => Go(notification))">
+                        Go!
+                    </MudButton>
+                    <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="@(() => MarkRead(notification))">
+                        Mark as Read
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        }
+    </MudStack>
+</MudContainer>
+
+@code {
+    private List<NotificationResponse> Notifications { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNotifications();
+    }
+
+    private async Task Go(NotificationResponse notification)
+    {
+        await MarkRead(notification);
+        Navigation.NavigateTo(notification.Url);
+    }
+
+    private async Task MarkRead(NotificationResponse notification)
+    {
+        await QuizWars.Notifications.MarkNotificationRead(notification.Id);
+        await LoadNotifications();
+    }
+
+    private async Task LoadNotifications()
+    {
+        Notifications = await QuizWars.Notifications.GetNotifications();
+    }
+}

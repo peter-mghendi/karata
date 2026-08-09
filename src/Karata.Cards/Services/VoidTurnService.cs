@@ -14,7 +14,7 @@ namespace Karata.Cards.Services;
 public class VoidTurnService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
-    KarataContext context,
+    CardsContext context,
     Guid roomId,
     string player
 ) : LiveRoomAwareService(players, spectators, roomId, player)

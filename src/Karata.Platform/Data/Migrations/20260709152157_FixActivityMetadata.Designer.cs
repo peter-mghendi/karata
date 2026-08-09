@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Karata.Platform.Data.Migrations
 {
-    [DbContext(typeof(KarataPlatformContext))]
+    [DbContext(typeof(PlatformContext))]
     [Migration("20260709152157_FixActivityMetadata")]
     partial class FixActivityMetadata
     {

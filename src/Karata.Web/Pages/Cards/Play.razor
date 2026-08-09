@@ -1,0 +1,437 @@
+@page "/cards/game/{id:guid}/play"
+
+@using System.Collections.Immutable
+@using System.Reactive.Disposables
+@using System.Reactive.Disposables.Fluent
+@using System.Reactive.Linq
+@using Karata.Kit.Bot.Interface
+@using Karata.Kit.Bot.Models
+@using Karata.Kit.Cards
+@using Karata.Kit.Cards.Connection
+@using Karata.Kit.Cards.Models
+@using Karata.Kit.Cards.State
+@using Karata.Pebble.Interceptors
+@using Microsoft.Extensions.Options
+@using TextCopy
+
+@attribute [Authorize]
+
+@implements IDisposable
+
+@inject AuthenticationStateProvider Authenticator
+@inject BotInterface BotInterface
+@inject IDialogService DialogService
+@inject ILoggerFactory LoggerFactory
+@inject IOptions<Client.Options> ClientOptions
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigator
+
+<SessionGuard Session="_session">
+    <MudLoading Loading="@(_room is null)" Text="Please wait..." Class="mud-height-full pa-0">
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mud-height-full pa-0">
+            @if (_room is not null)
+            {
+                <MudGrid Class="mud-height-full px-4 pt-4">
+                    <MudItem xs="12" md="8" xl="9" xxl="10">
+                        @* TODO: What is this 88vh? *@
+                        <MudCard Elevation="0" Style="background-color: transparent; height: 88vh">
+                            @if (_room!.State.Game.Status is GameStatus.Ongoing)
+                            {
+                                if (_table)
+                                {
+                                    <CardTableGameInterface Game="_room.State.Game"
+                                                            Hand="CurrentHand"
+                                                            Turn="_turn.State"
+                                                            OnAddCardToTurn="info => _turn.Mutate(new TurnStore.Insert(info))"
+                                                            OnReorderCardInTurn="info => _turn.Mutate(new TurnStore.Reorder(info))"
+                                                            OnRemoveCardFromTurn="card => _turn.Mutate(new TurnStore.Remove(card))"/>
+                                }
+                                else
+                                {
+                                    <CardListGameInterface Game="_room.State.Game"
+                                                           Hand="CurrentHand"
+                                                           Turn="_turn.State"
+                                                           OnAddCardToTurn="info => _turn.Mutate(new TurnStore.Insert(info))"
+                                                           OnReorderCardInTurn="info => _turn.Mutate(new TurnStore.Reorder(info))"
+                                                           OnRemoveCardFromTurn="card => _turn.Mutate(new TurnStore.Remove(card))"/>
+                                }
+                            }
+                            else
+                            {
+                                <div class="d-flex flex-column justify-center align-content-center pa-4 pt-8">
+                                    <MudText Align="Align.Center" Typo="Typo.h5" Class="gray-text mb-2">
+                                        Waiting for players...
+                                    </MudText>
+                                    <MudText Align="Align.Center" Typo="Typo.h3" Class="mb-4">
+                                    <span
+                                        style="@(_room.State.Game.Hands.Count is < 2 or > 4 ? "color: var(--mud-palette-error)" : "color: var(--mud-palette-success)")">
+                                        @_room.State.Game.Hands.Count    
+                                    </span>
+                                        of 4
+                                    </MudText>
+                                    <MudText Align="Align.Center" Typo="Typo.body2" Class="gray-text">
+                                        Room ID
+                                    </MudText>
+                                    <MudText Align="Align.Center" Typo="Typo.body1" Class="mb-2">
+                                        @_room.State.Id
+                                        <MudIconButton Size="Size.Small" Icon="@Icons.Material.Rounded.ContentCopy"
+                                                       Color="Color.Primary" OnClick="@CopyRoomId"/>
+                                    </MudText>
+                                    <MudText Align="Align.Center" Typo="Typo.body2" Class="gray-text">
+                                        Room link
+                                    </MudText>
+                                    <MudText Align="Align.Center" Typo="Typo.body2" Class="mb-8">
+                                        @Navigator.Uri
+                                        <MudIconButton Size="Size.Small" Icon="@Icons.Material.Rounded.ContentCopy"
+                                                       Color="Color.Primary" OnClick="@CopyRoomLink"/>
+                                    </MudText>
+                                    <MudGrid Spacing="2" Justify="Justify.Center">
+                                        <MudItem xs="12" sm="8" md="6" lg="4" xl="3" xxl="2">
+                                            <QuickResponseCode Data="@Navigator.Uri"/>
+                                        </MudItem>
+                                    </MudGrid>
+                                </div>
+                            }
+                        </MudCard>
+                    </MudItem>
+                    <MudItem Class="mud-height-full overflow-y-scroll" xs="12" md="4" xl="3" xxl="2">
+                        <MudPaper Elevation="0" Class="mb-4">
+                            <MudToolBar Gutters="false" Class="px-2">
+                                @if (_room!.State.Game.Status is GameStatus.Ongoing)
+                                {
+                                    <MudTooltip Text="Pick card(s)">
+                                        <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleUp"
+                                                       Color="Color.Inherit" OnClick="@PerformEmptyTurn"/>
+                                    </MudTooltip>
+                                    <MudTooltip Text="Play card(s)">
+                                        <MudIconButton Icon="@Icons.Material.Rounded.ArrowCircleDown"
+                                                       Color="Color.Inherit" OnClick="@PerformCurrentTurn"/>
+                                    </MudTooltip>
+                                }
+                                else
+                                {
+                                    <MudTooltip
+                                        Text="@(IsAdministrator ? "Start Game" : "Only the admin can start the game.")">
+                                        <MudIconButton Icon="@Icons.Material.Rounded.PlayArrow" Color="Color.Inherit"
+                                                       OnClick="@StartGame" Disabled="!IsAdministrator"/>
+                                    </MudTooltip>
+                                }
+
+                                <MudTooltip Text="Leave Room">
+                                    <MudIconButton Icon="@Icons.Material.Rounded.PersonRemove" Color="Color.Inherit"
+                                                   OnClick="@LeaveRoom"/>
+                                </MudTooltip>
+                            </MudToolBar>
+                        </MudPaper>
+                        
+                        <MudExpansionPanels Outlined="false" Elevation="0" Class="mb-4">
+                            <MudExpansionPanel Text="Experimental Features" Class="px-4">
+                                <MudList Dense ReadOnly T="string" Gutters="false">
+                                    <MudListItem>
+                                        <ChildContent>
+                                            <MudStack Spacing="0">
+                                                <MudStack Row AlignItems="AlignItems.Center">
+                                                    <MudSwitch @bind-Value="_table" Color="Color.Primary" Label="Table interface"/>
+                                                    <MudChip T="string" Icon="@Icons.Material.Rounded.Palette" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">Appearance</MudChip>
+                                                    <MudSpacer/>
+                                                </MudStack>
+                                                <MudText Typo="Typo.caption" Class="text-gray">
+                                                    The table interface is still under development and, as such, may contain bugs.
+                                                </MudText>
+                                            </MudStack>
+                                        </ChildContent>
+                                    </MudListItem>
+                                    <MudListItem>
+                                        <ChildContent>
+                                            <MudStack Spacing="0">
+                                                <MudStack Row AlignItems="AlignItems.Center">
+                                                    <MudSwitch @bind-Value="_learner" Color="Color.Primary" Label="Learner mode"/>
+                                                    <MudChip T="string" Icon="@Icons.Material.Rounded.Help" Variant="Variant.Text" Color="Color.Info" Size="Size.Small">Assistance</MudChip>
+                                                    <MudSpacer/>
+                                                </MudStack>
+                                                <MudText Typo="Typo.caption" Class="text-gray">Shows hints.</MudText>
+                                            </MudStack>
+                                        </ChildContent>            
+                                    </MudListItem>
+                                    <MudListItem>
+                                        <ChildContent>
+                                            <MudStack Spacing="0">
+                                                <MudStack Row AlignItems="AlignItems.Center">
+                                                    <MudText>Karata.Bot</MudText>
+                                                    <MudChip T="string" Icon="@Icons.Material.Rounded.SmartToy" Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small">
+                                                        Bot
+                                                    </MudChip>
+                                                    <MudSpacer/>
+                                                    <MudButton Variant="Variant.Text" Color="Color.Info" OnClick="@InviteBot" Disabled="!CanInviteBot">
+                                                        @if (CanInviteBot)
+                                                        {
+                                                            <span>Invite</span>    
+                                                        }
+                                                        else if (_room.State.Game.Hands.Any(hand => hand is { Player.Username: "service-account-karata-bot" }))
+                                                        {
+                                                            <span>Invited</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Room full</span>
+                                                        }
+                                                    </MudButton>
+                                                </MudStack>
+                                                <MudText Typo="Typo.caption">
+                                                    Karata.Bot is an experimental AI player that participates in games using the same information and actions available to players.
+                                                </MudText>
+                                            </MudStack>
+                                        </ChildContent>              
+                                    </MudListItem>
+                                </MudList>
+                            </MudExpansionPanel>
+                            
+                            @if (_learner && _room!.State.Game.Status is GameStatus.Ongoing)
+                            {
+                                <MudExpansionPanel Text="Learner mode" Class="px-4">
+                                    <TurnEffects Game="_room!.State.Game" Cards="@([.._turn.State])"/>
+                                </MudExpansionPanel>
+                            }
+                            <MudExpansionPanel Text="Information" Class="px-4">
+                                <InformationPanel Room="_room!.State"/>
+                            </MudExpansionPanel>
+                            <MudExpansionPanel Text="Players" Class="px-4">
+                                <PlayersPanel Me="CurrentHand.Id" Room="_room.State" Controls="IsAdministrator"
+                                              OnSetAway="SetAway" OnVoidTurn="VoidTurn"/>
+                            </MudExpansionPanel>
+                            <MudExpansionPanel Text="Chat" MaxHeight="480" Class="overflow-y-auto px-4">
+                                <ChatPanel Room="_room!.State" CurrentUserId="@CurrentHand.Player.Id" OnSend="Send"/>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    </MudItem>
+                </MudGrid>
+            }
+        </MudContainer>
+    </MudLoading>
+</SessionGuard>
+
+@code
+{
+    [Parameter] public Guid Id { get; set; }
+
+    [Inject] public required IClipboard Clipboard { get; set; }
+
+    private bool _learner;
+    private bool _table;
+
+    private PlayerConnection.Session? _session;
+    private RoomStore? _room;
+    private TurnStore _turn = new([], []);
+    private string? _username;
+    private readonly CompositeDisposable _subscriptions = new();
+
+    private bool CanInviteBot => _room!.State.Game.Hands.Count < 4 && _room.State.Game.Hands.All(h => h.Username != "service-account-karata-bot");
+    private HandData CurrentHand => _room!.State.Game.Hands.Single(h => h.Username == _username);
+    private bool IsAdministrator => CurrentHand.Player.Id == _room?.State.Administrator.Id;
+
+    private void OnStoreChanged<T>(T data) where T : class => StateHasChanged();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await Authenticator.GetAuthenticationStateAsync();
+        _username = auth.User.Identity!.Name!;
+
+        var connection = new PlayerConnection(ClientOptions.Value.Host)
+        {
+            AccessTokenProvider = ClientOptions.Value.TokenProvider
+        };
+
+        var parameters = new PlayerConnection.SessionParameters(
+            OnRequestPassword: async () =>
+            {
+                bool repeat;
+                do
+                {
+                    var dialog = await DialogService.ShowAsync<PasswordRequestModal>("Enter password");
+                    var result = await dialog.Result;
+
+                    if (result?.Data is string passcode) return passcode;
+
+                    var back = DialogService.ShowMessageBoxAsync("Go back?", "Exit to 'Join Game' screen?", "Exit", "Try again");
+                    repeat = await back is false;
+                } while (repeat);
+
+                Navigator.NavigateTo("/game/join");
+                return null;
+            },
+            OnRequestCard: async specific =>
+            {
+                var parameters = new DialogParameters { { nameof(CardRequestModal.Specific), specific } };
+                var dialog = await DialogService.ShowAsync<CardRequestModal>("Request a card", parameters);
+                var result = await dialog.Result;
+
+                return result?.Data as Card;
+            },
+            OnRequestLastCard: async () =>
+            {
+                const string blurb = "Declare <b>last card</b> if you have a card or cards that you can legally finish the game with in the next turn.";
+                var dialog = DialogService.ShowMessageBoxAsync("Last Card?", new MarkupString(blurb), "Yes!", "No");
+                return await dialog ?? false;
+            }
+        );
+        await connection.StartAsync();
+        _session = connection.Spawn(Id, parameters);
+
+        _session.Events.AddHandToRoom.Subscribe(data =>
+        {
+            var (_, user, _) = data;
+            Snackbar.Add($"{user.Username} has joined the room", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+        }).DisposeWith(_subscriptions);
+
+        _session.Events.AddToRoom.Subscribe(room =>
+        {
+            _room = new RoomStore(room, [
+                new LoggingInterceptor<RoomData>(LoggerFactory),
+                new TimingInterceptor<RoomData>(LoggerFactory)
+            ]);
+            _turn = new TurnStore([], [
+                new LoggingInterceptor<ImmutableList<Card>>(LoggerFactory),
+                new TimingInterceptor<ImmutableList<Card>>(LoggerFactory)
+            ]);
+
+            _room.Changes
+                .Merge<object>(_turn.Changes)
+                .Throttle(TimeSpan.FromMilliseconds(500))
+                .Subscribe(OnStoreChanged)
+                .DisposeWith(_subscriptions);
+
+            _session.Events.BindRoomState(_room).DisposeWith(_subscriptions);
+            StateHasChanged();
+        }).DisposeWith(_subscriptions);
+
+        _session.Events.EndGame
+            .Subscribe(result =>
+                {
+                    ShowMessage(new SystemMessage { Text = result.Reason, Type = result.ReasonType });
+                    
+                    _session.Dispose();
+                    Navigator.NavigateTo($"/game/{_room!.State.Id.ToString()}/over");
+                }
+            )
+            .DisposeWith(_subscriptions);
+
+        _session.Events.Chat.Subscribe(message =>
+        {
+            if (message.Sender.Username != _username)
+            {
+                Snackbar.Add(
+                    @<div>
+                        <p class="mud-typography-body2">@message.Sender.Username:</p>
+                        <p class="mud-typography-body1">@message.Text</p>
+                    </div>,
+                    Severity.Normal,
+                    c => c.SnackbarVariant = Variant.Text
+                );
+            }
+        }).DisposeWith(_subscriptions);
+
+        _session.Events.SystemMessage.Subscribe(ShowMessage).DisposeWith(_subscriptions);
+
+        _session.Events.RemoveFromRoom
+            .Subscribe(_ => {
+                    var uri = $"/game/{_room!.State.Id}";
+
+                    _session.Dispose();
+                    _room!.Dispose();
+                    _turn.Dispose();
+                    
+                    StateHasChanged();
+                    
+                    Navigator.NavigateTo(uri);
+                }
+            )
+            .DisposeWith(_subscriptions);
+
+        _session.Events.RemoveHandFromRoom.Subscribe(handId =>
+        {
+            var hand = _room!.State.Game.Hands.Find(h => h.Id == handId)!;
+            Snackbar.Add($"{hand.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+        }).DisposeWith(_subscriptions);
+
+        _session.Events.TurnAcknowledged.Subscribe(_ => _turn.Mutate(new TurnStore.Clear())).DisposeWith(_subscriptions);
+        
+        _session.Events.TurnCommitted.Subscribe(game =>
+        {
+            var current = game.CurrentHand.Username == _username ? "your" : $"{game.CurrentHand.Username}'s";
+            Snackbar.Add($"It is now {current} turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+
+            game.Hands.ForEach(hand =>
+            {
+                if (hand.Cards.Count == 0) ShowMessage(new() { Text = $"{hand.Username} is cardless.", Type = MessageType.Info }); 
+                if (hand.IsLastCard) ShowMessage(new() { Text = $"{hand.Username} is on their last card.", Type = MessageType.Warning }); 
+            });
+        }).DisposeWith(_subscriptions);
+        
+        _session.Events.TurnRejected
+            .Subscribe(problem => Snackbar.Add(problem.Message, Severity.Error, c => c.SnackbarVariant = Variant.Text))
+            .DisposeWith(_subscriptions);
+
+        _session.Events.UpdateGameStatus
+            .Subscribe(game => { Snackbar.Add($"The game is now {game.Status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text); })
+            .DisposeWith(_subscriptions);
+
+        _session.Events.UpdateHandStatus.Subscribe(data =>
+        {
+            var (handId, status) = data;
+            var hand = _room!.State.Game.Hands.Find(h => h.Id == handId)!;
+            Snackbar.Add($"{hand.Username} is now {status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+        }).DisposeWith(_subscriptions);
+
+        await _session.JoinRoom();
+    }
+
+    async Task InviteBot() => await BotInterface.InviteAsync(invitation: new BotInvitation(Room: Id, Password: null));
+    
+    async Task LeaveRoom() => await _session!.LeaveRoom();
+
+    async Task StartGame() => await _session!.StartGame();
+
+    async Task PerformCurrentTurn() => await PerformTurn([.._turn.State]);
+
+    async Task PerformEmptyTurn() => await PerformTurn([]);
+
+    async Task PerformTurn(List<Card> cards) => await _session!.PerformTurn(cards);
+
+    async Task Send(string message) => await _session!.SendChat(message);
+
+    async Task SetAway(long handId) => await _session!.SetAway(handId);
+
+    async Task VoidTurn(long handId) => await _session!.VoidTurn(handId);
+
+    private async Task CopyRoomId()
+    {
+        await Clipboard.SetTextAsync(Id.ToString());
+        Snackbar.Add("Copied to clipboard.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+    }
+
+    private async Task CopyRoomLink()
+    {
+        await Clipboard.SetTextAsync(Navigator.Uri);
+        Snackbar.Add("Copied to clipboard.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+    }
+    
+    private void ShowMessage(SystemMessage message)
+    {
+        var severity = message.Type switch
+        {
+            MessageType.Error => Severity.Error,
+            MessageType.Info => Severity.Info,
+            MessageType.Success => Severity.Success,
+            MessageType.Warning => Severity.Warning,
+            _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
+        };
+        Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
+    }
+
+    public void Dispose()
+    {
+        _subscriptions.Dispose();
+        _room?.Dispose();
+        _turn.Dispose();
+    }
+}

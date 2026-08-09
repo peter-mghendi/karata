@@ -21,6 +21,11 @@ builder.Services
         platform.Host = new Uri(Configuration.Platform[builder.HostEnvironment.Environment].Host);
         platform.TokenProvider = async () => await TokenProvider.ProvideAsync(services);
     })
+    .AddKarataTrivia((trivia, services) =>
+    {
+        trivia.Host = new Uri(Configuration.Trivia[builder.HostEnvironment.Environment].Host);
+        trivia.TokenProvider = async () => await TokenProvider.ProvideAsync(services);
+    })
     .AddKarataSurface()
     .AddKarataBotInterface(new Uri(Configuration.Bot[builder.HostEnvironment.Environment].Host));
 

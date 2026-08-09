@@ -1,0 +1,100 @@
+@page "/cards/game/join"
+
+@using Karata.Kit.Cards
+@using Karata.Kit.Cards.Models
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+@attribute [Authorize]
+
+@inject Client Cards
+@inject NavigationManager Navigator
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full">
+    <MudText Typo="Typo.h5" Class="pa-4 my-4">Join or create a game room to play.</MudText>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
+        <MudTextField @bind-Value="_link" Label="Invite Link" Variant="Variant.Filled" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.QrCodeScanner" Class="mb-4"></MudTextField>
+        <MudButton Disabled="@_loading" Href="@JoinLink" Variant="Variant.Filled" Color="Color.Primary">
+            <MudText>Join game</MudText>
+        </MudButton>
+        <MudButton Disabled="@_loading" Href="@SpectateLink" Variant="Variant.Outlined" Class="ml-2">
+            <MudText>Spectate</MudText>
+        </MudButton>
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
+        <MudTextField @bind-Value="_password" Label="Password (Optional)" Variant="Variant.Filled" Class="mb-4"></MudTextField>
+        <MudButton Disabled="@_loading" OnClick="CreateRoom" Variant="Variant.Filled">
+            @if (_loading)
+            {
+                <MudProgressCircular Indeterminate Class="ms-n1" Size="Size.Small" />
+                <MudText Class="ms-2">Creating game</MudText>
+            }
+            else
+            {
+                <MudText>Create game</MudText>
+            }
+        </MudButton>
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
+        <MudList T="string">
+            <MudListSubheader>Available Games</MudListSubheader>
+
+            @if (_rooms is [..])
+            {
+                @foreach (var room in _rooms)
+                {
+                    <MudListItem Text="@room.Id.ToString()" SecondaryText="@($"Created at {room.CreatedAt.ToLocalTime()}")" Href="@($"/game/{room.Id}")"/>
+                }
+            }
+            else
+            {
+                @foreach (var _ in Enumerable.Range(0, 5))
+                {
+                    <MudListItem>
+                        <MudSkeleton Animation="Animation.Wave" Width="40%"/>
+                        <MudSkeleton Animation="Animation.Wave" Width="30%"/>       
+                    </MudListItem>
+                }
+            }
+        </MudList>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private bool _loading;
+    private List<RoomData>? _rooms;
+    private string _link = string.Empty;
+    private string _password = string.Empty;
+
+
+    private string JoinLink => $"/cards/game/{_link}/play";
+    private string SpectateLink => $"/cards/game/{_link}/spectate";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _rooms = await Cards.Rooms.ListAsync();
+        }
+        catch (AccessTokenNotAvailableException)
+        {
+            Console.WriteLine("Redirecting you to login");
+        }
+    }
+
+    private async Task CreateRoom()
+    {
+        try
+        {
+            _loading = true;
+            var room = await Cards.Rooms.CreateAsync(new RoomRequest { Password = _password });
+            Navigator.NavigateTo($"/cards/game/{room.Id.ToString()}/play");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

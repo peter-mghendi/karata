@@ -1,4 +1,3 @@
-using Karata.Kit.Cards.Models;
 using Karata.Kit.Platform.Models;
 using RestSharp;
 
@@ -6,15 +5,16 @@ namespace Karata.Kit.Platform.Services;
 
 public class ProfileService(RestClient client)
 {
-    public async Task<List<ActivityData>> ListAsync(CancellationToken cancellation = default)
+    public async Task<List<ProfileData>> ListAsync(CancellationToken cancellation = default)
     {
-        var response = await client.GetAsync<List<ActivityData>>("profiles", cancellation);
+        // TODO [HTTP QUERY]: Change this to QueryAsync once RestClient has support
+        var response = await client.GetAsync<List<ProfileData>>("profiles", cancellation);
         return response ?? throw new Exception();
     }
 
-    public async Task<ProfileData?> GetAsync(string username)
+    public async Task<ProfileData?> GetAsync(string identifier)
     {
-        var response = await client.GetAsync<ProfileData>($"profiles/{username}");
+        var response = await client.GetAsync<ProfileData>($"profiles/{identifier}");
         return response ?? throw new Exception();
     }
 }

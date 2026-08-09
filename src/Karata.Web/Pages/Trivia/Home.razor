@@ -1,0 +1,125 @@
+﻿@page "/trivia"
+
+@using Howler.Blazor.Components
+@using Karata.Kit.Cards.Models
+@using Karata.Kit.Platform.Models
+@using Karata.Kit.Trivia
+@using Karata.Kit.Trivia.Models
+@using Karata.Kit.Trivia.Models.Request
+@using Karata.Kit.Trivia.Models.Response
+@using Karata.Surface.Components.Trivia.Dialogs
+@using Karata.Surface.Security
+@using Karata.Web.Extensions
+@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.Extensions.Options
+
+@attribute [Authorize]
+
+@implements IAsyncDisposable
+
+@inject IDialogService DialogService
+@inject IHowl Howl
+@inject IJSRuntime JsRuntime
+@inject IServiceProvider Services
+@inject NavigationManager Navigation
+@inject Client QuizWars
+@inject IOptions<Client.Options> ClientOptions
+
+<PageTitle>Home</PageTitle>
+
+<MudGrid>
+    @foreach (var topic in Topics)
+    {
+        <MudItem xs="6" sm="4" md="3">
+            <MudCard Class="rounded-lg">
+                <MudCardMedia Image="@topic.GetImageUrl()"/>
+                <MudCardHeader>@topic.Title</MudCardHeader>
+                <MudCardContent>@topic.Description</MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => Play(topic))">
+                        Play!
+                    </MudButton>
+                    <MudIconButton Icon="@Icons.Material.Filled.Favorite" Color="Color.Error"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Share" Color="Color.Default"/>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+</MudGrid>
+
+@code
+{
+    private HubConnection? _hub;
+    private List<TopicResponse> Topics { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _ = RequestNotificationSubscriptionAsync();
+        Topics = await QuizWars.Topics.GetTopics();
+
+        _hub = new HubConnectionBuilder()
+            .WithUrl(new Uri(ClientOptions.Value.Host, "/hubs/notification"), options =>
+            {
+                options.AccessTokenProvider = ClientOptions.Value.TokenProvider;
+            })
+            .WithAutomaticReconnect()
+            .AddJsonProtocol() // TODO: [Legacy] Use MessagePack
+            .Build();
+
+        _hub.On<NotificationResponse>("ReceiveNotification", ShowNotification);
+
+        await _hub.StartAsync();
+    }
+    
+    private async Task RequestNotificationSubscriptionAsync()
+    {
+        var subscription = await JsRuntime.InvokeAsync<NotificationSubscriptionData?>("push.request");
+        if (subscription is not null)
+        {
+            try
+            {
+                await QuizWars.Notifications.Subscribe(subscription);
+            }
+            catch (AccessTokenNotAvailableException ex)
+            {
+                ex.Redirect();
+            }
+        }
+    }
+
+    private async Task Play(TopicResponse topic)
+    {
+        var opponent = await SelectUser();
+        if (opponent is null)
+        {
+            return;
+        }
+
+        var request = new CreateGameRequest(topic.Id, opponent);
+        var game = await QuizWars.Games.CreateGame(request);
+
+        Navigation.NavigateTo($"trivia/game/{game.Identifier}/play");
+    }
+
+    private async Task<string?> SelectUser()
+    {
+        var dialog = await DialogService.ShowAsync<SelectUserDialog>("Select Opponent");
+        var result = await dialog.Result;
+
+        return result?.Data as string;
+    }
+
+    private async Task ShowNotification(NotificationResponse notification)
+    {
+        await Howl.Play("/audio/notification.mp3");
+        
+        var parameters = new DialogParameters<NotificationDialog> { { x => x.Notification, notification } };
+        await DialogService.ShowAsync<NotificationDialog>("Notification", parameters);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        return _hub?.DisposeAsync() ?? ValueTask.CompletedTask;
+    }
+}

@@ -1,4 +1,5 @@
 using Blazored.LocalStorage;
+using Howler.Blazor.Components;
 using Karata.Kit.Security;
 using Karata.Surface.Security;
 using Microsoft.Extensions.DependencyInjection;
@@ -42,6 +43,8 @@ public static class DependencyInjection
             services.AddMudServices();
             services.AddMudExtensions();
             services.AddScoped<AuthenticationHelper>();
+            services.AddScoped<IHowl, Howl>();
+            services.AddScoped<IHowlGlobal, HowlGlobal>();
 
             return services;
         }

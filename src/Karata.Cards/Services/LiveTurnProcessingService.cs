@@ -23,7 +23,7 @@ public sealed class LiveTurnProcessingService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
     ILogger<LiveTurnProcessingService> logger,
-    KarataContext context,
+    CardsContext context,
     IKarataEngine engine,
     Guid roomId,
     string playerId,

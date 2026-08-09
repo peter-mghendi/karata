@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Karata.Platform.Data.Migrations
 {
-    [DbContext(typeof(KarataPlatformContext))]
+    [DbContext(typeof(PlatformContext))]
     [Migration("20260702101000_InitialCreate")]
     partial class InitialCreate
     {

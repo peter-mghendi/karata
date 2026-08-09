@@ -11,7 +11,7 @@ using static Karata.Kit.Cards.Models.GameStatus;
 namespace Karata.Cards.Hubs;
 
 [Authorize]
-public partial class ReplayerHub(ILogger<SpectatorHub> logger, KarataContext context, ReplayProcessor processor) : Hub<IReplayerClient>
+public partial class ReplayerHub(ILogger<SpectatorHub> logger, CardsContext context, ReplayProcessor processor) : Hub<IReplayerClient>
 {
     private static readonly TimeSpan MinimumInterval = TimeSpan.FromMilliseconds(50);
 
