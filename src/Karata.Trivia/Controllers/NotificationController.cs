@@ -16,7 +16,6 @@ namespace Karata.Trivia.Controllers;
 public class NotificationController(
     CurrentUserService<TriviaContext, User> current, TriviaContext context) : ControllerBase
 {
-    // GET: api/notifications
     [HttpGet]
     public async Task<ActionResult<IEnumerable<NotificationResponse>>> GetNotifications()
     {
@@ -35,9 +34,8 @@ public class NotificationController(
             .ToListAsync();
     }
 
-    // PUT: api/notifications/5
     [HttpPut("subscribe")]
-    public async Task<IResult> PutNotification([FromBody] NotificationSubscriptionData data)
+    public async Task<IResult> UpsertNotificationSubscription([FromBody] NotificationSubscriptionData data)
     {
         var user = await current.RequireAsync();
         var stale = context.NotificationSubscriptions.Where(e => e.User.Id == user.Id);
@@ -56,9 +54,8 @@ public class NotificationController(
         return Results.Ok(subscription.AsResponse());
     }
 
-    // PUT: api/notifications/5
     [HttpPut("{id:long}")]
-    public async Task<IActionResult> PutNotification(long id) => await context.Notifications.FindAsync(id) switch
+    public async Task<IActionResult> MarkNotificationRead(long id) => await context.Notifications.FindAsync(id) switch
     {
         null => NotFound(),
         not { ReadAt: null } => Conflict(),

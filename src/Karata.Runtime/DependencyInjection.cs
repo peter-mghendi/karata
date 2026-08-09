@@ -1,6 +1,7 @@
 using Karata.Runtime.Data;
 using Karata.Runtime.Infrastructure;
 using Karata.Runtime.Models;
+using Karata.Runtime.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -18,10 +19,13 @@ public static class DependencyInjection
     public class KarataRuntimeOptions<TUser> where TUser : KarataUser
     {
         internal bool IsSignalREnabled { get; private set; }
+        internal bool IsTokenExchangeEnabled { get; private set; }
         internal Action<DatabaseOptions> DatabaseConfiguration { get; private set; } = _ => { };
         internal Action<UserProvisioningOptions<TUser>> UserProvisioningConfiguration { get; private set; } = _ => { };
 
         public void UseSignalR(bool use = true) => IsSignalREnabled = use;
+        
+        public void UseTokenExchange(bool use = true) => IsTokenExchangeEnabled = use;
 
         public void ConfigureDatabase(Action<DatabaseOptions> configure) => DatabaseConfiguration = configure;
 
@@ -77,6 +81,12 @@ public static class DependencyInjection
 
             services.AddTransient<CurrentUserService<TContext, TUser>>();
             services.AddTransient<IClaimsTransformation, UserProvisioningClaimsTransformation<TContext, TUser>>();
+
+            if (runtime.IsTokenExchangeEnabled)
+            {
+                services.AddHttpClient(); // Idempotent, required by TokenExchangeAccessTokenProvider
+                services.AddTransient<TokenExchangeAccessTokenProvider>();
+            }
 
             return services;
         }

@@ -1,6 +1,7 @@
 using Karata.Kit.Platform.Models;
 using Karata.Platform.Data;
 using Karata.Platform.Handlers;
+using Karata.Platform.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,35 +16,19 @@ public static class Endpoints
         public void MapEndpoints()
         {
             var api = endpoints.MapGroup("/api");
-            
+
             var activity = api.MapGroup("/activity");
             activity.MapGet("", ActivityHandler.ListActivity).WithName(nameof(ActivityHandler.ListActivity));
-            activity.MapPost("", ActivityHandler.CreateActivity).WithName(nameof(ActivityHandler.CreateActivity)).RequireAuthorization();
-            
-            api.MapGet(
-                    "/profiles",
-                    async ([FromServices] PlatformContext context) =>
-                    {
-                        var profiles = await context.Users.AsNoTracking().ToArrayAsync();
-                        return Ok(profiles.Select(profile => new ProfileData(profile.Id, profile.Username,
-                            $"https://api.dicebear.com/10.x/glyphs/svg?seed={profile.Username}")));
-                    })
-                .WithName("ListProfiles")
+            activity.MapPost("", ActivityHandler.CreateActivity).WithName(nameof(ActivityHandler.CreateActivity))
                 .RequireAuthorization();
-            
-            api.MapGet(
-                    "/profiles/{username}",
-                    async Task<Results<Ok<ProfileData>, NotFound>> ([FromServices] PlatformContext context,
-                        string username) =>
-                    {
-                        var profile = await context.Users.AsNoTracking()
-                            .FirstOrDefaultAsync(profile => profile.Username == username);
-                        if (profile is null) return NotFound();
 
-                        return Ok(new ProfileData(profile.Id, profile.Username,
-                            $"https://api.dicebear.com/10.x/glyphs/svg?seed={profile.Username}"));
-                    })
-                .WithName("GetProfile")
+            // TODO [HTTP QUERY]: Change this to MapQuery once ASP.NET Core has support
+            api.MapGet("/profiles", ProfileHandler.ListProfiles)
+                .WithName(nameof(ProfileHandler.ListProfiles))
+                .RequireAuthorization();
+
+            api.MapGet("/profiles/{identifier}", ProfileHandler.GetProfile)
+                .WithName(nameof(ProfileHandler.GetProfile))
                 .RequireAuthorization();
         }
     }

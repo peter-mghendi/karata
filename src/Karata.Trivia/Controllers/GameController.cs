@@ -1,3 +1,4 @@
+using Karata.Kit.Platform;
 using Karata.Kit.Trivia.Models.Request;
 using Karata.Kit.Trivia.Models.Response;
 using Karata.Runtime.Infrastructure;
@@ -21,43 +22,11 @@ public class GameController(TriviaContext context, ILogger<GameController> logge
         .Select(g => g.AsResponse())
         .ToListAsync();
 
-    [HttpGet("{identifier:guid}")]
-    public async Task<ActionResult<GameResponse>> GetGame(Guid identifier)
-    {
-        var game = await context.Games
-            .Include(g => g.Topic)
-            .Include(g => g.PlayerOne)
-            .Include(g => g.PlayerTwo)
-            .SingleOrDefaultAsync(g => g.Identifier == identifier);
-
-        if (game is null) return NotFound();
-
-        return game.AsResponse();
-    }
-
-    [HttpPut("{id:long}")]
-    public async Task<IActionResult> PutGame(long id, Game game)
-    {
-        if (id != game.Id) return BadRequest();
-
-        context.Entry(game).State = EntityState.Modified;
-
-        try
-        {
-            await context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException) when (!GameExists(id))
-        {
-            return NotFound();
-        }
-
-        return NoContent();
-    }
-
     [HttpPost]
-    public async Task<ActionResult<GameResponse>> PostGame(
+    public async Task<ActionResult<GameResponse>> CreateGame(
         [FromServices] CurrentUserService<TriviaContext, User> current,
         [FromServices] GameService service,
+        [FromServices] Client platform,
         [FromBody] CreateGameRequest request
     )
     {
@@ -75,16 +44,17 @@ public class GameController(TriviaContext context, ILogger<GameController> logge
         }
     }
 
-    [HttpDelete("{id:long}")]
-    public async Task<IActionResult> DeleteGame(long id)
+    [HttpGet("{identifier:guid}")]
+    public async Task<ActionResult<GameResponse>> GetGame(Guid identifier)
     {
-        if (await context.Games.FindAsync(id) is not {} game) return NotFound();
+        var game = await context.Games
+            .Include(g => g.Topic)
+            .Include(g => g.PlayerOne)
+            .Include(g => g.PlayerTwo)
+            .SingleOrDefaultAsync(g => g.Identifier == identifier);
 
-        context.Games.Remove(game);
-        await context.SaveChangesAsync();
+        if (game is null) return NotFound();
 
-        return NoContent();
+        return game.AsResponse();
     }
-
-    private bool GameExists(long id) => context.Games.Any(e => e.Id == id);
 }

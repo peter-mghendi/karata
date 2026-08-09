@@ -2,6 +2,7 @@
 
 @using Howler.Blazor.Components
 @using Karata.Kit.Cards.Models
+@using Karata.Kit.Platform.Models
 @using Karata.Kit.Trivia
 @using Karata.Kit.Trivia.Models
 @using Karata.Kit.Trivia.Models.Request
@@ -95,17 +96,18 @@
             return;
         }
 
-        var request = new CreateGameRequest(topic.Id, opponent.Id);
+        var request = new CreateGameRequest(topic.Id, opponent);
         var game = await QuizWars.Games.CreateGame(request);
 
         Navigation.NavigateTo($"trivia/game/{game.Identifier}/play");
     }
 
-    private async Task<UserData?> SelectUser()
+    private async Task<string?> SelectUser()
     {
         var dialog = await DialogService.ShowAsync<SelectUserDialog>("Select Opponent");
         var result = await dialog.Result;
-        return result?.Data as UserData;
+
+        return result?.Data as string;
     }
 
     private async Task ShowNotification(NotificationResponse notification)

@@ -8,43 +8,42 @@ using Karata.Runtime;
 using Karata.Runtime.Security;
 
 var builder = WebApplication.CreateBuilder(args);
+
 var db = builder.Configuration["DATABASE_URL"] ?? throw new Exception("DATABASE_URL is not set.");
 var platform = builder.Configuration["PLATFORM_URL"] ?? throw new Exception("PLATFORM_URL is not set.");
 
-builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
-
-builder.Services.AddKarataRuntime<CardsContext, User>(
-    configuration: builder.Configuration,
-    configure: options =>
-    {
-        options.UseSignalR();
-        options.ConfigureDatabase((postgres) => postgres.DataSource = new Uri(db));
-        options.ConfigureUserProvisioning(provisioning =>
+builder.Services
+    .AddKarataRuntime<CardsContext, User>(
+        configuration: builder.Configuration,
+        configure: options =>
         {
-            provisioning.Enabled = true;
-            provisioning.Factory = principal => new User
+            options.UseSignalR();
+            options.UseTokenExchange();
+            options.ConfigureDatabase((postgres) => postgres.DataSource = new Uri(db));
+            options.ConfigureUserProvisioning(provisioning =>
             {
-                Id = principal.FindFirstValue(ClaimTypes.NameIdentifier)!,
-                // Email = principal.FindFirstValue(ClaimTypes.Email)!,
-                Username = principal.FindFirstValue("preferred_username")!
-            };
-        });
-    }
-);
-
-builder.Services.AddTransient<TokenExchangeAccessTokenProvider>();
-builder.Services.AddKarataPlatform((options, services) =>
-{
-    options.Host = new Uri(platform);
-    options.TokenProvider = async () =>
+                provisioning.Enabled = true;
+                provisioning.Factory = principal => new User
+                {
+                    Id = principal.FindFirstValue(ClaimTypes.NameIdentifier)!,
+                    // Email = principal.FindFirstValue(ClaimTypes.Email)!,
+                    Username = principal.FindFirstValue("preferred_username")!
+                };
+            });
+        }
+    )
+    .AddKarataPlatform((options, services) =>
     {
-        using var scope = services.CreateScope();
-        using var provider = scope.ServiceProvider.GetRequiredService<TokenExchangeAccessTokenProvider>();
+        options.Host = new Uri(platform);
+        options.TokenProvider = async () =>
+        {
+            using var scope = services.CreateScope();
+            using var provider = scope.ServiceProvider.GetRequiredService<TokenExchangeAccessTokenProvider>();
 
-        return await provider.GetAsync();
-    };
-});
+            return await provider.GetAsync();
+        };
+    });
 
 builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
 builder.Services.AddSingleton<IKarataEngine, TwoPassKarataEngine>();

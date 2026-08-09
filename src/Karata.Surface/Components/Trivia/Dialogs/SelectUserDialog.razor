@@ -1,7 +1,7 @@
-@using Karata.Kit.Cards.Models
-@using Karata.Kit.Trivia
+@using Karata.Kit.Platform
+@using Karata.Kit.Platform.Models
 
-@inject Client QuizWars
+@inject Client Platform
 
 <MudDialog>
     <TitleContent>
@@ -11,7 +11,7 @@
         </MudText>
     </TitleContent>
     <DialogContent>
-        <MudList T="UserData" SelectedValueChanged="@Challenge">
+        <MudList T="ProfileData" SelectedValueChanged="@Challenge">
             @foreach (var user in Users)
             {
                 <MudListItem Text="@user.Username" Icon="@Icons.Material.Filled.Person" Value="user"/>
@@ -26,20 +26,19 @@
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
 
-    private List<UserData> Users { get; set; } = [];
+    private List<ProfileData> Users { get; set; } = [];
 
     protected override async Task OnInitializedAsync()
     {
-        Users = await QuizWars.Users.GetUsers();
+        Users = await Platform.Profiles.ListAsync();
     }
 
     private void Cancel() => MudDialog.Cancel();
 
-    private void Challenge(UserData? player)
+    private void Challenge(ProfileData? player)
     {
         if (player is null) return;
 
-        MudDialog.Close(DialogResult.Ok(player));
+        MudDialog.Close(DialogResult.Ok(player.Id));
     }
-
 }
