@@ -284,7 +284,7 @@ jobs:
       - name: Archive releases-web branch
         run: |
           git fetch origin releases-web
-          git archive --format tar.gz --output karata-web.tar.gz releases-web
+          git archive --format tar.gz --output karata-web.tar.gz origin/releases-web
 
       - name: Attach assets to release
         uses: softprops/action-gh-release@v2
