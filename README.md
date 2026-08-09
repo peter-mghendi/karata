@@ -256,7 +256,7 @@ tar -xzf karata-web.tar.gz
 
 ##### Published Assets Branch
 
-The latest generated frontend assets are also available in the `releases-karata-web` branch.
+The latest generated frontend assets are also available in the `releases-web` branch.
 
 This branch contains build output only and may be used directly with static hosting providers.
 
