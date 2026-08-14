@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <PackageReference Include="Konscious.Security.Cryptography.Argon2" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
   </ItemGroup>
 
   <ItemGroup>

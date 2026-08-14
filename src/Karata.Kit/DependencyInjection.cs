@@ -1,3 +1,4 @@
+using Karata.Kit.Bot.Interface;
 using Karata.Kit.Cards.Engine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -8,6 +9,12 @@ public static class DependencyInjection
 {
     extension(IServiceCollection services)
     {
+        public IServiceCollection AddKarataBotInterface(Uri host)
+        {
+            services.AddSingleton<BotInterface>(_ => new(host));
+            return services;
+        }
+        
         public IServiceCollection AddKarataCards(Action<Cards.Client.Options, IServiceProvider> configure)
         {
             services.AddOptions<Cards.Client.Options>().Configure(configure);

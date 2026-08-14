@@ -11,26 +11,11 @@
           "MimeKit": "4.17.0"
         }
       },
-      "Microsoft.Extensions.Caching.Memory": {
-        "type": "Direct",
-        "requested": "[10.0.8, )",
-        "resolved": "10.0.8",
-        "contentHash": "sYMYQjNprfqPTryuLNnr0/AOtnhlfuZ0ZxyOV0d3AXOEL8j9KV0EbelpZYyIatT2hJiaSGO9XGr5YDRsh22OfQ=="
-      },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
         "requested": "[10.0.1, )",
         "resolved": "10.0.1",
         "contentHash": "ISahzLHsHY7vrwqr2p1YWZ+gsxoBRtH7gWRDK8fDUst9pp2He0GiesaqEfeX0V8QMCJM3eNEHGGpnIcPjFo2NQ=="
-      },
-      "WebPush": {
-        "type": "Direct",
-        "requested": "[1.0.13, )",
-        "resolved": "1.0.13",
-        "contentHash": "Qyypsk6j+GqncCa/IgbmZLnL7DxqKFGz3jIdquGSLeiD3NtN+HPnIFBMwIJHffDU9ZEztTkaMMYxvW3PJxJL7Q==",
-        "dependencies": {
-          "Portable.BouncyCastle": "1.9.0"
-        }
       },
       "BouncyCastle.Cryptography": {
         "type": "Transitive",
@@ -1445,6 +1430,15 @@
         "requested": "[6.1.0, )",
         "resolved": "6.1.0",
         "contentHash": "M5cCC1ZMkZr9jbSQGTHnVkb5TDN67qWCV7AP8TAHdGkvDlu0puT5NzemESNn9+HkYIDpWpocP68/i+/ame2/2w=="
+      },
+      "WebPush": {
+        "type": "CentralTransitive",
+        "requested": "[1.0.13, )",
+        "resolved": "1.0.13",
+        "contentHash": "Qyypsk6j+GqncCa/IgbmZLnL7DxqKFGz3jIdquGSLeiD3NtN+HPnIFBMwIJHffDU9ZEztTkaMMYxvW3PJxJL7Q==",
+        "dependencies": {
+          "Portable.BouncyCastle": "1.9.0"
+        }
       }
     },
     "net10.0/linux-x64": {

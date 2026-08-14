@@ -11,12 +11,6 @@
           "Konscious.Security.Cryptography.Blake2": "1.1.1"
         }
       },
-      "Microsoft.Extensions.Caching.Memory": {
-        "type": "Direct",
-        "requested": "[10.0.8, )",
-        "resolved": "10.0.8",
-        "contentHash": "sYMYQjNprfqPTryuLNnr0/AOtnhlfuZ0ZxyOV0d3AXOEL8j9KV0EbelpZYyIatT2hJiaSGO9XGr5YDRsh22OfQ=="
-      },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
         "requested": "[10.0.1, )",

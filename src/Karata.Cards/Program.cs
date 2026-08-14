@@ -12,7 +12,6 @@ var builder = WebApplication.CreateBuilder(args);
 var db = builder.Configuration["DATABASE_URL"] ?? throw new Exception("DATABASE_URL is not set.");
 var platform = builder.Configuration["PLATFORM_URL"] ?? throw new Exception("PLATFORM_URL is not set.");
 
-builder.Services.AddMemoryCache();
 builder.Services
     .AddKarataRuntime<CardsContext, User>(
         configuration: builder.Configuration,

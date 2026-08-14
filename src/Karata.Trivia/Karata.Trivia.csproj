@@ -8,8 +8,6 @@
 
     <ItemGroup>
         <PackageReference Include="MailKit" />
-        <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
-        <PackageReference Include="WebPush" />
     </ItemGroup>
 
     <ItemGroup>
