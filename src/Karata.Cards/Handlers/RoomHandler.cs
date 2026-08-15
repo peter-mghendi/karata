@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static Karata.Kit.Cards.Models.GameStatus;
+using static Karata.Kit.Cards.Models.RoomVisibility;
 
 namespace Karata.Cards.Handlers;
 
@@ -19,6 +20,7 @@ public static class RoomHandler
         // TODO: [Legacy] Hardcoding these conditions in for now because this endpoint is only used to find joinable games.
         var rooms = await context.Rooms
             .Where(room => room.Game.Status == Lobby)
+            .Where(room => room.Visibility == Public)
             .Where(room => room.Game.Hands.Count < 4)
             .OrderByDescending(room => room.CreatedAt)
             .Take(5)
@@ -51,7 +53,7 @@ public static class RoomHandler
         {
             var user = await currentUserService.RequireAsync();
             var hand = new Hand { Player = user, Status = HandStatus.Invited };
-            var room = new Room { Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow };
+            var room = new Room { Visibility = request.Visibility, Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow };
             room.Game.Hands.Add(hand);
 
             context.Rooms.Add(room);

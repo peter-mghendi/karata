@@ -6,6 +6,7 @@ namespace Karata.Cards.Models;
 public class Room
 {
     public Guid Id { get; init; }
+    public required RoomVisibility Visibility { get; set; }
     public required User Administrator { get; set; }
     public required User Creator { get; set; }
     public Game Game { get; init; } = new();
@@ -23,10 +24,11 @@ public class Room
     public RoomData ToData() => new()
     {
         Id = Id,
+        Visibility = Visibility,
         CreatedAt = CreatedAt,
         Administrator = Administrator,
         Creator = Creator,
         Game = Game,
-        Chats = Chats.Select(c => c.ToData()).ToList()
+        Chats = [..Chats.Select(c => c.ToData())]
     };
 }

@@ -45,7 +45,7 @@
         try
         {
             _loading = true;
-            var room = await Cards.Rooms.CreateAsync(new RoomRequest());
+            var room = await Cards.Rooms.CreateAsync(new RoomRequest(RoomVisibility.Public));
             Navigator.NavigateTo($"/cards/game/{room.Id.ToString()}/play");
         }
         finally
