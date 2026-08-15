@@ -242,23 +242,6 @@
         };
 
         var parameters = new PlayerConnection.SessionParameters(
-            OnRequestPassword: async () =>
-            {
-                bool repeat;
-                do
-                {
-                    var dialog = await DialogService.ShowAsync<PasswordRequestModal>("Enter password");
-                    var result = await dialog.Result;
-
-                    if (result?.Data is string passcode) return passcode;
-
-                    var back = DialogService.ShowMessageBoxAsync("Go back?", "Exit to 'Join Game' screen?", "Exit", "Try again");
-                    repeat = await back is false;
-                } while (repeat);
-
-                Navigator.NavigateTo("/game/join");
-                return null;
-            },
             OnRequestCard: async specific =>
             {
                 var parameters = new DialogParameters { { nameof(CardRequestModal.Specific), specific } };
@@ -385,7 +368,8 @@
         await _session.JoinRoom();
     }
 
-    async Task InviteBot() => await BotInterface.InviteAsync(invitation: new BotInvitation(Room: Id, Password: null));
+    // TODO: [Bot] Create server-side invitiation before inviting bot
+    async Task InviteBot() => await BotInterface.InviteAsync(invitation: new BotInvitation(Room: Id));
     
     async Task LeaveRoom() => await _session!.LeaveRoom();
 

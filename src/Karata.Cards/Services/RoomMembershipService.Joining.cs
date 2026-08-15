@@ -11,11 +11,8 @@ public partial class RoomMembershipService
     {
         var player = (await context.Users.FindAsync(CallerPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
-
-        bool authorized;
-        do authorized = await VerifyPassword(room, player, connection);
-        while (!authorized);
-
+        
+        // TODO: [Auth] Validate membership
         ValidateJoiningGameState(room, player);
         presence.AddPresence(player.Id, room.Id.ToString());
         
@@ -52,27 +49,6 @@ public partial class RoomMembershipService
         }
 
         await context.SaveChangesAsync();
-    }
-
-    private async Task<bool> VerifyPassword(Room room, User player, string connection)
-    {
-        try
-        {
-            if (room.Hash is null) return true;
-            if (room.Game.Hands.Any(h => h.Player.Id == player.Id)) return true;
-
-            if (await PlayerConnection(connection).PromptPasscode(RoomId) is not [_, ..] password)
-                throw new PasswordRequiredException();
-            if (!passwords.VerifyPassword(Encoding.UTF8.GetBytes(password), room.Salt!, room.Hash))
-                throw new IncorrectPasswordException();
-
-            return true;
-        }
-        catch (PasswordException exception)
-        {
-            await Caller.SystemMessage(RoomId, exception.SystemMessage);
-            return false;
-        }
     }
 
     private static void ValidateJoiningGameState(Room room, User player)

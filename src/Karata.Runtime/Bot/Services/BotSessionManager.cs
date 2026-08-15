@@ -29,19 +29,19 @@ public sealed class BotSessionManager(
     /// If the game state hasn't hydrated yet, returns a placeholder with <see cref="HandStatus.Inactive"/> and empty cards,
     /// using the session's <see cref="ClientCredentialsAccessTokenProvider.CurrentUser"/> if available.
     /// </summary>
-    public async Task StartAsync(IBotStrategy strategy, Guid room, string? password, CancellationToken ct = default)
+    public async Task StartAsync(IBotStrategy strategy, Guid room, CancellationToken ct = default)
     {
         if (_sessions.TryGetValue(room, out _)) return;
 
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var session = bots.Create((await tokens.CurrentUser())!, strategy); // TODO: [Legacy] Inject CurrentUser
-        var runner = Run(() => StartBotSession(room, password, session, cancellation.Token), cancellation.Token);
+        var runner = Run(() => StartBotSession(room, session, cancellation.Token), cancellation.Token);
 
         var entry = new Entry(room, DateTimeOffset.UtcNow, cancellation, runner, session);
         _ = _sessions.TryAdd(room, entry);
     }
 
-    private async Task StartBotSession(Guid roomId, string? password, BotSession session, CancellationToken cancellation)
+    private async Task StartBotSession(Guid roomId, BotSession session, CancellationToken cancellation)
     {
         try
         {
@@ -49,7 +49,7 @@ public sealed class BotSessionManager(
             
             // Keep the session alive; it reacts to SignalR events internally.
             // We don't spin a busy loop; this awaits cancellation cooperatively.
-            await session.StartAsync(roomId, password, cancellation).ConfigureAwait(false);
+            await session.StartAsync(roomId, cancellation).ConfigureAwait(false);
             await Delay(Timeout.InfiniteTimeSpan, cancellation).ConfigureAwait(false);
         }
         catch (OperationCanceledException ex)

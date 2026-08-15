@@ -44,7 +44,6 @@ public static class RoomHandler
         [FromServices] Client platform,
         [FromServices] CardsContext context,
         [FromServices] CurrentUserService<CardsContext, User> currentUserService,
-        [FromServices] IPasswordService passwordService,
         [FromBody] RoomRequest request
     )
     {
@@ -54,12 +53,6 @@ public static class RoomHandler
             var hand = new Hand { Player = user, Status = HandStatus.Invited };
             var room = new Room { Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow };
             room.Game.Hands.Add(hand);
-
-            if (!string.IsNullOrWhiteSpace(request.Password))
-            {
-                room.Salt = IPasswordService.GenerateSalt();
-                room.Hash = passwordService.HashPassword(Encoding.UTF8.GetBytes(request.Password), room.Salt!);
-            }
 
             context.Rooms.Add(room);
             await context.SaveChangesAsync();

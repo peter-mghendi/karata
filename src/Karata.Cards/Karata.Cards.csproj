@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Konscious.Security.Cryptography.Argon2" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Karata.Runtime\Karata.Runtime.csproj" />
     <ProjectReference Include="..\Karata.ServiceDefaults\Karata.ServiceDefaults.csproj" />
   </ItemGroup>

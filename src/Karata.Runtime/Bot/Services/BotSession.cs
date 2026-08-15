@@ -26,10 +26,9 @@ public sealed class BotSession(
     private RoomStore? _room;
     private TurnPlan? _plan;
 
-    public async Task StartAsync(Guid roomId, string? password, CancellationToken ct)
+    public async Task StartAsync(Guid roomId, CancellationToken ct)
     {
         var parameters = new PlayerConnection.SessionParameters(
-            OnRequestPassword: () => Task.FromResult(password),
             OnRequestCard: specific => Task.FromResult(_plan!.RequestFactory(specific)),
             OnRequestLastCard: () => Task.FromResult(_plan!.LastCardStatusFactory(_room!.State))
         );

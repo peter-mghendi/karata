@@ -23,8 +23,7 @@
     </MudPaper>
 
     <MudPaper Class="pa-4 mb-4" Elevation="0">
-        <MudTextField @bind-Value="_password" Label="Password (Optional)" Variant="Variant.Filled" Class="mb-4"></MudTextField>
-        <MudButton Disabled="@_loading" OnClick="CreateRoom" Variant="Variant.Filled">
+        <MudButton Disabled="@_loading" OnClick="@CreateRoom" Variant="Variant.Filled">
             @if (_loading)
             {
                 <MudProgressCircular Indeterminate Class="ms-n1" Size="Size.Small" />
@@ -66,8 +65,6 @@
     private bool _loading;
     private List<RoomData>? _rooms;
     private string _link = string.Empty;
-    private string _password = string.Empty;
-
 
     private string JoinLink => $"/cards/game/{_link}/play";
     private string SpectateLink => $"/cards/game/{_link}/spectate";
@@ -89,7 +86,7 @@
         try
         {
             _loading = true;
-            var room = await Cards.Rooms.CreateAsync(new RoomRequest { Password = _password });
+            var room = await Cards.Rooms.CreateAsync(new RoomRequest());
             Navigator.NavigateTo($"/cards/game/{room.Id.ToString()}/play");
         }
         finally

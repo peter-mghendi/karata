@@ -44,7 +44,6 @@ builder.Services
         };
     });
 
-builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
 builder.Services.AddSingleton<IKarataEngine, TwoPassKarataEngine>();
 builder.Services.AddSingleton<PresenceService>();
 builder.Services.AddSingleton<ReplayProcessor>();

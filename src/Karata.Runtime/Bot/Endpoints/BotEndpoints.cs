@@ -41,7 +41,7 @@ public static class BotEndpoints
     {
         if (await cards.Rooms.GetAsync(invitation.Room) is not { } room) return TypedResults.NotFound();
 
-        await bots.StartAsync(strategy, room.Id, invitation.Password);
+        await bots.StartAsync(strategy, room.Id);
         return TypedResults.Accepted($"/api/rooms/{room.Id}");
     }
 }

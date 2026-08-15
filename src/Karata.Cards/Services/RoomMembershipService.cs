@@ -8,7 +8,6 @@ namespace Karata.Cards.Services;
 public partial class RoomMembershipService(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
-    IPasswordService passwords,
     CardsContext context,
     PresenceService presence,
     Guid roomId,
