@@ -51,7 +51,7 @@ public static class RoomHandler
         try
         {
             var user = await currentUserService.RequireAsync();
-            var hand = new Hand { Player = user, Status = HandStatus.Active };
+            var hand = new Hand { Player = user, Status = HandStatus.Invited };
             var room = new Room { Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow };
             room.Game.Hands.Add(hand);
 
@@ -64,6 +64,7 @@ public static class RoomHandler
             context.Rooms.Add(room);
             await context.SaveChangesAsync();
             
+            // TODO: [Legacy] Fix this hardcoded URL. 
             var activity = new ActivityRequest
             {
                 Text = $"{room.Creator.Username} has started a game.",
