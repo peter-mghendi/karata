@@ -1,7 +1,7 @@
 using Karata.Cards.Hubs;
-using Karata.Cards.Routing.Handlers;
+using Karata.Cards.Handlers;
 
-namespace Karata.Cards.Routing;
+namespace Karata.Cards;
 
 public static class Endpoints
 {

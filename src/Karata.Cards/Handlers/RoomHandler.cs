@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static Karata.Kit.Cards.Models.GameStatus;
 
-namespace Karata.Cards.Routing.Handlers;
+namespace Karata.Cards.Handlers;
 
 public static class RoomHandler
 {
@@ -30,7 +30,7 @@ public static class RoomHandler
 
     public static async Task<Results<Ok<RoomData>, BadRequest, NotFound>> GetRoom(
         [FromServices] CardsContext context,
-        string id
+        [FromRoute] string id
     )
     {
         if (!Guid.TryParse(id, out var guid)) return TypedResults.BadRequest();

@@ -66,8 +66,10 @@ public static class DependencyInjection
             });
 
             services.AddCors(cors => cors.AddPolicy(nameof(CrossOrigin.AllowAll), CrossOrigin.AllowAll));
-            services.AddHttpContextAccessor();
+
             services.AddHealthChecks();
+            services.AddHttpClient();
+            services.AddHttpContextAccessor();
 
             if (runtime.IsSignalREnabled)
             {
@@ -82,7 +84,6 @@ public static class DependencyInjection
 
             if (runtime.IsTokenExchangeEnabled)
             {
-                services.AddHttpClient(); // Idempotent, required by TokenExchangeAccessTokenProvider
                 services.AddTransient<TokenExchangeAccessTokenProvider>();
             }
 
