@@ -1,17 +1,17 @@
 using System.Collections.Concurrent;
 using Karata.Kit.Bot.Strategy;
 using Karata.Kit.Cards.Models;
-using Karata.Kit.Security;
+using Karata.Runtime.Security;
 using Microsoft.Extensions.Logging;
 using static System.Threading.CancellationToken;
 using static System.Threading.Tasks.Task;
 
-namespace Karata.Kit.Bot.Services;
+namespace Karata.Runtime.Bot.Services;
 
 public sealed class BotSessionManager(
     BotSessionFactory bots,
     ILogger<BotSessionManager> log,
-    ClientCredentialsAccessTokenProvider tokens
+    IAccessTokenProvider tokens
 ) : IAsyncDisposable
 {
     private sealed record Entry(
@@ -26,7 +26,7 @@ public sealed class BotSessionManager(
 
     /// <summary>
     /// Starts (or no-ops) a bot session for a room and returns the best-known <see cref="HandData"/> snapshot for the bot.
-    /// If the game state hasn't hydrated yet, returns a placeholder with <see cref="HandStatus.Away"/> and empty cards,
+    /// If the game state hasn't hydrated yet, returns a placeholder with <see cref="HandStatus.Inactive"/> and empty cards,
     /// using the session's <see cref="ClientCredentialsAccessTokenProvider.CurrentUser"/> if available.
     /// </summary>
     public async Task StartAsync(IBotStrategy strategy, Guid room, string? password, CancellationToken ct = default)

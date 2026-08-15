@@ -130,7 +130,7 @@ public sealed class LiveTurnProcessingService(
     {
         { Status: Lobby } => throw new GameNotStartedException(),
         { Status: Over } => throw new GameOverException(),
-        { Hands: var hands } when hands.Count(hand => hand.Status is Online or Offline) < 2 =>
+        { Hands: var hands } when hands.Count(hand => hand.Status is Active) < 2 =>
             throw new NotEnoughPlayersException(),
         { CurrentHand.Player: var currentPlayer } when currentPlayer.Id != CallerPlayerId =>
             throw new InvalidTurnException(),
@@ -256,7 +256,7 @@ public sealed class LiveTurnProcessingService(
 
     private async Task BroadcastTurnCommitted(Game game)
     {
-        foreach (var data in from hand in game.Hands select (Hand: hand, Game: Enrich.ForUser(game, hand)))
+        foreach (var data in from hand in game.Hands select (Hand: hand, Game: Enrich.ForHand(game, hand)))
             await Hand(data.Hand).TurnCommitted(RoomId, data.Game);
         await RoomSpectators.TurnCommitted(RoomId, game);
     }

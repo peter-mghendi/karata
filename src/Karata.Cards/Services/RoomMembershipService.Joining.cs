@@ -2,7 +2,6 @@ using System.Text;
 using Karata.Cards.Support.Exceptions;
 using Karata.Kit.Cards.Models;
 using Karata.Kit.Support.Exceptions;
-using static Karata.Kit.Cards.Models.HandStatus;
 
 namespace Karata.Cards.Services;
 
@@ -23,28 +22,28 @@ public partial class RoomMembershipService
         switch (room.Game.Status)
         {
             case GameStatus.Lobby when room.Game.Hands.SingleOrDefault(h => h.Player.Id == player.Id) is { } joined:
-                joined.Status = Online;
+                joined.Status = HandStatus.Active;
 
                 await AddToRoom(connection);
-                await Caller.AddToRoom(RoomId, Enrich.ForUser(room, joined));
+                await Caller.AddToRoom(RoomId, Enrich.ForHand(room, joined));
                 await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, joined.Id, joined.Status);
                 await RoomSpectators.UpdateHandStatus(RoomId, joined.Id, joined.Status);
                 break;
             case GameStatus.Lobby:
-                var hand = new Hand { Player = player, Status = Online };
+                var hand = new Hand { Player = player, Status = HandStatus.Active };
                 room.Game.Hands.Add(hand);
 
                 await AddToRoom(connection);
-                await Caller.AddToRoom(RoomId, Enrich.ForUser(room, hand));
+                await Caller.AddToRoom(RoomId, Enrich.ForHand(room, hand));
                 await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
                 await RoomSpectators.AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
                 break;
             case GameStatus.Ongoing:
                 var rejoined = room.Game.Hands.Single(h => h.Player.Id == player.Id);
-                rejoined.Status = Online;
+                rejoined.Status = HandStatus.Active;
 
                 await AddToRoom(connection);
-                await Caller.AddToRoom(RoomId, Enrich.ForUser(room, rejoined));
+                await Caller.AddToRoom(RoomId, Enrich.ForHand(room, rejoined));
                 await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, rejoined.Id, rejoined.Status);
                 await RoomSpectators.UpdateHandStatus(RoomId, rejoined.Id, rejoined.Status);
                 break;

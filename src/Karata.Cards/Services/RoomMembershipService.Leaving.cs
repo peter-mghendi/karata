@@ -1,11 +1,10 @@
 using Karata.Kit.Cards.Models;
-using static Karata.Kit.Cards.Models.HandStatus;
 
 namespace Karata.Cards.Services;
 
 public partial class RoomMembershipService
 {
-    public async Task LeaveAsync(string connection, HandStatus intent)
+    public async Task LeaveAsync(string connection)
     {
         var room = (await context.Rooms.FindAsync(RoomId))!;
         var player = (await context.Users.FindAsync(CallerPlayerId))!;
@@ -14,14 +13,13 @@ public partial class RoomMembershipService
         switch (room.Game.Status)
         {
             case GameStatus.Lobby:
-
                 if (room.Game.Hands.Count > 1)
                 {
                     room.Game.Hands.Remove(hand);
                 }
                 else
                 {
-                    room.Game.Hands.Single(h => h.Player.Id == player.Id).Status = Away;
+                    room.Game.Hands.Single(h => h.Player.Id == player.Id).Status = HandStatus.Inactive;
                 }
                 
                 presence.RemovePresence(CallerPlayerId, room.Id.ToString());
@@ -32,7 +30,8 @@ public partial class RoomMembershipService
                 await RoomSpectators.RemoveHandFromRoom(RoomId, hand.Id);
                 break;
             case GameStatus.Ongoing:
-                hand.Status = intent;
+                hand.Status = HandStatus.Inactive;
+
                 presence.RemovePresence(CallerPlayerId, room.Id.ToString());
 
                 await AddToRoom(connection);
@@ -41,7 +40,8 @@ public partial class RoomMembershipService
                 await RoomSpectators.RemoveHandFromRoom(RoomId, hand.Id);
                 break;
             case GameStatus.Over:
-                hand.Status = Away;
+                hand.Status = HandStatus.Inactive;
+                
                 presence.RemovePresence(CallerPlayerId, room.Id.ToString());
 
                 await AddToRoom(connection);

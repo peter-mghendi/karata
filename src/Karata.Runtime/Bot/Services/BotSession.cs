@@ -11,7 +11,7 @@ using Karata.Pebble.Interceptors;
 using Karata.Pips.Extensions;
 using Microsoft.Extensions.Logging;
 
-namespace Karata.Kit.Bot.Services;
+namespace Karata.Runtime.Bot.Services;
 
 public sealed class BotSession(
     UserData bot,

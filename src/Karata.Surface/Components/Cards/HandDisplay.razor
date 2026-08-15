@@ -1,5 +1,5 @@
 @using Karata.Kit.Cards.Models
-<MudListItem Value="@Hand.Id" Icon="@ConnectionIndicator(Hand).Icon" IconColor="@ConnectionIndicator(Hand).Color">
+<MudListItem Value="@Hand.Id">
     <ChildContent>
         @Hand.Username
         @if (IsAdministrator)
@@ -49,14 +49,6 @@
     [Parameter] public EventCallback<long> OnSetAway { get; set; }
 
     [Parameter] public EventCallback<long> OnVoidTurn { get; set; }
-
-    private static (string Icon, Color Color) ConnectionIndicator(HandData hand) => hand.Status switch
-    {
-        HandStatus.Online => (Icon: Icons.Material.Rounded.Link, Color: Color.Success),
-        HandStatus.Offline => (Icon: Icons.Material.Rounded.LinkOff, Color: Color.Error),
-        HandStatus.Away => (Icon: Icons.Material.Rounded.LinkOff, Color: Color.Default),
-        _ => (Icon: Icons.Material.Rounded.Circle, Color: Color.Default)
-    };
 
     private async Task SetAway(MouseEventArgs _) => await OnSetAway.InvokeAsync(Hand.Id);
 

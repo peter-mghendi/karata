@@ -88,7 +88,7 @@ public class GameStartService(
     private async Task UpdateGameState(Room room)
     {
         room.Game.Status = GameStatus.Ongoing;
-        foreach (var data in from hand in room.Game.Hands select (Hand: hand, Game: Enrich.ForUser(room.Game, hand)))
+        foreach (var data in from hand in room.Game.Hands select (Hand: hand, Game: Enrich.ForHand(room.Game, hand)))
             await Hand(data.Hand).UpdateGameStatus(RoomId, data.Game);
         await RoomSpectators.UpdateGameStatus(RoomId, room.Game);
     }

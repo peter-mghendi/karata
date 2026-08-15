@@ -35,7 +35,7 @@ public class VoidTurnService(
         room.Game.AdvanceTurn();
         await context.SaveChangesAsync();
 
-        foreach (var data in from hand in room.Game.Hands select (Hand: hand, Game: Enrich.ForUser(room.Game, hand)))
+        foreach (var data in from hand in room.Game.Hands select (Hand: hand, Game: Enrich.ForHand(room.Game, hand)))
             await Hand(data.Hand).TurnCommitted(RoomId, data.Game);
         await RoomSpectators.TurnCommitted(RoomId, room.Game);
     }

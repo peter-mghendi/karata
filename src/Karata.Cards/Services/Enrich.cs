@@ -5,9 +5,9 @@ namespace Karata.Cards.Services;
 
 public static class Enrich
 {
-    public static RoomData ForUser(Room room, Hand me) => room.ToData() with { Game = ForUser(room.Game, me) };
+    public static RoomData ForHand(Room room, Hand me) => room.ToData() with { Game = ForHand(room.Game, me) };
 
-    public static GameData ForUser(Game game, Hand me) => (GameData)game with
+    public static GameData ForHand(Game game, Hand me) => (GameData)game with
     {
         Hands =
         [

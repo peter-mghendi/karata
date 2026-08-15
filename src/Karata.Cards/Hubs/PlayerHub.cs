@@ -1,7 +1,6 @@
 using Karata.Cards.Data;
 using Karata.Cards.Hubs.Clients;
 using Karata.Cards.Services;
-using Karata.Kit.Cards.Models;
 using Karata.Kit.Support.Exceptions;
 using Karata.Runtime.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
@@ -9,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using static System.Guid;
+using static Karata.Kit.Cards.Models.GameStatus;
 
 namespace Karata.Cards.Hubs;
 
@@ -31,7 +31,10 @@ public class PlayerHub(
         if (!presence.TryGetPresence(user.Id, out var rooms) || rooms is null) return;
 
         var ids = rooms.Select(Parse);
-        foreach (var room in await context.Rooms.Where(r => ids.Contains(r.Id)).ToListAsync()) await Disconnect(membership, room.Id, HandStatus.Offline);
+        var disconnects = await context.Rooms.Where(r => ids.Contains(r.Id) && r.Game.Status != Ongoing)
+            .ToListAsync();
+
+        await Task.WhenAll(tasks: from room in disconnects select Disconnect(room.Id)); 
     }
     
     public async Task SendChat(Guid roomId, string text)
@@ -47,13 +50,13 @@ public class PlayerHub(
         await context.SaveChangesAsync();
     }
 
-    public async Task JoinRoom([FromServices] RoomMembershipServiceFactory factory, Guid roomId)
+    public async Task JoinRoom(Guid roomId)
     {
         try
         {
             var user = await currentUser.RequireAsync();
             logger.LogDebug("User {User} is joining room {Room}.", user.Id, roomId);
-            await factory.Create(roomId, user.Id).JoinAsync(Context.ConnectionId);
+            await membership.Create(roomId, user.Id).JoinAsync(Context.ConnectionId);
         }
         catch (KarataException exception)
         {
@@ -61,8 +64,7 @@ public class PlayerHub(
         }
     }
 
-    public async Task LeaveRoom([FromServices] RoomMembershipServiceFactory factory, Guid roomId) =>
-        await Disconnect(factory, roomId, HandStatus.Away);
+    public async Task LeaveRoom(Guid roomId) => await Disconnect(roomId);
 
     public async Task StartGame([FromServices] GameStartServiceFactory factory, Guid roomId)
     {
@@ -121,13 +123,13 @@ public class PlayerHub(
         }
     }
 
-    private async Task Disconnect(RoomMembershipServiceFactory factory, Guid roomId, HandStatus intent)
+    private async Task Disconnect(Guid roomId)
     {
         try
         {
             var user = await currentUser.RequireAsync();
             logger.LogDebug("User {User} is leaving room {Room}.", user.Id, roomId);
-            await factory.Create(roomId, Context.UserIdentifier!).LeaveAsync(user.Id, intent);
+            await membership.Create(roomId, Context.UserIdentifier!).LeaveAsync(user.Id);
         }
         catch (KarataException exception)
         {
