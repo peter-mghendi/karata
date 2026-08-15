@@ -16,6 +16,9 @@ public static class Endpoints
             rooms.MapPost("", RoomHandler.CreateRoom).WithName(nameof(RoomHandler.CreateRoom)).RequireAuthorization();
             rooms.MapGet("{id}", RoomHandler.GetRoom).WithName(nameof(RoomHandler.GetRoom));
 
+            var hands = api.MapGroup("/rooms/{id}/hands");
+            hands.MapPost("", RoomHandHandler.CreateHand).WithName(nameof(RoomHandHandler.CreateHand)).RequireAuthorization();
+
             var turns = api.MapGroup("/rooms/{id}/turns");
             turns.MapGet("", TurnHandler.ListTurns).WithName(nameof(TurnHandler.ListTurns)).RequireAuthorization();
         }
