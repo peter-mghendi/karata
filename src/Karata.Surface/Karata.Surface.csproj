@@ -8,6 +8,7 @@
         <PackageReference Include="Blazored.LocalStorage"/>
         <PackageReference Include="CodeBeam.MudBlazor.Extensions" />
         <PackageReference Include="Howler.Blazor" />
+        <PackageReference Include="Humanizer" />
         <PackageReference Include="Microsoft.AspNetCore.Components.Web"/>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" />
         <PackageReference Include="MudBlazor" />

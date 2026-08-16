@@ -1,9 +1,7 @@
-using System.Text;
 using Karata.Cards.Data;
-using Karata.Cards.Services;
 using Karata.Kit.Cards.Models;
+using Karata.Kit.Configuration;
 using Karata.Kit.Platform;
-using Karata.Kit.Platform.Models;
 using Karata.Runtime.Infrastructure;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -45,29 +43,30 @@ public static class RoomHandler
     public static async Task<Results<CreatedAtRoute<RoomData>, UnauthorizedHttpResult>> CreateRoom(
         [FromServices] Client platform,
         [FromServices] CardsContext context,
-        [FromServices] CurrentUserService<CardsContext, User> currentUserService,
+        [FromServices] CurrentUserService<CardsContext, User> current,
+        [FromKeyedServices(nameof(Configuration.Web))] HostConfiguration web,
         [FromBody] RoomRequest request
     )
     {
         try
         {
-            var user = await currentUserService.RequireAsync();
-            var hand = new Hand { Player = user, Status = HandStatus.Invited };
+            var user = await current.RequireAsync();
             var room = new Room { Visibility = request.Visibility, Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow };
-            room.Game.Hands.Add(hand);
+
+            room.Game.Hands.Add(new Hand { Player = user, Status = HandStatus.Invited });
 
             context.Rooms.Add(room);
             await context.SaveChangesAsync();
-            
-            // TODO: [Legacy] Fix this hardcoded URL. 
-            var activity = new ActivityRequest
-            {
-                Text = $"{room.Creator.Username} has started a game.",
-                Actions = [new("Check it out!", new Uri($"https://localhost:7240/game/{room.Id}"), "primary")],
-                Metadata = new() { ["room"] = room.Id.ToString() },
-                OccurredAt = room.CreatedAt
-            };
-            await platform.Activity.CreateAsync(activity);
+
+            if (room.Visibility is Public) await platform.Activity.CreateAsync(
+                new()
+                {
+                    Text = $"{room.Creator.Username} has started a game.",
+                    Actions = [new("Check it out!", new Uri($"{web.Host}/game/{room.Id}"), "primary")],
+                    Metadata = new() { ["room"] = room.Id.ToString() },
+                    OccurredAt = room.CreatedAt
+                }
+            );
 
             return TypedResults.CreatedAtRoute(room.ToData(), nameof(GetRoom), new { id = room.Id });
         }

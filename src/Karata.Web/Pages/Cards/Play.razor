@@ -6,7 +6,7 @@
 @using System.Reactive.Linq
 @using Karata.Kit.Bot.Interface
 @using Karata.Kit.Bot.Models
-@using Karata.Kit.Cards
+@using Karata.Kit
 @using Karata.Kit.Cards.Connection
 @using Karata.Kit.Cards.Models
 @using Karata.Kit.Cards.State
@@ -14,15 +14,19 @@
 @using Microsoft.Extensions.Options
 @using TextCopy
 
+@using static Karata.Kit.Cards.Models.HandStatus;
+
 @attribute [Authorize]
 
 @implements IDisposable
 
 @inject AuthenticationStateProvider Authenticator
 @inject BotInterface BotInterface
+@inject Karata.Kit.Cards.Client Cards
+@inject Karata.Kit.Platform.Client Platform
 @inject IDialogService DialogService
 @inject ILoggerFactory LoggerFactory
-@inject IOptions<Client.Options> ClientOptions
+@inject IOptions<Karata.Kit.Cards.Client.Options> ClientOptions
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigator
 
@@ -63,9 +67,8 @@
                                         Waiting for players...
                                     </MudText>
                                     <MudText Align="Align.Center" Typo="Typo.h3" Class="mb-4">
-                                    <span
-                                        style="@(_room.State.Game.Hands.Count is < 2 or > 4 ? "color: var(--mud-palette-error)" : "color: var(--mud-palette-success)")">
-                                        @_room.State.Game.Hands.Count    
+                                    <span style="@PlayerCountColor(_room)">
+                                        @_room.State.Game.Hands.Count(h => h.Status is Active)
                                     </span>
                                         of 4
                                     </MudText>
@@ -167,7 +170,7 @@
                                                         {
                                                             <span>Invite</span>    
                                                         }
-                                                        else if (_room.State.Game.Hands.Any(hand => hand is { Player.Username: "service-account-karata-bot" }))
+                                                        else if (BotPresent)
                                                         {
                                                             <span>Invited</span>
                                                         }
@@ -225,7 +228,10 @@
     private string? _username;
     private readonly CompositeDisposable _subscriptions = new();
 
-    private bool CanInviteBot => _room!.State.Game.Hands.Count < 4 && _room.State.Game.Hands.All(h => h.Username != "service-account-karata-bot");
+    private bool BotPresent => _room!.State.Game.Hands.Any(hand => hand is { Player.Username: "service-account-karata-bot", Status: Active });
+    
+    private bool CanInviteBot => _room!.State.Game.Hands.Count(h => h.Status is Active) < 4 && !BotPresent;
+
     private HandData CurrentHand => _room!.State.Game.Hands.Single(h => h.Username == _username);
     private bool IsAdministrator => CurrentHand.Player.Id == _room?.State.Administrator.Id;
 
@@ -368,8 +374,12 @@
         await _session.JoinRoom();
     }
 
-    // TODO: [Bot] Create server-side invitiation before inviting bot
-    async Task InviteBot() => await BotInterface.InviteAsync(invitation: new BotInvitation(Room: Id));
+    async Task InviteBot()
+    {
+        var bot = await Platform.Profiles.GetAsync("service-account-karata-bot");
+        await Cards.RoomHands.CreateAsync(Id, new HandRequest(bot!.Id));
+        await BotInterface.InviteAsync(invitation: new BotInvitation(Room: Id));
+    }
     
     async Task LeaveRoom() => await _session!.LeaveRoom();
 
@@ -410,6 +420,17 @@
             _ => throw new ArgumentException("Invalid message type.", nameof(MessageType))
         };
         Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
+    }
+    
+    private static string PlayerCountColor(RoomStore room)
+    {
+        switch (room.State.Game.Hands.Count(h => h.Status is Active))
+        {
+            case < 2 or > 4:
+                return "color: var(--mud-palette-error)";
+            default:
+                return "color: var(--mud-palette-success)";
+        }
     }
 
     public void Dispose()

@@ -1,9 +1,12 @@
 using Karata.Cards.Data;
+using Karata.Cards.Hubs;
+using Karata.Cards.Hubs.Clients;
 using Karata.Kit.Cards.Models;
 using Karata.Kit.Platform;
 using Karata.Runtime.Infrastructure;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Cards.Handlers;
 
@@ -13,6 +16,8 @@ public static class RoomHandHandler
         [FromServices] Client platform,
         [FromServices] CardsContext context,
         [FromServices] CurrentUserService<CardsContext, User> currentUserService,
+        [FromServices] IHubContext<PlayerHub, IPlayerClient> players,
+        [FromServices] IHubContext<SpectatorHub, ISpectatorClient> spectators,
         [FromRoute] string id,
         [FromBody] HandRequest request
     )
@@ -30,9 +35,13 @@ public static class RoomHandHandler
             if (room.Game.Hands.Count(h => h.Status is HandStatus.Active) >= 4) return TypedResults.BadRequest();
             if (await ResolveUser(platform, context, request.UserId) is not {} invitee) return TypedResults.BadRequest();
 
-            room.Game.Hands.Add(new Hand { Player = invitee, Status = HandStatus.Invited });
-
+            var hand = new Hand { Player = invitee, Status = HandStatus.Invited };
+            room.Game.Hands.Add(hand);
             await context.SaveChangesAsync();
+            
+            await players.Clients.Group(room.Id.ToString()).AddHandToRoom(room.Id, hand.Id, hand.Player.ToData(), hand.Status);
+            await spectators.Clients.Group(room.Id.ToString()).AddHandToRoom(room.Id, hand.Id, hand.Player.ToData(), hand.Status);
+
             return TypedResults.NoContent();
         }
         catch (UnauthorizedAccessException)

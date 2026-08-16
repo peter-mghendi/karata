@@ -12,9 +12,5 @@ public class ProfileService(RestClient client)
         return response ?? throw new Exception();
     }
 
-    public async Task<ProfileData?> GetAsync(string identifier)
-    {
-        var response = await client.GetAsync<ProfileData>($"profiles/{identifier}");
-        return response ?? throw new Exception();
-    }
+    public async Task<ProfileData?> GetAsync(string identifier) => await client.GetAsync<ProfileData>($"profiles/{identifier}");
 }

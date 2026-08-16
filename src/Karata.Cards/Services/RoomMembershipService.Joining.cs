@@ -1,7 +1,5 @@
-using System.Text;
 using Karata.Cards.Support.Exceptions;
 using Karata.Kit.Cards.Models;
-using Karata.Kit.Support.Exceptions;
 
 namespace Karata.Cards.Services;
 
@@ -11,8 +9,8 @@ public partial class RoomMembershipService
     {
         var player = (await context.Users.FindAsync(CallerPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
-        
-        // TODO: [Auth] Validate membership
+
+        ValidateMembership(room, player);
         ValidateJoiningGameState(room, player);
         presence.AddPresence(player.Id, room.Id.ToString());
         
@@ -49,6 +47,17 @@ public partial class RoomMembershipService
         }
 
         await context.SaveChangesAsync();
+    }
+
+    private static void ValidateMembership(Room room, User player)
+    {
+        if (room.Game.Hands.Any(h => h.Player.Id == player.Id))
+            return;
+
+        if (room.Visibility is RoomVisibility.Public or RoomVisibility.Unlisted)
+            return;
+
+        throw new UnauthorizedActionException();
     }
 
     private static void ValidateJoiningGameState(Room room, User player)

@@ -1,5 +1,6 @@
 @page "/cards/game/join"
 
+@using Humanizer
 @using Karata.Kit.Cards
 @using Karata.Kit.Cards.Models
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
@@ -13,17 +14,23 @@
     <MudText Typo="Typo.h5" Class="pa-4 my-4">Join or create a game room to play.</MudText>
 
     <MudPaper Class="pa-4 mb-4" Elevation="0">
-        <MudTextField @bind-Value="_link" Label="Invite Link" Variant="Variant.Filled" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.QrCodeScanner" Class="mb-4"></MudTextField>
-        <MudButton Disabled="@_loading" Href="@JoinLink" Variant="Variant.Filled" Color="Color.Primary">
+        <MudTextField @bind-Value="_link" Label="Room code" Variant="Variant.Filled" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Rounded.Abc" Class="mb-4" />
+        <MudButton Disabled="@_loading" Href="@JoinLink" Variant="Variant.Outlined" Color="Color.Primary">
             <MudText>Join game</MudText>
         </MudButton>
-        <MudButton Disabled="@_loading" Href="@SpectateLink" Variant="Variant.Outlined" Class="ml-2">
+        <MudButton Disabled="@_loading" Href="@SpectateLink" Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2">
             <MudText>Spectate</MudText>
         </MudButton>
     </MudPaper>
 
     <MudPaper Class="pa-4 mb-4" Elevation="0">
-        <MudButton Disabled="@_loading" OnClick="@CreateRoom" Variant="Variant.Filled">
+        <MudToggleGroup CheckMark Outlined T="RoomVisibility" Delimiters="false" @bind-Value="_visibility" Class="mb-4" SelectedClass="toggle-group-selected-text-primary">
+            @foreach (var visibility in Enum.GetValues<RoomVisibility>())
+            {
+                <MudToggleItem Value="@visibility" Text="@visibility.Humanize()" SelectedIcon="@Icons.Material.Rounded.Check" UnselectedIcon="@visibility.Icon" />
+            }
+        </MudToggleGroup>
+        <MudButton Disabled="@_loading" OnClick="@CreateRoom" Variant="Variant.Outlined" Color="Color.Secondary">
             @if (_loading)
             {
                 <MudProgressCircular Indeterminate Class="ms-n1" Size="Size.Small" />
@@ -65,6 +72,7 @@
     private bool _loading;
     private List<RoomData>? _rooms;
     private string _link = string.Empty;
+    private RoomVisibility _visibility;
 
     private string JoinLink => $"/cards/game/{_link}/play";
     private string SpectateLink => $"/cards/game/{_link}/spectate";
@@ -86,7 +94,7 @@
         try
         {
             _loading = true;
-            var room = await Cards.Rooms.CreateAsync(new RoomRequest(RoomVisibility.Public));
+            var room = await Cards.Rooms.CreateAsync(new RoomRequest(_visibility));
             Navigator.NavigateTo($"/cards/game/{room.Id.ToString()}/play");
         }
         finally

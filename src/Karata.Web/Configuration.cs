@@ -1,5 +1,5 @@
+using Karata.Kit.Configuration;
 using Karata.Kit.Security;
-using Karata.Surface.Models;
 
 namespace Karata.Web;
 

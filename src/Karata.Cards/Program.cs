@@ -4,6 +4,7 @@ using Karata.Cards.Data;
 using Karata.Cards.Services;
 using Karata.Kit;
 using Karata.Kit.Cards.Engine;
+using Karata.Kit.Configuration;
 using Karata.Runtime;
 using Karata.Runtime.Security;
 
@@ -52,6 +53,9 @@ builder.Services.AddTransient<RoomMembershipServiceFactory>();
 builder.Services.AddTransient<TurnProcessingServiceFactory>();
 builder.Services.AddTransient<VoidTurnServiceFactory>();
 builder.Services.AddTransient<SetAwayServiceFactory>();
+
+Console.WriteLine($"Karata.Cards is running in {builder.Environment.EnvironmentName} mode.");
+builder.Services.AddKeyedSingleton(nameof(Configuration.Web), Configuration.Web[builder.Environment.EnvironmentName]);
 
 var app = builder.ConfigureRuntimeHost().Build();
 await app.InitializeKarataRuntimeAsync<CardsContext, User>();
