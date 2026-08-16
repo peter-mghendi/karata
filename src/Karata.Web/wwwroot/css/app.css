@@ -80,3 +80,9 @@
     0% {transform: translateX(15px)}
     100% {transform: translateX(-15px)}
 }
+
+/* primary text variant for MudBlazor MudToggleGroup */
+.toggle-group-selected-text-primary {
+    color: var(--mud-palette-primary) !important;
+    background-color: var(--mud-palette-primary-hover) !important;
+}

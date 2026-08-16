@@ -21,8 +21,8 @@ public record NotificationResponse(
 
     public string Url => Action switch
     {
-        NotificationAction.Play => $"game/{Game.Identifier}/play",
-        NotificationAction.Results => $"game/{Game.Identifier}/results",
+        NotificationAction.Play => $"/trivia/game/{Game.Identifier}/play",
+        NotificationAction.Results => $"/trivia/game/{Game.Identifier}/results",
         _ => throw new ArgumentOutOfRangeException()
     };
 }

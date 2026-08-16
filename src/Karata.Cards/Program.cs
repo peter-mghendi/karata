@@ -1,9 +1,10 @@
 using System.Security.Claims;
+using Karata.Cards;
 using Karata.Cards.Data;
-using Karata.Cards.Routing;
 using Karata.Cards.Services;
 using Karata.Kit;
 using Karata.Kit.Cards.Engine;
+using Karata.Kit.Configuration;
 using Karata.Runtime;
 using Karata.Runtime.Security;
 
@@ -12,7 +13,6 @@ var builder = WebApplication.CreateBuilder(args);
 var db = builder.Configuration["DATABASE_URL"] ?? throw new Exception("DATABASE_URL is not set.");
 var platform = builder.Configuration["PLATFORM_URL"] ?? throw new Exception("PLATFORM_URL is not set.");
 
-builder.Services.AddMemoryCache();
 builder.Services
     .AddKarataRuntime<CardsContext, User>(
         configuration: builder.Configuration,
@@ -45,7 +45,6 @@ builder.Services
         };
     });
 
-builder.Services.AddSingleton<IPasswordService, Argon2PasswordService>();
 builder.Services.AddSingleton<IKarataEngine, TwoPassKarataEngine>();
 builder.Services.AddSingleton<PresenceService>();
 builder.Services.AddSingleton<ReplayProcessor>();
@@ -54,6 +53,9 @@ builder.Services.AddTransient<RoomMembershipServiceFactory>();
 builder.Services.AddTransient<TurnProcessingServiceFactory>();
 builder.Services.AddTransient<VoidTurnServiceFactory>();
 builder.Services.AddTransient<SetAwayServiceFactory>();
+
+Console.WriteLine($"Karata.Cards is running in {builder.Environment.EnvironmentName} mode.");
+builder.Services.AddKeyedSingleton(nameof(Configuration.Web), Configuration.Web[builder.Environment.EnvironmentName]);
 
 var app = builder.ConfigureRuntimeHost().Build();
 await app.InitializeKarataRuntimeAsync<CardsContext, User>();

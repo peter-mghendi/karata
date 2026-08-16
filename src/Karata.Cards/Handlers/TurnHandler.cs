@@ -3,7 +3,7 @@ using Karata.Kit.Cards.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Karata.Cards.Routing.Handlers;
+namespace Karata.Cards.Handlers;
 
 public static class TurnHandler
 {

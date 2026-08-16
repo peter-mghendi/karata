@@ -2,6 +2,25 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
+      "CmdScale.EntityFrameworkCore.TimescaleDB": {
+        "type": "Direct",
+        "requested": "[10.1.1, )",
+        "resolved": "10.1.1",
+        "contentHash": "HjgqJSPN+VuyYtSdjZAsUI6wBcWVXeJJfvb0Hfu06dDqcqArFDonU+pJbI7y3PqAOvvmS4HVBsh1PYejgFcY3g==",
+        "dependencies": {
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.2"
+        }
+      },
+      "CmdScale.EntityFrameworkCore.TimescaleDB.Design": {
+        "type": "Direct",
+        "requested": "[10.1.1, )",
+        "resolved": "10.1.1",
+        "contentHash": "o5Zfjk/fomNnz3vyG6Fn521k4ipuBJukG/Px6eVKFXP3/CMGmSB/PUPd+1BFWePkTHVRhI2Dy+8elVJpxGQMdQ==",
+        "dependencies": {
+          "CmdScale.EntityFrameworkCore.TimescaleDB": "10.1.1",
+          "Microsoft.EntityFrameworkCore.Design": "10.0.9"
+        }
+      },
       "Keycloak.AuthServices.Authentication": {
         "type": "Direct",
         "requested": "[3.0.0, )",
@@ -693,51 +712,51 @@
       },
       "Microsoft.EntityFrameworkCore": {
         "type": "Transitive",
-        "resolved": "10.0.8",
-        "contentHash": "EJx+fIBMgBlgD+ublKCn+GTOJkw3UqV7xOjYWBRVdUYyIm8UfvAsmSOPFiIInsWTHyMEYUJ9gCJY1jwX+6UB7w==",
+        "resolved": "10.0.9",
+        "contentHash": "tu85SRzOT021V7EQlViCiAE7TqldVn469Y6lt5TEn/+XC4/MeNCHgMRSxqYuWqvF4zAQZUhCmtNEZuM3ss4LeA==",
         "dependencies": {
-          "Microsoft.EntityFrameworkCore.Abstractions": "10.0.8",
-          "Microsoft.EntityFrameworkCore.Analyzers": "10.0.8"
+          "Microsoft.EntityFrameworkCore.Abstractions": "10.0.9",
+          "Microsoft.EntityFrameworkCore.Analyzers": "10.0.9"
         }
       },
       "Microsoft.EntityFrameworkCore.Abstractions": {
         "type": "Transitive",
-        "resolved": "10.0.8",
-        "contentHash": "jbKDXWPZQhuPHygMnwzNOqxBADVcpRVytcKYZsA++QqhPkpF93Ta8o5mbJQGrARSjlkr9WtOaADV97EDMOZ7DA=="
+        "resolved": "10.0.9",
+        "contentHash": "GRMaiPkqYna/gCsyDffYDWmefGPC3hDrdMw+2rrGcQwhs6uZOsaMQXMJnoXQ35tx9SkBV2ieRRU9N/jLOO6BZw=="
       },
       "Microsoft.EntityFrameworkCore.Analyzers": {
         "type": "Transitive",
-        "resolved": "10.0.8",
-        "contentHash": "M3BZ8JH8rB6BE7dO2g9iVbrHLnEz9wMXT6q+tDR6Nq3gyP3KmBj5OTiZGxyF3vesjOQNKanYoPGSNBR4kR2llg=="
+        "resolved": "10.0.9",
+        "contentHash": "aiEFB+C5EsZGqxvMPazE07hbWsp4iPaufJpanGt5O+lrwv7mJLrqma5haVIgFAPCyhQkmk75XSCEubT1zUjxtA=="
       },
       "Microsoft.EntityFrameworkCore.Design": {
         "type": "Transitive",
-        "resolved": "10.0.2",
-        "contentHash": "tBwpyZ75SqcRjmZyhLYJVGKyfz1Z1dmsYtvJGZ2QLSI1tOHgMuLPTovunHA1JF9a0EWJs+WB6tVWmqo3DTL/MQ==",
+        "resolved": "10.0.9",
+        "contentHash": "NxgqhpB89S6BViMku9B476KopBumtk0IQ4/iVn2GeeUBW9SyzLvWwOR0zPgcooAtRlR0UVzXkaUs71gYHSAbHg==",
         "dependencies": {
           "Humanizer.Core": "2.14.1",
           "Microsoft.Build.Framework": "18.0.2",
           "Microsoft.CodeAnalysis.CSharp": "5.0.0",
           "Microsoft.CodeAnalysis.CSharp.Workspaces": "5.0.0",
           "Microsoft.CodeAnalysis.Workspaces.MSBuild": "5.0.0",
-          "Microsoft.EntityFrameworkCore.Relational": "10.0.2",
-          "Microsoft.Extensions.DependencyModel": "10.0.2",
+          "Microsoft.EntityFrameworkCore.Relational": "10.0.9",
+          "Microsoft.Extensions.DependencyModel": "10.0.9",
           "Mono.TextTemplating": "3.0.0",
           "Newtonsoft.Json": "13.0.3"
         }
       },
       "Microsoft.EntityFrameworkCore.Relational": {
         "type": "Transitive",
-        "resolved": "10.0.8",
-        "contentHash": "UU3diAD2wwZveye2rnrwaF/wvJ9tm5iL2fuY9TTap6/iGQK1OO29M1BzXZRlRPVH/dByt5w/pISBSFtyR7hTqw==",
+        "resolved": "10.0.9",
+        "contentHash": "dEoyYKgiaZHHgOFm1WMWm1sFEsEuhPWufX4L9PekKtqd/RaIcPjkCjvbrVvJtApErb5wPSJhYvnTlxhH+p9h2g==",
         "dependencies": {
-          "Microsoft.EntityFrameworkCore": "10.0.8"
+          "Microsoft.EntityFrameworkCore": "10.0.9"
         }
       },
       "Microsoft.Extensions.DependencyModel": {
         "type": "Transitive",
-        "resolved": "10.0.2",
-        "contentHash": "DHXzj/FKmUDmhzw7AHbMXbNNcgO8Cb9PDbYOUDICjFAdIALy2WbC6pm+dFKiAUNtcYMucZu2iMVw1ef/sdcZFw=="
+        "resolved": "10.0.9",
+        "contentHash": "SCDTQ6HubnRvTUjR7dgMKHZvNoCb03t44ttHL8trlFTGgfDteWn/0nRdOxDhcI+lTWhKgd/flCVJEtAOPhSLNg=="
       },
       "Microsoft.IdentityModel.Abstractions": {
         "type": "Transitive",

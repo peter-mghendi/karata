@@ -16,7 +16,7 @@ namespace Karata.Runtime;
 
 public static class DependencyInjection
 {
-    public class KarataRuntimeOptions<TUser> where TUser : KarataUser
+    public sealed class Options<TUser> where TUser : KarataUser
     {
         internal bool IsSignalREnabled { get; private set; }
         internal bool IsTokenExchangeEnabled { get; private set; }
@@ -34,15 +34,12 @@ public static class DependencyInjection
     
     extension(IServiceCollection services)
     {
-        public IServiceCollection AddKarataRuntime<TContext, TUser>(
-            IConfiguration configuration,
-            Action<KarataRuntimeOptions<TUser>> configure
-        )
+        public IServiceCollection AddKarataRuntime<TContext, TUser>(IConfiguration configuration, Action<Options<TUser>> configure)
             where TContext : KarataContext<TUser>
             where TUser : KarataUser
         {
             var compress = ResponseCompressionDefaults.MimeTypes;
-            var runtime = new KarataRuntimeOptions<TUser>();
+            var runtime = new Options<TUser>();
             configure(runtime);
                 
             services.Configure(runtime.DatabaseConfiguration);
@@ -50,6 +47,7 @@ public static class DependencyInjection
 
             services.AddOpenApi();
             services.AddDatabase<TContext, TUser>();
+            services.AddMemoryCache();
             services.AddKeycloakWebApiAuthentication(configuration);
             services.AddAuthorization();
 
@@ -68,8 +66,10 @@ public static class DependencyInjection
             });
 
             services.AddCors(cors => cors.AddPolicy(nameof(CrossOrigin.AllowAll), CrossOrigin.AllowAll));
-            services.AddHttpContextAccessor();
+
             services.AddHealthChecks();
+            services.AddHttpClient();
+            services.AddHttpContextAccessor();
 
             if (runtime.IsSignalREnabled)
             {
@@ -84,7 +84,6 @@ public static class DependencyInjection
 
             if (runtime.IsTokenExchangeEnabled)
             {
-                services.AddHttpClient(); // Idempotent, required by TokenExchangeAccessTokenProvider
                 services.AddTransient<TokenExchangeAccessTokenProvider>();
             }
 

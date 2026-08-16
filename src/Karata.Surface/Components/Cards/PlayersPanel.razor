@@ -5,7 +5,7 @@
         <MudListSubheader>Players</MudListSubheader>    
     }
     
-    @foreach (var hand in Game.Hands)
+    @foreach (var hand in Game.Hands.OrderBy(hand => hand.Id))
     {
         <HandDisplay Hand="hand" IsAdministrator="@(hand.Player.Id == Room.Administrator.Id)" IsMe="@(hand.Id == Me)"
                      IsCurrent="@(Game.CurrentHand.Id == hand.Id)" Controls="Controls" 

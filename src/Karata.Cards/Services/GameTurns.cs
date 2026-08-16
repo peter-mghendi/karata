@@ -28,8 +28,7 @@ public static class GameTurns
             game.CurrentTurn = game.NextTurn;
             switch (game.CurrentHand.Status)
             {
-                case Online:
-                case Offline:
+                case Active:
                     game.CurrentHand.Turns.Add(new Turn
                     {
                         Type = TurnType.Skip,
@@ -39,7 +38,7 @@ public static class GameTurns
 
                     --skip;
                     break;
-                case Away:
+                case Inactive:
                     game.CurrentHand.Turns.Add(new Turn
                     {
                         Type = TurnType.Void,
@@ -52,7 +51,7 @@ public static class GameTurns
         }
 
         // correct to the next available player
-        while (game.CurrentHand.Status is Away)
+        while (game.CurrentHand.Status is Inactive)
         {
             game.CurrentHand.Turns.Add(new Turn
             {

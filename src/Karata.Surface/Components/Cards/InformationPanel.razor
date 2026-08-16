@@ -1,3 +1,4 @@
+@using Humanizer
 @using Karata.Kit.Cards.Models
 @using TextCopy
 
@@ -12,6 +13,10 @@
     <MudListItem Value="@Room.Id.ToString()" OnClick="@CopyInviteLink">
         <MudText Typo="Typo.caption">Room ID (Click to Copy)</MudText>
         <MudText Typo="Typo.body1" Class="gray-text">@Room.Id</MudText>
+    </MudListItem>
+    <MudListItem Value="@Room.Visibility.ToString()">
+        <MudText Typo="Typo.caption">Visibility</MudText>
+        <MudText Typo="Typo.body1" Class="gray-text">@Room.Visibility.Humanize()</MudText>
     </MudListItem>
     <MudListItem Value="@Room.CreatedAt.ToLocalTime().ToString()">
         <MudText Typo="Typo.caption">Created At</MudText>

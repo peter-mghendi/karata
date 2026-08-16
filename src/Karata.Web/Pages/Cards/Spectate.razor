@@ -53,7 +53,7 @@
                     <MudItem xs="12" sm="6">
                         <MudList Color="Color.Info" SelectedValue="@_store.State.Game.CurrentHand.Id">
                             <MudListSubheader>Players</MudListSubheader>
-                            @foreach (var hand in _store.State.Game.Hands)
+                            @foreach (var hand in _store.State.Game.Hands.OrderBy(hand => hand.Id))
                             {
                                 <HandDisplay Hand="hand" IsAdministrator="@(hand.Player.Id == _store.State.Administrator.Id)"/>
                             }
@@ -140,7 +140,7 @@
 
                 StateHasChanged();
 
-                Navigator.NavigateTo("/game/join");
+                Navigator.NavigateTo("/cards/game/join");
             })
             .DisposeWith(_subscriptions);
 

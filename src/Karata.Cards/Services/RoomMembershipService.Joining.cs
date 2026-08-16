@@ -1,8 +1,5 @@
-using System.Text;
 using Karata.Cards.Support.Exceptions;
 using Karata.Kit.Cards.Models;
-using Karata.Kit.Support.Exceptions;
-using static Karata.Kit.Cards.Models.HandStatus;
 
 namespace Karata.Cards.Services;
 
@@ -13,38 +10,35 @@ public partial class RoomMembershipService
         var player = (await context.Users.FindAsync(CallerPlayerId))!;
         var room = (await context.Rooms.FindAsync(RoomId))!;
 
-        bool authorized;
-        do authorized = await VerifyPassword(room, player, connection);
-        while (!authorized);
-
+        ValidateMembership(room, player);
         ValidateJoiningGameState(room, player);
         presence.AddPresence(player.Id, room.Id.ToString());
         
         switch (room.Game.Status)
         {
             case GameStatus.Lobby when room.Game.Hands.SingleOrDefault(h => h.Player.Id == player.Id) is { } joined:
-                joined.Status = Online;
+                joined.Status = HandStatus.Active;
 
                 await AddToRoom(connection);
-                await Caller.AddToRoom(RoomId, Enrich.ForUser(room, joined));
+                await Caller.AddToRoom(RoomId, Enrich.ForHand(room, joined));
                 await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, joined.Id, joined.Status);
                 await RoomSpectators.UpdateHandStatus(RoomId, joined.Id, joined.Status);
                 break;
             case GameStatus.Lobby:
-                var hand = new Hand { Player = player, Status = Online };
+                var hand = new Hand { Player = player, Status = HandStatus.Active };
                 room.Game.Hands.Add(hand);
 
                 await AddToRoom(connection);
-                await Caller.AddToRoom(RoomId, Enrich.ForUser(room, hand));
+                await Caller.AddToRoom(RoomId, Enrich.ForHand(room, hand));
                 await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
                 await RoomSpectators.AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
                 break;
             case GameStatus.Ongoing:
                 var rejoined = room.Game.Hands.Single(h => h.Player.Id == player.Id);
-                rejoined.Status = Online;
+                rejoined.Status = HandStatus.Active;
 
                 await AddToRoom(connection);
-                await Caller.AddToRoom(RoomId, Enrich.ForUser(room, rejoined));
+                await Caller.AddToRoom(RoomId, Enrich.ForHand(room, rejoined));
                 await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, rejoined.Id, rejoined.Status);
                 await RoomSpectators.UpdateHandStatus(RoomId, rejoined.Id, rejoined.Status);
                 break;
@@ -55,25 +49,15 @@ public partial class RoomMembershipService
         await context.SaveChangesAsync();
     }
 
-    private async Task<bool> VerifyPassword(Room room, User player, string connection)
+    private static void ValidateMembership(Room room, User player)
     {
-        try
-        {
-            if (room.Hash is null) return true;
-            if (room.Game.Hands.Any(h => h.Player.Id == player.Id)) return true;
+        if (room.Game.Hands.Any(h => h.Player.Id == player.Id))
+            return;
 
-            if (await PlayerConnection(connection).PromptPasscode(RoomId) is not [_, ..] password)
-                throw new PasswordRequiredException();
-            if (!passwords.VerifyPassword(Encoding.UTF8.GetBytes(password), room.Salt!, room.Hash))
-                throw new IncorrectPasswordException();
+        if (room.Visibility is RoomVisibility.Public or RoomVisibility.Unlisted)
+            return;
 
-            return true;
-        }
-        catch (PasswordException exception)
-        {
-            await Caller.SystemMessage(RoomId, exception.SystemMessage);
-            return false;
-        }
+        throw new UnauthorizedActionException();
     }
 
     private static void ValidateJoiningGameState(Room room, User player)

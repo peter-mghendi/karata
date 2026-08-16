@@ -10,7 +10,7 @@
     <MudCardContent>
         <MudStack Row>
             <MudTextField T="string" @bind-Value="_link" Label="Game ID" Variant="Variant.Filled"
-                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Rounded.Password"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Rounded.Abc"
                           Placeholder="ae2f0338-9762-4f07-b771-0acf5f7f2615"/>
             <MudButton Href="@JoinLink" Color="Color.Primary" Variant="Variant.Outlined">
                 <MudText>Join</MudText>
@@ -45,7 +45,7 @@
         try
         {
             _loading = true;
-            var room = await Cards.Rooms.CreateAsync(new RoomRequest { Password = string.Empty });
+            var room = await Cards.Rooms.CreateAsync(new RoomRequest(RoomVisibility.Public));
             Navigator.NavigateTo($"/cards/game/{room.Id.ToString()}/play");
         }
         finally

@@ -31,9 +31,6 @@ public interface IPlayerClient
     // Prompts the user to declare last card status
     Task<bool> PromptLastCardRequest(Guid roomId);
     
-    // Prompts the user for a passcode.
-    Task<string?> PromptPasscode(Guid roomId);
-    
     // Reclaims the pile and adds cards to the deck
     Task ReclaimPile(Guid roomId);
     

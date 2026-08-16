@@ -91,12 +91,6 @@ public sealed partial class PlayerConnection(Uri host) : IUserConnection<PlayerC
         {
             Route(roomId, session => session.Events.OnUpdateHandStatus(handId, status));
         });
-        Hub.On<Guid, string?>("PromptPasscode", async roomId =>
-        {
-            Console.WriteLine($"PromptPasscode: {roomId}");
-            if (!Sessions.TryGetValue(roomId, out var session)) return null;
-            return await session.OnRequestPassword();
-        });
         Hub.On<Guid, bool, Card?>("PromptCardRequest", async (roomId, specific) =>
         {
             Console.WriteLine($"PromptCardRequest: {roomId}");

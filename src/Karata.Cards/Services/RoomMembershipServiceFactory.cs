@@ -8,11 +8,10 @@ namespace Karata.Cards.Services;
 public class RoomMembershipServiceFactory(
     IHubContext<PlayerHub, IPlayerClient> players,
     IHubContext<SpectatorHub, ISpectatorClient> spectators,
-    IPasswordService passwords,
     CardsContext context,
     PresenceService presence
 )
 {
     public RoomMembershipService Create(Guid room, string player) => 
-        new(players, spectators, passwords, context, presence, room, player);
+        new(players, spectators, context, presence, room, player);
 }

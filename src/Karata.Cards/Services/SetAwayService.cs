@@ -27,13 +27,13 @@ public class SetAwayService(
         
         if (CallerPlayerId != room.Administrator.Id) throw new UnauthorizedActionException();
 
-        hand.Status = Away;
+        hand.Status = Inactive;
         RecomputeTurn(room, hand);
         RedelegateAdministration(room, hand.Player);
         
         await context.SaveChangesAsync();
         
-        foreach (var data in from each in room.Game.Hands select (Hand: hand, Game: Enrich.ForUser(room.Game, hand)))
+        foreach (var data in from each in room.Game.Hands select (Hand: hand, Game: Enrich.ForHand(room.Game, hand)))
             await Hand(data.Hand).TurnCommitted(RoomId, data.Game);
         await RoomSpectators.TurnCommitted(RoomId, room.Game);
         await RoomPlayers.UpdateAdministrator(RoomId, room.Administrator);
@@ -45,7 +45,7 @@ public class SetAwayService(
     private static void RecomputeTurn(Room room, Hand player)
     {
         if (room.Game.CurrentHand.Id != player.Id) return;
-        if (room.Game.Hands.Count(hand => hand.Status is Online or Offline) <= 1) return;
+        if (room.Game.Hands.Count(hand => hand.Status is Active) <= 1) return;
         
         room.Game.CurrentHand.Turns.Add(new Turn
         {

@@ -4,7 +4,7 @@ using Karata.Kit.Cards.Engine;
 using Karata.Kit.Cards.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Karata.Kit.Bot.Services;
+namespace Karata.Runtime.Bot.Services;
 
 public sealed class BotSessionFactory(PlayerConnection connection, IKarataEngine engine, ILoggerFactory loggers)
 {

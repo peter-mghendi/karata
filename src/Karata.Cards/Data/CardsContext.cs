@@ -21,6 +21,7 @@ public class CardsContext(DbContextOptions<CardsContext> options) : KarataContex
         JsonSerializerOptions options = new(JsonSerializerDefaults.Web);
 
         // Room
+        modelBuilder.Entity<Room>().Property(h => h.Visibility).HasConversion<string>();
         modelBuilder.Entity<Room>().HasOne(r => r.Administrator).WithMany();
         modelBuilder.Entity<Room>().HasOne(r => r.Creator).WithMany();
         modelBuilder.Entity<Room>()

@@ -6,7 +6,6 @@ namespace Karata.Kit.Cards.Connection;
 public sealed partial class PlayerConnection
 {
     public sealed record SessionParameters(
-        Func<Task<string?>> OnRequestPassword,
         Func<bool, Task<Card?>> OnRequestCard,
         Func<Task<bool>> OnRequestLastCard
     ) : IUserConnection.ISessionParameters;
@@ -15,8 +14,7 @@ public sealed partial class PlayerConnection
     {
         public HubConnection Hub { get; } = hub;
         public RoomEvents Events { get; init; } = new();
-            
-        public readonly Func<Task<string?>> OnRequestPassword = parameters.OnRequestPassword;
+
         public readonly Func<bool, Task<Card?>> OnRequestCard = parameters.OnRequestCard;
         public readonly Func<Task<bool>> OnRequestLastCard = parameters.OnRequestLastCard;
         
