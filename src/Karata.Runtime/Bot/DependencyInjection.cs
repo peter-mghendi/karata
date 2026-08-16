@@ -1,6 +1,7 @@
 using Karata.Kit;
 using Karata.Kit.Bot.Interface;
 using Karata.Kit.Cards.Connection;
+using Karata.Kit.Platform;
 using Karata.Kit.Security;
 using Karata.Runtime.Bot.Services;
 using Karata.Runtime.Infrastructure;
@@ -16,7 +17,7 @@ public static class DependencyInjection
 {
     extension(IServiceCollection services)
     {
-        public IServiceCollection AddKarataBot(Uri host)
+        public IServiceCollection AddKarataBot()
         {
             services.AddCors(cors => cors.AddPolicy(nameof(CrossOrigin.AllowAll), CrossOrigin.AllowAll));
             services.AddHttpClient();
@@ -24,10 +25,15 @@ public static class DependencyInjection
             services.AddMemoryCache();
             
             services.AddSingleton<IAccessTokenProvider, ClientCredentialsAccessTokenProvider>();
-            services.AddKarataCards((cards, services) =>
+            services.AddKarataCards((cards, provider) =>
             {
-                cards.Host = host;
-                cards.TokenProvider = async () => await services.GetRequiredService<IAccessTokenProvider>().GetAsync();
+                cards.Host = new Uri(provider.GetRequiredService<IConfiguration>()["KARATA_CARDS_HOST"]!);
+                cards.TokenProvider = async () => await provider.GetRequiredService<IAccessTokenProvider>().GetAsync();
+            });
+            services.AddKarataPlatform((platform, provider) =>
+            {
+                platform.Host = new Uri(provider.GetRequiredService<IConfiguration>()["KARATA_PLATFORM_HOST"]!);
+                platform.TokenProvider = async () => await provider.GetRequiredService<IAccessTokenProvider>().GetAsync();
             });
             services.AddSingleton<PlayerConnection>(provider =>
             {
@@ -53,7 +59,8 @@ public static class DependencyInjection
             app.UseHttpsRedirection();
             app.UseCors(nameof(CrossOrigin.AllowAll));
             app.MapHealthChecks("/health");
-            
+
+            await app.Services.GetRequiredService<Client>().Profiles.GetAsync("service-account-karata-bot");
             await app.Services.GetRequiredService<PlayerConnection>().StartAsync();
         }
     }

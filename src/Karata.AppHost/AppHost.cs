@@ -91,10 +91,11 @@ var bot = builder.AddProject<Projects.Karata_Bot>("bot")
     .WithReference(keycloak)
     .WithReference(cards)
     .WithEnvironment("KARATA_CARDS_HOST", cards.GetEndpoint("https"))
+    .WithEnvironment("KARATA_PLATFORM_HOST", platform.GetEndpoint("https"))
     .WithEnvironment("KARATA_ID_AUTHORITY", $"{keycloak.GetEndpoint("http")}/realms/karata")
     .WithEnvironment("KARATA_ID_CLIENT_ID", "karata-bot")
     .WithEnvironment("KARATA_ID_CLIENT_SECRET", Guid.Empty.ToString())
-    .WithEnvironment("KARATA_ID_SCOPE", "openid profile email karata-cards")
+    .WithEnvironment("KARATA_ID_SCOPE", "openid profile email karata-cards karata-platform")
     .WithHttpHealthCheck("/health", StatusCodes.Status200OK);
 
 var web = builder.AddProject<Projects.Karata_Web>("web")

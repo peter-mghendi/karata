@@ -4,11 +4,7 @@ using Karata.Runtime.Bot;
 using Karata.Runtime.Bot.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
-var host = builder.Configuration["KARATA_CARDS_HOST"] ?? throw new Exception("KARATA_CARDS_HOST is not set");
-
-Console.WriteLine($"Karata Host: {host}");
-
-builder.Services.AddKarataBot(host: new Uri(host));
+builder.Services.AddKarataBot();
 builder.Services.AddKeyedTransient<IBotStrategy, BailBotStrategy>(nameof(BailBotStrategy));
 builder.Services.AddKeyedTransient<IBotStrategy, RandomValidBotStrategy>(nameof(RandomValidBotStrategy));
 
