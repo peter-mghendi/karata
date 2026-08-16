@@ -62,7 +62,7 @@ public static class RoomHandler
                 new()
                 {
                     Text = $"{room.Creator.Username} has started a game.",
-                    Actions = [new("Check it out!", new Uri($"{web.Host}/game/{room.Id}"), "primary")],
+                    Actions = [new("Check it out!", new Uri($"{web.Host}/cards/game/{room.Id}"), "primary")],
                     Metadata = new() { ["room"] = room.Id.ToString() },
                     OccurredAt = room.CreatedAt
                 }

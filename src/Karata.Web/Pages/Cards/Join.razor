@@ -51,7 +51,7 @@
             {
                 @foreach (var room in _rooms)
                 {
-                    <MudListItem Text="@room.Id.ToString()" SecondaryText="@($"Created at {room.CreatedAt.ToLocalTime()}")" Href="@($"/game/{room.Id}")"/>
+                    <MudListItem Text="@room.Id.ToString()" SecondaryText="@($"Created at {room.CreatedAt.ToLocalTime()}")" Href="@($"/cards/game/{room.Id}")"/>
                 }
             }
             else

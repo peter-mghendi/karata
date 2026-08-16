@@ -146,7 +146,7 @@
         _session.Events.RemoveFromRoom
             .Subscribe(_ =>
                 {
-                    var uri = $"/game/{_room!.State.Id}";
+                    var uri = $"/cards/game/{_room!.State.Id}";
 
                     _room!.Dispose();
                     _turn.Dispose();

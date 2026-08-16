@@ -299,7 +299,7 @@
                     ShowMessage(new SystemMessage { Text = result.Reason, Type = result.ReasonType });
                     
                     _session.Dispose();
-                    Navigator.NavigateTo($"/game/{_room!.State.Id.ToString()}/over");
+                    Navigator.NavigateTo($"/cards/game/{_room!.State.Id.ToString()}/over");
                 }
             )
             .DisposeWith(_subscriptions);
@@ -323,7 +323,7 @@
 
         _session.Events.RemoveFromRoom
             .Subscribe(_ => {
-                    var uri = $"/game/{_room!.State.Id}";
+                    var uri = $"/cards/game/{_room!.State.Id}";
 
                     _session.Dispose();
                     _room!.Dispose();
