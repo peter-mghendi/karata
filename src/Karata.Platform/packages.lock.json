@@ -2,25 +2,6 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
-      "CmdScale.EntityFrameworkCore.TimescaleDB": {
-        "type": "Direct",
-        "requested": "[10.1.1, )",
-        "resolved": "10.1.1",
-        "contentHash": "HjgqJSPN+VuyYtSdjZAsUI6wBcWVXeJJfvb0Hfu06dDqcqArFDonU+pJbI7y3PqAOvvmS4HVBsh1PYejgFcY3g==",
-        "dependencies": {
-          "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.2"
-        }
-      },
-      "CmdScale.EntityFrameworkCore.TimescaleDB.Design": {
-        "type": "Direct",
-        "requested": "[10.1.1, )",
-        "resolved": "10.1.1",
-        "contentHash": "o5Zfjk/fomNnz3vyG6Fn521k4ipuBJukG/Px6eVKFXP3/CMGmSB/PUPd+1BFWePkTHVRhI2Dy+8elVJpxGQMdQ==",
-        "dependencies": {
-          "CmdScale.EntityFrameworkCore.TimescaleDB": "10.1.1",
-          "Microsoft.EntityFrameworkCore.Design": "10.0.9"
-        }
-      },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
         "requested": "[10.0.1, )",
@@ -1178,6 +1159,8 @@
       "karata.runtime": {
         "type": "Project",
         "dependencies": {
+          "CmdScale.EntityFrameworkCore.TimescaleDB": "[10.1.1, )",
+          "CmdScale.EntityFrameworkCore.TimescaleDB.Design": "[10.1.1, )",
           "Karata.Kit": "[1.0.0, )",
           "Keycloak.AuthServices.Authentication": "[3.0.0, )",
           "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore": "[10.0.8, )",
@@ -1198,6 +1181,25 @@
           "OpenTelemetry.Instrumentation.AspNetCore": "[1.15.2, )",
           "OpenTelemetry.Instrumentation.Http": "[1.15.1, )",
           "OpenTelemetry.Instrumentation.Runtime": "[1.15.1, )"
+        }
+      },
+      "CmdScale.EntityFrameworkCore.TimescaleDB": {
+        "type": "CentralTransitive",
+        "requested": "[10.1.1, )",
+        "resolved": "10.1.1",
+        "contentHash": "HjgqJSPN+VuyYtSdjZAsUI6wBcWVXeJJfvb0Hfu06dDqcqArFDonU+pJbI7y3PqAOvvmS4HVBsh1PYejgFcY3g==",
+        "dependencies": {
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.2"
+        }
+      },
+      "CmdScale.EntityFrameworkCore.TimescaleDB.Design": {
+        "type": "CentralTransitive",
+        "requested": "[10.1.1, )",
+        "resolved": "10.1.1",
+        "contentHash": "o5Zfjk/fomNnz3vyG6Fn521k4ipuBJukG/Px6eVKFXP3/CMGmSB/PUPd+1BFWePkTHVRhI2Dy+8elVJpxGQMdQ==",
+        "dependencies": {
+          "CmdScale.EntityFrameworkCore.TimescaleDB": "10.1.1",
+          "Microsoft.EntityFrameworkCore.Design": "10.0.9"
         }
       },
       "Humanizer": {

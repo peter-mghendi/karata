@@ -1,3 +1,4 @@
+using CmdScale.EntityFrameworkCore.TimescaleDB;
 using Karata.Runtime.Data;
 using Karata.Runtime.Models;
 using Microsoft.AspNetCore.Builder;
@@ -36,7 +37,7 @@ public static class Database
                     Database = config.DataSource.LocalPath.TrimStart('/'),
                     SslMode = SslMode.Prefer
                 };
-                options.UseNpgsql(connection.ToString());
+                options.UseNpgsql(connection.ToString()).UseTimescaleDb();
 
                 if (env.IsDevelopment())
                 {

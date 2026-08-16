@@ -5,11 +5,6 @@
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
     </PropertyGroup>
-    
-    <ItemGroup>
-        <PackageReference Include="CmdScale.EntityFrameworkCore.TimescaleDB" />
-        <PackageReference Include="CmdScale.EntityFrameworkCore.TimescaleDB.Design" />
-    </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Karata.Runtime\Karata.Runtime.csproj" />
