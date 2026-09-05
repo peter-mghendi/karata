@@ -89,7 +89,6 @@
       }
     ],
     "client": {
-      "karata-cards": [],
       "realm-management": [
         {
           "id": "89b02e16-0c84-49f3-8721-3640525a94ec",
@@ -303,10 +302,9 @@
         }
       ],
       "security-admin-console": [],
-      "admin-cli": [],
       "account-console": [],
+      "karata-go": [],
       "karata-trivia": [],
-      "karata-web": [],
       "synapse": [],
       "broker": [
         {
@@ -320,6 +318,10 @@
         }
       ],
       "karata-bot": [],
+      "karata-platform": [],
+      "karata-cards": [],
+      "admin-cli": [],
+      "karata-web": [],
       "account": [
         {
           "id": "d2c0f2cf-eb2b-4689-beff-cb910418d366",
@@ -407,8 +409,7 @@
           "containerId": "af171743-2cf7-475e-8c44-dcbcc48e31dc",
           "attributes": {}
         }
-      ],
-      "karata-platform": []
+      ]
     }
   },
   "groups": [],
@@ -871,6 +872,72 @@
         "offline_access",
         "microprofile-jwt",
         "karata-platform"
+      ]
+    },
+    {
+      "id": "8b524025-a36c-4de9-a4d1-c99498ac5011",
+      "clientId": "karata-go",
+      "name": "Karata Go",
+      "description": "Karata.Go",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "00000000-0000-0000-0000-000000000000",
+      "redirectUris": [
+        "https://localhost:7243",
+        "https://localhost:7243/*",
+        "http://localhost:10000"
+      ],
+      "webOrigins": [
+        "https://localhost:7243",
+        "https://localhost:7243/*"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "logout.confirmation.enabled": "false",
+        "client.secret.creation.time": "1756017383",
+        "standard.token.exchange.enabled": "false",
+        "oauth2.jwt.authorization.grant.enabled": "false",
+        "frontchannel.logout.session.required": "true",
+        "post.logout.redirect.uris": "+",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "realm_client": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "backchannel.logout.session.required": "true",
+        "display.on.consent.screen": "false",
+        "dpop.bound.access.tokens": "false"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "organization",
+        "offline_access",
+        "microprofile-jwt"
       ]
     },
     {
@@ -1452,8 +1519,8 @@
           "protocolMapper": "oidc-allowed-origins-mapper",
           "consentRequired": false,
           "config": {
-            "introspection.token.claim": "true",
-            "access.token.claim": "true"
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
           }
         }
       ]
@@ -1499,6 +1566,35 @@
             "access.token.claim": "true",
             "claim.name": "upn",
             "jsonType.label": "String"
+          }
+        }
+      ]
+    },
+    {
+      "id": "1a7e7325-2c93-4e2d-8664-365662ba4a89",
+      "name": "karata-go",
+      "description": "karata-go",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "true",
+        "gui.order": "",
+        "consent.screen.text": "Your Go short URLs",
+        "include.in.openid.provider.metadata": "true"
+      },
+      "protocolMappers": [
+        {
+          "id": "01f3501a-06fc-452b-a3d8-102c9016ebce",
+          "name": "karata-go",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "karata-go",
+            "id.token.claim": "false",
+            "lightweight.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
           }
         }
       ]
@@ -2038,7 +2134,8 @@
     "organization",
     "karata-cards",
     "karata-platform",
-    "karata-trivia"
+    "karata-trivia",
+    "karata-go"
   ],
   "browserSecurityHeaders": {
     "contentSecurityPolicyReportOnly": "",
@@ -2137,13 +2234,13 @@
         "config": {
           "allowed-protocol-mapper-types": [
             "saml-user-attribute-mapper",
+            "oidc-usermodel-property-mapper",
+            "oidc-usermodel-attribute-mapper",
+            "saml-role-list-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
             "saml-user-property-mapper",
             "oidc-full-name-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
-            "oidc-address-mapper",
-            "saml-role-list-mapper",
-            "oidc-usermodel-property-mapper",
-            "oidc-usermodel-attribute-mapper"
+            "oidc-address-mapper"
           ]
         }
       },
@@ -2164,13 +2261,13 @@
         "config": {
           "allowed-protocol-mapper-types": [
             "saml-role-list-mapper",
-            "oidc-usermodel-attribute-mapper",
-            "saml-user-property-mapper",
-            "oidc-usermodel-property-mapper",
+            "oidc-address-mapper",
             "oidc-sha256-pairwise-sub-mapper",
+            "oidc-usermodel-property-mapper",
             "oidc-full-name-mapper",
             "saml-user-attribute-mapper",
-            "oidc-address-mapper"
+            "oidc-usermodel-attribute-mapper",
+            "saml-user-property-mapper"
           ]
         }
       },

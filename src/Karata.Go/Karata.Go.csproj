@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+    <PropertyGroup>
+        <AssemblyName>karata-go</AssemblyName>
+        <ContainerRepository>peter-mghendi/karata-go</ContainerRepository>
+        <PublishSingleFile>true</PublishSingleFile>
+        <SelfContained>true</SelfContained>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Karata.Runtime\Karata.Runtime.csproj"/>
+        <ProjectReference Include="..\Karata.ServiceDefaults\Karata.ServiceDefaults.csproj"/>
+    </ItemGroup>
+</Project>

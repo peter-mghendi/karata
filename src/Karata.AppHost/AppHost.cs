@@ -15,6 +15,7 @@ var idDatabase = postgres.AddDatabase("id-db", "id_db");
 var cardsDatabase = postgres.AddDatabase("cards-db", "cards_db");
 var triviaDatabase = postgres.AddDatabase("trivia-db", "trivia_db");
 var platformDatabase = postgres.AddDatabase("platform-db", "platform_db");
+var goDatabase = postgres.AddDatabase("go-db", "go_db");
 
 var keycloak = builder.AddKeycloak(
         name: "id",
@@ -41,6 +42,21 @@ var platform = builder.AddProject<Projects.Karata_Platform>("platform")
     .WithEnvironment("Keycloak__auth-server-url", keycloak.GetEndpoint("http"))
     .WithEnvironment("Keycloak__ssl-required", "none")
     .WithEnvironment("Keycloak__resource", "karata-platform")
+    .WithEnvironment("Keycloak__verify-token-audience", true.ToString())
+    .WithEnvironment("Keycloak__credentials__secret", Guid.Empty.ToString())
+    .WithEnvironment("Keycloak__confidential-port", 0.ToString())
+    .WithHttpHealthCheck("/health", StatusCodes.Status200OK);
+
+var go = builder.AddProject<Projects.Karata_Go>("go")
+    .WaitFor(keycloak)
+    .WaitFor(goDatabase)
+    .WithReference(keycloak)
+    .WithReference(goDatabase)
+    .WithEnvironment("DATABASE_URL", goDatabase.Resource.UriExpression)
+    .WithEnvironment("Keycloak__realm", "karata")
+    .WithEnvironment("Keycloak__auth-server-url", keycloak.GetEndpoint("http"))
+    .WithEnvironment("Keycloak__ssl-required", "none")
+    .WithEnvironment("Keycloak__resource", "karata-go")
     .WithEnvironment("Keycloak__verify-token-audience", true.ToString())
     .WithEnvironment("Keycloak__credentials__secret", Guid.Empty.ToString())
     .WithEnvironment("Keycloak__confidential-port", 0.ToString())
