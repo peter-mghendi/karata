@@ -1,7 +1,6 @@
-using Karata.Kit.Cards.Models;
+using Karata.Kit.Platform.Models;
 using Karata.Kit.Trivia.Models;
 using Karata.Kit.Trivia.Models.Response;
-using Karata.Trivia.Data;
 using Karata.Trivia.Models;
 
 namespace Karata.Trivia.Extensions;

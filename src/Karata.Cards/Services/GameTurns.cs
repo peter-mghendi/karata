@@ -1,4 +1,3 @@
-using Karata.Cards.Models;
 using Karata.Kit.Cards.Models;
 using static Karata.Kit.Cards.Models.HandStatus;
 

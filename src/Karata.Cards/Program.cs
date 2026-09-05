@@ -4,7 +4,6 @@ using Karata.Cards.Data;
 using Karata.Cards.Services;
 using Karata.Kit;
 using Karata.Kit.Cards.Engine;
-using Karata.Kit.Configuration;
 using Karata.Runtime;
 using Karata.Runtime.Security;
 

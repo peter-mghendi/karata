@@ -1,5 +1,4 @@
 using Karata.Kit.Trivia.Models.Enum;
-using Karata.Trivia.Data;
 
 namespace Karata.Trivia.Models;
 

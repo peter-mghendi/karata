@@ -11,7 +11,7 @@
         </MudText>
     </TitleContent>
     <DialogContent>
-        <MudList T="ProfileData" SelectedValueChanged="@Challenge">
+        <MudList T="UserData" SelectedValueChanged="@Challenge">
             @foreach (var user in Users)
             {
                 <MudListItem Text="@user.Username" Icon="@Icons.Material.Filled.Person" Value="user"/>
@@ -26,7 +26,7 @@
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
 
-    private List<ProfileData> Users { get; set; } = [];
+    private List<UserData> Users { get; set; } = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -35,7 +35,7 @@
 
     private void Cancel() => MudDialog.Cancel();
 
-    private void Challenge(ProfileData? player)
+    private void Challenge(UserData? player)
     {
         if (player is null) return;
 

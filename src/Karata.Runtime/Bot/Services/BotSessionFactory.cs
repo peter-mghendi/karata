@@ -1,7 +1,7 @@
 using Karata.Kit.Bot.Strategy;
 using Karata.Kit.Cards.Connection;
 using Karata.Kit.Cards.Engine;
-using Karata.Kit.Cards.Models;
+using Karata.Kit.Platform.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Karata.Runtime.Bot.Services;

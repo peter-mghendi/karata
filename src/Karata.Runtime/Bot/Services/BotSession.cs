@@ -7,6 +7,7 @@ using Karata.Kit.Cards.Engine;
 using Karata.Kit.Cards.Engine.Exceptions;
 using Karata.Kit.Cards.Models;
 using Karata.Kit.Cards.State;
+using Karata.Kit.Platform.Models;
 using Karata.Pebble.Interceptors;
 using Karata.Pips.Extensions;
 using Microsoft.Extensions.Logging;

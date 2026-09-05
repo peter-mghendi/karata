@@ -1,5 +1,3 @@
-using Karata.Kit.Cards.Models;
-
 namespace Karata.Kit.Platform.Models;
 
 public record ActivityData
