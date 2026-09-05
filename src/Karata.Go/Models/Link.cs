@@ -10,7 +10,7 @@ public class Link
     public required string Application { get; set; }
     public required User Creator { get; set; }
     public required DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset? DeletedAt { get; set; }
+    public DateTimeOffset? ExpiredAt { get; set; }
 
     public LinkData ToData() => new()
     {
@@ -19,6 +19,6 @@ public class Link
         Application = Application,
         Creator = Creator,
         CreatedAt = CreatedAt,
-        DeletedAt = DeletedAt,
+        ExpiredAt = ExpiredAt,
     };
 }

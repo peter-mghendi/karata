@@ -9,5 +9,5 @@ public record LinkData
     public required string Application { get; set; }
     public required UserData Creator { get; set; }
     public required DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset? DeletedAt { get; set; }
+    public DateTimeOffset? ExpiredAt { get; set; }
 }

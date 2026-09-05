@@ -41,12 +41,12 @@ namespace Karata.Go.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Destination")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ExpiredAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Slug");
 

@@ -74,12 +74,12 @@ public sealed class LinkHandler
         var link = await db.Links
             .AsNoTracking()
             .Include(link => link.Creator)
-            .SingleOrDefaultAsync(l => l.Slug == slug && l.DeletedAt != null);
+            .SingleOrDefaultAsync(l => l.Slug == slug && l.ExpiredAt != null);
 
         if (link is null) return NoContent();
         if (link.Creator.Id != subject) Forbid();
 
-        link.DeletedAt = DateTimeOffset.UtcNow;
+        link.ExpiredAt = DateTimeOffset.UtcNow;
 
         await db.SaveChangesAsync();
         return NoContent();

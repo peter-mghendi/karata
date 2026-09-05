@@ -11,7 +11,7 @@ public sealed class RedirectHandler
     public static async Task<Results<RedirectHttpResult, NotFound>> To(
         [FromServices] GoContext db,
         [FromRoute] string slug
-    ) => await db.Links.AsNoTracking().SingleOrDefaultAsync(l => l.Slug == slug && l.DeletedAt != null) switch
+    ) => await db.Links.AsNoTracking().SingleOrDefaultAsync(l => l.Slug == slug && l.ExpiredAt != null) switch
     {
         { } link => Redirect(link.Destination.ToString(), permanent: false),
         null => NotFound()
