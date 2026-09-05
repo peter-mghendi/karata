@@ -1,11 +1,4 @@
-using Karata.Kit.Platform.Models;
-using Karata.Platform.Data;
 using Karata.Platform.Handlers;
-using Karata.Platform.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using static Microsoft.AspNetCore.Http.TypedResults;
 
 namespace Karata.Platform;
 

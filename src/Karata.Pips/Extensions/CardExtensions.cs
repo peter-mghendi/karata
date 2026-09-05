@@ -1,4 +1,3 @@
-using static Karata.Pips.Card;
 using static Karata.Pips.Card.CardColor;
 using static Karata.Pips.Card.CardFace;
 using static Karata.Pips.Card.CardSuit;

@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Karata.Kit.Cards.Models;
+using Karata.Kit.Platform.Models;
 using Karata.Pebble;
 using Karata.Pebble.Interceptors;
 using Karata.Pebble.StateActions;

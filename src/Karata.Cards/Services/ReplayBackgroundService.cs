@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using Karata.Cards.Data;
 using Karata.Cards.Hubs;
 using Karata.Cards.Hubs.Clients;
-using Karata.Cards.Models;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Karata.Cards.Services;

@@ -127,6 +127,62 @@ dotnet publish src/Karata.Platform -c Release
 
 ---
 
+#### Karata.Go
+
+`Karata.Go` is a tiny link shortener service that understands Karata auth, intended to be used by other services.
+It is built on the the `Karata.Runtime` "framework".
+
+##### Docker (recommended)
+
+The latest server image is published to GitHub Container Registry:
+
+Pull
+
+```shell
+docker pull ghcr.io/peter-mghendi/karata-go:latest
+```
+
+Run:
+
+```shell
+docker run -d \
+  --name karata-go \
+  --env-file path/to/your/.env \
+  -p 5000:5000 \
+  ghcr.io/peter-mghendi/karata-go:latest
+```
+
+A PostgreSQL-compatible database is required.
+
+##### Pre-built binary
+
+Pre-built server binaries are attached to GitHub Releases.
+
+Builds are currently available for:
+
+- `linux-arm64`
+- `linux-x64`
+
+```
+chmod +x karata-server
+source path/to/your/.env ./karata-server
+```
+
+The server expects its configuration to be supplied via environment variables.
+
+##### Building from source
+
+Build from source:
+
+```shell#### Karata.Go
+git clone https://github.com/peter-mghendi/karata.git
+cd karata
+
+dotnet publish src/Karata.Go -c Release
+```
+
+---
+
 #### Karata.Cards
 
 `Karata.Cards` is the supported card game server runtime.

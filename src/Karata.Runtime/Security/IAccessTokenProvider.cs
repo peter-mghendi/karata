@@ -1,5 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
-using Karata.Kit.Cards.Models;
+using Karata.Kit.Platform.Models;
 
 namespace Karata.Runtime.Security;
 

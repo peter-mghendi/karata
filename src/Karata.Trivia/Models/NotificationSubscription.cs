@@ -1,5 +1,3 @@
-using Karata.Trivia.Data;
-
 namespace Karata.Trivia.Models;
 
 public class NotificationSubscription

@@ -4,6 +4,7 @@
     <ProjectReference Include="..\Karata.Bot\Karata.Bot.csproj" />
     <ProjectReference Include="..\Karata.Cards\Karata.Cards.csproj" />
     <ProjectReference Include="..\Karata.Desktop\Karata.Desktop.csproj" />
+    <ProjectReference Include="..\Karata.Go\Karata.Go.csproj" />
     <ProjectReference Include="..\Karata.Platform\Karata.Platform.csproj" />
     <ProjectReference Include="..\Karata.Trivia\Karata.Trivia.csproj" />
     <ProjectReference Include="..\Karata.Web\Karata.Web.csproj" />

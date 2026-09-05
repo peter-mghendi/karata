@@ -2,6 +2,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Karata.Kit.Cards.Models;
+using Karata.Kit.Platform.Models;
 using Karata.Pips;
 
 namespace Karata.Kit.Cards.Connection;

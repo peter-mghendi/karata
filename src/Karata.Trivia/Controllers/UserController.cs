@@ -1,4 +1,4 @@
-using Karata.Kit.Cards.Models;
+using Karata.Kit.Platform.Models;
 using Karata.Runtime.Infrastructure;
 using Karata.Trivia.Data;
 using Karata.Trivia.Extensions;

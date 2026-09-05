@@ -1,7 +1,6 @@
 using Karata.Cards.Data;
 using Karata.Cards.Hubs;
 using Karata.Cards.Hubs.Clients;
-using Karata.Cards.Models;
 using Karata.Cards.Support.Exceptions;
 using Karata.Kit.Cards.Models;
 using Microsoft.AspNetCore.SignalR;

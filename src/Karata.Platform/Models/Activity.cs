@@ -1,6 +1,4 @@
-using Karata.Kit.Cards.Models;
 using Karata.Kit.Platform.Models;
-using OpenTelemetry.Trace;
 
 namespace Karata.Platform.Models;
 

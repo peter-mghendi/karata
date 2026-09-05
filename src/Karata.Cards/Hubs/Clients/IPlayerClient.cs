@@ -1,4 +1,5 @@
 using Karata.Kit.Cards.Models;
+using Karata.Kit.Platform.Models;
 
 namespace Karata.Cards.Hubs.Clients;
 

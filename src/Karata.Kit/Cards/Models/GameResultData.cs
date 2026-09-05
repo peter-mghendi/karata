@@ -1,3 +1,5 @@
+using Karata.Kit.Platform.Models;
+
 namespace Karata.Kit.Cards.Models;
 
 public record GameResultData

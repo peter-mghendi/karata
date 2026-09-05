@@ -1,6 +1,5 @@
 using System.Collections.Frozen;
 using System.ComponentModel.DataAnnotations.Schema;
-using Karata.Trivia.Data;
 
 namespace Karata.Trivia.Models;
 
