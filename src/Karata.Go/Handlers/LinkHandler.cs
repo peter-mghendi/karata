@@ -42,7 +42,8 @@ public sealed class LinkHandler
                 Attempts = attempts,
                 Application = application,
                 Creator = user!,
-                CreatedAt = DateTimeOffset.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
+                ExpiredAt = request.ExpiresAt
             };
 
             try
