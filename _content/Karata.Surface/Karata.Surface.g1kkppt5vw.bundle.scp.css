@@ -1,0 +1,71 @@
+/* _content/Karata.Surface/Components/Cards/CardComponent.razor.rz.scp.css */
+.card[b-4ko4ho6ngz] {
+    width: 70px;
+    float: left;
+    border: solid gray 1px;
+}
+
+.card:not(:first-child)[b-4ko4ho6ngz] {
+    margin-left: -55px;
+}
+    
+/* _content/Karata.Surface/Components/Cards/CardTableGameInterface.razor.rz.scp.css */
+#table[b-hnjm68iis9] {
+    --center-offset: 43.5%;
+    --edge-offset-vertical: 16px;
+    --edge-offset-horizontal: 8px;
+}
+
+/*noinspection CssInvalidPseudoSelector*/
+[b-hnjm68iis9] #bottom .card{
+    position: relative;
+    transition-duration: 250ms;
+}
+
+/*noinspection CssInvalidPseudoSelector*/
+[b-hnjm68iis9] #bottom .card:hover {
+    z-index: 10;
+    box-shadow:  2px 2px 3px gray;
+    margin-top: -10px;
+}
+
+#top[b-hnjm68iis9] {
+    left: var(--center-offset);
+    top: var(--edge-offset-vertical);
+    transform: rotate(180deg);
+}
+
+#bottom[b-hnjm68iis9] {
+    right: var(--center-offset);
+    bottom: var(--edge-offset-vertical);
+    transform: rotate(0);
+}
+
+#left[b-hnjm68iis9] {
+    bottom: var(--center-offset);
+    left: var(--edge-offset-horizontal);
+    transform: rotate(90deg);
+}
+
+#right[b-hnjm68iis9] {
+    top: var(--center-offset);
+    right: var(--edge-offset-horizontal);
+    transform: rotate(270deg);
+}
+
+#deck[b-hnjm68iis9] {
+    top: 30%;
+    left: 40%;
+    width: 70px;
+}
+
+#pile[b-hnjm68iis9] {
+    top: 30%;
+    right: 40%;
+    width: 70px;
+}
+
+#turn[b-hnjm68iis9] {
+    bottom: 27.5%;
+    right: 43.5%;
+}
