@@ -36,7 +36,7 @@ public class GameController(TriviaContext context, ILogger<GameController> logge
         try
         {
             var game = await service.CreateGame(creator, request);
-            return CreatedAtAction("GetGame", new { identifier = game.Identifier }, game.AsResponse());
+            return CreatedAtAction("GetGame", new { id = game.Id }, game.AsResponse());
         }
         catch (BadHttpRequestException)
         {
@@ -44,14 +44,13 @@ public class GameController(TriviaContext context, ILogger<GameController> logge
         }
     }
 
-    [HttpGet("{identifier:guid}")]
-    public async Task<ActionResult<GameResponse>> GetGame(Guid identifier)
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<GameResponse>> GetGame(Guid id)
     {
         var game = await context.Games
             .Include(g => g.Topic)
-            .Include(g => g.PlayerOne)
-            .Include(g => g.PlayerTwo)
-            .SingleOrDefaultAsync(g => g.Identifier == identifier);
+            .Include(g => g.Players)
+            .SingleOrDefaultAsync(g => g.Id == id);
 
         if (game is null) return NotFound();
 

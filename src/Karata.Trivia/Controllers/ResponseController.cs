@@ -49,28 +49,33 @@ public class ResponseController(
         var response = new Response
         {
             TimeLeft = request.TimeLeft,
-            Points = CalculatePoints(round, choice, request.TimeLeft),
+            Score = CalculatePoints(round, choice, request.TimeLeft),
+            SubmittedAt = DateTimeOffset.UtcNow,
+            GameId = game.Id,
             Choice = choice,
-            User = user!,
+            User = user,
             Round = round,
         };
 
         round.Responses.Add(response);
 
-        if (round.Index is 6 && user.Id == game.PlayerTwo.Id)
+        if (round.Index is 6)
         {
-            var notification = new Notification
+            foreach (var player in game.Players.Where(player => player.Id != user.Id))
             {
-                Action = NotificationAction.Results,
-                SentAt = DateTimeOffset.UtcNow,
-                Game = game,
-                Recipient = game.PlayerOne
-            };
-            context.Notifications.Add(notification);
+                var notification = new Notification
+                {
+                    Action = NotificationAction.Results,
+                    SentAt = DateTimeOffset.UtcNow,
+                    Game = game,
+                    Recipient = player
+                };
+                context.Notifications.Add(notification);
 
-            await context.Entry(game.PlayerOne).Collection(u => u.NotificationSubscriptions).LoadAsync();
-            await hub.Clients.User(notification.Recipient.Id).ReceiveNotification(notification.AsResponse());
-            await PushNotificationService.SendNotificationAsync(notification);
+                await context.Entry(player).Collection(u => u.NotificationSubscriptions).LoadAsync();
+                await hub.Clients.User(notification.Recipient.Id).ReceiveNotification(notification.AsResponse());
+                await PushNotificationService.SendNotificationAsync(notification);
+            }
         }
 
         await context.SaveChangesAsync();
@@ -79,10 +84,9 @@ public class ResponseController(
         return round.Responses.Select(r => r.AsResponse()).ToList();
     }
 
-    private async Task<Game?> GetGameAsync(Guid identifier) => await context.Games
+    private async Task<Game?> GetGameAsync(Guid id) => await context.Games
         .Include(g => g.Topic)
-        .Include(g => g.PlayerOne)
-        .Include(g => g.PlayerTwo)
+        .Include(g => g.Players)
         .Include(g => g.Rounds)
         .ThenInclude(r => r.Question)
         .ThenInclude(q => q.Choices)
@@ -92,17 +96,13 @@ public class ResponseController(
         .Include(g => g.Rounds)
         .ThenInclude(r => r.Responses)
         .ThenInclude(r => r.User)
-        .SingleOrDefaultAsync(g => g.Identifier == identifier);
+        .SingleOrDefaultAsync(g => g.Id == id);
 
 
-    private static int CalculatePoints(Round round, Choice? choice, int time)
+    private static int CalculatePoints(Round round, Choice? choice, int time) => choice switch
     {
-        if (choice is null or { IsCorrect: false })
-        {
-            return 0;
-        }
-
-        var points = time + 10;
-        return round.Index + 1 == GameService.GameRounds ? points * 2 : points;
-    }
+        { IsCorrect: true } when round.Index + 1 == GameService.GameRounds => (time + 10) * 2,
+        { IsCorrect: true } => time + 10,
+        null or { IsCorrect: false } => 0
+    };
 }

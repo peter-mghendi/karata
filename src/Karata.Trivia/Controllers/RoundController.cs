@@ -42,10 +42,9 @@ public class RoundController(CurrentUserService<TriviaContext, User> current, Tr
         return CreateObfuscatedResponse(round, user);
     }
 
-    private async Task<Game?> GetGameAsync(Guid identifier) => await context.Games
+    private async Task<Game?> GetGameAsync(Guid id) => await context.Games
         .Include(g => g.Topic)
-        .Include(g => g.PlayerOne)
-        .Include(g => g.PlayerTwo)
+        .Include(g => g.Players)
         .Include(g => g.Rounds)
         .ThenInclude(r => r.Question)
         .ThenInclude(q => q.Choices)
@@ -55,7 +54,7 @@ public class RoundController(CurrentUserService<TriviaContext, User> current, Tr
         .Include(g => g.Rounds)
         .ThenInclude(r => r.Responses)
         .ThenInclude(r => r.User)
-        .SingleOrDefaultAsync(g => g.Identifier == identifier);
+        .SingleOrDefaultAsync(g => g.Id == id);
 
     // Obfuscate correct answer if we do not have a response for this user yet.
     // I will regret this code tomorrow

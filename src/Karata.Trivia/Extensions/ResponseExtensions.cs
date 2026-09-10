@@ -11,10 +11,9 @@ public static class ResponseExtensions
 
     public static GameResponse AsResponse(this Game game) => new(
         game.Id,
-        game.Identifier,
         game.Topic.AsResponse(),
-        game.PlayerOne.AsUserData(),
-        game.PlayerTwo.AsUserData()
+        game.Creator,
+        [..game.Players]
     );
 
     public static NotificationResponse AsResponse(this Notification notification)
@@ -48,7 +47,7 @@ public static class ResponseExtensions
     public static ResponseResponse AsResponse(this Response response) => new(
         response.Id,
         response.TimeLeft,
-        response.Points,
+        response.Score,
         response.Choice?.AsResponse(),
         response.User.AsUserData()
     );

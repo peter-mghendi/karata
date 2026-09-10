@@ -30,7 +30,9 @@
                     <MudStack AlignItems="AlignItems.Center">
                         <MudText Typo="Typo.h4">@Game.Topic.Title</MudText>
                         <MudText>@Game.Topic.Description</MudText>
-                        <MudText Class="mb-6">@(Game.PlayerOne.Username) vs @(Game.PlayerTwo.Username)</MudText>
+                        <MudText Class="mb-6">
+                            @(string.Join(" vs ", Game.Players.Select(player => player.Username)))
+                        </MudText>
 
                         @if (_forced)
                         {
@@ -54,7 +56,7 @@
                                    Disabled="@(_forced || !_waiting)">
                             Start!
                         </MudButton>
-                        <MudText Typo="Typo.caption" Style="color: var(--mud-palette-text-secondary)">@Game.Identifier</MudText>
+                        <MudText Typo="Typo.caption" Style="color: var(--mud-palette-text-secondary)">@Game.Id</MudText>
                     </MudStack>
                 </MudCardContent>
             </MudCard>

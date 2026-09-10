@@ -15,6 +15,7 @@ public class GameService(Client platform,  TriviaContext context, IHubContext<No
 {
     public const int GameRounds = 7;
 
+    // TODO: [Gap] Account for more than 2 players here
     public async Task<Game> CreateGame(User creator, CreateGameRequest request)
     {
         var topic = await context.Topics
@@ -40,10 +41,10 @@ public class GameService(Client platform,  TriviaContext context, IHubContext<No
 
         var game = new Game
         {
-            Identifier = Guid.CreateVersion7(),
+            CreatedAt = DateTimeOffset.UtcNow,
             Topic = topic,
-            PlayerOne = creator,
-            PlayerTwo = opponent,
+            Creator = creator,
+            Players = [creator, opponent],
             Rounds = rounds
         };
 

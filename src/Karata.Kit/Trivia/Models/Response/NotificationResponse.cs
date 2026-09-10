@@ -14,15 +14,15 @@ public record NotificationResponse(
     
     public string Text => Action switch
     {
-        NotificationAction.Play => $"{Game.PlayerOne.Username} has challenged you in {Game.Topic.Title}. Play now!",
-        NotificationAction.Results => $"{Game.PlayerTwo.Username} has completed your challenge in {Game.Topic.Title}. View results now!",
+        NotificationAction.Play => $"{Game.Creator.Username} has challenged you in {Game.Topic.Title}. Play now!",
+        NotificationAction.Results => $"A player has completed your challenge in {Game.Topic.Title}. View results now!",
         _ => throw new ArgumentOutOfRangeException()
     };
 
     public string Url => Action switch
     {
-        NotificationAction.Play => $"/trivia/game/{Game.Identifier}/play",
-        NotificationAction.Results => $"/trivia/game/{Game.Identifier}/results",
+        NotificationAction.Play => $"/trivia/game/{Game.Id}/play",
+        NotificationAction.Results => $"/trivia/game/{Game.Id}/results",
         _ => throw new ArgumentOutOfRangeException()
     };
 }

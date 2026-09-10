@@ -1,21 +1,20 @@
-using System.Collections.Frozen;
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace Karata.Trivia.Models;
 
 public class Game
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; }
     
-    public required Guid Identifier { get; set; }
+    public required DateTimeOffset CreatedAt { get; init; }
 
-    public required Topic Topic { get; set; }
+    public long TopicId { get; set; }
 
-    public required User PlayerOne { get; set; }
+    public required Topic Topic { get; init; }
 
-    public required User PlayerTwo { get; set; }
+    public required User Creator { get; init; }
+
+    public List<GameParticipant> Participants { get; init; } = [];
+    
+    public List<User> Players { get; init; } = [];
 
     public List<Round> Rounds { get; init; } = [];
-
-    [NotMapped] public FrozenSet<User> Players => [PlayerOne, PlayerTwo];
 }
