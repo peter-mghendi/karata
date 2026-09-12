@@ -16,28 +16,6 @@ public static class ResponseExtensions
         [..game.Players]
     );
 
-    public static NotificationResponse AsResponse(this Notification notification)
-    {
-        return new NotificationResponse(
-            notification.Id,
-            notification.Action,
-            notification.SentAt,
-            notification.ReadAt,
-            notification.Game.AsResponse()
-        );
-    }
-
-    public static NotificationSubscriptionData AsResponse(this NotificationSubscription subscription)
-    {
-        return new NotificationSubscriptionData(
-            NotificationSubscriptionId: subscription.Id,
-            UserId: subscription.User.Id,
-            Url: subscription.Url,
-            P256dh: subscription.P256dh,
-            Auth: subscription.Auth
-        );
-    }
-
     public static QuestionResponse AsResponse(this Question question) => new(
         question.Id,
         question.Text,

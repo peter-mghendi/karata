@@ -1,8 +1,6 @@
 using Karata.Kit.Platform;
-using Karata.Kit.Trivia.Models.Enum;
 using Karata.Kit.Trivia.Models.Request;
 using Karata.Trivia.Data;
-using Karata.Trivia.Extensions;
 using Karata.Trivia.Hubs;
 using Karata.Trivia.Hubs.Clients;
 using Karata.Trivia.Models;
@@ -48,21 +46,11 @@ public class GameService(Client platform,  TriviaContext context, IHubContext<No
             Rounds = rounds
         };
 
-        var notification = new Notification
-        {
-            Action = NotificationAction.Play,
-            SentAt = DateTimeOffset.UtcNow,
-            Game = game,
-            Recipient = opponent
-        };
-
         context.Games.Add(game);
-        context.Notifications.Add(notification);
         await context.SaveChangesAsync();
-        
-        await context.Entry(opponent).Collection(u => u.NotificationSubscriptions).LoadAsync();
-        await hub.Clients.User(opponent.Id).ReceiveNotification(notification.AsResponse());
-        await PushNotificationService.SendNotificationAsync(notification);
+
+        // TODO: [Notifications] Send push and signalr notification
+        // await hub.Clients.User(opponent.Id).ReceiveNotification(notification);
 
         return game;
     }

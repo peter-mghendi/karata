@@ -14,8 +14,4 @@
         <ProjectReference Include="..\Karata.Runtime\Karata.Runtime.csproj" />
         <ProjectReference Include="..\Karata.ServiceDefaults\Karata.ServiceDefaults.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Data\Migrations\" />
-    </ItemGroup>
 </Project>

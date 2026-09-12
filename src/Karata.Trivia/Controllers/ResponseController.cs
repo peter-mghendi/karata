@@ -1,4 +1,3 @@
-using Karata.Kit.Trivia.Models.Enum;
 using Karata.Kit.Trivia.Models.Request;
 using Karata.Kit.Trivia.Models.Response;
 using Karata.Runtime.Infrastructure;
@@ -63,18 +62,8 @@ public class ResponseController(
         {
             foreach (var player in game.Players.Where(player => player.Id != user.Id))
             {
-                var notification = new Notification
-                {
-                    Action = NotificationAction.Results,
-                    SentAt = DateTimeOffset.UtcNow,
-                    Game = game,
-                    Recipient = player
-                };
-                context.Notifications.Add(notification);
-
-                await context.Entry(player).Collection(u => u.NotificationSubscriptions).LoadAsync();
-                await hub.Clients.User(notification.Recipient.Id).ReceiveNotification(notification.AsResponse());
-                await PushNotificationService.SendNotificationAsync(notification);
+                // TODO: [Notifications] Send push and signalr notification
+                // await hub.Clients.User(player.Id).ReceiveNotification(notification);
             }
         }
 
