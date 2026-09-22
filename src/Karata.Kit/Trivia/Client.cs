@@ -17,8 +17,6 @@ public class Client(Client.Options options)
     
     public GameService Games => new(_client);
 
-    public NotificationService Notifications => new(_client);
-
     public ResponseService Responses => new(_client);
 
     public RoundService Rounds => new(_client);

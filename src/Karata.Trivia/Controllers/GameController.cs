@@ -1,6 +1,5 @@
 using Karata.Kit.Platform;
-using Karata.Kit.Trivia.Models.Request;
-using Karata.Kit.Trivia.Models.Response;
+using Karata.Kit.Trivia.Models;
 using Karata.Runtime.Infrastructure;
 using Karata.Trivia.Data;
 using Karata.Trivia.Extensions;
@@ -27,7 +26,7 @@ public class GameController(TriviaContext context, ILogger<GameController> logge
         [FromServices] CurrentUserService<TriviaContext, User> current,
         [FromServices] GameService service,
         [FromServices] Client platform,
-        [FromBody] CreateGameRequest request
+        [FromBody] GameRequest request
     )
     {
         var creator = await current.RequireAsync();

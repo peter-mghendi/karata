@@ -1,15 +1,11 @@
-using Karata.Kit.Trivia.Models.Request;
-using Karata.Kit.Trivia.Models.Response;
+using Karata.Kit.Trivia.Models;
 using Karata.Runtime.Infrastructure;
 using Karata.Trivia.Data;
 using Karata.Trivia.Extensions;
-using Karata.Trivia.Hubs;
-using Karata.Trivia.Hubs.Clients;
 using Karata.Trivia.Models;
 using Karata.Trivia.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Karata.Trivia.Controllers;
@@ -17,18 +13,15 @@ namespace Karata.Trivia.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/games/{identifier:guid}/rounds/{index:int}/responses")]
-public class ResponseController(
-    CurrentUserService<TriviaContext, User> current,
-    TriviaContext context,
-    IHubContext<NotificationHub, INotificationHubClient> hub
-) : ControllerBase
+public class ResponseController(CurrentUserService<TriviaContext, User> current, TriviaContext context) : ControllerBase
 {
+    // TODO: [Notifications] Send notification
     // POST: api/games/0085f04e-8a30-449e-91e1-38899b4d3ed5/rounds/3/responses
     [HttpPost]
     public async Task<ActionResult<IEnumerable<ResponseResponse>>> PostResponse(
         [FromRoute] Guid identifier,
         [FromRoute] int index,
-        [FromBody] CreateResponseRequest request
+        [FromBody] ResponseRequest request
     )
     {
         var game = await GetGameAsync(identifier);
@@ -57,16 +50,6 @@ public class ResponseController(
         };
 
         round.Responses.Add(response);
-
-        if (round.Index is 6)
-        {
-            foreach (var player in game.Players.Where(player => player.Id != user.Id))
-            {
-                // TODO: [Notifications] Send push and signalr notification
-                // await hub.Clients.User(player.Id).ReceiveNotification(notification);
-            }
-        }
-
         await context.SaveChangesAsync();
 
         // User has responded, do not obfuscate the response.

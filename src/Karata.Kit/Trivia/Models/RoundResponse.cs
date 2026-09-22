@@ -1,4 +1,4 @@
-namespace Karata.Kit.Trivia.Models.Response;
+namespace Karata.Kit.Trivia.Models;
 
 public record RoundResponse(long Id, int Index, QuestionResponse Question, List<ResponseResponse> Responses)
 {

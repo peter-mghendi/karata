@@ -1,4 +1,4 @@
-using Karata.Kit.Trivia.Models.Response;
+using Karata.Kit.Trivia.Models;
 using RestSharp;
 
 namespace Karata.Kit.Trivia.Services;

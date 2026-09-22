@@ -1,35 +1,27 @@
 using Karata.Kit.Platform;
-using Karata.Kit.Trivia.Models.Request;
+using Karata.Kit.Trivia.Models;
 using Karata.Trivia.Data;
-using Karata.Trivia.Hubs;
-using Karata.Trivia.Hubs.Clients;
 using Karata.Trivia.Models;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Karata.Trivia.Services;
 
-public class GameService(Client platform,  TriviaContext context, IHubContext<NotificationHub, INotificationHubClient> hub)
+public class GameService(Client platform,  TriviaContext context)
 {
     public const int GameRounds = 7;
 
     // TODO: [Gap] Account for more than 2 players here
-    public async Task<Game> CreateGame(User creator, CreateGameRequest request)
+    // TODO: [Notifications] Send notification
+    public async Task<Game> CreateGame(User creator, GameRequest request)
     {
         var topic = await context.Topics
             .Include(t => t.Questions)
             .SingleOrDefaultAsync(t => t.Id == request.TopicId);
 
-        if (topic is null)
-        {
-            throw new BadHttpRequestException("Topic not found.");
-        }
+        if (topic is null) throw new BadHttpRequestException("Topic not found.");
 
         var opponent = await FetchUserFromDatabase(request.OpponentId) ?? await FetchUserFromPlatform(request.OpponentId);
-        if (opponent is null)
-        {
-            throw new BadHttpRequestException("Opponent not found.");
-        }
+        if (opponent is null) throw new BadHttpRequestException("Opponent not found.");
 
         var rounds = topic.Questions
             .OrderBy(_ => Random.Shared.Next())
@@ -48,10 +40,6 @@ public class GameService(Client platform,  TriviaContext context, IHubContext<No
 
         context.Games.Add(game);
         await context.SaveChangesAsync();
-
-        // TODO: [Notifications] Send push and signalr notification
-        // await hub.Clients.User(opponent.Id).ReceiveNotification(notification);
-
         return game;
     }
 

@@ -1,6 +1,5 @@
 using Karata.Kit.Platform.Models;
 using Karata.Kit.Trivia.Models;
-using Karata.Kit.Trivia.Models.Response;
 using Karata.Trivia.Models;
 
 namespace Karata.Trivia.Extensions;

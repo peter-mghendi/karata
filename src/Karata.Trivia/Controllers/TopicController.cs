@@ -1,4 +1,4 @@
-using Karata.Kit.Trivia.Models.Response;
+using Karata.Kit.Trivia.Models;
 using Karata.Trivia.Data;
 using Karata.Trivia.Extensions;
 using Karata.Trivia.Models;

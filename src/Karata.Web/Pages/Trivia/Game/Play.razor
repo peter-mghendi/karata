@@ -1,10 +1,8 @@
 @page "/trivia/game/{Identifier:guid}/play"
-
-@using Karata.Kit.Trivia.Models.Response
 @using Karata.Kit.Trivia
-@using Karata.Kit.Trivia.Models.Request
 @using System.Timers
 @using Howler.Blazor.Components
+@using Karata.Kit.Trivia.Models
 @using Karata.Web.Extensions
 @using static System.Threading.Tasks.Task
 
@@ -175,7 +173,7 @@
     private async Task<ResponseResponse> SendResponse()
     {
         var time = Math.Clamp((int)Math.Round(TimeLeft, 0, MidpointRounding.AwayFromZero), 0, 10);
-        var request = new CreateResponseRequest(SelectedChoice!.Id, time);
+        var request = new ResponseRequest(SelectedChoice!.Id, time);
 
         Console.WriteLine($"Response: {request}");
         var responses = await QuizWars.Responses.CreateResponse(Identifier, CurrentRound!.Index, request);
