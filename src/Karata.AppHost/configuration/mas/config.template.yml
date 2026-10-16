@@ -1,0 +1,134 @@
+branding:
+  service_name: "Karata ID for Matrix"
+http:
+  listeners:
+    - name: web
+      resources:
+        - name: discovery
+        - name: human
+        - name: oauth
+        - name: compat
+        - name: graphql
+        - name: assets
+      binds:
+        - address: '[::]:8080'
+      proxy_protocol: false
+    - name: internal
+      resources:
+        - name: health
+      binds:
+        - address: '[::]:8081'
+      proxy_protocol: false
+  trusted_proxies:
+    - 192.168.0.0/16
+    - 172.16.0.0/12
+    - 10.0.0.0/10
+    - 127.0.0.1/8
+    - fd00::/8
+    - ::1/128
+  public_base: "{{MAS_PUBLIC_BASE}}"
+  issuer: "{{MAS_PUBLIC_BASE}}"
+database:
+  uri: "{{DATABASE_URL}}"
+  max_connections: 10
+  min_connections: 0
+  connect_timeout: 30
+  idle_timeout: 600
+  max_lifetime: 1800
+email:
+  from: '"Karata ID for Matrix" <id@localhost>'
+  reply_to: '"Karata ID for Matrix" <id@localhost>'
+  transport: blackhole
+secrets:
+  encryption: 0000000000000000000000000000000000000000000000000000000000000000
+  keys:
+    - key: |
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIEogIBAAKCAQEAwS0NTWAy/YKyIcI6EMJeQyIAnHbZ8CbKbJKUpZ4nBL8NtaLh
+        qtq29e57N7xqN0irU31tsBxmHA78ISny2gyt9sjhvuHoHZ2EeCzpdZIzY9WkDIGg
+        bWVhqbwR128BTpMJrn+O3SNVnes11RZIU+hfBsl+ERZ45Z8Xe9ZfRYqbFXfks0FF
+        Em7UMRCQ8DWkaPUUP9n/L08QG9+usrLkLu0vZeLQ26rr7YCYjjJJ1dwHdR5Rwcad
+        8UEljQ7Koi6uBPpPIWgGL8UILQBfksEwkk2hU0sSZJ/ZWyxd6Mu2gtXKS2qHIebe
+        qvexoXLM7tVwJlNvyMRRgRER/PKbzv1MEZ87yQIDAQABAoIBAFSFpNNdKxJXFB/H
+        PubEVMAk6YWMTzFPl7RHsniAqWvfOF1oBjtedT1H+mvZqdPEnQnr0ImE83yFZfYQ
+        x6x2bcuT+4osiAYlPKfkZsXFkWy2NpAuS4ZyHHhKzLepXzYFCfBq6ZSCeFyfZK92
+        j3D/NEzg7qMFZSJ7KKhLlOX1joOmbIzc1u9GRjiom/AWQUjQ7lqEFK5Il9Mf1nXC
+        FobznlTDG7jZzpqTr+B8ceoGg/gmjEZriCKLn1bHYy/lyrF0F1nvOCinkJE0x6hV
+        7ZYhM70LaRh6xN1QHe0qO6E+/j29MfFkA1Lcbyr+nw2wK3aqB+OFjzKPZh2drBL0
+        Jie+IU0CgYEA/V0IRhDwPOwBWmIx1SHANeuXC+i3wg92ds6/V1rlTjedVZNQkbB+
+        jXF3H7xVzQrU+VwHl0hYJslAeW8/POAuiQ2a7GGM64wry+9qNZiiEeS63Ca1eKve
+        F0rczfX+cRuZMf1jpG+rivoyLsa+qYOjhSfvTk+ZJOzp6/dcwzZqRdsCgYEAwy+t
+        tXxYiXEC/qlZfmt+1RpYFIu5ZgfX05ePxbSz0IAiSNU58OyqY0ewIp+BqEOJM22q
+        rxQ49gexsgseRWVoQAvnb759vIrI8fmxCwbSjGc5NfdRJknTUoGKu7POBgmDpaoo
+        5ClRwd2LEujTY4W4tI67VIXfuwXpcWNMSJQIgCsCgYARMCSFjFSf7WrSFONIkDeX
+        8NmYZztAIQhqWvBEHth7i+5SheHrYEvVkKMCNiaj+F4mZIXnT3Mbfn+vPUrO+G5v
+        wcqGyr9io2m9NgrAhBBKonfCw6WAADja36tHFa8jQToNWCFQYHsEvKB25+i7W0DW
+        obTsXR4IkUH1Thyu6ZwgDQKBgFOzdoKFOFJ4LBiY9s/HuTQZf/wPjwm6A0uxiu31
+        d8bJq+ofxiES3F6Gt3mhfTBzBbsQJEnAGk0nL4RyUCDiQ7pzYGQDBFh+C3343Xsl
+        CdU7zsTdsecBcaXH935WtNrR6ap5Nd/h+DVyk9kgDsZ26aZELwEoB7Fj75+4PVZC
+        ZQLRAoGAIRZsp0a1sOLkO/TaKCoqMZUykHbha/LebSuIgGUX/0F2sywC9XYUargT
+        gXz7fXF3/vol5WjZSXwv64LVFzDqWxepiLBO3g52Gowhd5+m7VcGQVJK2Vacilhr
+        BdY5RenCZMwYjHDM7rb5bMNzQ4GBYEQNcGp6BkZ5Q2PQNKjDql4=
+        -----END RSA PRIVATE KEY-----
+    - key: |
+        -----BEGIN EC PRIVATE KEY-----
+        MHcCAQEEIKvyh601I8fQUx9L6C6hzFvZAPxx29YK7Nrn7PDcYCuyoAoGCCqGSM49
+        AwEHoUQDQgAEfdZWC0gj9NvucNFKbjUQgEOsGAmY/9IqcGeD4kWdmDEVHQ07DkFn
+        FMcGhK0L/v30YpbdE7yROLn11lr9DVwreQ==
+        -----END EC PRIVATE KEY-----
+    - key: |
+        -----BEGIN EC PRIVATE KEY-----
+        MIGkAgEBBDAtz1Tk4Y5DKbvnAR4D2/ILG0HATM9bc1I7Sg6vLu/eU3YlgTmVKUfi
+        0iddKRt4UkWgBwYFK4EEACKhZANiAARSQl3M9gLhW+yM+LRvaHso3dv6m+Em23NN
+        QCvpYuWyQjmiJKwmJkv0B9uYQ9HweYQBsP6z+/MS9FHf+q1XbdikDrB4ZBjoHbaK
+        s2qcOuyDbaNtRCP2+lA+hhU1YYtmYhs=
+        -----END EC PRIVATE KEY-----
+    - key: |
+        -----BEGIN EC PRIVATE KEY-----
+        MHQCAQEEIGoDR1vJSxLDVgKtx0CQgrOiiRpKYAdmi5aLtMcyBo65oAcGBSuBBAAK
+        oUQDQgAEoFVg/Hokwh/HMo19BDUVahZ1bn5B9gMoDcD4eOitTz4SUmKqpRsOQdMY
+        UPzhWe2pbqcuqyNmRYuOMwBIDuDzhw==
+        -----END EC PRIVATE KEY-----
+passwords:
+  enabled: false
+  schemes:
+    - version: 1
+      algorithm: argon2id
+  minimum_complexity: 3
+registration:
+  enabled: false
+  require_email: false
+account:
+  email_change_allowed: true
+  display_name_change_allowed: true
+matrix:
+  kind: synapse
+  homeserver: "{{HOMESERVER_NAME}}"
+  secret: "{{MAS_SYNAPSE_SHARED_SECRET}}"
+  endpoint: "{{SYNAPSE_INTERNAL_URL}}"
+upstream_oauth2:
+  providers:
+    - id: "C0DE01CAFEBADC0FFEE0DDF00D"
+      brand_id: "keycloak"
+      display_name: "Sign in with Karata ID"
+      issuer: "{{KEYCLOAK_INTERNAL_ISSUER}}"
+      authorization_endpoint: "{{KEYCLOAK_EXTERNAL_ISSUER}}/protocol/openid-connect/auth"
+      token_endpoint: "{{KEYCLOAK_INTERNAL_ISSUER}}/protocol/openid-connect/token"
+      jwks_uri: "{{KEYCLOAK_INTERNAL_ISSUER}}/protocol/openid-connect/certs"
+      userinfo_endpoint: "{{KEYCLOAK_INTERNAL_ISSUER}}/protocol/openid-connect/userinfo"
+      discovery_mode: "insecure"
+      token_endpoint_auth_method: client_secret_basic
+      client_id: "mas"
+      client_secret: "00000000-0000-0000-0000-000000000000"
+      scope: "openid profile email"
+      claims_imports:
+        localpart:
+          action: require
+          template: "{{ user.preferred_username }}"
+        displayname:
+          action: suggest
+          template: "{{ user.name }}"
+        email:
+          action: suggest
+          template: "{{ user.email }}"
+          set_email_verification: import

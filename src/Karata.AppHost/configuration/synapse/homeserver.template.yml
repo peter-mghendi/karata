@@ -1,0 +1,39 @@
+server_name: "localhost"
+public_baseurl: "http://localhost:18000/"
+pid_file: /data/homeserver.pid
+listeners:
+  - port: 18000
+    resources:
+      - compress: false
+        names:
+          - client
+          - federation
+    tls: false
+    type: http
+    x_forwarded: true
+database:
+  name: psycopg2
+  txn_limit: 10000
+  args:
+    user: "{{POSTGRES_USER}}"
+    password: "{{POSTGRES_PASSWORD}}"
+    dbname: synapse_db
+    host: "{{POSTGRES_HOST}}"
+    port: 5432
+    cp_min: 5
+    cp_max: 10
+log_config: "/data/log.yml"
+media_store_path: /data/media_store
+registration_shared_secret: "B~y~29AsU37PiPImPz+Dv6eD3gA7O3^Dr;PN_GBPO9j*Na.TUO"
+report_stats: true
+macaroon_secret_key: "+BwCjV#6OU8;jpz5l+YGxff;pfhYwb9sKkTVpr#59JpcGm5&~8"
+form_secret: "Vf#d29GR-*H0j9QFca-i2g9+awY_3#lGw5MD~C6=5IaEx~f++y"
+signing_key_path: "/data/signing.key"
+trusted_key_servers:
+  - server_name: "matrix.org"
+password_config:
+  enabled: false
+matrix_authentication_service:
+  enabled: true
+  endpoint: "{{MAS_INTERNAL_URL}}"
+  secret: "{{MAS_SYNAPSE_SHARED_SECRET}}"
