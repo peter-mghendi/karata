@@ -1,5 +1,4 @@
-using Karata.Kit.Trivia.Models.Request;
-using Karata.Kit.Trivia.Models.Response;
+using Karata.Kit.Trivia.Models;
 using RestSharp;
 
 namespace Karata.Kit.Trivia.Services;
@@ -12,9 +11,9 @@ public class GameService(RestClient client)
         return response!;
     } 
     
-    public async Task<GameResponse> CreateGame(CreateGameRequest request)
+    public async Task<GameResponse> CreateGame(GameRequest request)
     {
-        var response = await client.PostJsonAsync<CreateGameRequest, GameResponse>("games", request);
+        var response = await client.PostJsonAsync<GameRequest, GameResponse>("games", request);
         return response!;
     } 
 }

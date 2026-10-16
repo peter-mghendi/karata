@@ -1,6 +1,5 @@
 using Karata.Kit.Platform.Models;
 using Karata.Kit.Trivia.Models;
-using Karata.Kit.Trivia.Models.Response;
 using Karata.Trivia.Models;
 
 namespace Karata.Trivia.Extensions;
@@ -11,33 +10,10 @@ public static class ResponseExtensions
 
     public static GameResponse AsResponse(this Game game) => new(
         game.Id,
-        game.Identifier,
         game.Topic.AsResponse(),
-        game.PlayerOne.AsUserData(),
-        game.PlayerTwo.AsUserData()
+        game.Creator,
+        [..game.Players]
     );
-
-    public static NotificationResponse AsResponse(this Notification notification)
-    {
-        return new NotificationResponse(
-            notification.Id,
-            notification.Action,
-            notification.SentAt,
-            notification.ReadAt,
-            notification.Game.AsResponse()
-        );
-    }
-
-    public static NotificationSubscriptionData AsResponse(this NotificationSubscription subscription)
-    {
-        return new NotificationSubscriptionData(
-            NotificationSubscriptionId: subscription.Id,
-            UserId: subscription.User.Id,
-            Url: subscription.Url,
-            P256dh: subscription.P256dh,
-            Auth: subscription.Auth
-        );
-    }
 
     public static QuestionResponse AsResponse(this Question question) => new(
         question.Id,
@@ -48,7 +24,7 @@ public static class ResponseExtensions
     public static ResponseResponse AsResponse(this Response response) => new(
         response.Id,
         response.TimeLeft,
-        response.Points,
+        response.Score,
         response.Choice?.AsResponse(),
         response.User.AsUserData()
     );

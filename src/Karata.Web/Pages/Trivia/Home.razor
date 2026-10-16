@@ -1,14 +1,10 @@
 ﻿@page "/trivia"
 
-@using Howler.Blazor.Components
 @using Karata.Kit.Trivia
 @using Karata.Kit.Trivia.Models
-@using Karata.Kit.Trivia.Models.Request
-@using Karata.Kit.Trivia.Models.Response
 @using Karata.Surface.Components.Trivia.Dialogs
 @using Karata.Web.Extensions
 @using Microsoft.AspNetCore.SignalR.Client
-@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using Microsoft.Extensions.Options
 
 @attribute [Authorize]
@@ -16,11 +12,8 @@
 @implements IAsyncDisposable
 
 @inject IDialogService DialogService
-@inject IHowl Howl
-@inject IJSRuntime JsRuntime
-@inject IServiceProvider Services
 @inject NavigationManager Navigation
-@inject Client QuizWars
+@inject Client Trivia
 @inject IOptions<Client.Options> ClientOptions
 
 <PageTitle>Home</PageTitle>
@@ -52,8 +45,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _ = RequestNotificationSubscriptionAsync();
-        Topics = await QuizWars.Topics.GetTopics();
+        Topics = await Trivia.Topics.GetTopics();
 
         _hub = new HubConnectionBuilder()
             .WithUrl(new Uri(ClientOptions.Value.Host, "/hubs/notification"), options =>
@@ -64,25 +56,7 @@
             .AddJsonProtocol() // TODO: [Legacy] Use MessagePack
             .Build();
 
-        _hub.On<NotificationResponse>("ReceiveNotification", ShowNotification);
-
         await _hub.StartAsync();
-    }
-    
-    private async Task RequestNotificationSubscriptionAsync()
-    {
-        var subscription = await JsRuntime.InvokeAsync<NotificationSubscriptionData?>("push.request");
-        if (subscription is not null)
-        {
-            try
-            {
-                await QuizWars.Notifications.Subscribe(subscription);
-            }
-            catch (AccessTokenNotAvailableException ex)
-            {
-                ex.Redirect();
-            }
-        }
     }
 
     private async Task Play(TopicResponse topic)
@@ -93,10 +67,10 @@
             return;
         }
 
-        var request = new CreateGameRequest(topic.Id, opponent);
-        var game = await QuizWars.Games.CreateGame(request);
+        var request = new GameRequest(topic.Id, opponent);
+        var game = await Trivia.Games.CreateGame(request);
 
-        Navigation.NavigateTo($"trivia/game/{game.Identifier}/play");
+        Navigation.NavigateTo($"trivia/game/{game.Id}/play");
     }
 
     private async Task<string?> SelectUser()
@@ -105,14 +79,6 @@
         var result = await dialog.Result;
 
         return result?.Data as string;
-    }
-
-    private async Task ShowNotification(NotificationResponse notification)
-    {
-        await Howl.Play("/audio/notification.mp3");
-        
-        var parameters = new DialogParameters<NotificationDialog> { { x => x.Notification, notification } };
-        await DialogService.ShowAsync<NotificationDialog>("Notification", parameters);
     }
 
     public ValueTask DisposeAsync()

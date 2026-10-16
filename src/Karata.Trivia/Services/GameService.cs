@@ -1,36 +1,27 @@
 using Karata.Kit.Platform;
-using Karata.Kit.Trivia.Models.Enum;
-using Karata.Kit.Trivia.Models.Request;
+using Karata.Kit.Trivia.Models;
 using Karata.Trivia.Data;
-using Karata.Trivia.Extensions;
-using Karata.Trivia.Hubs;
-using Karata.Trivia.Hubs.Clients;
 using Karata.Trivia.Models;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Karata.Trivia.Services;
 
-public class GameService(Client platform,  TriviaContext context, IHubContext<NotificationHub, INotificationHubClient> hub)
+public class GameService(Client platform,  TriviaContext context)
 {
     public const int GameRounds = 7;
 
-    public async Task<Game> CreateGame(User creator, CreateGameRequest request)
+    // TODO: [Gap] Account for more than 2 players here
+    // TODO: [Notifications] Send notification
+    public async Task<Game> CreateGame(User creator, GameRequest request)
     {
         var topic = await context.Topics
             .Include(t => t.Questions)
             .SingleOrDefaultAsync(t => t.Id == request.TopicId);
 
-        if (topic is null)
-        {
-            throw new BadHttpRequestException("Topic not found.");
-        }
+        if (topic is null) throw new BadHttpRequestException("Topic not found.");
 
         var opponent = await FetchUserFromDatabase(request.OpponentId) ?? await FetchUserFromPlatform(request.OpponentId);
-        if (opponent is null)
-        {
-            throw new BadHttpRequestException("Opponent not found.");
-        }
+        if (opponent is null) throw new BadHttpRequestException("Opponent not found.");
 
         var rounds = topic.Questions
             .OrderBy(_ => Random.Shared.Next())
@@ -40,29 +31,15 @@ public class GameService(Client platform,  TriviaContext context, IHubContext<No
 
         var game = new Game
         {
-            Identifier = Guid.CreateVersion7(),
+            CreatedAt = DateTimeOffset.UtcNow,
             Topic = topic,
-            PlayerOne = creator,
-            PlayerTwo = opponent,
+            Creator = creator,
+            Players = [creator, opponent],
             Rounds = rounds
         };
 
-        var notification = new Notification
-        {
-            Action = NotificationAction.Play,
-            SentAt = DateTimeOffset.UtcNow,
-            Game = game,
-            Recipient = opponent
-        };
-
         context.Games.Add(game);
-        context.Notifications.Add(notification);
         await context.SaveChangesAsync();
-        
-        await context.Entry(opponent).Collection(u => u.NotificationSubscriptions).LoadAsync();
-        await hub.Clients.User(opponent.Id).ReceiveNotification(notification.AsResponse());
-        await PushNotificationService.SendNotificationAsync(notification);
-
         return game;
     }
 

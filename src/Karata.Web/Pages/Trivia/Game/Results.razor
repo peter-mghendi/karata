@@ -3,8 +3,8 @@
 @using BlafettisLib
 @using Howler.Blazor.Components
 @using Karata.Kit.Platform.Models
-@using Karata.Kit.Trivia.Models.Response
 @using Karata.Kit.Trivia
+@using Karata.Kit.Trivia.Models
 @using Karata.Web.Extensions
 
 @inject AuthenticationStateProvider Authenticator
@@ -15,9 +15,10 @@
 
 <MudContainer MaxWidth="MaxWidth.Large">
     <MudStack>
-        <Blafettis @ref="_blafettis" spread="90"/>
+        <Blafettis @ref="@_blafettis" spread="90"/>
 
-        @if (Game is null || Rounds is { Count: 0 })
+        @* HACK: Should not need to check for Me being null here *@
+        @if (Game is null || Me is null || Rounds is { Count: 0 })
         {
             <MudText>Loading...</MudText>
         }
@@ -30,17 +31,15 @@
                         <MudText Typo="Typo.h4">@Game.Topic.Title</MudText>
                         <MudText>@Game.Topic.Description</MudText>
                         <MudGrid Class="mb-4">
-                            <MudItem xs="6">
-                                <PlayerDisplay Player="Game.PlayerOne" Rounds="Rounds" Me="Me"/>
-                            </MudItem>
-                            <MudItem xs="6">
-                                <PlayerDisplay Player="Game.PlayerTwo" Rounds="Rounds" Me="Me"/>
-                            </MudItem>
+                            @foreach (var player in Game.Players)
+                            {
+                                <MudItem xs="6">
+                                    <PlayerDisplay Player="@player" Rounds="@Rounds" Me="@Me"/>
+                                </MudItem>
+                            }
                         </MudGrid>
 
-                        <MudText Typo="Typo.caption" Style="color: var(--mud-palette-text-secondary)">
-                            @Game.Identifier
-                        </MudText>
+                        <MudText Typo="Typo.caption" Style="color: var(--mud-palette-text-secondary)">@Game.Id</MudText>
                     </MudStack>
                 </MudCardContent>
             </MudCard>
@@ -122,7 +121,7 @@
 
     private UserData? Me => Game?.Players.SingleOrDefault(player => player.Username == _username);
 
-    private List<ChartSeries<double>> Series => [PlayerSeries(Game!.PlayerOne), PlayerSeries(Game!.PlayerTwo)];
+    private List<ChartSeries<double>> Series => [..Game!.Players.Select(PlayerSeries)];
 
     private static readonly string[] Labels = Enumerable.Range(0, 8).Select(x => x.ToString()).ToArray();
 
@@ -136,8 +135,7 @@
         Game = await QuizWars.Games.GetGame(Identifier);
         Rounds = await QuizWars.Rounds.GetRounds(Identifier);
 
-        var winner = Winner();
-        if (winner is not null && winner.Id == Me!.Id)
+        if (Winners() is [{ Id: var winnerId }] && winnerId == Me!.Id)
         {
             // await Howl.Play("/audio/win.mp3"); // Requires user interaction to play.
             _blafettis?.RaiseConfetti();
@@ -163,13 +161,11 @@
         return new ChartSeries<double> { Name = player.Username, Data = data };
     }
 
-    private UserData? Winner()
+    private UserData[] Winners() => Rounds.Any(r => r.Responses.Count < Game!.Players.Length) switch
     {
-        if (Rounds.Any(r => r.Responses.Count < 2)) return null;
-
-        var (p1, p2) = (Points(Game!.PlayerOne), Points(Game!.PlayerTwo));
-        return p1 > p2 ? Game.PlayerOne : p1 < p2 ? Game.PlayerTwo : null;
-    }
+        true => [.. Game!.Players.GroupBy(Points).MaxBy(x => x.Key)!],
+        false => []
+    };
 
     private int Points(UserData player) => Rounds
         .SelectMany(r => r.Responses)

@@ -8,21 +8,21 @@ public static class Endpoints
     {
         public void MapEndpoints()
         {
-            var api = endpoints.MapGroup("/api");
+            var api = endpoints.MapGroup("/api")
+                .RequireAuthorization();
 
             var activity = api.MapGroup("/activity");
-            activity.MapGet("", ActivityHandler.ListActivity).WithName(nameof(ActivityHandler.ListActivity));
-            activity.MapPost("", ActivityHandler.CreateActivity).WithName(nameof(ActivityHandler.CreateActivity))
-                .RequireAuthorization();
+            activity.MapGet("", ActivityHandler.ListActivity)
+                .WithName(nameof(ActivityHandler.ListActivity))
+                .AllowAnonymous();
+            activity.MapPost("", ActivityHandler.CreateActivity)
+                .WithName(nameof(ActivityHandler.CreateActivity));
 
-            // TODO [HTTP QUERY]: Change this to MapQuery once ASP.NET Core has support
-            api.MapGet("/profiles", ProfileHandler.ListProfiles)
-                .WithName(nameof(ProfileHandler.ListProfiles))
-                .RequireAuthorization();
-
-            api.MapGet("/profiles/{identifier}", ProfileHandler.GetProfile)
-                .WithName(nameof(ProfileHandler.GetProfile))
-                .RequireAuthorization();
+            var profiles = api.MapGroup("/profiles");
+            profiles.MapGet("", ProfileHandler.ListProfiles)
+                .WithName(nameof(ProfileHandler.ListProfiles));
+            profiles.MapGet("/{identifier}", ProfileHandler.GetProfile)
+                .WithName(nameof(ProfileHandler.GetProfile));
         }
     }
 }

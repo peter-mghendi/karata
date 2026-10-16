@@ -298,6 +298,56 @@ jobs:
             karata-platform-linux-arm64.tar.gz
             karata-platform-linux-x64.tar.gz
 
+  trivia:
+    needs: [ version, verify, release ]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish OCI container
+        env:
+          ContainerImageTags: "${{ needs.version.outputs.version }};latest"
+        run: dotnet publish --configuration Release -p PublishProfile=DefaultContainer -p ContainerRegistry=ghcr.io src/Karata.Trivia/Karata.Trivia.csproj
+
+      - name: Publish arm64 binaries
+        run: |
+          dotnet publish --configuration Release --runtime linux-arm64 --output publish/arm64 src/Karata.Trivia/Karata.Trivia.csproj
+          tar -czf karata-trivia-linux-arm64.tar.gz publish/arm64/karata-trivia
+
+      - name: Publish x64 binaries
+        run: |
+          dotnet publish --configuration Release --runtime linux-x64 --output publish/x64 src/Karata.Trivia/Karata.Trivia.csproj
+          tar -czf karata-trivia-linux-x64.tar.gz publish/x64/karata-trivia
+
+      - name: Attach assets to release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: false
+          tag_name: ${{ needs.version.outputs.version }}
+          files: |
+            karata-trivia-linux-arm64.tar.gz
+            karata-trivia-linux-x64.tar.gz
+
   web:
     needs: [ version, verify, release ]
     runs-on: ubuntu-latest

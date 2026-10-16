@@ -1,10 +1,8 @@
 @page "/trivia/game/{Identifier:guid}/play"
-
-@using Karata.Kit.Trivia.Models.Response
 @using Karata.Kit.Trivia
-@using Karata.Kit.Trivia.Models.Request
 @using System.Timers
 @using Howler.Blazor.Components
+@using Karata.Kit.Trivia.Models
 @using Karata.Web.Extensions
 @using static System.Threading.Tasks.Task
 
@@ -30,7 +28,9 @@
                     <MudStack AlignItems="AlignItems.Center">
                         <MudText Typo="Typo.h4">@Game.Topic.Title</MudText>
                         <MudText>@Game.Topic.Description</MudText>
-                        <MudText Class="mb-6">@(Game.PlayerOne.Username) vs @(Game.PlayerTwo.Username)</MudText>
+                        <MudText Class="mb-6">
+                            @(string.Join(" vs ", Game.Players.Select(player => player.Username)))
+                        </MudText>
 
                         @if (_forced)
                         {
@@ -54,7 +54,7 @@
                                    Disabled="@(_forced || !_waiting)">
                             Start!
                         </MudButton>
-                        <MudText Typo="Typo.caption" Style="color: var(--mud-palette-text-secondary)">@Game.Identifier</MudText>
+                        <MudText Typo="Typo.caption" Style="color: var(--mud-palette-text-secondary)">@Game.Id</MudText>
                     </MudStack>
                 </MudCardContent>
             </MudCard>
@@ -173,7 +173,7 @@
     private async Task<ResponseResponse> SendResponse()
     {
         var time = Math.Clamp((int)Math.Round(TimeLeft, 0, MidpointRounding.AwayFromZero), 0, 10);
-        var request = new CreateResponseRequest(SelectedChoice!.Id, time);
+        var request = new ResponseRequest(SelectedChoice!.Id, time);
 
         Console.WriteLine($"Response: {request}");
         var responses = await QuizWars.Responses.CreateResponse(Identifier, CurrentRound!.Index, request);

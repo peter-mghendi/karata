@@ -3,7 +3,6 @@ using Karata.Kit;
 using Karata.Runtime;
 using Karata.Runtime.Security;
 using Karata.Trivia.Data;
-using Karata.Trivia.Hubs;
 using Karata.Trivia.Models;
 using Karata.Trivia.Services;
 
@@ -51,5 +50,4 @@ var app = builder.ConfigureRuntimeHost().Build();
 await app.InitializeKarataRuntimeAsync<TriviaContext, User>();
 
 app.MapControllers();
-app.MapHub<NotificationHub>("/hubs/notification", options => options.AllowStatefulReconnects = true);
 app.Run();

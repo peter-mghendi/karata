@@ -17,7 +17,7 @@ namespace Karata.Trivia.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.8")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -38,31 +38,29 @@ namespace Karata.Trivia.Data.Migrations
 
                     b.Property<string>("Text")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("QuestionId");
+
+                    b.HasIndex("Id", "QuestionId")
+                        .IsUnique();
 
                     b.ToTable("Choices");
                 });
 
             modelBuilder.Entity("Karata.Trivia.Models.Game", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<Guid>("Identifier")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("PlayerOneId")
-                        .HasColumnType("text");
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("PlayerTwoId")
-                        .IsRequired()
+                    b.Property<string>("CreatorId")
                         .HasColumnType("text");
 
                     b.Property<long>("TopicId")
@@ -70,77 +68,29 @@ namespace Karata.Trivia.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Identifier")
-                        .IsUnique();
-
-                    b.HasIndex("PlayerOneId");
-
-                    b.HasIndex("PlayerTwoId");
+                    b.HasIndex("CreatorId");
 
                     b.HasIndex("TopicId");
+
+                    b.HasIndex("Id", "TopicId")
+                        .IsUnique();
 
                     b.ToTable("Games");
                 });
 
-            modelBuilder.Entity("Karata.Trivia.Models.Notification", b =>
+            modelBuilder.Entity("Karata.Trivia.Models.GameParticipant", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("Action")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("GameId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("ReadAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("RecipientId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("SentAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GameId");
-
-                    b.HasIndex("RecipientId");
-
-                    b.ToTable("Notifications");
-                });
-
-            modelBuilder.Entity("Karata.Trivia.Models.NotificationSubscription", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Auth")
-                        .HasColumnType("text");
-
-                    b.Property<string>("P256dh")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("GameId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("UserId")
                         .HasColumnType("text");
 
-                    b.HasKey("Id");
+                    b.HasKey("GameId", "UserId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("NotificationSubscriptions");
+                    b.ToTable("GameParticipant");
                 });
 
             modelBuilder.Entity("Karata.Trivia.Models.Question", b =>
@@ -153,7 +103,8 @@ namespace Karata.Trivia.Data.Migrations
 
                     b.Property<string>("Text")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<long>("TopicId")
                         .HasColumnType("bigint");
@@ -161,6 +112,9 @@ namespace Karata.Trivia.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("TopicId");
+
+                    b.HasIndex("Id", "TopicId")
+                        .IsUnique();
 
                     b.ToTable("Questions");
                 });
@@ -173,28 +127,45 @@ namespace Karata.Trivia.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<long?>("ChoiceId")
+                    b.Property<long>("ChoiceId")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("Points")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("GameId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("QuestionId")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("RoundId")
                         .HasColumnType("bigint");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("TimeLeft")
                         .HasColumnType("integer");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ChoiceId");
-
-                    b.HasIndex("RoundId");
+                    b.HasIndex("SubmittedAt");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("ChoiceId", "QuestionId");
+
+                    b.HasIndex("GameId", "UserId");
+
+                    b.HasIndex("RoundId", "QuestionId");
+
+                    b.HasIndex("RoundId", "UserId")
+                        .IsUnique();
 
                     b.ToTable("Responses");
                 });
@@ -207,8 +178,8 @@ namespace Karata.Trivia.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("GameId")
-                        .HasColumnType("bigint");
+                    b.Property<Guid>("GameId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Index")
                         .HasColumnType("integer");
@@ -216,11 +187,23 @@ namespace Karata.Trivia.Data.Migrations
                     b.Property<long>("QuestionId")
                         .HasColumnType("bigint");
 
+                    b.Property<long>("TopicId")
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("GameId");
+                    b.HasIndex("GameId", "Index")
+                        .IsUnique();
 
-                    b.HasIndex("QuestionId");
+                    b.HasIndex("GameId", "QuestionId")
+                        .IsUnique();
+
+                    b.HasIndex("GameId", "TopicId");
+
+                    b.HasIndex("Id", "QuestionId")
+                        .IsUnique();
+
+                    b.HasIndex("QuestionId", "TopicId");
 
                     b.ToTable("Rounds");
                 });
@@ -229,17 +212,20 @@ namespace Karata.Trivia.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
                         .HasColumnType("bigint");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
@@ -265,7 +251,7 @@ namespace Karata.Trivia.Data.Migrations
                     b.HasOne("Karata.Trivia.Models.Question", "Question")
                         .WithMany("Choices")
                         .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Question");
@@ -273,51 +259,37 @@ namespace Karata.Trivia.Data.Migrations
 
             modelBuilder.Entity("Karata.Trivia.Models.Game", b =>
                 {
-                    b.HasOne("Karata.Trivia.Models.User", "PlayerOne")
+                    b.HasOne("Karata.Trivia.Models.User", "Creator")
                         .WithMany("CreatedGames")
-                        .HasForeignKey("PlayerOneId");
-
-                    b.HasOne("Karata.Trivia.Models.User", "PlayerTwo")
-                        .WithMany("InvitedGames")
-                        .HasForeignKey("PlayerTwoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CreatorId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Karata.Trivia.Models.Topic", "Topic")
-                        .WithMany()
+                        .WithMany("Games")
                         .HasForeignKey("TopicId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("PlayerOne");
-
-                    b.Navigation("PlayerTwo");
+                    b.Navigation("Creator");
 
                     b.Navigation("Topic");
                 });
 
-            modelBuilder.Entity("Karata.Trivia.Models.Notification", b =>
+            modelBuilder.Entity("Karata.Trivia.Models.GameParticipant", b =>
                 {
                     b.HasOne("Karata.Trivia.Models.Game", "Game")
-                        .WithMany()
+                        .WithMany("Participants")
                         .HasForeignKey("GameId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Karata.Trivia.Models.User", "Recipient")
+                    b.HasOne("Karata.Trivia.Models.User", "User")
                         .WithMany()
-                        .HasForeignKey("RecipientId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Game");
-
-                    b.Navigation("Recipient");
-                });
-
-            modelBuilder.Entity("Karata.Trivia.Models.NotificationSubscription", b =>
-                {
-                    b.HasOne("Karata.Trivia.Models.User", "User")
-                        .WithMany("NotificationSubscriptions")
-                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
@@ -327,7 +299,7 @@ namespace Karata.Trivia.Data.Migrations
                     b.HasOne("Karata.Trivia.Models.Topic", "Topic")
                         .WithMany("Questions")
                         .HasForeignKey("TopicId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Topic");
@@ -335,19 +307,31 @@ namespace Karata.Trivia.Data.Migrations
 
             modelBuilder.Entity("Karata.Trivia.Models.Response", b =>
                 {
+                    b.HasOne("Karata.Trivia.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Karata.Trivia.Models.Choice", "Choice")
                         .WithMany()
-                        .HasForeignKey("ChoiceId");
+                        .HasForeignKey("ChoiceId", "QuestionId")
+                        .HasPrincipalKey("Id", "QuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Karata.Trivia.Models.GameParticipant", null)
+                        .WithMany()
+                        .HasForeignKey("GameId", "UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Karata.Trivia.Models.Round", "Round")
                         .WithMany("Responses")
-                        .HasForeignKey("RoundId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("RoundId", "QuestionId")
+                        .HasPrincipalKey("Id", "QuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("Karata.Trivia.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
 
                     b.Navigation("Choice");
 
@@ -360,14 +344,16 @@ namespace Karata.Trivia.Data.Migrations
                 {
                     b.HasOne("Karata.Trivia.Models.Game", "Game")
                         .WithMany("Rounds")
-                        .HasForeignKey("GameId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("GameId", "TopicId")
+                        .HasPrincipalKey("Id", "TopicId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Karata.Trivia.Models.Question", "Question")
                         .WithMany()
-                        .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("QuestionId", "TopicId")
+                        .HasPrincipalKey("Id", "TopicId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Game");
@@ -377,6 +363,8 @@ namespace Karata.Trivia.Data.Migrations
 
             modelBuilder.Entity("Karata.Trivia.Models.Game", b =>
                 {
+                    b.Navigation("Participants");
+
                     b.Navigation("Rounds");
                 });
 
@@ -392,16 +380,14 @@ namespace Karata.Trivia.Data.Migrations
 
             modelBuilder.Entity("Karata.Trivia.Models.Topic", b =>
                 {
+                    b.Navigation("Games");
+
                     b.Navigation("Questions");
                 });
 
             modelBuilder.Entity("Karata.Trivia.Models.User", b =>
                 {
                     b.Navigation("CreatedGames");
-
-                    b.Navigation("InvitedGames");
-
-                    b.Navigation("NotificationSubscriptions");
                 });
 #pragma warning restore 612, 618
         }

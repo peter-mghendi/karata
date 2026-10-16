@@ -1,4 +1,4 @@
-using Karata.Kit.Trivia.Models.Response;
+using Karata.Kit.Trivia.Models;
 
 namespace Karata.Web.Extensions;
 

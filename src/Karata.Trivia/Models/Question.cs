@@ -6,6 +6,8 @@ public class Question
 
     public required string Text { get; set; }
 
+    public long TopicId { get; set; }
+
     public required Topic Topic { get; set; }
 
     public List<Choice> Choices { get; } = [];
