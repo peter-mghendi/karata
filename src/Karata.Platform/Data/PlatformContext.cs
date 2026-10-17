@@ -19,6 +19,7 @@ public class PlatformContext(DbContextOptions<PlatformContext> options) : Karata
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasPostgresExtension("timescaledb");
         modelBuilder.ApplyConfiguration(ActivityConfiguration.Instance);
     }
 }
