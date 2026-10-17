@@ -11,6 +11,9 @@ namespace Karata.Platform.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterDatabase()
+                .Annotation("Npgsql:PostgresExtension:timescaledb", ",,");
+
             migrationBuilder.CreateTable(
                 name: "Activity",
                 columns: table => new
@@ -20,9 +23,9 @@ namespace Karata.Platform.Data.Migrations
                     Subject = table.Column<string>(type: "text", nullable: false),
                     Application = table.Column<string>(type: "text", nullable: false),
                     Text = table.Column<string>(type: "text", nullable: false),
-                    RecordedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    Actions = table.Column<string>(type: "jsonb", nullable: false),
-                    Metadata = table.Column<string>(type: "jsonb", nullable: false)
+                    Actions = table.Column<string>(type: "text", nullable: false),
+                    Metadata = table.Column<string>(type: "text", nullable: false),
+                    RecordedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -43,6 +46,9 @@ namespace Karata.Platform.Data.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Activity");
+
+            migrationBuilder.AlterDatabase()
+                .OldAnnotation("Npgsql:PostgresExtension:timescaledb", ",,");
         }
     }
 }
