@@ -4,17 +4,12 @@
 @using Karata.Kit.Trivia.Models
 @using Karata.Surface.Components.Trivia.Dialogs
 @using Karata.Web.Extensions
-@using Microsoft.AspNetCore.SignalR.Client
-@using Microsoft.Extensions.Options
 
 @attribute [Authorize]
-
-@implements IAsyncDisposable
 
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
 @inject Client Trivia
-@inject IOptions<Client.Options> ClientOptions
 
 <PageTitle>Home</PageTitle>
 
@@ -40,23 +35,11 @@
 
 @code
 {
-    private HubConnection? _hub;
     private List<TopicResponse> Topics { get; set; } = [];
 
     protected override async Task OnInitializedAsync()
     {
         Topics = await Trivia.Topics.GetTopics();
-
-        _hub = new HubConnectionBuilder()
-            .WithUrl(new Uri(ClientOptions.Value.Host, "/hubs/notification"), options =>
-            {
-                options.AccessTokenProvider = ClientOptions.Value.TokenProvider;
-            })
-            .WithAutomaticReconnect()
-            .AddJsonProtocol() // TODO: [Legacy] Use MessagePack
-            .Build();
-
-        await _hub.StartAsync();
     }
 
     private async Task Play(TopicResponse topic)
@@ -79,10 +62,5 @@
         var result = await dialog.Result;
 
         return result?.Data as string;
-    }
-
-    public ValueTask DisposeAsync()
-    {
-        return _hub?.DisposeAsync() ?? ValueTask.CompletedTask;
     }
 }
