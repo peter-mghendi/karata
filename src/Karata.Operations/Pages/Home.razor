@@ -1,0 +1,17 @@
+@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">@Greeting</MudText>
+<MudText Class="mb-8">Welcome to karata operations!</MudText>
+
+@code
+{
+    private static string Greeting => DateTime.Now.Hour switch
+    {
+        >= 0 and < 12 => "Good Morning",
+        >= 12 and < 16 => "Good Afternoon",
+        >= 16 => "Good Evening",
+        _ => string.Empty
+    };
+}
