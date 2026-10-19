@@ -1,0 +1,31 @@
+@using Karata.Surface
+
+@inherits LayoutComponentBase
+
+@inject SurfaceTheme Theme
+
+<MudThemeProvider @ref="_themer" Theme="@_theme" IsDarkMode="_dark"/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _dark = true;
+    private readonly MudTheme? _theme = SurfaceTheme.Default;
+    private MudThemeProvider _themer = null!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dark = await Theme.GetDark(_themer);
+            StateHasChanged();
+        }
+    }
+}

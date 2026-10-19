@@ -42,6 +42,7 @@ public static class DependencyInjection
             services.InjectClipboard();
             services.AddMudServices();
             services.AddMudExtensions();
+            services.AddScoped<SurfaceTheme>();
             services.AddScoped<AuthenticationHelper>();
             services.AddScoped<IHowl, Howl>();
             services.AddScoped<IHowlGlobal, HowlGlobal>();

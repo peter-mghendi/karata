@@ -1,8 +1,9 @@
+@using Karata.Kit.Configuration
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Rounded.Home">
         Home
     </MudNavLink>
-    <MudNavLink Href="https://web.karata.app" Icon="@Icons.Material.Rounded.Web">
+    <MudNavLink Href="@Web.Host" Icon="@Icons.Material.Rounded.Web">
         Karata Web
     </MudNavLink>
 
@@ -41,3 +42,9 @@
         Questions
     </MudNavLink>
 </MudNavMenu>
+
+@code
+{
+    [Inject(Key = nameof(Web))]
+    public required HostConfiguration Web { get; set; }
+}
