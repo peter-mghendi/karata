@@ -7,6 +7,12 @@ namespace Karata.Kit.Cards.Services;
 
 public class RoomService(RestClient client)
 {
+    public async Task<int> CountAsync(RoomQuery query, CancellationToken cancellation = default)
+    {
+        var page = await QueryAsync(query, cancellation);
+        return page.TotalItems;
+    }
+    
     public async Task<Page<RoomData>> QueryAsync(RoomQuery query, CancellationToken cancellation = default)
     {
         // TODO: [HTTP QUERY]: RestSharp does not yet have support for RFC 10008 HTTP QUERY

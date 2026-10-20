@@ -54,7 +54,7 @@ public class SurfaceTheme(ILocalStorageService storage)
     
     public async Task SetDark(bool value) => await storage.SetItemAsync("karata:settings:dark", value);
     
-    public string ToggleIcon(bool dark) => dark switch
+    public static string ToggleIcon(bool dark) => dark switch
     {
         true => Icons.Material.Rounded.LightMode,
         false => Icons.Material.Rounded.DarkMode,

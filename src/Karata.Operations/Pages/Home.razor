@@ -1,17 +1,81 @@
 @page "/"
 
+@using Karata.Kit.Cards
+@using Karata.Kit.Cards.Models
+
+@inject Client Cards
+
 <PageTitle>Home</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">@Greeting</MudText>
-<MudText Class="mb-8">Welcome to karata operations!</MudText>
+<AuthorizeView Context="auth">
+    <Authorized>
+        <MudText Typo="Typo.h5" Class="mb-4">Hello, @auth.User.Identity!.Name!</MudText>
+
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="3">
+                <StatCard Title="Card Games"
+                          Value="@TotalCardRoomCount"
+                          Icon="@Icons.Material.Rounded.Style"
+                          Color="Color.Primary"
+                          Href="/cards/rooms"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <StatCard Title="Card Games in Lobby"
+                          Value="@LobbyCardRoomCount"
+                          Icon="@Icons.Material.Rounded.HourglassEmpty"
+                          Color="Color.Info"
+                          Href="/cards/rooms"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <StatCard Title="Ongoing Card Games"
+                          Value="@OngoingCardRoomCount"
+                          Icon="@Icons.Material.Rounded.PlayArrow"
+                          Color="Color.Success"
+                          Href="/cards/rooms"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <StatCard Title="Completed Card Games"
+                          Value="@OverCardRoomCount"
+                          Icon="@Icons.Material.Filled.CheckCircle"
+                          Color="Color.Default"
+                          Href="/cards/rooms"/>
+            </MudItem>
+        </MudGrid>
+    </Authorized>
+</AuthorizeView>
 
 @code
 {
-    private static string Greeting => DateTime.Now.Hour switch
+    private string? TotalCardRoomCount { get; set; }
+    private string? LobbyCardRoomCount { get; set; }
+    private string? OngoingCardRoomCount { get; set; }
+    private string? OverCardRoomCount { get; set; }
+
+    protected override async Task OnInitializedAsync()
     {
-        >= 0 and < 12 => "Good Morning",
-        >= 12 and < 16 => "Good Afternoon",
-        >= 16 => "Good Evening",
-        _ => string.Empty
-    };
+        await base.OnInitializedAsync();
+
+        var total = CountAsync();
+        var lobby = CountAsync(GameStatus.Lobby);
+        var ongoing = CountAsync(GameStatus.Ongoing);
+        var over = CountAsync(GameStatus.Over);
+
+        var counts = await Task.WhenAll(total, lobby, ongoing, over);
+
+        TotalCardRoomCount = counts[0].ToString();
+        LobbyCardRoomCount = counts[1].ToString();
+        OngoingCardRoomCount = counts[2].ToString();
+        OverCardRoomCount = counts[3].ToString();
+    }
+
+    private async Task<int> CountAsync(GameStatus? status = null)
+    {
+        var query = new RoomQuery(
+            Limit: 1,
+            Page: 1,
+            Filter: status is { } s ? new RoomFilter(GameStatuses: [s]) : null
+        );
+
+        return await Cards.Rooms.CountAsync(query);
+    }
 }

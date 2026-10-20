@@ -29,15 +29,10 @@
                          Color="Color.Error">
                     end session
                 </MudLink>
-                <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@ToggleDarkMode"/>
+                <MudIconButton Icon="@(ThemeToggleIcon)" Color="Color.Inherit" OnClick="@ToggleDarkMode"/>
             </MudAppBar>
 
-            <MudDrawer @bind-Open="_open" Elevation="1">
-                <MudDrawerHeader>
-                    <MudLink Href="/" Typo="Typo.h6" Color="Color.Default" Underline="Underline.None">
-                        operations
-                    </MudLink>
-                </MudDrawerHeader>
+            <MudDrawer @bind-Open="_open" ClipMode="DrawerClipMode.Docked" Variant="@DrawerVariant.Mini" OpenMiniOnHover Elevation="1">
                 <NavMenu/>
             </MudDrawer>
 
@@ -60,12 +55,13 @@
     private readonly MudTheme? _theme = SurfaceTheme.Default;
     private MudThemeProvider _themer = null!;
     
+    private string ThemeToggleIcon => SurfaceTheme.ToggleIcon(_dark);
+    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             _dark = await Theme.GetDark(_themer);
-            // StateHasChanged();
         }
     }
 
@@ -79,10 +75,4 @@
         _dark = !_dark;
         await Theme.SetDark(_dark);
     }
-
-    public string DarkLightModeButtonIcon => _dark switch
-    {
-        true => Icons.Material.Rounded.AutoMode,
-        false => Icons.Material.Outlined.DarkMode,
-    };
 }
