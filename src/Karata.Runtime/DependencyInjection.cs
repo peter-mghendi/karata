@@ -6,11 +6,11 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using static Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders;
 
 namespace Karata.Runtime;
 
@@ -24,24 +24,26 @@ public static class DependencyInjection
         internal Action<UserProvisioningOptions<TUser>> UserProvisioningConfiguration { get; private set; } = _ => { };
 
         public void UseSignalR(bool use = true) => IsSignalREnabled = use;
-        
+
         public void UseTokenExchange(bool use = true) => IsTokenExchangeEnabled = use;
 
         public void ConfigureDatabase(Action<DatabaseOptions> configure) => DatabaseConfiguration = configure;
 
-        public void ConfigureUserProvisioning(Action<UserProvisioningOptions<TUser>> configure) => UserProvisioningConfiguration = configure;
+        public void ConfigureUserProvisioning(Action<UserProvisioningOptions<TUser>> configure) =>
+            UserProvisioningConfiguration = configure;
     }
-    
+
     extension(IServiceCollection services)
     {
-        public IServiceCollection AddKarataRuntime<TContext, TUser>(IConfiguration configuration, Action<Options<TUser>> configure)
+        public IServiceCollection AddKarataRuntime<TContext, TUser>(IConfiguration configuration,
+            Action<Options<TUser>> configure)
             where TContext : KarataContext<TUser>
             where TUser : KarataUser
         {
             var compress = ResponseCompressionDefaults.MimeTypes;
             var runtime = new Options<TUser>();
             configure(runtime);
-                
+
             services.Configure(runtime.DatabaseConfiguration);
             services.Configure(runtime.UserProvisioningConfiguration);
 
@@ -90,7 +92,7 @@ public static class DependencyInjection
             return services;
         }
     }
-    
+
     extension(WebApplicationBuilder builder)
     {
         public WebApplicationBuilder ConfigureRuntimeHost()
@@ -99,6 +101,7 @@ public static class DependencyInjection
             {
                 builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(port));
             }
+
             return builder;
         }
     }
@@ -111,7 +114,7 @@ public static class DependencyInjection
         {
             await app.MaintainDatabaseAsync<TContext, TUser>();
 
-            app.UseForwardedHeaders(new() { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto });
+            app.UseForwardedHeaders(new() { ForwardedHeaders = XForwardedFor | XForwardedProto });
             app.UseResponseCompression();
 
             if (app.Environment.IsDevelopment())

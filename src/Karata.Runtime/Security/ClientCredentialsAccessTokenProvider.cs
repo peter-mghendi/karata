@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Keycloak.AuthServices.Common;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 
@@ -29,7 +30,7 @@ public sealed class ClientCredentialsAccessTokenProvider(
         {
             if (cache.TryGetValue(key, out string? sanity) && sanity is [_, ..]) return sanity;
 
-            var endpoint = $"{_authority}/protocol/openid-connect/token";
+            var endpoint = $"{_authority}/{KeycloakConstants.TokenEndpointPath}";
             var parameters = new Dictionary<string, string>
             {
                 ["grant_type"] = "client_credentials",

@@ -6,6 +6,7 @@ using Karata.Kit;
 using Karata.Kit.Cards.Engine;
 using Karata.Runtime;
 using Karata.Runtime.Security;
+using Keycloak.AuthServices.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,8 +27,7 @@ builder.Services
                 provisioning.Factory = principal => new User
                 {
                     Id = principal.FindFirstValue(ClaimTypes.NameIdentifier)!,
-                    // Email = principal.FindFirstValue(ClaimTypes.Email)!,
-                    Username = principal.FindFirstValue("preferred_username")!
+                    Username = principal.FindFirstValue(KeycloakConstants.NameClaimType)!
                 };
             });
         }

@@ -5,6 +5,7 @@ using Karata.Runtime.Infrastructure;
 using Karata.Trivia.Data;
 using Karata.Trivia.Extensions;
 using Karata.Trivia.Models;
+using Karata.Trivia.Security;
 using Karata.Trivia.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +21,7 @@ public class GameController(TriviaContext context, ILogger<GameController> logge
 {
     private const int MaxPageSize = 20;
 
+    [Authorize(Policy = nameof(GamePolicy.QueryGames))]
     [HttpGet]
     public async Task<ActionResult<Page<GameData>>> GetGames([FromQuery] GameQuery query)
     {

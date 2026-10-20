@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Keycloak.AuthServices.Common;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
@@ -37,7 +38,7 @@ public sealed class TokenExchangeAccessTokenProvider(
         {
             if (cache.TryGetValue(key, out string? sanity) && sanity is [_, ..]) return sanity;
             
-            var endpoint = $"{_authority}/protocol/openid-connect/token";
+            var endpoint = $"{_authority}/{KeycloakConstants.TokenEndpointPath}";
             var parameters = new Dictionary<string, string>
             {
                 ["grant_type"] = "urn:ietf:params:oauth:grant-type:token-exchange",

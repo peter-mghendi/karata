@@ -4,6 +4,7 @@ using Karata.Go.Data;
 using Karata.Go.Models;
 using Karata.Go.Services;
 using Karata.Runtime;
+using Keycloak.AuthServices.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 var db = builder.Configuration["DATABASE_URL"] is { } url
@@ -22,8 +23,7 @@ builder.Services
                 provisioning.Factory = principal => new User
                 {
                     Id = principal.FindFirstValue(ClaimTypes.NameIdentifier)!,
-                    // Email = principal.FindFirstValue(ClaimTypes.Email)!,
-                    Username = principal.FindFirstValue("preferred_username")!
+                    Username = principal.FindFirstValue(KeycloakConstants.NameClaimType)!
                 };
             });
         }

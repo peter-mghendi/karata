@@ -49,6 +49,15 @@
   "roles": {
     "realm": [
       {
+        "id": "940e729a-bdcb-43d4-b918-c8937f56b9e2",
+        "name": "trivia:admin",
+        "description": "",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "e4d33a2c-482e-49de-b67c-ae03a23d8986",
+        "attributes": {}
+      },
+      {
         "id": "112fe2df-0493-4689-ae13-2fbc1e24a44f",
         "name": "offline_access",
         "description": "${role_offline-access}",
@@ -2366,13 +2375,13 @@
         "config": {
           "allowed-protocol-mapper-types": [
             "saml-user-property-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
+            "oidc-usermodel-property-mapper",
             "oidc-address-mapper",
-            "oidc-full-name-mapper",
             "saml-role-list-mapper",
             "saml-user-attribute-mapper",
-            "oidc-usermodel-property-mapper",
-            "oidc-usermodel-attribute-mapper"
+            "oidc-sha256-pairwise-sub-mapper",
+            "oidc-usermodel-attribute-mapper",
+            "oidc-full-name-mapper"
           ]
         }
       },
@@ -2393,13 +2402,13 @@
         "config": {
           "allowed-protocol-mapper-types": [
             "oidc-sha256-pairwise-sub-mapper",
-            "saml-user-property-mapper",
+            "oidc-address-mapper",
+            "saml-user-attribute-mapper",
             "saml-role-list-mapper",
             "oidc-full-name-mapper",
-            "oidc-usermodel-property-mapper",
+            "saml-user-property-mapper",
             "oidc-usermodel-attribute-mapper",
-            "oidc-address-mapper",
-            "saml-user-attribute-mapper"
+            "oidc-usermodel-property-mapper"
           ]
         }
       },
