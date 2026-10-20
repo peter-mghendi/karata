@@ -12,7 +12,9 @@ public static class Endpoints
             var api = endpoints.MapGroup("/api");
 
             var rooms = api.MapGroup("/rooms");
-            rooms.MapGet("", RoomHandler.ListRooms).WithName(nameof(RoomHandler.ListRooms)).RequireAuthorization();
+            rooms.MapMethods("", [HttpMethods.Query], RoomHandler.QueryRooms)
+                .WithName(nameof(RoomHandler.QueryRooms))
+                .RequireAuthorization();
             rooms.MapPost("", RoomHandler.CreateRoom).WithName(nameof(RoomHandler.CreateRoom)).RequireAuthorization();
             rooms.MapGet("{id}", RoomHandler.GetRoom).WithName(nameof(RoomHandler.GetRoom));
 
@@ -23,7 +25,7 @@ public static class Endpoints
             turns.MapGet("", TurnHandler.ListTurns).WithName(nameof(TurnHandler.ListTurns)).RequireAuthorization();
         }
 
-        // TODO: [Legacy] Use MessagePack
+        // TODO: [Leg   acy] Use MessagePack
         public void MapHubs()
         {
             endpoints.MapHub<PlayerHub>("/hubs/game/play", options => options.AllowStatefulReconnects = true);

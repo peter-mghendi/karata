@@ -54,7 +54,7 @@ public partial class RoomMembershipService
         if (room.Game.Hands.Any(h => h.Player.Id == player.Id))
             return;
 
-        if (room.Visibility is RoomVisibility.Public or RoomVisibility.Unlisted)
+        if (room.Visibility is RoomVisibility.Public)
             return;
 
         throw new UnauthorizedActionException();

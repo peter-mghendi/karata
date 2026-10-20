@@ -1,31 +1,72 @@
 using Karata.Cards.Data;
 using Karata.Kit.Cards.Models;
+using Karata.Kit.Common.Models;
 using Karata.Kit.Configuration;
 using Karata.Kit.Platform;
 using Karata.Runtime.Infrastructure;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using static Karata.Kit.Cards.Models.GameStatus;
 using static Karata.Kit.Cards.Models.RoomVisibility;
 
 namespace Karata.Cards.Handlers;
 
 public static class RoomHandler
 {
-    public static async Task<Ok<List<RoomData>>> ListRooms([FromServices] CardsContext context)
+    private const int MaxPageSize = 20;
+
+    public static async Task<Ok<Page<RoomData>>> QueryRooms(
+        [FromServices] CardsContext context,
+        [FromBody] RoomQuery query
+    )
     {
-        // TODO: [Legacy] Hardcoding these conditions in for now because this endpoint is only used to find joinable games.
-        var rooms = await context.Rooms
-            .Where(room => room.Game.Status == Lobby)
-            .Where(room => room.Visibility == Public)
-            .Where(room => room.Game.Hands.Count < 4)
-            .OrderByDescending(room => room.CreatedAt)
-            .Take(5)
-            .Select(room => room.ToData())
+        var limit = Math.Clamp(query.Limit, 1, MaxPageSize);
+        var page = Math.Max(query.Page, 1);
+        var order = query.Order ?? new RoomOrder();
+
+        IQueryable<Room> rooms = context.Rooms;
+
+        if (query.Filter is { } filter)
+        {
+            if (filter.GameStatuses is { Length: > 0 })
+                rooms = rooms.Where(r => filter.GameStatuses.Contains(r.Game.Status));
+
+            if (filter.Visibilities is { Length: > 0 })
+                rooms = rooms.Where(r => filter.Visibilities.Contains(r.Visibility));
+
+            if (filter.MinHandCount is { } min)
+                rooms = rooms.Where(r => r.Game.Hands.Count >= min);
+
+            if (filter.MaxHandCount is { } max)
+                rooms = rooms.Where(r => r.Game.Hands.Count <= max);
+
+            if (filter.Creators is { Length: > 0 })
+                rooms = rooms.Where(r => filter.Creators.Contains(r.Creator.Id));
+
+            if (filter.Administrators is { Length: > 0 })
+                rooms = rooms.Where(r => filter.Administrators.Contains(r.Administrator.Id));
+        }
+
+        // Count after filtering, before ordering and paging.
+        var totalItems = await rooms.CountAsync();
+
+        var ordered = (order.Field, order.Direction) switch
+        {
+            (RoomOrderField.HandCount, SortDirection.Ascending) => rooms.OrderBy(r => r.Game.Hands.Count),
+            (RoomOrderField.HandCount, SortDirection.Descending) => rooms.OrderByDescending(r => r.Game.Hands.Count),
+            (RoomOrderField.CreatedAt, SortDirection.Ascending) => rooms.OrderBy(r => r.CreatedAt),
+            (RoomOrderField.CreatedAt, SortDirection.Descending) => rooms.OrderByDescending(r => r.CreatedAt),
+            _ => rooms.OrderByDescending(r => r.CreatedAt),
+        };
+
+        var items = await ordered
+            .ThenBy(r => r.Id)
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .Select(r => r.ToData())
             .ToListAsync();
 
-        return TypedResults.Ok(rooms);
+        return TypedResults.Ok(new Page<RoomData>(page, items.Count, totalItems, items));
     }
 
     public static async Task<Results<Ok<RoomData>, BadRequest, NotFound>> GetRoom(
@@ -44,29 +85,34 @@ public static class RoomHandler
         [FromServices] Client platform,
         [FromServices] CardsContext context,
         [FromServices] CurrentUserService<CardsContext, User> current,
-        [FromKeyedServices(nameof(Configuration.Web))] HostConfiguration web,
+        [FromKeyedServices(nameof(Configuration.Web))]
+        HostConfiguration web,
         [FromBody] RoomRequest request
     )
     {
         try
         {
             var user = await current.RequireAsync();
-            var room = new Room { Visibility = request.Visibility, Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow };
+            var room = new Room
+            {
+                Visibility = request.Visibility, Administrator = user, Creator = user, CreatedAt = DateTimeOffset.UtcNow
+            };
 
             room.Game.Hands.Add(new Hand { Player = user, Status = HandStatus.Invited });
 
             context.Rooms.Add(room);
             await context.SaveChangesAsync();
 
-            if (room.Visibility is Public) await platform.Activity.CreateAsync(
-                new()
-                {
-                    Text = $"{room.Creator.Username} has started a game.",
-                    Actions = [new("Check it out!", new Uri($"{web.Host}/cards/game/{room.Id}"), "primary")],
-                    Metadata = new() { ["room"] = room.Id.ToString() },
-                    OccurredAt = room.CreatedAt
-                }
-            );
+            if (room.Visibility is Public)
+                await platform.Activity.CreateAsync(
+                    new()
+                    {
+                        Text = $"{room.Creator.Username} has started a game.",
+                        Actions = [new("Check it out!", new Uri($"{web.Host}/cards/game/{room.Id}"), "primary")],
+                        Metadata = new() { ["room"] = room.Id.ToString() },
+                        OccurredAt = room.CreatedAt
+                    }
+                );
 
             return TypedResults.CreatedAtRoute(room.ToData(), nameof(GetRoom), new { id = room.Id });
         }

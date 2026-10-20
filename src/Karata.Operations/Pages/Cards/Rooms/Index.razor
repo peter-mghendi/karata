@@ -1,0 +1,93 @@
+@page "/cards/rooms"
+
+@using Karata.Kit.Cards
+@using Karata.Kit.Cards.Models
+
+@inject Client Cards
+
+<PageTitle>Rooms</PageTitle>
+
+<MudBreadcrumbs Items="_crumbs"/>
+
+<MudTable T="RoomData" ServerData="LoadRoomsAsync" RowsPerPage="PageSize" Loading="_loading" Hover>
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Rooms</MudText>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Room</MudTh>
+        <MudTh>Hands</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Visibility</MudTh>
+        <MudTh>Creator</MudTh>
+        <MudTh>Created</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Room">@context.Id</MudTd>
+        <MudTd DataLabel="Hands">@context.Game.Hands.Count</MudTd>
+        <MudTd DataLabel="Status">
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="StatusColor(context.Game.Status)">
+                @context.Game.Status
+            </MudChip>
+        </MudTd>
+        <MudTd DataLabel="Visibility">
+            <MudTooltip Text="@context.Visibility.ToString()">
+                <MudIcon Icon="@VisibilityIcon(context.Visibility)" Size="Size.Small"/>
+            </MudTooltip>
+        </MudTd>
+        <MudTd DataLabel="Creator">@context.Creator.Username</MudTd>
+        <MudTd DataLabel="Created">@context.CreatedAt.LocalDateTime.ToString("g")</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No rooms found.</MudText>
+    </NoRecordsContent>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="@([PageSize])"/>
+    </PagerContent>
+</MudTable>
+
+@code {
+    private const int PageSize = 10;
+
+    private bool _loading;
+    private string _search = string.Empty;
+
+    private readonly List<BreadcrumbItem> _crumbs =
+    [
+        new("Home", href: "/"),
+        new("Cards", href: null, disabled: true)
+    ];
+
+    private async Task<TableData<RoomData>> LoadRoomsAsync(TableState state, CancellationToken cancellation)
+    {
+        _loading = true;
+        try
+        {
+            var query = new RoomQuery(
+                Limit: PageSize,
+                Page: state.Page + 1,
+                Order: new RoomOrder()
+            );
+
+            var page = await Cards.Rooms.QueryAsync(query, cancellation);
+            return new TableData<RoomData> { Items = page.Items, TotalItems = page.TotalItems };
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static Color StatusColor(GameStatus status) => status switch
+    {
+        GameStatus.Lobby => Color.Info,
+        GameStatus.Ongoing => Color.Success,
+        _ => Color.Default
+    };
+
+    private static string VisibilityIcon(RoomVisibility visibility) => visibility switch
+    {
+        RoomVisibility.Public => Icons.Material.Filled.Public,
+        _ => Icons.Material.Filled.Lock
+    };
+
+}

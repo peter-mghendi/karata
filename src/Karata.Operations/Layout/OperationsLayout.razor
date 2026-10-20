@@ -32,7 +32,7 @@
                 <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@ToggleDarkMode"/>
             </MudAppBar>
 
-            <MudDrawer @bind-Open="_open" Variant="DrawerVariant.Temporary" Elevation="1">
+            <MudDrawer @bind-Open="_open" Elevation="1">
                 <MudDrawerHeader>
                     <MudLink Href="/" Typo="Typo.h6" Color="Color.Default" Underline="Underline.None">
                         operations
@@ -41,7 +41,7 @@
                 <NavMenu/>
             </MudDrawer>
 
-            <MudMainContent Class="pt-20 pa-4">
+            <MudMainContent Class="pa-4 pt-16">
                 @Body
             </MudMainContent>
         </MudLayout>

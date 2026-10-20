@@ -4,5 +4,5 @@ namespace Karata.Runtime.Infrastructure;
 
 public static class CrossOrigin
 {
-    public static void AllowAll(CorsPolicyBuilder policy) => policy.AllowAnyOrigin().AllowAnyHeader();
+    public static void AllowAll(CorsPolicyBuilder policy) => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
 }

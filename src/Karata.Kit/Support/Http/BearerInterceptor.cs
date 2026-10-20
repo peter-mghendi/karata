@@ -2,7 +2,7 @@ using System.Net.Http.Headers;
 using RestSharp;
 using RestSharp.Interceptors;
 
-namespace Karata.Kit.Security;
+namespace Karata.Kit.Support.Http;
 
 public sealed class BearerInterceptor(Func<Task<string?>> token) : Interceptor
 {
@@ -20,7 +20,7 @@ public static class RestClientOptionsExtensions
     {
         public void WithBearerInterceptor(Func<Task<string?>> token)
         {
-            options.Interceptors = [new BearerInterceptor(token)];
+            options.Interceptors = [..options.Interceptors, new BearerInterceptor(token)];
         }
     }
 } 
