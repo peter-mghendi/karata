@@ -6,37 +6,36 @@ namespace Karata.Trivia.Extensions;
 
 public static class ResponseExtensions
 {
-    public static ChoiceResponse AsResponse(this Choice choice) => new(choice.Id, choice.Text, choice.IsCorrect);
+    public static ChoiceData ToData(this Choice choice) => new(choice.Id, choice.Text, choice.IsCorrect);
 
-    public static GameResponse AsResponse(this Game game) => new(
+    public static GameData ToData(this Game game) => new(
         game.Id,
-        game.Topic.AsResponse(),
+        game.Topic.ToData(),
+        [.. game.Players],
         game.Creator,
-        [..game.Players]
+        game.CreatedAt
     );
 
-    public static QuestionResponse AsResponse(this Question question) => new(
+    public static QuestionData ToData(this Question question) => new(
         question.Id,
         question.Text,
-        question.Choices.Select(c => c.AsResponse()).ToList()
+        [.. question.Choices.Select(c => c.ToData())]
     );
 
-    public static ResponseResponse AsResponse(this Response response) => new(
+    public static ResponseData ToData(this Response response) => new(
         response.Id,
         response.TimeLeft,
         response.Score,
-        response.Choice?.AsResponse(),
-        response.User.AsUserData()
+        response.Choice?.ToData(),
+        response.User
     );
 
-    public static RoundResponse AsResponse(this Round round) => new(
+    public static RoundData ToData(this Round round) => new(
         round.Id,
         round.Index,
-        round.Question.AsResponse(),
-        round.Responses.Select(r => r.AsResponse()).ToList()
+        round.Question.ToData(),
+        [.. round.Responses.Select(r => r.ToData())]
     );
 
-    public static TopicResponse AsResponse(this Topic topic) => new(topic.Id, topic.Title, topic.Description);
-
-    public static UserData AsUserData(this User user) => new() { Id = user.Id, Username = user.Username };
+    public static TopicData ToData(this Topic topic) => new(topic.Id, topic.Title, topic.Description);
 }

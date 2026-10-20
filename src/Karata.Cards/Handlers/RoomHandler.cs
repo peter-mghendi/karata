@@ -22,7 +22,6 @@ public static class RoomHandler
     {
         var limit = Math.Clamp(query.Limit, 1, MaxPageSize);
         var page = Math.Max(query.Page, 1);
-        var order = query.Order ?? new RoomOrder();
 
         IQueryable<Room> rooms = context.Rooms;
 
@@ -47,26 +46,16 @@ public static class RoomHandler
                 rooms = rooms.Where(r => filter.Administrators.Contains(r.Administrator.Id));
         }
 
-        // Count after filtering, before ordering and paging.
-        var totalItems = await rooms.CountAsync();
-
-        var ordered = (order.Field, order.Direction) switch
-        {
-            (RoomOrderField.HandCount, SortDirection.Ascending) => rooms.OrderBy(r => r.Game.Hands.Count),
-            (RoomOrderField.HandCount, SortDirection.Descending) => rooms.OrderByDescending(r => r.Game.Hands.Count),
-            (RoomOrderField.CreatedAt, SortDirection.Ascending) => rooms.OrderBy(r => r.CreatedAt),
-            (RoomOrderField.CreatedAt, SortDirection.Descending) => rooms.OrderByDescending(r => r.CreatedAt),
-            _ => rooms.OrderByDescending(r => r.CreatedAt),
-        };
-
-        var items = await ordered
+        var total = await rooms.CountAsync();
+        var items = await rooms
+            .OrderByDescending(r => r.CreatedAt)
             .ThenBy(r => r.Id)
             .Skip((page - 1) * limit)
             .Take(limit)
             .Select(r => r.ToData())
             .ToListAsync();
 
-        return TypedResults.Ok(new Page<RoomData>(page, items.Count, totalItems, items));
+        return TypedResults.Ok(new Page<RoomData>(page, items.Count, total, items));
     }
 
     public static async Task<Results<Ok<RoomData>, BadRequest, NotFound>> GetRoom(

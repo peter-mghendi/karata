@@ -115,9 +115,9 @@
 
     [Parameter] public Guid Identifier { get; set; }
 
-    private GameResponse? Game { get; set; }
+    private GameData? Game { get; set; }
 
-    private List<RoundResponse> Rounds { get; set; } = [];
+    private List<RoundData> Rounds { get; set; } = [];
 
     private UserData? Me => Game?.Players.SingleOrDefault(player => player.Username == _username);
 
@@ -132,7 +132,7 @@
         var auth = await Authenticator.GetAuthenticationStateAsync();
         _username = auth.User.Identity!.Name!;
 
-        Game = await QuizWars.Games.GetGame(Identifier);
+        Game = await QuizWars.Games.FetchAsync(Identifier);
         Rounds = await QuizWars.Rounds.GetRounds(Identifier);
 
         if (Winners() is [{ Id: var winnerId }] && winnerId == Me!.Id)

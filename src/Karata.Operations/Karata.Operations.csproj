@@ -20,4 +20,8 @@
       <_ContentIncludedByDefault Remove="wwwroot\sample-data\weather.json" />
     </ItemGroup>
 
+    <ItemGroup>
+      <AdditionalFiles Include="Pages\Trivia\Games\Index.razor" />
+    </ItemGroup>
+
 </Project>

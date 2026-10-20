@@ -1,7 +1,6 @@
 using Karata.Kit.Platform.Models;
 using Karata.Runtime.Infrastructure;
 using Karata.Trivia.Data;
-using Karata.Trivia.Extensions;
 using Karata.Trivia.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,14 +19,14 @@ public class UserController(CurrentUserService<TriviaContext, User> current, Tri
         var user = await current.RequireAsync();
         return await context.Users
             .Where(u => u.Id != user.Id)
-            .Select(u => u.AsUserData())
+            .Select(u => u.ToData())
             .ToListAsync();
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<UserData>> GetUser(string id) => await context.Users.FindAsync(id) switch
     {
-        { } user => user.AsUserData(),
+        { } user => user.ToData(),
         null => NotFound(),
     };
 }

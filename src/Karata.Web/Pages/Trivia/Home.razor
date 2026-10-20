@@ -35,14 +35,14 @@
 
 @code
 {
-    private List<TopicResponse> Topics { get; set; } = [];
+    private List<TopicData> Topics { get; set; } = [];
 
     protected override async Task OnInitializedAsync()
     {
         Topics = await Trivia.Topics.GetTopics();
     }
 
-    private async Task Play(TopicResponse topic)
+    private async Task Play(TopicData topic)
     {
         var opponent = await SelectUser();
         if (opponent is null)
@@ -51,7 +51,7 @@
         }
 
         var request = new GameRequest(topic.Id, opponent);
-        var game = await Trivia.Games.CreateGame(request);
+        var game = await Trivia.Games.CreateAsync(request);
 
         Navigation.NavigateTo($"trivia/game/{game.Id}/play");
     }

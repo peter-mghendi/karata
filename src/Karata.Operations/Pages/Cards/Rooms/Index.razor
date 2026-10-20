@@ -49,7 +49,6 @@
     private const int PageSize = 10;
 
     private bool _loading;
-    private string _search = string.Empty;
 
     private readonly List<BreadcrumbItem> _crumbs =
     [
@@ -62,12 +61,7 @@
         _loading = true;
         try
         {
-            var query = new RoomQuery(
-                Limit: PageSize,
-                Page: state.Page + 1,
-                Order: new RoomOrder()
-            );
-
+            var query = new RoomQuery(Limit: PageSize, Page: state.Page + 1);
             var page = await Cards.Rooms.QueryAsync(query, cancellation);
             return new TableData<RoomData> { Items = page.Items, TotalItems = page.TotalItems };
         }
@@ -86,8 +80,7 @@
 
     private static string VisibilityIcon(RoomVisibility visibility) => visibility switch
     {
-        RoomVisibility.Public => Icons.Material.Filled.Public,
-        _ => Icons.Material.Filled.Lock
+        RoomVisibility.Public => Icons.Material.Rounded.Public,
+        _ => Icons.Material.Rounded.Lock
     };
-
 }
