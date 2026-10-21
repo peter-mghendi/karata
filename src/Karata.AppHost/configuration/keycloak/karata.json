@@ -76,6 +76,15 @@
         "attributes": {}
       },
       {
+        "id": "60410b46-94de-485c-8966-fa12f18651e9",
+        "name": "operations:user",
+        "description": "",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "e4d33a2c-482e-49de-b67c-ae03a23d8986",
+        "attributes": {}
+      },
+      {
         "id": "af6c8be0-16c0-4f12-8021-27ea3bf0a157",
         "name": "default-roles-karata",
         "description": "${role_default-roles}",

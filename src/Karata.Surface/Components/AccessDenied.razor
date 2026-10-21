@@ -1,37 +1,57 @@
+@using Karata.Surface.Security
 @inject NavigationManager Navigator
+@inject AuthenticationHelper Authenticator
 
-<MudStack AlignItems="AlignItems.Center" Spacing="2" Class="mt-16">
-    <MudIcon Icon="@Icons.Material.Rounded.Lock" Color="Color.Warning" Style="font-size: 4rem;"/>
+<MudContainer MaxWidth="MaxWidth.Small"
+              Class="@(FullScreen ? "d-flex align-center justify-center pa-6" : "mt-16")"
+              Style="@(FullScreen ? "min-height: 100vh;" : null)">
+    <MudStack AlignItems="AlignItems.Center" Spacing="2">
+        <MudIcon Icon="@Icons.Material.Rounded.Lock" Color="Color.Warning" Style="font-size: 4rem;" />
 
-    <MudText Typo="Typo.h4">Access denied</MudText>
+        <MudText Typo="Typo.h4" Align="Align.Center">Access denied</MudText>
 
-    <MudText Color="Color.Secondary" Align="Align.Center">
-        @if (User is not null)
+        <MudText Class="mud-text-secondary" Align="Align.Center">
+            @if (User is not null)
+            {
+                <span>
+                    You're signed in as <b>@User</b>, but your account doesn't have permission to @(FullScreen ? "use this application" : "view this page").
+                </span>
+            }
+            else
+            {
+                <span>Your account doesn't have permission to @(FullScreen ? "use this application" : "view this page").</span>
+            }
+        </MudText>
+
+        <MudText Typo="Typo.caption" Class="mud-text-secondary mb-4">@_path</MudText>
+
+        @if (FullScreen)
         {
-            <span>You're signed in as <b>@User</b>, but your account doesn't have permission to view this page.</span>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Rounded.Logout"
+                       OnClick="@(() => Authenticator.Logout())">
+                Sign out
+            </MudButton>
         }
         else
         {
-            <span>Your account doesn't have permission to view this page.</span>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Rounded.Home"
+                       Href="/">
+                Go to Home
+            </MudButton>
         }
-    </MudText>
-
-    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
-        @_path
-    </MudText>
-
-    <MudButton Variant="Variant.Filled"
-               Color="Color.Primary"
-               StartIcon="@Icons.Material.Rounded.Home"
-               Href="/">
-        Go to Home
-    </MudButton>
-</MudStack>
+    </MudStack>
+</MudContainer>
 
 @code {
     [Parameter] public string? User { get; set; }
+    [Parameter] public bool FullScreen { get; set; }
 
     private string _path = "";
 
-    protected override void OnInitialized() => _path = "/" + Navigator.ToBaseRelativePath(Navigator.Uri);
+    protected override void OnInitialized() =>
+        _path = "/" + Navigator.ToBaseRelativePath(Navigator.Uri);
 }

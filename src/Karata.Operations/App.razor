@@ -1,4 +1,5 @@
-﻿<CascadingAuthenticationState>
+﻿@using Karata.Surface
+<CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages.NotFound)">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(OperationsLayout)">
@@ -6,14 +7,7 @@
                     <CenteredProgress/>
                 </Authorizing>
                 <NotAuthorized Context="auth">
-                    @if (auth.User.Identity?.IsAuthenticated == true)
-                    {
-                        <AccessDenied User="@auth.User.Identity.Name" />
-                    }
-                    else
-                    {
-                        <RedirectToLogin />
-                    }
+                    <AccessFailed State="@auth" />
                 </NotAuthorized>
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1"/>

@@ -12,7 +12,7 @@
 <MudDialogProvider/>
 <MudSnackbarProvider/>
 
-<AuthorizeView Context="auth">
+<AuthorizeView Roles="operations:user" Context="auth">
     <Authorized>
         <MudLayout>
             <MudAppBar Elevation="0">
@@ -45,7 +45,7 @@
         <CenteredProgress />
     </Authorizing>
     <NotAuthorized>
-        <RedirectToLogin />
+        <AccessFailed FullScreen State="@auth" />
     </NotAuthorized>
 </AuthorizeView>
 
