@@ -1,5 +1,4 @@
 using Karata.Kit;
-using Karata.Kit.Configuration;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Karata.Operations;

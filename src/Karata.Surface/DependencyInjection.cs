@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Blazored.LocalStorage;
 using Howler.Blazor.Components;
 using Karata.Kit.Security;
@@ -29,9 +30,10 @@ public static class DependencyInjection
                 }
 
                 options.UserOptions.NameClaim = "preferred_username";
-                options.UserOptions.RoleClaim = "roles";
+                options.UserOptions.RoleClaim = ClaimTypes.Role;
                 options.UserOptions.ScopeClaim = "scope";
-            });
+            })
+            .AddAccountClaimsPrincipalFactory<KeycloakClaimsPrincipalFactory>();
 
             return services;
         }

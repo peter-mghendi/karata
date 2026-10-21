@@ -5,6 +5,16 @@
                 <Authorizing>
                     <CenteredProgress/>
                 </Authorizing>
+                <NotAuthorized Context="auth">
+                    @if (auth.User.Identity?.IsAuthenticated == true)
+                    {
+                        <AccessDenied User="@auth.User.Identity.Name" />
+                    }
+                    else
+                    {
+                        <RedirectToLogin />
+                    }
+                </NotAuthorized>
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
         </Found>

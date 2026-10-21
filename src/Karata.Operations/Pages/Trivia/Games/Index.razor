@@ -3,6 +3,8 @@
 @using Karata.Kit.Trivia
 @using Karata.Kit.Trivia.Models
 
+@attribute [Authorize(Roles = "trivia:admin")]
+
 @inject Client Trivia
 
 <PageTitle>Games</PageTitle>
