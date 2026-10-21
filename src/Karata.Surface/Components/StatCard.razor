@@ -1,0 +1,33 @@
+@* StatCard.razor *@
+<MudPaper Class="mud-width-full pa-4 d-flex flex-column" Style="height: 100%;" Outlined="true">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">@Title</MudText>
+        <MudAvatar Color="@Color" Variant="Variant.Text" Size="Size.Small">
+            <MudIcon Icon="@Icon" Size="Size.Small" />
+        </MudAvatar>
+    </MudStack>
+
+    <MudStack Class="flex-grow-1 my-4" AlignItems="AlignItems.Center" Justify="Justify.Center">
+        @if (Value is null)
+        {
+            <MudSkeleton Width="60px" Height="56px" />
+        }
+        else
+        {
+            <MudText Typo="Typo.h3">@Value</MudText>
+        }
+    </MudStack>
+
+    @if (Href is not null)
+    {
+        <MudLink Href="@Href" Typo="Typo.caption" Class="align-self-end">View rooms</MudLink>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public string Icon { get; set; } = Icons.Material.Filled.Info;
+    [Parameter] public Color Color { get; set; } = Color.Default;
+    [Parameter] public string? Href { get; set; }
+}

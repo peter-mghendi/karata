@@ -18,7 +18,7 @@ public class ResponseController(CurrentUserService<TriviaContext, User> current,
     // TODO: [Notifications] Send notification
     // POST: api/games/0085f04e-8a30-449e-91e1-38899b4d3ed5/rounds/3/responses
     [HttpPost]
-    public async Task<ActionResult<IEnumerable<ResponseResponse>>> PostResponse(
+    public async Task<ActionResult<IEnumerable<ResponseData>>> PostResponse(
         [FromRoute] Guid identifier,
         [FromRoute] int index,
         [FromBody] ResponseRequest request
@@ -53,7 +53,7 @@ public class ResponseController(CurrentUserService<TriviaContext, User> current,
         await context.SaveChangesAsync();
 
         // User has responded, do not obfuscate the response.
-        return round.Responses.Select(r => r.AsResponse()).ToList();
+        return round.Responses.Select(r => r.ToData()).ToList();
     }
 
     private async Task<Game?> GetGameAsync(Guid id) => await context.Games

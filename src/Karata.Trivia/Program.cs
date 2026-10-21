@@ -4,7 +4,10 @@ using Karata.Runtime;
 using Karata.Runtime.Security;
 using Karata.Trivia.Data;
 using Karata.Trivia.Models;
+using Karata.Trivia.Security;
 using Karata.Trivia.Services;
+using Keycloak.AuthServices.Authorization;
+using Keycloak.AuthServices.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,23 +28,26 @@ builder.Services
                 provisioning.Factory = principal => new User
                 {
                     Id = principal.FindFirstValue(ClaimTypes.NameIdentifier)!,
-                    // Email = principal.FindFirstValue(ClaimTypes.Email)!,
-                    Username = principal.FindFirstValue("preferred_username")!
+                    Username = principal.FindFirstValue(KeycloakConstants.NameClaimType)!
                 };
             });
         }
     )
-    .AddKarataPlatform((options, services) =>
-    {
-        options.Host = new Uri(platform);
-        options.TokenProvider = async () =>
-        {
-            using var scope = services.CreateScope();
-            using var provider = scope.ServiceProvider.GetRequiredService<TokenExchangeAccessTokenProvider>();
+    .AddKeycloakAuthorization()
+    .AddAuthorizationBuilder()
+    .AddPolicy(nameof(GamePolicy.QueryGames), GamePolicy.QueryGames);
 
-            return await provider.GetAsync();
-        };
-    });
+builder.Services.AddKarataPlatform((options, services) =>
+{
+    options.Host = new Uri(platform);
+    options.TokenProvider = async () =>
+    {
+        using var scope = services.CreateScope();
+        using var provider = scope.ServiceProvider.GetRequiredService<TokenExchangeAccessTokenProvider>();
+
+        return await provider.GetAsync();
+    };
+});
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<GameService>();

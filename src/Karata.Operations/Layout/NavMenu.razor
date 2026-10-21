@@ -1,0 +1,50 @@
+@using Karata.Kit.Configuration
+<MudNavMenu>
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Rounded.Home">
+        Home
+    </MudNavLink>
+    <MudNavLink Href="@Web.Host" Icon="@Icons.Material.Rounded.Language">
+        Karata Web
+    </MudNavLink>
+
+    <MudNavLink Disabled Icon="@Icons.Material.Rounded.Style">Cards</MudNavLink>
+    <MudNavLink Href="cards/users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Rounded.Person">
+        Users
+    </MudNavLink>
+    <MudNavLink Href="cards/rooms" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Rounded.MeetingRoom">
+        Rooms
+    </MudNavLink>
+
+    <MudNavLink Disabled Icon="@Icons.Material.Rounded.Shortcut">Go</MudNavLink>
+    <MudNavLink Href="go/users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Rounded.Person">
+        Users
+    </MudNavLink>
+    <MudNavLink Href="go/links" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Rounded.Link">
+        Links
+    </MudNavLink>
+
+    <MudNavLink Disabled Icon="@Icons.Material.Rounded.Hub">Platform</MudNavLink>
+    <MudNavLink Href="platform/users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Rounded.ManageAccounts">
+        Users
+    </MudNavLink>
+
+    <MudNavLink Disabled Icon="@Icons.Material.Rounded.Lightbulb">Trivia</MudNavLink>
+    <MudNavLink Href="trivia/users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Rounded.Person">
+        Users
+    </MudNavLink>
+    <MudNavLink Href="trivia/games" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Rounded.SportsEsports">
+        Games
+    </MudNavLink>
+    <MudNavLink Href="trivia/topics" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Rounded.Category">
+        Topics
+    </MudNavLink>
+    <MudNavLink Href="trivia/questions" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Rounded.Quiz">
+        Questions
+    </MudNavLink>
+</MudNavMenu>
+
+@code
+{
+    [Inject(Key = nameof(Web))]
+    public required HostConfiguration Web { get; set; }
+}

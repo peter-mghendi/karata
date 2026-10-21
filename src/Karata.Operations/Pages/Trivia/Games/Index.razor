@@ -1,0 +1,65 @@
+@page "/trivia/games"
+
+@using Karata.Kit.Trivia
+@using Karata.Kit.Trivia.Models
+
+@attribute [Authorize(Roles = "trivia:admin")]
+
+@inject Client Trivia
+
+<PageTitle>Games</PageTitle>
+
+<MudBreadcrumbs Items="_crumbs"/>
+
+<MudTable T="GameData" ServerData="LoadGamesAsync" RowsPerPage="PageSize" Loading="_loading" Hover>
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Rooms</MudText>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Room</MudTh>
+        <MudTh>Topic</MudTh>
+        <MudTh>Players</MudTh>
+        <MudTh>Creator</MudTh>
+        <MudTh>Created</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Room">@context.Id</MudTd>
+        <MudTd DataLabel="Room">@context.Topic</MudTd>
+        <MudTd DataLabel="Hands">@context.Players.Length</MudTd>
+        <MudTd DataLabel="Creator">@context.Creator.Username</MudTd>
+        <MudTd DataLabel="Created">@context.CreatedAt.LocalDateTime.ToString("g")</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No games found.</MudText>
+    </NoRecordsContent>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="@([PageSize])"/>
+    </PagerContent>
+</MudTable>
+
+@code {
+    private const int PageSize = 10;
+
+    private bool _loading;
+
+    private readonly List<BreadcrumbItem> _crumbs =
+    [
+        new("Home", href: "/"),
+        new("Trivia", href: null, disabled: true)
+    ];
+
+    private async Task<TableData<GameData>> LoadGamesAsync(TableState state, CancellationToken cancellation)
+    {
+        _loading = true;
+        try
+        {
+            var query = new GameQuery(Limit: PageSize, Page: state.Page + 1);
+            var page = await Trivia.Games.QueryAsync(query, cancellation);
+            return new TableData<GameData> { Items = page.Items, TotalItems = page.TotalItems };
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

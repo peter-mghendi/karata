@@ -1,0 +1,16 @@
+﻿@using Karata.Surface
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(OperationsLayout)">
+                <Authorizing>
+                    <CenteredProgress/>
+                </Authorizing>
+                <NotAuthorized Context="auth">
+                    <AccessFailed State="@auth" />
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
+        </Found>
+    </Router>
+</CascadingAuthenticationState>

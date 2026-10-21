@@ -32,6 +32,12 @@
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.17.0"
         }
       },
+      "Keycloak.AuthServices.Authorization": {
+        "type": "Direct",
+        "requested": "[3.0.0, )",
+        "resolved": "3.0.0",
+        "contentHash": "dnYxElMsfUXN0xy8PpY5aTT0GjUJIja8v8XiOgrXA5JwFleesKaGxv9L5wBme0o7dHMSMp0YC3EHs5HC24NVIA=="
+      },
       "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore": {
         "type": "Direct",
         "requested": "[10.0.8, )",

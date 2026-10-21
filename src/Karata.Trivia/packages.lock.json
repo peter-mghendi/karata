@@ -13,9 +13,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.1, )",
-        "resolved": "10.0.1",
-        "contentHash": "ISahzLHsHY7vrwqr2p1YWZ+gsxoBRtH7gWRDK8fDUst9pp2He0GiesaqEfeX0V8QMCJM3eNEHGGpnIcPjFo2NQ=="
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "kICGrGYEzCNI3wPzfEXcwNHgTvlvVn9yJDhSdRK+oZQy4jvYH529u7O0xf5ocQKzOMjfS07+3z9PKRIjrFMJDA=="
       },
       "BouncyCastle.Cryptography": {
         "type": "Transitive",
@@ -1186,6 +1186,7 @@
           "CmdScale.EntityFrameworkCore.TimescaleDB.Design": "[10.1.1, )",
           "Karata.Kit": "[1.0.0, )",
           "Keycloak.AuthServices.Authentication": "[3.0.0, )",
+          "Keycloak.AuthServices.Authorization": "[3.0.0, )",
           "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore": "[10.0.8, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.8, )",
           "Microsoft.OpenApi": "[2.9.0, )",
@@ -1291,6 +1292,12 @@
           "Microsoft.AspNetCore.Authentication.OpenIdConnect": "10.0.5",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.17.0"
         }
+      },
+      "Keycloak.AuthServices.Authorization": {
+        "type": "CentralTransitive",
+        "requested": "[3.0.0, )",
+        "resolved": "3.0.0",
+        "contentHash": "dnYxElMsfUXN0xy8PpY5aTT0GjUJIja8v8XiOgrXA5JwFleesKaGxv9L5wBme0o7dHMSMp0YC3EHs5HC24NVIA=="
       },
       "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore": {
         "type": "CentralTransitive",

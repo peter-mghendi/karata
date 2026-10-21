@@ -1,14 +1,30 @@
 using Karata.Kit.Cards.Models;
+using Karata.Kit.Common.Models;
+using Karata.Kit.Support.Http;
 using RestSharp;
 
 namespace Karata.Kit.Cards.Services;
 
 public class RoomService(RestClient client)
 {
-    public async Task<List<RoomData>> ListAsync(CancellationToken cancellation = default)
+    public async Task<int> CountAsync(RoomQuery query, CancellationToken cancellation = default)
     {
-        var response = await client.GetAsync<List<RoomData>>("rooms", cancellation);
-        return response ?? throw new Exception();
+        var page = await QueryAsync(query, cancellation);
+        return page.TotalItems;
+    }
+    
+    public async Task<Page<RoomData>> QueryAsync(RoomQuery query, CancellationToken cancellation = default)
+    {
+        // TODO: [HTTP QUERY]: RestSharp does not yet have support for RFC 10008 HTTP QUERY
+        var request = new RestRequest("rooms", Method.Post);
+        request.AddJsonBody(query);
+        request.Interceptors = [new QueryInterceptor()];
+
+        return await client.ExecuteAsync<Page<RoomData>>(request, cancellation) switch
+        {
+            { IsSuccessful: true } and { Data: { } data } => data,
+            { } response => throw new Exception($"Query failed: {response.ErrorMessage}")
+        };
     }
     
     public async Task<RoomData> CreateAsync(RoomRequest request, CancellationToken cancellation = default)

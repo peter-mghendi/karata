@@ -1,0 +1,13 @@
+﻿@page "/authentication/{action}"
+
+@layout EmptyLayout
+
+@attribute [AllowAnonymous]
+
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center;">
+    <RemoteAuthenticatorView Action="@Action"/>
+</div>
+
+@code {
+    [Parameter] public string? Action { get; set; }
+}

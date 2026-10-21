@@ -3,8 +3,8 @@
 @inherits LayoutComponentBase
 
 @inject AuthenticationHelper Authenticator
-@inject ILocalStorageService LocalStorage
 @inject NavigationManager Navigator
+@inject SurfaceTheme Theme
 
 <MudThemeProvider @ref="_themer" @bind-IsDarkMode="@_dark" Theme="_theme"/>
 <MudPopoverProvider/>
@@ -46,7 +46,7 @@
                     </MudLink>
                 </NotAuthorized>
             </AuthorizeView>
-            <MudIconButton Icon="@ThemeToggleIcon" Color="@Color.Default" OnClick="@OnToggleThemeAsync"/>
+            <MudIconButton Icon="@ThemeToggleIcon" Color="@Color.Default" OnClick="@ToggleDarkMode"/>
         </MudAppBar>
         <MudMainContent Class="mud-height-full" Style="position: relative">
             <div>
@@ -63,25 +63,21 @@
     private readonly MudTheme _theme = new();
     private MudThemeProvider _themer = null!;
 
-    private string ThemeToggleIcon => _dark switch
-    {
-        true => Icons.Material.Rounded.LightMode,
-        false => Icons.Material.Rounded.DarkMode,
-    };
+    private string ThemeToggleIcon => SurfaceTheme.ToggleIcon(_dark);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            _dark = await LocalStorage.GetItemAsync<bool?>("karata:settings:dark") ?? await _themer.GetSystemDarkModeAsync();
+            _dark = await Theme.GetDark(_themer);
             StateHasChanged();
         }
     }
 
-    private async Task OnToggleThemeAsync()
+    private async Task ToggleDarkMode()
     {
-        await LocalStorage.SetItemAsync("karata:settings:dark", !_dark);
         _dark = !_dark;
+        await Theme.SetDark(_dark);
 
         StateHasChanged();
     }

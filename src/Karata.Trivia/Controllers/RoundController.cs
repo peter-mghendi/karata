@@ -16,7 +16,7 @@ public class RoundController(CurrentUserService<TriviaContext, User> current, Tr
 {
     // GET: api/games/0085f04e-8a30-449e-91e1-38899b4d3ed5/rounds
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<RoundResponse>>> GetRounds(Guid identifier)
+    public async Task<ActionResult<IEnumerable<RoundData>>> GetRounds(Guid identifier)
     {
         var user = await current.RequireAsync();
         var game = await GetGameAsync(identifier);
@@ -30,7 +30,7 @@ public class RoundController(CurrentUserService<TriviaContext, User> current, Tr
 
     // GET: api/games/0085f04e-8a30-449e-91e1-38899b4d3ed5/rounds/3
     [HttpGet("{index:int}")]
-    public async Task<ActionResult<RoundResponse>> GetRound(Guid identifier, int index)
+    public async Task<ActionResult<RoundData>> GetRound(Guid identifier, int index)
     {
         var user = await current.RequireAsync();
         var game = await GetGameAsync(identifier);
@@ -59,8 +59,8 @@ public class RoundController(CurrentUserService<TriviaContext, User> current, Tr
     // Obfuscate correct answer if we do not have a response for this user yet.
     // I will regret this code tomorrow
     // UPDATE: Yep.
-    private static RoundResponse CreateObfuscatedResponse(Round round, User user) =>
-        round.AsResponse() is {} response && round.Responses.All(r => r.User.Id != user.Id)
+    private static RoundData CreateObfuscatedResponse(Round round, User user) =>
+        round.ToData() is {} response && round.Responses.All(r => r.User.Id != user.Id)
             ? response with
             {
                 Responses = response.Responses.Select(r => r.Choice is not null
@@ -73,5 +73,5 @@ public class RoundController(CurrentUserService<TriviaContext, User> current, Tr
                     Choices = response.Question.Choices.Select(c => c with { IsCorrect = false }).ToList()
                 }
             }
-            : round.AsResponse();
+            : round.ToData();
 }

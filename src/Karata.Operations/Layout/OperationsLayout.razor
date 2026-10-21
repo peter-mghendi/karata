@@ -1,0 +1,78 @@
+@using Karata.Surface
+@using Karata.Surface.Security
+
+@inherits LayoutComponentBase
+
+@inject AuthenticationHelper Authenticator
+@inject SurfaceTheme Theme
+@inject NavigationManager Navigator
+
+<MudThemeProvider @ref="_themer" Theme="@_theme" IsDarkMode="_dark"/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<AuthorizeView Roles="operations:user" Context="auth">
+    <Authorized>
+        <MudLayout>
+            <MudAppBar Elevation="0">
+                <MudIconButton Icon="@Icons.Material.Rounded.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer"/>
+                <MudLink Href="/" Typo="Typo.h6" Color="Color.Default" Class="me-2" Underline="Underline.None">
+                    operations
+                </MudLink>
+                <MudSpacer/>
+                <MudLink OnClick="@(() => Navigator.NavigateTo($"users/{auth.User.Identity!.Name!}"))"
+                         Typo="Typo.body2" Class="me-4">
+                    hi, @auth.User.Identity!.Name!
+                </MudLink>
+                <MudLink OnClick="@(() => Authenticator.Logout())" Typo="Typo.body2" Class="me-4"
+                         Color="Color.Error">
+                    end session
+                </MudLink>
+                <MudIconButton Icon="@(ThemeToggleIcon)" Color="Color.Inherit" OnClick="@ToggleDarkMode"/>
+            </MudAppBar>
+
+            <MudDrawer @bind-Open="_open" ClipMode="DrawerClipMode.Docked" Variant="@DrawerVariant.Mini" OpenMiniOnHover Elevation="1">
+                <NavMenu/>
+            </MudDrawer>
+
+            <MudMainContent Class="pa-4 pt-16">
+                @Body
+            </MudMainContent>
+        </MudLayout>
+    </Authorized>
+    <Authorizing>
+        <CenteredProgress />
+    </Authorizing>
+    <NotAuthorized>
+        <AccessFailed FullScreen State="@auth" />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private bool _open = true;
+    private bool _dark = true;
+    private readonly MudTheme? _theme = SurfaceTheme.Default;
+    private MudThemeProvider _themer = null!;
+    
+    private string ThemeToggleIcon => SurfaceTheme.ToggleIcon(_dark);
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dark = await Theme.GetDark(_themer);
+        }
+    }
+
+    private void ToggleDrawer()
+    {
+        _open = !_open;
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        _dark = !_dark;
+        await Theme.SetDark(_dark);
+    }
+}

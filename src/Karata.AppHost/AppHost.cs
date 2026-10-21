@@ -202,8 +202,20 @@ var bot = builder.AddProject<Projects.Karata_Bot>("bot")
 var web = builder.AddProject<Projects.Karata_Web>("web")
     .WaitFor(id)
     .WithReference(id)
+    .WithReference(platform)
     .WithReference(cards)
+    .WithReference(trivia)
+    .WithReference(go)
     .WithReference(bot)
+    .WithHttpHealthCheck("/", StatusCodes.Status200OK);
+
+var operations = builder.AddProject<Projects.Karata_Operations>("operations")
+    .WaitFor(id)
+    .WithReference(id)
+    .WithReference(platform)
+    .WithReference(cards)
+    .WithReference(trivia)
+    .WithReference(go)
     .WithHttpHealthCheck("/", StatusCodes.Status200OK);
 
 var desktop = builder.AddProject<Projects.Karata_Desktop>("desktop")

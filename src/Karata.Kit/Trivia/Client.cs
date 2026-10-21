@@ -1,27 +1,26 @@
 ﻿using Karata.Kit.Security;
+using Karata.Kit.Support.Http;
 using Karata.Kit.Trivia.Services;
 using RestSharp;
 
 namespace Karata.Kit.Trivia;
 
-public class Client(Client.Options options)
+public sealed class Client(Client.Options options) : BaseClient<Client.Options>(options)
 {
-    public sealed class Options
+    public sealed class Options : IClientOptions
     {
         public required Uri Host { get; set; }
 
         public required Func<Task<string?>> TokenProvider { get; set; }
     }
     
-    private readonly RestClient _client = new(new Uri(options.Host, "/api"), rest => rest.WithBearerInterceptor(options.TokenProvider));
-    
-    public GameService Games => new(_client);
+    public GameService Games => new(Client);
 
-    public ResponseService Responses => new(_client);
+    public ResponseService Responses => new(Client);
 
-    public RoundService Rounds => new(_client);
+    public RoundService Rounds => new(Client);
     
-    public TopicService Topics => new(_client);
+    public TopicService Topics => new(Client);
     
-    public UserService Users => new(_client);
+    public UserService Users => new(Client);
 }

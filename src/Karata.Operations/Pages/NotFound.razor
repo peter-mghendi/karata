@@ -1,0 +1,44 @@
+@page "/not-found"
+
+@layout EmptyLayout
+
+@inject NavigationManager Navigation
+
+<PageTitle>Not Found</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small"
+              Class="d-flex align-center justify-center pa-6"
+              Style="min-height: 100vh;">
+    <MudStack AlignItems="AlignItems.Center" Spacing="2">
+        <MudIcon Icon="@Icons.Material.Rounded.SearchOff"
+                 Color="Color.Primary"
+                 Style="font-size: 5rem;" />
+
+        <MudText Typo="Typo.h1" Color="Color.Primary" Align="Align.Center">404</MudText>
+        <MudText Typo="Typo.h5" Align="Align.Center">Page not found</MudText>
+
+        <MudText Color="Color.Secondary" Align="Align.Center">
+            Sorry, the content you are looking for does not exist or has moved.
+        </MudText>
+
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center" Class="mb-4">
+            @_path
+        </MudText>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Rounded.Home"
+                   Href="/">
+            Go to Home
+        </MudButton>
+    </MudStack>
+</MudContainer>
+
+@code {
+    private string _path = "";
+
+    protected override void OnInitialized()
+    {
+        _path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+    }
+}

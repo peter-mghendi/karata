@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using Karata.Kit.Platform.Models;
+using Keycloak.AuthServices.Common;
 
 namespace Karata.Runtime.Security;
 
@@ -16,7 +17,7 @@ public interface IAccessTokenProvider
         return new UserData
         {
             Id = jwt.Claims.FirstOrDefault(c => c.Type == "sub")!.Value,
-            Username = jwt.Claims.FirstOrDefault(c => c.Type == "preferred_username")!.Value
+            Username = jwt.Claims.FirstOrDefault(c => c.Type == KeycloakConstants.NameClaimType)!.Value
         };
     }
 }

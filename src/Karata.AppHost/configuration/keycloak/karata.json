@@ -49,6 +49,15 @@
   "roles": {
     "realm": [
       {
+        "id": "940e729a-bdcb-43d4-b918-c8937f56b9e2",
+        "name": "trivia:admin",
+        "description": "",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "e4d33a2c-482e-49de-b67c-ae03a23d8986",
+        "attributes": {}
+      },
+      {
         "id": "112fe2df-0493-4689-ae13-2fbc1e24a44f",
         "name": "offline_access",
         "description": "${role_offline-access}",
@@ -61,6 +70,15 @@
         "id": "a511aa16-796b-406f-8493-d27a9b5f7fa0",
         "name": "uma_authorization",
         "description": "${role_uma_authorization}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "e4d33a2c-482e-49de-b67c-ae03a23d8986",
+        "attributes": {}
+      },
+      {
+        "id": "60410b46-94de-485c-8966-fa12f18651e9",
+        "name": "operations:user",
+        "description": "",
         "composite": false,
         "clientRole": false,
         "containerId": "e4d33a2c-482e-49de-b67c-ae03a23d8986",
@@ -89,6 +107,7 @@
       }
     ],
     "client": {
+      "karata-operations": [],
       "realm-management": [
         {
           "id": "89b02e16-0c84-49f3-8721-3640525a94ec",
@@ -252,8 +271,8 @@
                 "manage-identity-providers",
                 "impersonation",
                 "view-events",
-                "manage-realm",
                 "manage-events",
+                "manage-realm",
                 "manage-authorization",
                 "query-users",
                 "query-groups",
@@ -942,6 +961,72 @@
       ]
     },
     {
+      "id": "124cc3f9-9bc8-43ea-b058-fda1e17ba61b",
+      "clientId": "karata-operations",
+      "name": "Karata.Operations",
+      "description": "Karata.Operations",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "https://localhost:7246",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": true,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [
+        "https://localhost:7246",
+        "https://localhost:7246/*"
+      ],
+      "webOrigins": [
+        "https://localhost:7246",
+        "https://localhost:7246/*"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "logout.confirmation.enabled": "false",
+        "realm_client": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "backchannel.logout.session.required": "true",
+        "oauth2.jwt.authorization.grant.enabled": "false",
+        "standard.token.exchange.enabled": "false",
+        "frontchannel.logout.session.required": "true",
+        "post.logout.redirect.uris": "+",
+        "display.on.consent.screen": "false",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "dpop.bound.access.tokens": "false"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "karata-cards",
+        "address",
+        "phone",
+        "organization",
+        "offline_access",
+        "microprofile-jwt",
+        "karata-trivia",
+        "karata-platform"
+      ]
+    },
+    {
       "id": "4f0da51e-a6af-4d1f-8010-0cc0281961f3",
       "clientId": "karata-platform",
       "name": "Karata Platform",
@@ -1493,12 +1578,15 @@
           "protocolMapper": "oidc-usermodel-realm-role-mapper",
           "consentRequired": false,
           "config": {
-            "user.attribute": "foo",
             "introspection.token.claim": "true",
+            "multivalued": "true",
+            "userinfo.token.claim": "false",
+            "user.attribute": "foo",
+            "id.token.claim": "true",
+            "lightweight.claim": "false",
             "access.token.claim": "true",
             "claim.name": "realm_access.roles",
-            "jsonType.label": "String",
-            "multivalued": "true"
+            "jsonType.label": "String"
           }
         }
       ]
@@ -2298,14 +2386,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "saml-user-attribute-mapper",
-            "saml-role-list-mapper",
-            "oidc-usermodel-attribute-mapper",
-            "oidc-address-mapper",
             "oidc-usermodel-property-mapper",
-            "saml-user-property-mapper",
             "oidc-sha256-pairwise-sub-mapper",
-            "oidc-full-name-mapper"
+            "oidc-full-name-mapper",
+            "oidc-usermodel-attribute-mapper",
+            "saml-user-property-mapper",
+            "oidc-address-mapper",
+            "saml-role-list-mapper",
+            "saml-user-attribute-mapper"
           ]
         }
       },
@@ -2325,14 +2413,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "saml-role-list-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
-            "saml-user-property-mapper",
-            "oidc-usermodel-property-mapper",
             "oidc-usermodel-attribute-mapper",
-            "oidc-address-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
             "oidc-full-name-mapper",
-            "saml-user-attribute-mapper"
+            "oidc-address-mapper",
+            "saml-user-property-mapper",
+            "saml-user-attribute-mapper",
+            "saml-role-list-mapper",
+            "oidc-usermodel-property-mapper"
           ]
         }
       },

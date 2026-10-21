@@ -8,7 +8,7 @@ public static class Linq
         {
             var items = list.ToList();
             if (items.Count <= 1)
-                return new[] { items };
+                return [items];
 
             return items.SelectMany((item, index) =>
                     items.Where((_, i) => i != index) // Get all items except the current one

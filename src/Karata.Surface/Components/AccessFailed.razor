@@ -1,0 +1,13 @@
+@if (State.User.Identity?.IsAuthenticated == true)
+{
+    <AccessDenied FullScreen="@FullScreen" User="@State.User.Identity.Name" />
+}
+else
+{
+    <RedirectToLogin />
+}
+
+@code {
+    [Parameter, EditorRequired] public AuthenticationState State { get; set; } = null!;
+    [Parameter] public bool FullScreen { get; set; }
+}

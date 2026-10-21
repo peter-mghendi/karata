@@ -80,7 +80,7 @@
                 </MudCardHeader>
                 <MudCardContent>
                     <MudStack>
-                        <MudRadioGroup T="ChoiceResponse" @bind-Value="@SelectedChoice">
+                        <MudRadioGroup T="ChoiceData" @bind-Value="@SelectedChoice">
                             <MudStack>
                                 @foreach (var choice in @CurrentRound.Question.Choices)
                                 {
@@ -119,11 +119,11 @@
 
     private double TimeLeft { get; set; }
 
-    private ChoiceResponse? SelectedChoice { get; set; }
+    private ChoiceData? SelectedChoice { get; set; }
 
-    private GameResponse? Game { get; set; }
+    private GameData? Game { get; set; }
 
-    private RoundResponse? CurrentRound { get; set; }
+    private RoundData? CurrentRound { get; set; }
 
     private Color ProgressColor => TimeLeft switch
     {
@@ -132,7 +132,7 @@
         _ => Color.Error
     };
 
-    private (Color RadioColor, Color TextColor) GetOptionColors(ChoiceResponse choice)
+    private (Color RadioColor, Color TextColor) GetOptionColors(ChoiceData choice)
     {
         if (_selection is null || _selection.Value.Choice != choice.Id) return (Color.Primary, Color.Default);
         return (_selection.Value.Color, _selection.Value.Color);
@@ -143,7 +143,7 @@
         var auth = await Authenticator.GetAuthenticationStateAsync();
         _username = auth.User.Identity!.Name!;
 
-        Game = await QuizWars.Games.GetGame(Identifier);
+        Game = await QuizWars.Games.FetchAsync(Identifier);
     }
 
     private async Task Start(bool force = false)
@@ -170,7 +170,7 @@
     }
 
     // TODO: UI feedback for opponent answer.
-    private async Task<ResponseResponse> SendResponse()
+    private async Task<ResponseData> SendResponse()
     {
         var time = Math.Clamp((int)Math.Round(TimeLeft, 0, MidpointRounding.AwayFromZero), 0, 10);
         var request = new ResponseRequest(SelectedChoice!.Id, time);
@@ -180,7 +180,7 @@
         return responses.Single(r => r.User.Username == _username);
     }
 
-    private async Task ShowFeedback(ResponseResponse response)
+    private async Task ShowFeedback(ResponseData response)
     {
         var choice = response.Choice;
         var source = "wrong";

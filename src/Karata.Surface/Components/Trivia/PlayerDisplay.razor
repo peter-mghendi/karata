@@ -19,9 +19,9 @@
 
     [Parameter] public required UserData Player { init; get; }
 
-    [Parameter] public List<RoundResponse> Rounds { get; set; } = [];
+    [Parameter] public List<RoundData> Rounds { get; set; } = [];
 
-    private List<ResponseResponse> Responses =>
+    private List<ResponseData> Responses =>
         Rounds
             .SelectMany(r => r.Responses)
             .Where(r => r.User.Id == Player.Id)

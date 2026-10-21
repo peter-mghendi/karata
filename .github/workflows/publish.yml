@@ -392,5 +392,48 @@ jobs:
           generate_release_notes: false
           tag_name: ${{ needs.version.outputs.version }}
           files: karata-web.tar.gz
-          
-  
+
+  operations:
+    needs: [ version, verify, release ]
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      - name: Install Webassembly workload
+        run: dotnet workload install wasm-tools
+
+      - name: Publish static site
+        run: dotnet publish --configuration Release -o dist src/Karata.Operations/Karata.Operations.csproj
+
+      - name: Deploy to releases-operations
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: releases-operations
+          commit-message: "Release ${{ needs.version.outputs.version }}"
+          folder: dist/wwwroot
+          force: true
+          single-commit: true
+
+      - name: Archive releases-operations branch
+        run: |
+          git fetch origin releases-operations
+          git archive --format tar.gz --output karata-operations.tar.gz origin/releases-operations
+
+      - name: Attach assets to release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: false
+          tag_name: ${{ needs.version.outputs.version }}
+          files: karata-operations.tar.gz
