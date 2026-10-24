@@ -11,7 +11,6 @@ public class Room
     public required User Creator { get; set; }
     public Game Game { get; init; } = new();
     public required DateTimeOffset CreatedAt { get; set; }
-    public List<Chat> Chats { get; init; } = [];
 
     public User? NextEligibleAdministrator => Game.Hands
         .Where(hand => hand.Player.Id != Administrator.Id)
@@ -28,7 +27,6 @@ public class Room
         CreatedAt = CreatedAt,
         Administrator = Administrator,
         Creator = Creator,
-        Game = Game,
-        Chats = [..Chats.Select(c => c.ToData())]
+        Game = Game
     };
 }

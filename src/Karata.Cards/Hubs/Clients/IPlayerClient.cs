@@ -11,9 +11,6 @@ public interface IPlayerClient
     // Adds the current user to a room
     Task AddToRoom(Guid roomId, RoomData room);
     
-    // Receives a chat message sent by another player.
-    Task Chat(Guid roomId, ChatData message);
-    
     // Ends the game
     Task EndGame(Guid roomId, GameResultData result);
     

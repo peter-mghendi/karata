@@ -17,40 +17,10 @@ namespace Karata.Cards.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.8")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("Karata.Cards.Models.Chat", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid?>("RoomId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("SenderId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("SentAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RoomId");
-
-                    b.HasIndex("SenderId");
-
-                    b.ToTable("Chats");
-                });
 
             modelBuilder.Entity("Karata.Cards.Models.Game", b =>
                 {
@@ -253,19 +223,6 @@ namespace Karata.Cards.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("Karata.Cards.Models.Chat", b =>
-                {
-                    b.HasOne("Karata.Cards.Models.Room", null)
-                        .WithMany("Chats")
-                        .HasForeignKey("RoomId");
-
-                    b.HasOne("Karata.Cards.Models.User", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId");
-
-                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("Karata.Cards.Models.Game", b =>
@@ -521,8 +478,6 @@ namespace Karata.Cards.Data.Migrations
 
             modelBuilder.Entity("Karata.Cards.Models.Room", b =>
                 {
-                    b.Navigation("Chats");
-
                     b.Navigation("Game")
                         .IsRequired();
                 });
