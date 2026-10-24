@@ -12,7 +12,6 @@ public sealed class RoomEvents : IDisposable
     private readonly ISubject<RoomData> _addToRoom = Subject.Synchronize(new Subject<RoomData>());
     private readonly ISubject<(long Id, UserData User, HandStatus Status)> _addHandToRoom =
         Subject.Synchronize(new Subject<(long, UserData, HandStatus)>());
-    private readonly ISubject<ChatData> _chat = Subject.Synchronize(new Subject<ChatData>());
     private readonly ISubject<GameResultData> _endGame = Subject.Synchronize(new Subject<GameResultData>());
     private readonly ISubject<(long HandId, IReadOnlyList<Card> Cards)> _moveCardsFromDeckToHand =
         Subject.Synchronize(new Subject<(long, IReadOnlyList<Card>)>());
@@ -32,7 +31,6 @@ public sealed class RoomEvents : IDisposable
 
     public IObservable<RoomData> AddToRoom => _addToRoom.AsObservable();
     public IObservable<(long Id, UserData User, HandStatus Status)> AddHandToRoom => _addHandToRoom.AsObservable();
-    public IObservable<ChatData> Chat => _chat.AsObservable();
     public IObservable<GameResultData> EndGame => _endGame.AsObservable();
     public IObservable<(long HandId, IReadOnlyList<Card> Cards)> MoveCardsFromDeckToHand => _moveCardsFromDeckToHand.AsObservable();
     public IObservable<IReadOnlyList<Card>> MoveCardsFromDeckToPile => _moveCardsFromDeckToPile.AsObservable();
@@ -51,8 +49,6 @@ public sealed class RoomEvents : IDisposable
     internal void OnAddToRoom(RoomData r) => _addToRoom.OnNext(r);
 
     internal void OnAddHandToRoom(long id, UserData user, HandStatus status) => _addHandToRoom.OnNext((id, user, status));
-
-    internal void OnChat(ChatData chat) => _chat.OnNext(chat);
     
     internal void OnEndGame(GameResultData result) => _endGame.OnNext(result);
 
@@ -84,12 +80,11 @@ public sealed class RoomEvents : IDisposable
     internal void OnUpdateHandStatus(long handId, HandStatus status) => _updateHandStatus.OnNext((handId, status));
     
 
-    // Subjects are IDisposable in practice; ok to just complete for now
+    // Subjects are IDisposable in practice; OK to just complete for now
     public void Dispose()
     {
         _addToRoom.OnCompleted();
         _addHandToRoom.OnCompleted();
-        _chat.OnCompleted();
         _endGame.OnCompleted();
         _moveCardsFromDeckToHand.OnCompleted();
         _moveCardsFromDeckToPile.OnCompleted();

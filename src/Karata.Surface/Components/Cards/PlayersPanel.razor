@@ -1,5 +1,5 @@
 @using Karata.Kit.Cards.Models
-<MudList ReadOnly SelectedValue="@Game.CurrentHand.Id">
+<MudList ReadOnly SelectedValue="@CurrentId">
     @if (Subheader)
     {
         <MudListSubheader>Players</MudListSubheader>    
@@ -8,7 +8,7 @@
     @foreach (var hand in Game.Hands.OrderBy(hand => hand.Id))
     {
         <HandDisplay Hand="hand" IsAdministrator="@(hand.Player.Id == Room.Administrator.Id)" IsMe="@(hand.Id == Me)"
-                     IsCurrent="@(Game.CurrentHand.Id == hand.Id)" Controls="Controls" 
+                     IsCurrent="@(hand.Id == CurrentId)" Controls="Controls"
                      OnSetAway="OnSetAway" OnVoidTurn="OnVoidTurn"/>
     }
 </MudList>
@@ -28,4 +28,6 @@
     [Parameter] public EventCallback<long> OnVoidTurn { get; set; }
 
     private GameData Game => Room.Game;
+
+    private long CurrentId => Game.Status is GameStatus.Ongoing ? Game.CurrentHand.Id : -1L;
 }

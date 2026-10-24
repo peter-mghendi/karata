@@ -1,0 +1,26 @@
+.example {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0.75rem 0;
+}
+
+.cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.cards img {
+    width: 3.5rem;
+    height: auto;
+    border-radius: 0.25rem;
+    border: 1px solid var(--mud-palette-lines-inputs);
+    background: white;
+}
+
+.caption {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}

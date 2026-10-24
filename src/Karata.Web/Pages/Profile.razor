@@ -3,63 +3,174 @@
 @using Karata.Kit.Platform
 @using Karata.Kit.Platform.Models
 @using Karata.Surface.Security
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 @inject AuthenticationHelper Authenticator
+@inject AuthenticationStateProvider AuthState
 @inject Client Platform
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full pt-4">
-    @if (_user is not null)
+<PageTitle>@(_user?.Username ?? Username)</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="py-6">
+    @if (!_loaded)
     {
-        <MudStack AlignItems="AlignItems.Center">
-            <MudImage Width="128" Height="128" Src="@_user.Avatar" Alt="@_user.Username" Class="rounded-circle"/>
-
-            <MudText Typo="Typo.h4">@_user.Username</MudText>
-
-            <AuthorizeView>
-                <Authorized>
-                    @if (context.User.Identity!.Name! == Username)
-                    {
-                        <MudLink Href="@Authenticator.Profile()">edit profile</MudLink>
-                    }
-                </Authorized>
-            </AuthorizeView>
-            <MudChip T="string" Size="Size.Medium" Variant="Variant.Text" Color="Color.Primary">Level --</MudChip>
-
-            <MudStack Row Class="flex" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                    <MudText Typo="Typo.h5">--</MudText>
-                    <MudText Typo="Typo.body2">played</MudText>
-                </MudStack>
-                <MudDivider Vertical/>
-                <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                    <MudText Typo="Typo.h5">--</MudText>
-                    <MudText Typo="Typo.body2">won</MudText>
-                </MudStack>
-                <MudDivider Vertical/>
-                <MudStack AlignItems="AlignItems.Center" Spacing="1">
-                    <MudText Typo="Typo.h5">--</MudText>
-                    <MudText Typo="Typo.body2">lost</MudText>
-                </MudStack>
+        <MudStack AlignItems="AlignItems.Center" Spacing="2">
+            <MudSkeleton SkeletonType="SkeletonType.Circle" Animation="Animation.Wave" Height="112px" Width="112px"/>
+            <MudSkeleton Animation="Animation.Wave" Width="30%" Height="2.5rem"/>
+        </MudStack>
+    }
+    else if (_failed)
+    {
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+            Couldn't load this profile.
+            <MudLink OnClick="LoadAsync">Try again</MudLink>
+        </MudAlert>
+    }
+    else if (_user is null)
+    {
+        <MudPaper Outlined Class="pa-6 rounded-lg">
+            <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Rounded.PersonOff" Class="mud-text-secondary"
+                         Style="font-size: 3rem;"/>
+                <MudText Typo="Typo.h6" Align="Align.Center">We couldn't find a player called "@Username".</MudText>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Rounded.Home" Href="/">
+                    Go home
+                </MudButton>
             </MudStack>
+        </MudPaper>
+    }
+    else
+    {
+        <MudStack Spacing="4">
+            <MudPaper Outlined Class="pa-6 rounded-lg">
+                <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                    @if (string.IsNullOrWhiteSpace(_user.Avatar))
+                    {
+                        <MudAvatar Color="Color.Secondary" Style="width: 7rem; height: 7rem; font-size: 3rem;">
+                            @Initial
+                        </MudAvatar>
+                    }
+                    else
+                    {
+                        <MudImage Width="112" Height="112" Src="@_user.Avatar" Alt="@_user.Username"
+                                  Class="rounded-circle" ObjectFit="ObjectFit.Cover"/>
+                    }
 
-            <MudTabs ApplyEffectsToContainer Centered KeepPanelsAlive Rounded Style="width: 100%" TabPanelsClass="pa-6">
-                <MudTabPanel Text="Activity">
-                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="width: 100%">
-                        <MudText>No activity to display</MudText>
+                    <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText Typo="Typo.h4">@_user.Username</MudText>
+
+                        @if (IsMe)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info">
+                                You
+                            </MudChip>
+                        }
                     </MudStack>
-                </MudTabPanel>
-            </MudTabs>
+
+                    @if (IsMe)
+                    {
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Rounded.Edit" Href="@Authenticator.Profile()">
+                            Edit profile
+                        </MudButton>
+                    }
+                </MudStack>
+            </MudPaper>
+
+            <ActivityFeed Feed="_activity"
+                          Failed="_activityFailed"
+                          Refreshing="_refreshing"
+                          OnRefresh="LoadActivityAsync"
+                          ShowActor="false"
+                          EmptyText="@EmptyText"/>
         </MudStack>
     }
 </MudContainer>
 
 @code {
-    [Parameter] public required string Username { get; init; }
+    [Parameter] public required string Username { get; set; }
 
     private UserData? _user;
+    private List<ActivityData>? _activity;
+    private string? _me;
+    private string? _loadedFor;
 
-    protected override async Task OnInitializedAsync()
+    private bool _loaded;
+    private bool _failed;
+    private bool _activityFailed;
+    private bool _refreshing;
+
+    private bool IsMe => string.Equals(_me, _user?.Username, StringComparison.OrdinalIgnoreCase);
+
+    private string Initial => _user!.Username.FirstOrDefault() is { } first
+        ? char.ToUpperInvariant(first).ToString()
+        : "?";
+
+    private string EmptyText => IsMe
+        ? "Nothing here yet. Play a game and it will show up here."
+        : $"No recent activity from {_user!.Username}.";
+
+    // OnInitialized would only run once. Following a link from one profile to another reuses this component.
+    protected override async Task OnParametersSetAsync()
     {
-        _user = await Platform.Profiles.GetAsync(Username);
+        if (string.Equals(_loadedFor, Username, StringComparison.OrdinalIgnoreCase)) return;
+
+        _loadedFor = Username;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        (_loaded, _failed, _user, _activity, _activityFailed) = (false, false, null, null, false);
+
+        try
+        {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            _me = auth.User.Identity?.Name;
+
+            _user = await Platform.Profiles.GetAsync(Username);
+        }
+        catch (AccessTokenNotAvailableException ex)
+        {
+            ex.Redirect();
+            return;
+        }
+        catch (Exception)
+        {
+            _failed = true;
+        }
+
+        _loaded = true;
+        StateHasChanged();
+
+        if (_user is not null) await LoadActivityAsync();
+    }
+
+    private async Task LoadActivityAsync()
+    {
+        _refreshing = true;
+        try
+        {
+            // TODO: replace with your filtered activity method. Until then the general feed is filtered here.
+            var feed = await Platform.Activity.ListAsync();
+            _activity =
+            [
+                .. feed.Where(activity =>
+                    string.Equals(activity.Actor.Username, _user!.Username, StringComparison.OrdinalIgnoreCase))
+            ];
+            _activityFailed = false;
+        }
+        catch (AccessTokenNotAvailableException ex)
+        {
+            ex.Redirect();
+        }
+        catch (Exception)
+        {
+            _activityFailed = true;
+        }
+        finally
+        {
+            _refreshing = false;
+        }
     }
 }

@@ -1,0 +1,79 @@
+@using Karata.Kit.Cards.Models
+
+@{
+    var top = Game.Pile.Peek();
+    var current = Game.CurrentHand;
+    var myTurn = Me is not null && current.Id == Me.Id;
+}
+
+<MudPaper Outlined Class="pa-3 rounded-lg"
+          Style="@(myTurn ? "border-color: var(--mud-palette-primary);" : null)">
+    <MudStack Row Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="2">
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="1" aria-live="polite">
+            <MudIcon Icon="@(myTurn ? Icons.Material.Rounded.PlayCircle : Me is null ? Icons.Material.Rounded.Person : Icons.Material.Rounded.HourglassTop)"
+                     Color="@(myTurn ? Color.Primary : Color.Default)"/>
+            <MudText Typo="Typo.subtitle1">
+                @(myTurn ? "Your turn" : Me is null ? $"{current.Username}'s turn" : $"Waiting for {current.Username}")
+            </MudText>
+        </MudStack>
+
+        <MudSpacer/>
+
+        <MudChip T="string" Icon="@GetIcon(top)" Variant="Variant.Outlined"
+                 Color="@(top.Color is Red ? Color.Error : Color.Default)">
+            Top card: @top.Name
+        </MudChip>
+
+        @if (Game.Pick > 0)
+        {
+            <MudChip T="string" Icon="@Icons.Material.Rounded.PostAdd" Color="Color.Warning">
+                Pick @Game.Pick
+            </MudChip>
+        }
+
+        @if (Game.Request is { } request)
+        {
+            <MudChip T="string" Icon="@GetIcon(request)" Variant="Variant.Outlined"
+                     Color="@(request.Color is Red ? Color.Error : Color.Default)">
+                Request: @(request.Face is None ? request.Suit.ToString() : request.Name)
+            </MudChip>
+        }
+    </MudStack>
+
+    @if (Opponents.Count > 0)
+    {
+        <MudStack Row Wrap="Wrap.Wrap" Spacing="1" Class="mt-2">
+            @foreach (var hand in Opponents)
+            {
+                var active = hand.Id == current.Id;
+                var count = hand.Cards.Count;
+
+                <MudChip T="string" Size="Size.Small"
+                         Icon="@(hand.IsLastCard ? Icons.Material.Rounded.Warning : Icons.Material.Rounded.Person)"
+                         Variant="@(active ? Variant.Filled : Variant.Text)"
+                         Color="@(hand.IsLastCard ? Color.Warning : active ? Color.Primary : Color.Default)">
+                    @hand.Username · @count @(count == 1 ? "card" : "cards")@(hand.IsLastCard ? " · last card" : "")@(hand.Status is not HandStatus.Active ? $" · {hand.Status.ToString().ToLowerInvariant()}" : "")
+                </MudChip>
+            }
+        </MudStack>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public GameData Game { get; set; } = null!;
+
+    /// <summary>The viewing player's hand. Null when spectating.</summary>
+    [Parameter] public HandData? Me { get; set; }
+
+    private List<HandData> Opponents => [.. Game.Hands.Where(hand => Me is null || hand.Id != Me.Id)];
+
+    private static string GetIcon(Card card) => card.Suit switch
+    {
+        Spades => CardIcons.Spade,
+        Hearts => CardIcons.Heart,
+        Clubs => CardIcons.Club,
+        Diamonds => CardIcons.Diamond,
+        BlackJoker or RedJoker => Icons.Material.Rounded.TheaterComedy,
+        _ => throw new ArgumentException($"Invalid suit {card.Suit}", nameof(card))
+    };
+}

@@ -11,7 +11,11 @@ using static Karata.Kit.Cards.Models.GameStatus;
 namespace Karata.Cards.Hubs;
 
 [Authorize]
-public partial class ReplayerHub(ILogger<SpectatorHub> logger, CardsContext context, ReplayProcessor processor) : Hub<IReplayerClient>
+public partial class ReplayerHub(
+    ILogger<SpectatorHub> logger,
+    CardsContext context,
+    ReplayProcessor processor
+) : Hub<IReplayerClient>
 {
     private static readonly TimeSpan MinimumInterval = TimeSpan.FromMilliseconds(50);
 
@@ -38,7 +42,7 @@ public partial class ReplayerHub(ILogger<SpectatorHub> logger, CardsContext cont
         {
             if (interval < MinimumInterval)
                 throw new KarataException($"Interval must be greater than {MinimumInterval.Humanize()}");
-            
+
             if (await context.Rooms.FindAsync(roomId) is not { } room)
                 throw new KarataException("Room not found");
 
@@ -68,7 +72,7 @@ public partial class ReplayerHub(ILogger<SpectatorHub> logger, CardsContext cont
         try
         {
             LogSpectatorAction(logger, Context.ConnectionId, "leaving", roomId);
-            
+
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId.ToString());
             await Clients.Client(Context.ConnectionId).RemoveFromRoom(roomId);
         }
@@ -79,5 +83,6 @@ public partial class ReplayerHub(ILogger<SpectatorHub> logger, CardsContext cont
     }
 
     [LoggerMessage(LogLevel.Debug, "Spectator {spectator} is {action} room {room}.")]
-    private static partial void LogSpectatorAction(ILogger<SpectatorHub> logger, string spectator, string action, Guid room);
+    private static partial void LogSpectatorAction(ILogger<SpectatorHub> logger, string spectator, string action,
+        Guid room);
 }

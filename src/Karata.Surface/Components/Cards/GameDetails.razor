@@ -1,33 +1,150 @@
+@using Humanizer
 @using Karata.Kit.Cards.Models
+@using TextCopy
+
+@inject IClipboard Clipboard
+@inject ISnackbar Snackbar
+
 <MudLoading Loading="@(Room is null)" Text="Please wait..." Class="mud-height-full pa-0">
-    <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full py-4">
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="py-6">
         @if (Room is not null)
         {
-            <MudPaper Class="pa-4 mb-4">
-                <InformationPanel Subheader Room="Room"/>
-                <PlayersPanel Subheader Room="Room"/>
-                <MudDivider Class="my-2"/>
+            var game = Room.Game;
+            var over = game.Status is GameStatus.Over;
+            var seated = game.Hands.Count(hand => hand.Status is HandStatus.Active);
+            var turn = game.Status is GameStatus.Ongoing && game.Hands.Count > game.CurrentTurn
+                ? game.CurrentHand.Username
+                : "—";
 
-                @if (Room.Game.Status is GameStatus.Lobby or GameStatus.Ongoing)
-                {
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/cards/game/{Room.Id}/play")">
-                        Join
-                    </MudButton>
-                    <MudButton Variant="Variant.Outlined" Href="@($"/cards/game/{Room.Id}/spectate")" Class="ml-2">
-                        Spectate
-                    </MudButton>
-                }
-                @if (Room.Game.Status is GameStatus.Over)
-                {
-                    <MudButton Variant="Variant.Outlined" Href="@($"/cards/game/{Room.Id}/replay")" Class="ml-2">
-                        Replay
-                    </MudButton>
-                }
+            var facts = new (string Label, string Value, string Hint)[]
+            {
+                ("Host", Room.Administrator.Username, ""),
+                ("Players", $"{seated} of {MaxPlayers}", ""),
+                ("Created", Room.CreatedAt.Humanize(), Room.CreatedAt.LocalDateTime.ToString("f")),
+                over
+                    ? ("Winner", game.Result?.Winner?.Username ?? "No winner", "")
+                    : ("Current turn", turn, "")
+            };
+
+            <MudPaper Outlined Class="pa-5 rounded-lg">
+                <MudStack Spacing="4">
+                    <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start" Wrap="Wrap.Wrap"
+                              Spacing="2">
+                        <div>
+                            <MudText Typo="Typo.h5">@($"{Room.Administrator.Username}'s room")</MudText>
+                            <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary"
+                                         Style="font-family: monospace;">
+                                    @Room.Id
+                                </MudText>
+                                <MudTooltip Text="Copy room ID">
+                                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Rounded.ContentCopy"
+                                                   OnClick="CopyId"/>
+                                </MudTooltip>
+                            </MudStack>
+                        </div>
+
+                        <MudStack Row Spacing="1">
+                            <MudChip T="string" Size="Size.Small" Color="@StatusColor(game.Status)">
+                                @game.Status
+                            </MudChip>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                     Icon="@Room.Visibility.Icon">
+                                @Room.Visibility.Humanize()
+                            </MudChip>
+                        </MudStack>
+                    </MudStack>
+
+                    @if (over && game.Result is { } result)
+                    {
+                        <MudAlert Severity="@ResultSeverity(result.ReasonType)" Variant="Variant.Outlined"
+                                  Icon="@ResultIcon(result.ResultType)">
+                            @result.Reason
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                Finished @result.CompletedAt.Humanize()
+                            </MudText>
+                        </MudAlert>
+                    }
+
+                    <MudGrid Spacing="2">
+                        @foreach (var (label, value, hint) in facts)
+                        {
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@label</MudText>
+                                <MudText title="@hint">@value</MudText>
+                            </MudItem>
+                        }
+                    </MudGrid>
+
+                    <MudDivider/>
+
+                    @if (over)
+                    {
+                        <GameStandings Room="Room"/>
+                    }
+                    else
+                    {
+                        <PlayersPanel Subheader Room="Room"/>
+                    }
+
+                    <MudStack Row Spacing="2" Wrap="Wrap.Wrap">
+                        @if (game.Status is GameStatus.Lobby or GameStatus.Ongoing)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Rounded.PlayArrow"
+                                       Href="@($"/cards/game/{Room.Id}/play")">
+                                Join
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Rounded.Visibility"
+                                       Href="@($"/cards/game/{Room.Id}/spectate")">
+                                Spectate
+                            </MudButton>
+                        }
+
+                        @if (over)
+                        {
+                            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Rounded.Replay"
+                                       Href="@($"/cards/game/{Room.Id}/replay")">
+                                Replay
+                            </MudButton>
+                        }
+                    </MudStack>
+                </MudStack>
             </MudPaper>
         }
     </MudContainer>
 </MudLoading>
 
 @code {
+    private const int MaxPlayers = 4;
+
     [Parameter] public RoomData? Room { get; set; }
+
+    private static Color StatusColor(GameStatus status) => status switch
+    {
+        GameStatus.Lobby => Color.Info,
+        GameStatus.Ongoing => Color.Success,
+        _ => Color.Default
+    };
+
+    private static Severity ResultSeverity(MessageType type) => type switch
+    {
+        MessageType.Success => Severity.Success,
+        MessageType.Warning => Severity.Warning,
+        MessageType.Error => Severity.Error,
+        _ => Severity.Info
+    };
+
+    private static string ResultIcon(GameResultType type) => type switch
+    {
+        GameResultType.Win => Icons.Material.Rounded.EmojiEvents,
+        GameResultType.DeckExhaustion => Icons.Material.Rounded.Inventory2,
+        _ => Icons.Material.Rounded.Flag
+    };
+
+    private async Task CopyId()
+    {
+        await Clipboard.SetTextAsync(Room!.Id.ToString());
+        Snackbar.Add("Copied to clipboard.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+    }
 }

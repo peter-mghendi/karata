@@ -1,0 +1,72 @@
+@using Karata.Kit.Cards.Models
+
+@inject AuthenticationStateProvider Authenticator
+
+<MudStack Spacing="2">
+    <MudText Typo="Typo.subtitle1">Final standings</MudText>
+
+    @foreach (var hand in Standings)
+    {
+        var winner = IsWinner(hand);
+
+        <MudPaper Outlined Class="pa-3 rounded-lg"
+                  Style="@(winner ? "border-color: var(--mud-palette-success);" : null)">
+            <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@(winner ? Icons.Material.Rounded.EmojiEvents : Icons.Material.Rounded.Person)"
+                         Color="@(winner ? Color.Warning : Color.Default)"/>
+
+                <MudText Class="flex-grow-1" Style="min-width: 0; overflow-wrap: anywhere;">
+                    @hand.Username
+                </MudText>
+
+                @if (hand.Username == _me)
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info">You</MudChip>
+                }
+
+                @if (hand.Status is not HandStatus.Active)
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text">
+                        @hand.Status.ToString().ToLowerInvariant()
+                    </MudChip>
+                }
+
+                @if (winner)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success">Winner</MudChip>
+                }
+                else if (ShowCounts)
+                {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="white-space: nowrap;">
+                        @hand.Cards.Count @(hand.Cards.Count == 1 ? "card" : "cards") left
+                    </MudText>
+                }
+            </MudStack>
+        </MudPaper>
+    }
+</MudStack>
+
+@code {
+    [Parameter, EditorRequired] public RoomData Room { get; set; } = null!;
+
+    private string? _me;
+
+    private bool ShowCounts => Room.Game.Hands.Any(hand => hand.Cards.Count > 0);
+
+    private List<HandData> Standings =>
+    [
+        .. Room.Game.Hands
+            .OrderByDescending(IsWinner)
+            .ThenBy(hand => hand.Cards.Count)
+            .ThenBy(hand => hand.Username)
+    ];
+
+    private bool IsWinner(HandData hand) =>
+        Room.Game.Result?.Winner is { } winner && winner.Id == hand.Player.Id;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await Authenticator.GetAuthenticationStateAsync();
+        _me = auth.User.Identity?.Name;
+    }
+}

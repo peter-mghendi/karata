@@ -18,63 +18,144 @@
 @inject Client KarataCardsClient
 @inject NavigationManager Navigator
 
+<PageTitle>Spectating</PageTitle>
+
 <SessionGuard Session="_session">
     <MudLoading Loading="@(_store is null)" Text="Please wait..." Class="mud-height-full pa-0">
-        <MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full pa-0">
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="py-6">
             @if (_store is not null)
             {
-                <MudGrid Spacing="4" Justify="Justify.Center" Class="mb-4">
-                    <MudItem xs="6">
-                        <MudList T="string" Color="Color.Info">
-                            <MudListSubheader>Game info</MudListSubheader>
-                            @if (_store.State.Game.Pile.Any())
-                            {
-                                <MudListItem Icon="@GetIcon(_store.State.Game.Pile.Peek())" IconColor="@(_store.State.Game.Pile.Peek().Color is Red ? Color.Error : Color.Default)">
-                                    Top card: @(_store.State.Game.Pile.Peek().Name)
-                                </MudListItem>
-                            }
-                            @if (_store.State.Game.Pick > 0)
-                            {
-                                <MudListItem IconColor="Color.Warning" Icon="@Icons.Material.Rounded.PostAdd">
-                                    Cards to pick: @_store.State.Game.Pick
-                                </MudListItem>
-                            }
-                            @if (_store.State.Game.Request is not null)
-                            {
-                                <MudListItem Icon="@GetIcon(_store.State.Game.Request)" IconColor="@(_store.State.Game.Request.Color is Red ? Color.Error : Color.Default)">
-                                    Current request: @(_store.State.Game.Request.Face is None ? _store.State.Game.Request.Suit.ToString() : _store.State.Game.Request.Name)
-                                </MudListItem>
-                            }
-                            <MudListItem IconColor="@Color.Info" Icon="@Icons.Material.Rounded.Person">
-                                Current player: @_store.State.Game.CurrentHand.Username
-                            </MudListItem>
-                        </MudList>
-                    </MudItem>
-                    <MudItem xs="12" sm="6">
-                        <MudList Color="Color.Info" SelectedValue="@_store.State.Game.CurrentHand.Id">
-                            <MudListSubheader>Players</MudListSubheader>
-                            @foreach (var hand in _store.State.Game.Hands.OrderBy(hand => hand.Id))
-                            {
-                                <HandDisplay Hand="hand" IsAdministrator="@(hand.Player.Id == _store.State.Administrator.Id)"/>
-                            }
-                        </MudList>
-                    </MudItem>
-                </MudGrid>
-            }
+                var room = _store.State;
+                var game = room.Game;
 
-            @if (_turns is not null)
-            {
-                <MudList T="string">
-                    <MudListSubheader Class="pb-4">Turns</MudListSubheader>
+                <MudStack Spacing="3">
+                    <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap"
+                              Spacing="2">
+                        <div>
+                            <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Rounded.Visibility" Color="Color.Info"
+                                         Size="Size.Small"/>
+                                <MudText Typo="Typo.overline" Class="mud-text-secondary">Spectating</MudText>
+                            </MudStack>
+                            <MudText Typo="Typo.h5">@($"{room.Administrator.Username}'s room")</MudText>
+                        </div>
 
-                    @foreach (var turn in _turns)
+                        <MudStack Row Spacing="1">
+                            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Rounded.MenuBook"
+                                       Href="/cards/rules" Target="_blank">
+                                Rules
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Rounded.ArrowBack"
+                                       Href="@($"/cards/game/{room.Id}")">
+                                Room details
+                            </MudButton>
+                        </MudStack>
+                    </MudStack>
+
+                    @if (game.Status is GameStatus.Ongoing && game.Hands.Count > game.CurrentTurn)
                     {
-                        <MudListItem Value="@turn">
-                            <MudText Typo="Typo.caption">@(turn.Hand.Username)</MudText>
-                            <MudText Typo="Typo.body1" Class="gray-text">@GetDescription(turn)</MudText>
-                        </MudListItem>
+                        <GameStatusBar Game="game"/>
                     }
-                </MudList>
+                    else if (game.Status is GameStatus.Lobby)
+                    {
+                        <MudPaper Outlined Class="pa-6 rounded-lg">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                <MudProgressCircular Indeterminate Color="Color.Info"/>
+                                <MudText Typo="Typo.h6">Waiting for the game to start</MudText>
+
+                                <MudStack Row Justify="Justify.Center" Wrap="Wrap.Wrap" Spacing="1">
+                                    @foreach (var hand in game.Hands.Where(h => h.Status is HandStatus.Active))
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                                 Icon="@Icons.Material.Rounded.Person">
+                                            @hand.Username
+                                        </MudChip>
+                                    }
+                                </MudStack>
+
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                    @game.Hands.Count(h => h.Status is HandStatus.Active) of @MaxPlayers players have joined
+                                </MudText>
+                            </MudStack>
+                        </MudPaper>
+                    }
+
+                    <MudText Typo="Typo.h6" Class="mt-2">Activity</MudText>
+
+                    @if (_failed)
+                    {
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+                            Couldn't load the activity log.
+                        </MudAlert>
+                    }
+                    else if (!_loaded)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="8rem" Class="rounded-lg"/>
+                    }
+                    else if (_entries.Count == 0)
+                    {
+                        <MudText Class="mud-text-secondary">Nothing has happened yet.</MudText>
+                    }
+                    else
+                    {
+                        <MudPaper Outlined Class="rounded-lg">
+                            @foreach (var entry in Visible)
+                            {
+                                <MudStack Row AlignItems="AlignItems.Start" Spacing="3" Class="pa-3">
+                                    <MudAvatar Size="Size.Small" Variant="Variant.Outlined" Color="@entry.Color">
+                                        <MudIcon Icon="@entry.Icon" Size="Size.Small"/>
+                                    </MudAvatar>
+
+                                    <MudStack Spacing="1" Class="flex-grow-1" Style="min-width: 0;">
+                                        <MudText>
+                                            @if (entry.Player is not null)
+                                            {
+                                                <b>@entry.Player</b>
+                                            }
+                                            &nbsp;@entry.Text
+                                        </MudText>
+
+                                        @if (entry.Cards.Count > 0 || entry.Notes.Count > 0)
+                                        {
+                                            <MudStack Row Wrap="Wrap.Wrap" Spacing="1">
+                                                @foreach (var card in entry.Cards)
+                                                {
+                                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                                             Icon="@GetIcon(card)"
+                                                             Color="@(card.Color is Red ? Color.Error : Color.Default)">
+                                                        @card.Name
+                                                    </MudChip>
+                                                }
+
+                                                @foreach (var note in entry.Notes)
+                                                {
+                                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text"
+                                                             Color="Color.Info">
+                                                        @note
+                                                    </MudChip>
+                                                }
+                                            </MudStack>
+                                        }
+                                    </MudStack>
+
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary"
+                                             Style="white-space: nowrap;">
+                                        @entry.At.LocalDateTime.ToString("t")
+                                    </MudText>
+                                </MudStack>
+
+                                <MudDivider/>
+                            }
+
+                            @if (!_all && _entries.Count > Recent)
+                            {
+                                <MudButton Variant="Variant.Text" FullWidth OnClick="@(() => _all = true)">
+                                    Show @(_entries.Count - Recent) earlier
+                                </MudButton>
+                            }
+                        </MudPaper>
+                    }
+                </MudStack>
             }
         </MudContainer>
     </MudLoading>
@@ -82,23 +163,34 @@
 
 @code
 {
+    private const int MaxPlayers = 4;
+    private const int Recent = 30;
+
     [Parameter] public Guid Id { get; set; }
 
     private SpectatorConnection.Session? _session;
     private RoomStore? _store;
-    private List<TurnData>? _turns;
+    private List<Entry> _entries = [];
+    private bool _loaded;
+    private bool _failed;
+    private bool _all;
+    private bool _refreshing;
+    private bool _stale;
     private readonly CompositeDisposable _subscriptions = new();
+
+    private IEnumerable<Entry> Visible => _all ? _entries : _entries.Take(Recent);
 
     private void OnStoreChanged(RoomData room) => StateHasChanged();
 
     protected override async Task OnInitializedAsync()
     {
-        _turns = await KarataCardsClient.Turns.ListAsync(Id);
+        await RefreshTurnsAsync();
 
         var connection = new SpectatorConnection(ClientOptions.Value.Host);
         await connection.StartAsync();
-        
+
         _session = connection.Spawn(Id, new SpectatorConnection.SessionParameters());
+
         _session.Events.AddHandToRoom.Subscribe(data =>
         {
             var (_, user, _) = data;
@@ -107,36 +199,37 @@
 
         _session.Events.AddToRoom.Subscribe(room =>
         {
-            _store = new RoomStore(room, [new LoggingInterceptor<RoomData>(LoggerFactory), new TimingInterceptor<RoomData>(LoggerFactory)]);
-            _store.Changes.Subscribe(OnStoreChanged);
+            if (room.Game.Status is GameStatus.Over)
+            {
+                Navigator.NavigateTo($"/cards/game/{room.Id}/results");
+                return;
+            }
+
+            _store = new RoomStore(room, [
+                new LoggingInterceptor<RoomData>(LoggerFactory),
+                new TimingInterceptor<RoomData>(LoggerFactory)
+            ]);
+            _store.Changes.Subscribe(OnStoreChanged).DisposeWith(_subscriptions);
 
             _session.Events.BindRoomState(_store).DisposeWith(_subscriptions);
             OnStoreChanged(room);
         }).DisposeWith(_subscriptions);
-        
-        _session.Events.EndGame
-            .Subscribe(result => ShowMessage(new SystemMessage { Text = result.Reason, Type = result.ReasonType }))
+
+        _session.Events.TurnCommitted
+            .Subscribe(game => _ = RefreshTurnsAsync())
             .DisposeWith(_subscriptions);
-        
+
+        _session.Events.EndGame
+            .Subscribe(_ => Navigator.NavigateTo($"/cards/game/{Id}/results"))
+            .DisposeWith(_subscriptions);
+
         _session.Events.SystemMessage.Subscribe(ShowMessage).DisposeWith(_subscriptions);
-        
-        _session.Events.TurnCommitted.Subscribe(game =>
-        {
-            Snackbar.Add($"It is now {game.CurrentHand.Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
 
-            game.Hands.ForEach(hand =>
-            {
-                if (hand.Cards.Count == 0) ShowMessage(new() { Text = $"{hand.Username} is cardless.", Type = MessageType.Info }); 
-                if (hand.IsLastCard) ShowMessage(new() { Text = $"{hand.Username} is on their last card.", Type = MessageType.Warning }); 
-            });
-        }).DisposeWith(_subscriptions);
-
-        
         _session.Events.RemoveFromRoom
             .Subscribe(_ =>
             {
                 _session.Dispose();
-                _store!.Dispose();
+                _store?.Dispose();
 
                 StateHasChanged();
 
@@ -151,13 +244,15 @@
                 Snackbar.Add($"{hand.Username} has left the room.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
             })
             .DisposeWith(_subscriptions);
-        
-        _session.Events.TurnCommitted
-            .Subscribe(resolution => { Snackbar.Add($"It is now {_store!.State.Game.Hands[resolution.CurrentTurn].Username}'s turn.", Severity.Info, c => c.SnackbarVariant = Variant.Text); })
-            .DisposeWith(_subscriptions);
 
         _session.Events.UpdateGameStatus
-            .Subscribe(game => Snackbar.Add($"The game is now {game.Status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text))
+            .Subscribe(game =>
+            {
+                if (game.Status is GameStatus.Over) return;
+
+                Snackbar.Add($"The game is now {game.Status.ToString().ToLower()}.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
+                _ = RefreshTurnsAsync();
+            })
             .DisposeWith(_subscriptions);
 
         _session.Events.UpdateHandStatus.Subscribe(data =>
@@ -170,6 +265,119 @@
         await _session.JoinRoom();
     }
 
+    private async Task RefreshTurnsAsync()
+    {
+        if (_refreshing)
+        {
+            _stale = true;
+            return;
+        }
+
+        _refreshing = true;
+        try
+        {
+            do
+            {
+                _stale = false;
+                _entries = BuildEntries(await KarataCardsClient.Turns.ListAsync(Id));
+                _loaded = true;
+                _failed = false;
+                StateHasChanged();
+            } while (_stale);
+        }
+        catch (Exception)
+        {
+            _failed = !_loaded;
+            StateHasChanged();
+        }
+        finally
+        {
+            _refreshing = false;
+        }
+    }
+
+    private static List<Entry> BuildEntries(List<TurnData> turns)
+    {
+        var entries = turns
+            .Where(turn => turn.Type is TurnType.Play or TurnType.Void)
+            .OrderByDescending(turn => turn.CreatedAt)
+            .ThenByDescending(turn => turn.Id)
+            .Select(Describe)
+            .ToList();
+
+        var deals = turns.Where(turn => turn.Type is TurnType.Deal).ToList();
+        if (deals.Count > 0)
+        {
+            var counts = deals.Select(turn => turn.CardsPicked.Count).Distinct().ToList();
+            var text = counts is [var each] ? $"{CardCount(each)} dealt to each player." : "Cards dealt.";
+
+            entries.Add(new Entry(null, Icons.Material.Rounded.Style, Color.Info, $"Game started. {text}",
+                deals.Min(turn => turn.CreatedAt), [], []));
+        }
+
+        return entries;
+    }
+
+    private static Entry Describe(TurnData turn)
+    {
+        var player = turn.Hand.Username;
+
+        if (turn.Type is TurnType.Void)
+        {
+            return new Entry(player, Icons.Material.Rounded.PersonOff, Color.Default, "was skipped (away).",
+                turn.CreatedAt, [], []);
+        }
+
+        var played = turn.CardsPlayed.Count;
+        var picked = turn.CardsPicked.Count;
+
+        var text = (played, picked) switch
+        {
+            (> 0, > 0) => $"played {CardCount(played)} and picked {CardCount(picked)}.",
+            (> 0, _) => $"played {CardCount(played)}.",
+            (_, > 0) => $"picked {CardCount(picked)}.",
+            _ => "took no action."
+        };
+
+        return new Entry(
+            player,
+            played > 0 ? Icons.Material.Rounded.Style : Icons.Material.Rounded.PostAdd,
+            played > 0 ? Color.Primary : Color.Warning,
+            text,
+            turn.CreatedAt,
+            [.. turn.CardsPlayed],
+            TurnNotes(turn)
+        );
+    }
+
+    private static List<string> TurnNotes(TurnData turn)
+    {
+        var notes = new List<string>();
+
+        if (turn.Delta is { } delta)
+        {
+            if (delta.Reverse) notes.Add("Reversed direction");
+
+            if (delta.Skip == 0) notes.Add("Plays again");
+            else if (delta.Skip > 1) notes.Add($"Skips {delta.Skip - 1} {(delta.Skip == 2 ? "player" : "players")}");
+
+            if (delta.RemoveRequestLevels > 0) notes.Add("Countered the request");
+
+            if (delta.RequestLevel is not CardRequestLevel.NoRequest && turn.Request is { } request)
+            {
+                notes.Add($"Requested {(request.Face is None ? request.Suit.ToString() : request.Name)}");
+            }
+
+            if (delta.Give > 0) notes.Add($"Next player picks {delta.Give}");
+        }
+
+        if (turn.IsLastCard) notes.Add("Last card!");
+
+        return notes;
+    }
+
+    private static string CardCount(int num) => $"{num} {(num == 1 ? "card" : "cards")}";
+
     private static string GetIcon(Card card) => card.Suit switch
     {
         Spades => CardIcons.Spade,
@@ -180,30 +388,6 @@
         _ => throw new ArgumentException($"Invalid suit {card.Suit}", nameof(card))
     };
 
-    private static string GetDescription(TurnData turn)
-    {
-        return turn.Type switch
-        {
-            TurnType.Skip => "Was skipped.",
-            TurnType.Void => "was skipped (away).",
-            TurnType.Deal => $"Was dealt {CardCount(turn.CardsPicked.Count)}.",
-            TurnType.Play => new[]
-                {
-                    turn.CardsPlayed.Count > 0
-                        ? $"Played {CardCount(turn.CardsPlayed.Count)}"
-                        : null,
-                    turn.CardsPicked.Count > 0
-                        ? $"Picked {CardCount(turn.CardsPicked.Count)}"
-                        : null
-                }.Where(x => x != null)
-                .DefaultIfEmpty("Took no action")
-                .Aggregate((a, b) => a + " and " + b?.ToLower()) + ".",
-            _ => $"{turn.Hand.Username} performed an unknown action."
-        };
-
-        string CardCount(int num) => $"{num} {(num == 1 ? "card" : "cards")}";
-    }
-    
     private void ShowMessage(SystemMessage message)
     {
         var severity = message.Type switch
@@ -222,4 +406,14 @@
         _subscriptions.Dispose();
         _store?.Dispose();
     }
+    
+    private sealed record Entry(
+        string? Player,
+        string Icon,
+        Color Color,
+        string Text,
+        DateTimeOffset At,
+        List<Card> Cards,
+        List<string> Notes
+    );
 }

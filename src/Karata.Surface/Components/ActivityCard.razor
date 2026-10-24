@@ -1,32 +1,61 @@
+@using Humanizer
 @using Karata.Kit.Platform.Models
 
-<MudCard Elevation="0" Class="mb-4 pa-2">
-    <MudCardHeader>
-        <CardHeaderAvatar>
-            <MudAvatar Color="MudBlazor.Color.Secondary">@Activity.Actor.Username.ToUpper().First()</MudAvatar>
-        </CardHeaderAvatar>
-        <CardHeaderContent>
-            <MudText Typo="Typo.body1">@Activity.Actor.Username</MudText>
-            <MudText Typo="Typo.body2">@Activity.OccurredAt.ToLocalTime().ToString()</MudText>
-        </CardHeaderContent>
-    </MudCardHeader>
-    <MudCardContent>
-        <MudText>@Activity.Text</MudText>
-    </MudCardContent>
-    <MudCardActions>
-        @foreach (var action in Activity.Actions)
+<MudStack Row AlignItems="AlignItems.Start" Spacing="3" Class="pa-3">
+    @if (ShowActor)
+    {
+        <MudAvatar Color="Color.Secondary">@Initial</MudAvatar>
+    }
+
+    <MudStack Spacing="1" Class="flex-grow-1" Style="min-width: 0;">
+        <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start" Spacing="2">
+            <MudText Style="overflow-wrap: anywhere;">
+                @if (ShowActor)
+                {
+                    <b>@Activity.Actor.Username</b>
+                }
+                else
+                {
+                    @Activity.Text
+                }
+            </MudText>
+
+            <MudTooltip Text="@Activity.OccurredAt.ToLocalTime().ToString("f")">
+                <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="white-space: nowrap;">
+                    @Activity.OccurredAt.Humanize()
+                </MudText>
+            </MudTooltip>
+        </MudStack>
+
+        @if (ShowActor)
         {
-            <MudButton Variant="Variant.Text" Color="Color(action)" Href="@action.Href.ToString()">
-                @action.Text
-            </MudButton>
+            <MudText>@Activity.Text</MudText>
         }
-    </MudCardActions>
-</MudCard>
+
+        @if (Activity.Actions.Count > 0)
+        {
+            <MudStack Row Spacing="1" Wrap="Wrap.Wrap" Class="mt-1">
+                @foreach (var action in Activity.Actions)
+                {
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="ActionColor(action)"
+                               Href="@action.Href.ToString()">
+                        @action.Text
+                    </MudButton>
+                }
+            </MudStack>
+        }
+    </MudStack>
+</MudStack>
 
 @code {
     [Parameter] public required ActivityData Activity { get; set; }
 
-    private static Color Color(ActionData action) => Enum.TryParse<Color>(action.Type, ignoreCase: true, result: out var color) 
-        ? color 
-        : MudBlazor.Color.Default;
+    [Parameter] public bool ShowActor { get; set; } = true;
+
+    private string Initial => Activity.Actor.Username.FirstOrDefault() is { } first
+        ? char.ToUpperInvariant(first).ToString()
+        : "?";
+
+    private static Color ActionColor(ActionData action) =>
+        Enum.TryParse<Color>(action.Type, ignoreCase: true, result: out var color) ? color : Color.Default;
 }

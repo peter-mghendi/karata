@@ -57,3 +57,7 @@
     bottom: 27.5%;
     right: 43.5%;
 }
+
+.seat-active {
+    filter: drop-shadow(0 0 0.6rem rgba(255, 213, 79, 0.95));
+}

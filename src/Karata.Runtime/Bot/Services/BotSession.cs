@@ -46,9 +46,7 @@ public sealed class BotSession(
                 _room.Changes
                     .Where(room => room.Game.Status is GameStatus.Ongoing)
                     .Take(1)
-                    .Select(_ => Observable.FromAsync(async cancellation => await session.SendChat("gg", cancellation)))
-                    .Concat()
-                    .Subscribe()
+                    .Subscribe(_ => _log.LogDebug("Game {Game} has started.", roomId))
                     .DisposeWith(_disposables);
 
                 session.Events.BindRoomState(_room).DisposeWith(_disposables);
@@ -70,7 +68,6 @@ public sealed class BotSession(
             .DisposeWith(_disposables);
 
         await session.JoinRoom(ct);
-        await session.SendChat("behold me, peasants", ct);
     }
 
     private async Task PlayTurnAsync(PlayerConnection.Session session, CancellationToken ct)
@@ -80,7 +77,6 @@ public sealed class BotSession(
             _plan = await strategy.PlanAsync(_room!.State, ct);
             _ = engine.EvaluateTurn(_room!.State.Game, _plan.Move);
             await session.PerformTurn(_plan.Move, ct);
-            await session.SendChat("get rekt", ct);
 
             _log.LogDebug("Played {Move}.", string.Join(", ", _plan.Move.Select(card => card.Name)));
         }

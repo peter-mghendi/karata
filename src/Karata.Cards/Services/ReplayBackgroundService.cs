@@ -13,24 +13,25 @@ internal sealed record ReplaySessionHandle(Task Task, CancellationTokenSource Ca
 public sealed class ReplayProcessor(IServiceScopeFactory factory, IHubContext<ReplayerHub, IReplayerClient> replayers)
 {
     private readonly ConcurrentDictionary<ReplayKey, ReplaySessionHandle> _sessions = new();
-    
+
     public async Task StartAsync(ReplayRequest request)
     {
         using var scope = factory.CreateScope();
         await using var context = scope.ServiceProvider.GetRequiredService<CardsContext>();
-        
+
         var key = new ReplayKey(request.RoomId, request.UserId);
         if (_sessions.TryRemove(key, out var existing))
         {
             await existing.Cancellation.CancelAsync();
         }
-        
+
         var replayer = replayers.Clients.User(request.UserId);
         var room = await context.Rooms.FindAsync(request.RoomId);
+        var watcher = room!.Game.Hands.SingleOrDefault(hand => hand.Player.Id == request.UserId);
         var turns = room!.Game.Hands.SelectMany(hand => hand.Turns).OrderBy(turn => turn.CreatedAt);
-        
+
         var cts = new CancellationTokenSource();
-        var runner = new ReplaySessionRunner(request.RoomId, [..turns], replayer, request.Interval, cts.Token);
+        var runner = new ReplaySessionRunner(request, [.. turns], replayer, cts.Token);
         var task = Task.Run(() => runner.RunAsync(), cts.Token);
 
         _sessions[key] = new ReplaySessionHandle(task, cts);

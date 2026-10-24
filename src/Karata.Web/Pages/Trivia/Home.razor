@@ -3,7 +3,6 @@
 @using Karata.Kit.Trivia
 @using Karata.Kit.Trivia.Models
 @using Karata.Surface.Components.Trivia.Dialogs
-@using Karata.Web.Extensions
 
 @attribute [Authorize]
 
@@ -11,35 +10,100 @@
 @inject NavigationManager Navigation
 @inject Client Trivia
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Trivia</PageTitle>
 
-<MudGrid>
-    @foreach (var topic in Topics)
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-4">
+    <MudStack Row AlignItems="AlignItems.End" Wrap="Wrap.Wrap" Class="mb-6" Spacing="3">
+        <MudStack>
+            <MudText Typo="Typo.h4">Trivia</MudText>
+            <MudText Class="mud-text-secondary">Pick a topic, choose an opponent, and play.</MudText>
+        </MudStack>
+        <MudSpacer/>
+        <MudTextField @bind-Value="_search" Immediate Clearable Placeholder="Search topics" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Rounded.Search" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" />
+    </MudStack>
+
+    <MudGrid>
+        @if (_loading)
+        {
+            @for (var i = 0; i < 4; i++)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="16rem" Class="rounded-lg" />
+                </MudItem>
+            }
+        }
+        else
+        {
+            @foreach (var topic in Visible)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3" Class="d-flex">
+                    <MudCard Outlined Class="rounded-lg d-flex flex-column flex-grow-1">
+                        <div class="d-flex align-center justify-center" aria-hidden="true"
+                             style="@TopicBackdrop.For(topic) height: 7rem;">
+                        </div>
+
+                        <MudCardContent Class="flex-grow-1">
+                            <MudText Typo="Typo.h6" GutterBottom>@topic.Title</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary"
+                                     Style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                                @topic.Description
+                            </MudText>
+                        </MudCardContent>
+
+                        <MudCardActions Class="pa-3">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       FullWidth
+                                       StartIcon="@Icons.Material.Rounded.PlayArrow"
+                                       Disabled="@(_playing is not null)"
+                                       OnClick="@(() => Play(topic))">
+                                @(_playing == topic ? "Starting…" : "Play")
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        }
+    </MudGrid>
+
+    @if (!_loading && !Visible.Any())
     {
-        <MudItem xs="6" sm="4" md="3">
-            <MudCard Class="rounded-lg">
-                <MudCardMedia Image="@topic.GetImageUrl()"/>
-                <MudCardHeader>@topic.Title</MudCardHeader>
-                <MudCardContent>@topic.Description</MudCardContent>
-                <MudCardActions>
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => Play(topic))">
-                        Play!
-                    </MudButton>
-                    <MudIconButton Icon="@Icons.Material.Filled.Favorite" Color="Color.Error"/>
-                    <MudIconButton Icon="@Icons.Material.Filled.Share" Color="Color.Default"/>
-                </MudCardActions>
-            </MudCard>
-        </MudItem>
+        <MudStack AlignItems="AlignItems.Center" Class="mt-12" Spacing="1">
+            <MudIcon Icon="@Icons.Material.Rounded.SearchOff" Class="mud-text-secondary" Style="font-size: 3rem;" />
+            <MudText Class="mud-text-secondary">
+                @(Topics.Count == 0 ? "There are no topics yet." : "No topics match your search.")
+            </MudText>
+        </MudStack>
     }
-</MudGrid>
+</MudContainer>
 
 @code
 {
     private List<TopicData> Topics { get; set; } = [];
 
+    private bool _loading = true;
+    private string? _search;
+    private TopicData? _playing;
+
+    private IEnumerable<TopicData> Visible =>
+        string.IsNullOrWhiteSpace(_search)
+            ? Topics
+            : Topics.Where(t =>
+                t.Title.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                || t.Description is { } d && d.Contains(_search, StringComparison.OrdinalIgnoreCase));
+
     protected override async Task OnInitializedAsync()
     {
-        Topics = await Trivia.Topics.GetTopics();
+        try
+        {
+            Topics = await Trivia.Topics.GetTopics();
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     private async Task Play(TopicData topic)
@@ -50,10 +114,16 @@
             return;
         }
 
-        var request = new GameRequest(topic.Id, opponent);
-        var game = await Trivia.Games.CreateAsync(request);
-
-        Navigation.NavigateTo($"trivia/game/{game.Id}/play");
+        _playing = topic;
+        try
+        {
+            var game = await Trivia.Games.CreateAsync(new GameRequest(topic.Id, opponent));
+            Navigation.NavigateTo($"trivia/game/{game.Id}/play");
+        }
+        finally
+        {
+            _playing = null;
+        }
     }
 
     private async Task<string?> SelectUser()
@@ -61,6 +131,30 @@
         var dialog = await DialogService.ShowAsync<SelectUserDialog>("Select Opponent");
         var result = await dialog.Result;
 
-        return result?.Data as string;
+        return result is { Canceled: false } ? result.Data as string : null;
+    }
+
+    private static string Backdrop(TopicData topic)
+    {
+        var hash = Hash(topic.Id.ToString());
+        var hue = (int)(hash % 360);
+        var shift = 25 + (int)(hash / 360 % 40);
+
+        return $"background: linear-gradient(135deg, hsl({hue}, 55%, 42%), hsl({(hue + shift) % 360}, 60%, 32%));";
+    }
+
+    private static uint Hash(string value)
+    {
+        unchecked
+        {
+            var hash = 2166136261u;
+            foreach (var c in value)
+            {
+                hash ^= c;
+                hash *= 16777619u;
+            }
+
+            return hash;
+        }
     }
 }

@@ -17,7 +17,6 @@ public static class RoomEventsStateBindings
                 events.MoveCardsFromDeckToHand.Select(data => new RoomStore.MoveCardsFromDeckToHand(data.HandId, [..data.Cards])),
                 events.MoveCardsFromDeckToPile.Select(cards => new RoomStore.MoveCardsFromDeckToPile([..cards])),
                 events.MoveCardsFromHandToPile.Select(data => new RoomStore.MoveCardsFromHandToPile(data.HandId, [..data.Cards], data.Visible)),
-                events.Chat.Select(chat => new RoomStore.Chat(chat)),
                 events.ReclaimPile.Select(_ => new RoomStore.ReclaimPile()),
                 events.RemoveHandFromRoom.Select(user => new RoomStore.RemoveHandFromRoom(user)),
                 events.UpdateAdministrator.Select(administrator => new RoomStore.UpdateAdministrator(administrator)),

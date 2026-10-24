@@ -1,174 +1,324 @@
 @page "/trivia/game/{Identifier:guid}/results"
 
 @using BlafettisLib
-@using Howler.Blazor.Components
 @using Karata.Kit.Platform.Models
 @using Karata.Kit.Trivia
 @using Karata.Kit.Trivia.Models
-@using Karata.Web.Extensions
+
+@attribute [Authorize]
 
 @inject AuthenticationStateProvider Authenticator
-@inject IHowl Howl
 @inject Client QuizWars
 
-<PageTitle>Game Over</PageTitle>
+<PageTitle>Results</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large">
-    <MudStack>
-        <Blafettis @ref="@_blafettis" spread="90"/>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="py-6">
+    <Blafettis @ref="_blafettis" spread="90"/>
 
-        @* HACK: Should not need to check for Me being null here *@
-        @if (Game is null || Me is null || Rounds is { Count: 0 })
-        {
-            <MudText>Loading...</MudText>
-        }
-        else
-        {
-            <MudCard Class="rounded-lg">
-                <MudCardMedia Image="@Game.Topic.GetImageUrl()"/>
-                <MudCardContent>
-                    <MudStack AlignItems="AlignItems.Center">
-                        <MudText Typo="Typo.h4">@Game.Topic.Title</MudText>
-                        <MudText>@Game.Topic.Description</MudText>
-                        <MudGrid Class="mb-4">
-                            @foreach (var player in Game.Players)
-                            {
-                                <MudItem xs="6">
-                                    <PlayerDisplay Player="@player" Rounds="@Rounds" Me="@Me"/>
-                                </MudItem>
-                            }
-                        </MudGrid>
+    @if (Game is null)
+    {
+        <MudStack Spacing="4">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="18rem" Class="rounded-lg"/>
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="12rem" Class="rounded-lg"/>
+        </MudStack>
+    }
+    else
+    {
+        var headline = Headline;
 
-                        <MudText Typo="Typo.caption" Style="color: var(--mud-palette-text-secondary)">@Game.Id</MudText>
+        <MudStack Spacing="4">
+            <MudCard Outlined Class="rounded-lg overflow-hidden">
+                <div class="d-flex flex-column align-center justify-center pa-6"
+                     style="@TopicBackdrop.For(Game.Topic) min-height: 10rem; color: white;">
+                    <MudIcon Icon="@headline.Icon" Color="Color.Inherit" Style="font-size: 3rem;"/>
+                    <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Inherit">@headline.Title</MudText>
+                    <MudText Align="Align.Center" Color="Color.Inherit" Style="opacity: 0.85;">@headline.Detail</MudText>
+                </div>
+
+                <MudCardContent Class="pa-6">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1" Class="mb-4">
+                        <MudText Typo="Typo.h6" Align="Align.Center">@Game.Topic.Title</MudText>
+                        <MudText Class="mud-text-secondary" Align="Align.Center">@Game.Topic.Description</MudText>
+                    </MudStack>
+
+                    <MudGrid Spacing="2">
+                        @foreach (var standing in Standings)
+                        {
+                            var you = IsMe(standing.Player);
+
+                            <MudItem xs="6">
+                                <MudPaper Outlined Class="pa-4 rounded-lg mud-height-full"
+                                          Style="@(standing.IsLeader ? "border-color: var(--mud-palette-primary);" : null)">
+                                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                                            @if (standing.IsLeader)
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Rounded.EmojiEvents" Color="Color.Warning"
+                                                         Size="Size.Small"/>
+                                            }
+                                            <MudText>@(you ? "You" : standing.Player.Username)</MudText>
+                                        </MudStack>
+
+                                        @if (standing.Answered >= Rounds.Count)
+                                        {
+                                            <MudText Typo="Typo.h3">@standing.Points</MudText>
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                                @standing.Correct of @Rounds.Count correct
+                                            </MudText>
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.h5" Class="mud-text-secondary">Waiting…</MudText>
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                                @standing.Answered of @Rounds.Count answered
+                                            </MudText>
+                                        }
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                        }
+                    </MudGrid>
+
+                    <MudStack Row Justify="Justify.Center" Class="mt-4">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Rounded.Replay" Href="trivia">
+                            Play again
+                        </MudButton>
                     </MudStack>
                 </MudCardContent>
             </MudCard>
 
-            <MudCard Class="rounded-lg pb-6">
-                <MudCardHeader>
-                    <MudText Typo="Typo.h5">Questions</MudText>
-                    <MudSpacer/>
-                    <MudIconButton Icon="@Icons.Material.Rounded.Share"/>
-                    <MudIconButton Icon="@Icons.Material.Rounded.Flag" Color="Color.Error"/>
-                </MudCardHeader>
+            @if (Rounds.Count > 0)
+            {
+                <MudCard Outlined Class="rounded-lg">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-2">Review</MudText>
 
-                @* HACK: The height hack will not work for longer questions and answers. *@
-                <MudCarousel ItemsSource="Rounds" Class="mud-width-full" Style="height:25rem;" AutoCycle EnableSwipeGesture
-                             ShowArrows ShowBullets>
-                    <ItemTemplate>
-                        <MudCard Class="rounded-lg px-8" Elevation="0">
-                            <MudCardHeader>
-                                <MudText Typo="Typo.h6">
-                                    @(context.Index + 1)/@(Rounds.Count) : @(context.Question.Text)
-                                </MudText>
-                            </MudCardHeader>
-                            <MudCardContent>
-                                <MudRadioGroup Value="@(context.Answer?.Id ?? -1)" ReadOnly>
-                                    <MudStack>
-                                        @foreach (var choice in context.Question.Choices)
-                                        {
-                                            <MudRadio Color="@(context.IsAnswer(choice) ? Color.Success : Color.Default)"
-                                                      Value="@choice.Id">
-                                                <MudText Color="@(context.IsAnswer(choice) ? Color.Success : Color.Default)"
-                                                         Class="me-2" Style="vertical-align: middle" Inline>
-                                                    @choice.Text
-                                                </MudText>
+                        <MudExpansionPanels MultiExpansion Elevation="0">
+                            @foreach (var round in Rounds)
+                            {
+                                var outcome = RoundOutcome(round);
+                                var points = MyResponse(round)?.Points ?? 0;
 
-                                                @* O(n²) :( *@
-                                                @foreach (var response in context.Responses.Where(response => choice.Id == response.Choice?.Id))
-                                                {
-                                                    <MudChip T="string" Color="@(context.IsAnswer(choice) ? Color.Success : Color.Error)"
-                                                             Variant="@Variant.Text">
-                                                        @response.User.Username
-                                                    </MudChip>
-                                                }
-                                            </MudRadio>
-                                        }
-                                    </MudStack>
-                                </MudRadioGroup>
-                            </MudCardContent>
-                        </MudCard>
-                    </ItemTemplate>
-                </MudCarousel>
-            </MudCard>
+                                <MudExpansionPanel>
+                                    <TitleContent>
+                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="3" Style="width: 100%;">
+                                            <MudIcon Icon="@outcome.Icon" Color="@outcome.Color"/>
+                                            <MudText Class="flex-grow-1">
+                                                @(round.Index + 1). @round.Question.Text
+                                            </MudText>
 
-            <MudCard Class="rounded-lg">
-                <MudCardHeader>
-                    <MudText Typo="Typo.h5">Scoring</MudText>
-                </MudCardHeader>
+                                            @if (round.Index + 1 == Rounds.Count)
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Rounded.RocketLaunch" Color="Color.Info"
+                                                         Size="Size.Small" Title="Double points"/>
+                                            }
 
-                <MudCardContent>
-                    <MudChart ChartType="ChartType.Line" ChartSeries="@Series" ChartLabels="@Labels" Width="100%"
-                              Height="350px" ChartOptions="@Options" @bind-SelectedIndex="_index" CanHideSeries/>
-                </MudCardContent>
-            </MudCard>
-        }
-    </MudStack>
+                                            @if (points > 0)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Success"
+                                                         Variant="Variant.Text">
+                                                    +@points
+                                                </MudChip>
+                                            }
+                                        </MudStack>
+                                    </TitleContent>
+
+                                    <ChildContent>
+                                        <MudStack Spacing="1" Class="ps-9">
+                                            @foreach (var choice in round.Question.Choices)
+                                            {
+                                                var correct = round.IsAnswer(choice);
+                                                var pickers = round.Responses
+                                                    .Where(response => response.Choice?.Id == choice.Id)
+                                                    .ToList();
+
+                                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                                    <MudIcon Size="Size.Small"
+                                                             Icon="@(correct ? Icons.Material.Rounded.CheckCircle
+                                                                     : pickers.Count > 0 ? Icons.Material.Rounded.Cancel
+                                                                     : Icons.Material.Rounded.RadioButtonUnchecked)"
+                                                             Color="@(correct ? Color.Success
+                                                                     : pickers.Count > 0 ? Color.Error
+                                                                     : Color.Default)"/>
+
+                                                    <MudText Color="@(correct ? Color.Success : Color.Default)"
+                                                             Class="flex-grow-1">
+                                                        @choice.Text
+                                                    </MudText>
+
+                                                    @foreach (var picker in pickers)
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                                                 Color="@(correct ? Color.Success : Color.Error)">
+                                                            @(IsMe(picker.User) ? "You" : picker.User.Username)
+                                                        </MudChip>
+                                                    }
+                                                </MudStack>
+                                            }
+                                        </MudStack>
+                                    </ChildContent>
+                                </MudExpansionPanel>
+                            }
+                        </MudExpansionPanels>
+                    </MudCardContent>
+                </MudCard>
+
+                <MudCard Outlined Class="rounded-lg">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Scoring</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Points after each question</MudText>
+
+                        <MudChart ChartType="ChartType.Line" ChartSeries="@Series" ChartLabels="@Labels"
+                                  Width="100%" Height="320px" ChartOptions="@ChartOptions" CanHideSeries/>
+                    </MudCardContent>
+                </MudCard>
+            }
+        </MudStack>
+    }
 </MudContainer>
 
 @code {
-    private int _index = -1;
+    private sealed record Standing(UserData Player, int Points, int Correct, int Answered)
+    {
+        public bool IsLeader { get; init; }
+    }
 
     private string _username = null!;
-
     private Blafettis? _blafettis;
+    private bool _celebrate;
+    private bool _celebrated;
 
     [Parameter] public Guid Identifier { get; set; }
 
     private GameData? Game { get; set; }
-
     private List<RoundData> Rounds { get; set; } = [];
+    private UserData? Me { get; set; }
+    private bool Complete { get; set; }
 
-    private UserData? Me => Game?.Players.SingleOrDefault(player => player.Username == _username);
+    private List<Standing> Standings { get; set; } = [];
+    private List<ChartSeries<double>> Series { get; set; } = [];
+    private string[] Labels { get; set; } = [];
+    private LineChartOptions ChartOptions { get; set; } = new();
 
-    private List<ChartSeries<double>> Series => [..Game!.Players.Select(PlayerSeries)];
+    private Standing? MyStanding =>
+        Me is { } me ? Standings.FirstOrDefault(standing => standing.Player.Id == me.Id) : null;
 
-    private static readonly string[] Labels = Enumerable.Range(0, 8).Select(x => x.ToString()).ToArray();
+    private (string Icon, string Title, string Detail) Headline
+    {
+        get
+        {
+            if (!Complete)
+            {
+                return (Icons.Material.Rounded.HourglassTop, "Waiting for your opponent",
+                    "Final results appear once everyone has finished.");
+            }
 
-    private static readonly LineChartOptions Options = new() { YAxisTicks = 20, MaxNumYAxisTicks = 8 };
+            var leaders = Standings.Where(standing => standing.IsLeader).ToList();
+            var points = leaders[0].Points;
+
+            if (leaders.Count > 1)
+            {
+                return (Icons.Material.Rounded.Balance, "It's a draw", $"Tied on {points} points.");
+            }
+
+            var winner = leaders[0].Player.Username;
+
+            if (MyStanding is not { } mine)
+            {
+                return (Icons.Material.Rounded.EmojiEvents, $"{winner} wins", $"{points} points.");
+            }
+
+            return mine.IsLeader
+                ? (Icons.Material.Rounded.EmojiEvents, "You won!", $"You scored {points} points.")
+                : (Icons.Material.Rounded.SportsScore, $"{winner} wins", $"You finished with {mine.Points} points.");
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
         var auth = await Authenticator.GetAuthenticationStateAsync();
         _username = auth.User.Identity!.Name!;
 
-        Game = await QuizWars.Games.FetchAsync(Identifier);
-        Rounds = await QuizWars.Rounds.GetRounds(Identifier);
+        var game = await QuizWars.Games.FetchAsync(Identifier);
+        var rounds = await QuizWars.Rounds.GetRounds(Identifier);
 
-        if (Winners() is [{ Id: var winnerId }] && winnerId == Me!.Id)
+        Rounds = [.. rounds.OrderBy(round => round.Index)];
+        Me = game.Players.SingleOrDefault(player => player.Username == _username);
+
+        var standings = game.Players.Select(Summarise).ToList();
+        Complete = Rounds.Count > 0 && standings.All(standing => standing.Answered >= Rounds.Count);
+
+        var top = standings.Select(standing => standing.Points).DefaultIfEmpty(0).Max();
+        Standings = [.. standings.Select(standing => standing with { IsLeader = Complete && standing.Points == top })];
+
+        Series = [.. game.Players.Select(PlayerSeries)];
+        Labels = [.. Enumerable.Range(0, Rounds.Count + 1).Select(i => i.ToString())];
+
+        var max = Series.SelectMany(series => series.Data).DefaultIfEmpty(0).Max();
+        ChartOptions = new LineChartOptions
         {
-            // await Howl.Play("/audio/win.mp3"); // Requires user interaction to play.
-            _blafettis?.RaiseConfetti();
+            YAxisTicks = Math.Max(10, (int)(Math.Ceiling(max / 60d) * 10)),
+            MaxNumYAxisTicks = 8
+        };
+
+        _celebrate = Complete && MyStanding is { IsLeader: true } && Standings.Count(s => s.IsLeader) == 1;
+        Game = game;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!_celebrate || _celebrated) return;
+
+        _celebrated = true;
+        _blafettis?.RaiseConfetti();
+    }
+
+    private Standing Summarise(UserData player)
+    {
+        var responses = Rounds
+            .SelectMany(round => round.Responses.Where(response => response.User.Id == player.Id))
+            .ToList();
+
+        return new Standing(
+            player,
+            responses.Sum(response => response.Points),
+            responses.Count(response => response.Choice is { IsCorrect: true }),
+            responses.Count);
+    }
+
+    private ChartSeries<double> PlayerSeries(UserData player)   
+    {
+        var total = 0d;
+        var data = new List<double> { 0 };
+
+        foreach (var round in Rounds)
+        {
+            var responses = round.Responses.Where(response => response.User.Id == player.Id).ToList();
+            if (responses.Count == 0) break;
+
+            total += responses.Sum(response => response.Points);
+            data.Add(total);
         }
+
+        return new ChartSeries<double> { Name = player.Username, Data = data.ToArray() };
     }
 
-    private ChartSeries<double> PlayerSeries(UserData player)
-    {
-        var data = Rounds
-            .SelectMany(round => round.Responses.Where(response => response.User.Id == player.Id),
-                (round, response) => new { round.Index, response.Points })
-            .OrderBy(item => item.Index)
-            .GroupBy(item => item.Index)
-            .TakeWhile(group => group.Key == group.First().Index)
-            .OrderBy(group => group.Key)
-            .Aggregate(new List<double> { 0 }, (acc, group) =>
-            {
-                acc.Add(acc.Last() + group.Sum(item => item.Points));
-                return acc;
-            })
-            .ToArray();
+    private bool IsMe(UserData user) => Me is { } me && user.Id == me.Id;
 
-        return new ChartSeries<double> { Name = player.Username, Data = data };
+    private ResponseData? MyResponse(RoundData round) =>
+        Me is { } me ? round.Responses.FirstOrDefault(response => response.User.Id == me.Id) : null;
+
+    private (string Icon, Color Color) RoundOutcome(RoundData round)
+    {
+        if (Me is null) return (Icons.Material.Rounded.Quiz, Color.Default);
+
+        return MyResponse(round) switch
+        {
+            null => (Icons.Material.Rounded.HelpOutline, Color.Default),
+            { Choice: null } => (Icons.Material.Rounded.TimerOff, Color.Warning),
+            { Choice.IsCorrect: true } => (Icons.Material.Rounded.CheckCircle, Color.Success),
+            _ => (Icons.Material.Rounded.Cancel, Color.Error)
+        };
     }
-
-    private UserData[] Winners() => Rounds.Any(r => r.Responses.Count < Game!.Players.Length) switch
-    {
-        true => [.. Game!.Players.GroupBy(Points).MaxBy(x => x.Key)!],
-        false => []
-    };
-
-    private int Points(UserData player) => Rounds
-        .SelectMany(r => r.Responses)
-        .Where(r => r.User.Id == player.Id)
-        .ToList().Sum(r => r.Points);
 }

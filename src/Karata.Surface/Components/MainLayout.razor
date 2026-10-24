@@ -14,20 +14,20 @@
 <MudLayout Class="mud-height-full mb-12">
     <div style="min-height: 100%; display: grid; grid-template-rows: 1fr auto;">
         <MudAppBar Elevation="0" Style="background-color: var(--mud-palette-background-gray);">
-            <MudLink Href="/" Typo="Typo.body1" Color="Color.Default" Class="me-4" Underline="Underline.None">
+            <MudLink Href="/" Typo="Typo.body1" Class="me-4" Underline="Underline.None">
                 karata
             </MudLink>
-            <MudLink Href="/cards/game/join" Typo="Typo.body2" Class="me-4" Color="Color.Default">
+            <MudLink Href="/cards/game/join" Typo="Typo.body2" Class="me-4">
                 cards
             </MudLink>
-            <MudLink Href="/trivia" Typo="Typo.body2" Class="me-4" Color="Color.Default">
+            <MudLink Href="/trivia" Typo="Typo.body2" Class="me-4">
                 trivia
             </MudLink>
             <MudSpacer/>
             <AuthorizeView>
                 <Authorized>
-                    <MudLink OnClick="@(() => Navigator.NavigateTo($"users/{context.User.Identity!.Name!}"))" Typo="Typo.body2"
-                             Class="me-4">
+                    <MudLink OnClick="@(() => Navigator.NavigateTo($"users/{context.User.Identity!.Name!}"))"
+                             Typo="Typo.body2" Class="me-4">
                         hi, @context.User.Identity!.Name!
                     </MudLink>
                     <MudLink OnClick="@(() => Authenticator.Logout())" Typo="Typo.body2" Class="me-4"
@@ -36,8 +36,7 @@
                     </MudLink>
                 </Authorized>
                 <NotAuthorized>
-                    <MudLink OnClick="@(() => Authenticator.Register())" Typo="Typo.body2" Class="me-4"
-                             Color="Color.Default">
+                    <MudLink OnClick="@(() => Authenticator.Register())" Typo="Typo.body2" Class="me-4">
                         register
                     </MudLink>
                     <MudLink OnClick="@(() => Authenticator.Login())" Typo="Typo.body2" Class="me-2"
@@ -54,13 +53,13 @@
             </div>
         </MudMainContent>
     </div>
-    <LegaleseFooter/>
+    <Footer/>
 </MudLayout>
 
 @code
 {
     private bool _dark;
-    private readonly MudTheme _theme = new();
+    private readonly MudTheme _theme = SurfaceTheme.Default;
     private MudThemeProvider _themer = null!;
 
     private string ThemeToggleIcon => SurfaceTheme.ToggleIcon(_dark);

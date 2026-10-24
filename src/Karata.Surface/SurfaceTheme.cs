@@ -3,9 +3,9 @@ using MudBlazor;
 
 namespace Karata.Surface;
 
-public class SurfaceTheme(ILocalStorageService storage)
+public sealed class SurfaceTheme(ILocalStorageService storage)
 {
-    public static MudTheme Default = new()
+    public static readonly MudTheme Default = new()
     {
         PaletteLight = new PaletteLight
         {

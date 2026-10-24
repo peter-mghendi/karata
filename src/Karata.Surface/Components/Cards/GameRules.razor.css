@@ -1,0 +1,18 @@
+section {
+    scroll-margin-top: 5rem;
+}
+
+.rules {
+    margin: 0.5rem 0;
+    padding-inline-start: 1.25rem;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.rules li + li {
+    margin-top: 0.4rem;
+}
+
+.rules ul {
+    margin-top: 0.4rem;
+}

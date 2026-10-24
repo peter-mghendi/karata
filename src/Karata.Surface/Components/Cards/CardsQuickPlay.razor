@@ -1,0 +1,80 @@
+@using Karata.Kit.Cards
+@using Karata.Kit.Cards.Models
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+@inject Client Cards
+@inject NavigationManager Navigator
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="2">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth Disabled="@_loading"
+               StartIcon="@(_loading ? null : Icons.Material.Rounded.Add)" OnClick="CreateRoom">
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate Size="Size.Small" Class="me-2"/>
+            <span>Creating…</span>
+        }
+        else
+        {
+            <span>Create a room</span>
+        }
+    </MudButton>
+
+    <MudTextField @bind-Value="_code" Immediate Clearable Margin="Margin.Dense"
+                  Label="Join with a room code or link" Variant="Variant.Outlined"
+                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.ArrowForward"
+                  AdornmentAriaLabel="Join" OnAdornmentClick="Join" OnKeyDown="OnKey"
+                  Error="@(!string.IsNullOrWhiteSpace(_code) && RoomId is null)"
+                  ErrorText="That doesn't look like a room code or link."/>
+
+    <MudStack Row Spacing="1" Wrap="Wrap.Wrap">
+        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Rounded.MeetingRoom"
+                   Href="/cards/game/join">
+            Open rooms
+        </MudButton>
+        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Rounded.MenuBook"
+                   Href="/cards/rules">
+            How to play
+        </MudButton>
+    </MudStack>
+</MudStack>
+
+@code {
+    private bool _loading;
+    private string? _code;
+
+    private Guid? RoomId => RoomCode.Parse(_code);
+
+    private async Task CreateRoom()
+    {
+        _loading = true;
+        try
+        {
+            var room = await Cards.Rooms.CreateAsync(new RoomRequest(RoomVisibility.Public));
+            Navigator.NavigateTo($"/cards/game/{room.Id}/play");
+        }
+        catch (AccessTokenNotAvailableException ex)
+        {
+            ex.Redirect();
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Couldn't create a room. Please try again.", Severity.Error,
+                c => c.SnackbarVariant = Variant.Text);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void Join()
+    {
+        if (RoomId is { } id) Navigator.NavigateTo($"/cards/game/{id}/play");
+    }
+
+    private void OnKey(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter") Join();
+    }
+}

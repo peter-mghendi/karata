@@ -1,0 +1,26 @@
+<MudPaper Outlined Class="pa-4 rounded-lg flex-grow-1 d-flex flex-column">
+    <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
+        <MudAvatar Color="@Color" Variant="Variant.Outlined">
+            <MudIcon Icon="@Icon"/>
+        </MudAvatar>
+        <MudText Typo="Typo.h6">@Title</MudText>
+    </MudStack>
+
+    <MudText Class="mud-text-secondary mb-4">@Description</MudText>
+
+    <div class="mt-auto">
+        @ChildContent
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    [Parameter, EditorRequired] public string Icon { get; set; } = "";
+
+    [Parameter] public string? Description { get; set; }
+
+    [Parameter] public Color Color { get; set; } = Color.Primary;
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}
