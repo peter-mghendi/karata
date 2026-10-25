@@ -1,68 +1,40 @@
 @using Karata.Kit.Cards.Models
 @implements Karata.Surface.Models.IPlayerInterface
 
-<div Class="pa-4 mb-4">
-    <MudGrid Spacing="4" Justify="Justify.Center">
-        <MudItem xs="6">
-            <MudList T="string" Color="Color.Info">
-                <MudListSubheader>Game Info:</MudListSubheader>
-                <MudAlert Class="mb-4" Severity="@(Game.Pile.Peek().Color is Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(Game.Pile.Peek())">
-                    Top card: @(Game.Pile.Peek().Name)
-                </MudAlert>
-                @if (Game.Pick > 0)
-                {
-                    <MudAlert Class="mb-4" Severity="Severity.Warning" Icon="@Icons.Material.Rounded.PostAdd">
-                        Cards to pick: @Game.Pick
-                    </MudAlert>
-                }
-                @if (Game.Request is not null)
-                {
-                    <MudAlert Class="mb-4" Severity="@(Game.Request.Color is Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(Game.Request)">
-                        Current request: @(Game.Request.Face is None ? Game.Request.Suit.ToString() : Game.Request.Name)
-                    </MudAlert>
-                }
-                <MudAlert Severity="@Severity.Info" Icon="@Icons.Material.Rounded.Person">
-                    Current player: @Game.CurrentHand.Username
-                    @if (Game.CurrentHand.Id == Hand.Id)
-                    {
-                        <MudChip Value="@("You")" Icon="@Icons.Material.Rounded.AccountCircle" Variant="Variant.Text" Color="Color.Info" Size="Size.Small">
-                            You
-                        </MudChip>
-                    }
-                </MudAlert>
-            </MudList>
-        </MudItem>
-        <MudItem xs="12" sm="6">
-            <MudList T="string" Color="Color.Info">
-                <MudListSubheader>Player Hands:</MudListSubheader>
-                @foreach (var hand in OtherHands)
-                {
-                    <MudAlert Class="mb-4" Severity="@Severity.Normal" Icon="@Icons.Material.Rounded.Person">
-                        @(hand.Username) has @(hand.Cards.Count) cards.
-                    </MudAlert>
-                }
-            </MudList>
-        </MudItem>
-    </MudGrid>
-</div>
-
-@* TODO: What is this 88vh? *@
-<MudDropContainer T="DropItem" Items="_items" ItemsSelector="@((DropItem item, string dropzone) => item.Identifier == dropzone)" 
-                  ItemDropped="ItemUpdated" Class="d-flex flex-column flex-grow-1 gap-4" Style="height: 70%;">
+<MudDropContainer T="DropItem" Items="_items"
+                  ItemsSelector="@((DropItem item, string dropzone) => item.Identifier == dropzone)"
+                  ItemDropped="ItemUpdated" Class="d-flex flex-column flex-grow-1">
     <ChildContent>
-        <div class="d-flex flex-wrap justify-space-between gap-4 mud-height-full">
-            <MudDropZone T="DropItem" Identifier="Hand" Class="rounded pa-4 flex-grow-1 overflow-y-auto mud-height-full" AllowReorder>
-                <MudText Typo="Typo.h6" Class="mb-4">My Cards</MudText>
-            </MudDropZone>
-            <MudDropZone T="DropItem" Identifier="Turn" Class="rounded pa-4 flex-grow-1" AllowReorder>
-                <MudText Typo="Typo.h6" Class="mb-4">Current Turn</MudText>
-            </MudDropZone>
-        </div>
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2" Class="mb-1">My cards</MudText>
+                <MudDropZone T="DropItem" Identifier="Hand" AllowReorder Class="rounded-lg pa-2"
+                             Style="min-height: 12rem; border: 1px solid var(--mud-palette-lines-default);"/>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2" Class="mb-1">Current turn</MudText>
+                <MudDropZone T="DropItem" Identifier="Turn" AllowReorder Class="rounded-lg pa-2"
+                             Style="min-height: 12rem; border: 2px dashed var(--mud-palette-lines-inputs);">
+                    @if (Turn.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">
+                            Drag cards here to play them.
+                        </MudText>
+                    }
+                </MudDropZone>
+            </MudItem>
+        </MudGrid>
     </ChildContent>
+
     <ItemRenderer>
-        <MudAlert Class="mt-4" Severity="@(context.Card.Color is Red ? Severity.Error : Severity.Normal)" Icon="@GetIcon(context.Card)">
-            @context.Card.Name
-        </MudAlert>
+        <MudPaper Outlined Class="mt-2 pa-3 rounded-lg d-flex align-center gap-3" Style="cursor: grab;">
+            <MudIcon Icon="@GetIcon(context.Card)" Size="Size.Small"
+                     Color="@(context.Card.Color is Red ? Color.Error : Color.Default)"/>
+            <MudText Color="@(context.Card.Color is Red ? Color.Error : Color.Default)">
+                @context.Card.Name
+            </MudText>
+        </MudPaper>
     </ItemRenderer>
 </MudDropContainer>
 
@@ -86,9 +58,7 @@
     [Parameter]
     public EventCallback<Card> OnRemoveCardFromTurn { get; set; }
 
-    private List<Card> CurrentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToList();
-
-    private List<HandData> OtherHands => Game.Hands.Where(h => h.Id != Hand.Id).ToList();
+    private List<Card> CurrentHand => [.. Hand.Cards.Where(c => !Turn.Contains(c))];
 
     private async Task AddCardToTurn(Card card, int index) => await OnAddCardToTurn.InvokeAsync((card, index));
 

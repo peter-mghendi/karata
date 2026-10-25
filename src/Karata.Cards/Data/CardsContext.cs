@@ -8,7 +8,6 @@ namespace Karata.Cards.Data;
 
 public class CardsContext(DbContextOptions<CardsContext> options) : KarataContext<User>(options)
 {
-    public DbSet<Chat> Chats => Set<Chat>();
     public DbSet<Game> Games => Set<Game>();
     public DbSet<Hand> Hands => Set<Hand>();
     public DbSet<Room> Rooms => Set<Room>();
@@ -29,12 +28,10 @@ public class CardsContext(DbContextOptions<CardsContext> options) : KarataContex
             .WithOne()
             .HasForeignKey<Game>(g => g.RoomId)
             .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<Room>().HasMany(r => r.Chats).WithOne();
 
         modelBuilder.Entity<Room>().Navigation(r => r.Administrator).AutoInclude();
         modelBuilder.Entity<Room>().Navigation(r => r.Creator).AutoInclude();
         modelBuilder.Entity<Room>().Navigation(r => r.Game).AutoInclude();
-        modelBuilder.Entity<Room>().Navigation(r => r.Chats).AutoInclude();
 
         // Game
         modelBuilder.Entity<Game>().Property(g => g.Status).HasConversion<string>();
@@ -134,8 +131,5 @@ public class CardsContext(DbContextOptions<CardsContext> options) : KarataContex
                 metadata => JsonSerializer.Serialize(metadata, options),
                 json => JsonSerializer.Deserialize<TurnMetadata>(json, options) ?? new TurnMetadata()
             );
-        
-        // Chat
-        modelBuilder.Entity<Chat>().Navigation(c => c.Sender).AutoInclude();
     }
 }

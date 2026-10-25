@@ -30,9 +30,6 @@ public sealed partial class PlayerConnection
         public Task PerformTurn(IReadOnlyList<Card> cards, CancellationToken ct = default)
             => Hub.SendAsync(nameof(PerformTurn), roomId, cards, cancellationToken: ct);
 
-        public Task SendChat(string message, CancellationToken ct = default)
-            => Hub.SendAsync(nameof(SendChat), roomId, message, cancellationToken: ct);
-
         public async Task SetAway(long handId, CancellationToken ct = default) =>
             await Hub.SendAsync(nameof(SetAway), roomId, handId, cancellationToken: ct);
 

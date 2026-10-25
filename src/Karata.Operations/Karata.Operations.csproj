@@ -16,12 +16,4 @@
         <ProjectReference Include="..\Karata.Surface\Karata.Surface.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\sample-data\weather.json" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <AdditionalFiles Include="Pages\Trivia\Games\Index.razor" />
-    </ItemGroup>
-
 </Project>

@@ -17,9 +17,7 @@
         <MudLayout>
             <MudAppBar Elevation="0">
                 <MudIconButton Icon="@Icons.Material.Rounded.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer"/>
-                <MudLink Href="/" Typo="Typo.h6" Color="Color.Default" Class="me-2" Underline="Underline.None">
-                    operations
-                </MudLink>
+                <MudLink Href="/" Typo="Typo.h6" Class="me-2" Underline="Underline.None">operations</MudLink>
                 <MudSpacer/>
                 <MudLink OnClick="@(() => Navigator.NavigateTo($"users/{auth.User.Identity!.Name!}"))"
                          Typo="Typo.body2" Class="me-4">
@@ -52,7 +50,7 @@
 @code {
     private bool _open = true;
     private bool _dark = true;
-    private readonly MudTheme? _theme = SurfaceTheme.Default;
+    private readonly MudTheme _theme = SurfaceTheme.Default;
     private MudThemeProvider _themer = null!;
     
     private string ThemeToggleIcon => SurfaceTheme.ToggleIcon(_dark);

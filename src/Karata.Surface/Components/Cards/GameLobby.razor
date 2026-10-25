@@ -1,0 +1,143 @@
+@using Karata.Kit.Cards.Models
+
+<MudStack AlignItems="AlignItems.Center" Spacing="4" Class="pa-4 pt-8">
+    <MudStack AlignItems="AlignItems.Center" Spacing="0">
+        <MudText Typo="Typo.h5" Align="Align.Center">Waiting for players</MudText>
+        <MudText Class="mud-text-secondary" Align="Align.Center">
+            <b style="@(CanStart ? "color: var(--mud-palette-success)" : "color: var(--mud-palette-error)")">
+                @Active.Count
+            </b>
+            of @MaxPlayers joined
+        </MudText>
+    </MudStack>
+
+    <MudGrid Spacing="2" Justify="Justify.Center" Style="max-width: 42rem;">
+        @for (var seat = 0; seat < MaxPlayers; seat++)
+        {
+            var hand = seat < Active.Count ? Active[seat] : null;
+
+            <MudItem xs="6" sm="3">
+                @if (hand is not null)
+                {
+                    <MudPaper Outlined Class="pa-3 rounded-lg mud-height-full">
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                            <MudAvatar Color="Color.Primary" Variant="Variant.Outlined">
+                                <MudIcon Icon="@Icons.Material.Rounded.Person"/>
+                            </MudAvatar>
+                            <MudText Align="Align.Center" Style="word-break: break-word;">@hand.Username</MudText>
+                            <MudStack Row Spacing="1" Justify="Justify.Center">
+                                @if (hand.Player.Id == Room.Administrator.Id)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary"
+                                             Icon="@Icons.Material.Rounded.Shield">
+                                        Host
+                                    </MudChip>
+                                }
+                                @if (hand.Id == Me.Id)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info"
+                                             Variant="Variant.Outlined">
+                                        You
+                                    </MudChip>
+                                }
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+                }
+                else
+                {
+                    <MudPaper Outlined Class="pa-3 rounded-lg mud-height-full" Style="border-style: dashed;">
+                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1"
+                                  Class="mud-height-full">
+                            <MudAvatar Variant="Variant.Outlined">
+                                <MudIcon Icon="@Icons.Material.Rounded.PersonAdd" Class="mud-text-secondary"/>
+                            </MudAvatar>
+                            <MudText Class="mud-text-secondary">Open seat</MudText>
+
+                            @if (seat == Active.Count && CanInviteBot)
+                            {
+                                <MudButton Size="Size.Small" Variant="Variant.Text"
+                                           StartIcon="@Icons.Material.Rounded.SmartToy"
+                                           OnClick="@(() => OnInviteBot.InvokeAsync())">
+                                    Add bot
+                                </MudButton>
+                            }
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudItem>
+        }
+    </MudGrid>
+
+    @if (IsAdministrator)
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
+                   StartIcon="@Icons.Material.Rounded.PlayArrow" Disabled="@(!CanStart)"
+                   OnClick="@(() => OnStart.InvokeAsync())">
+            Start game
+        </MudButton>
+
+        @if (!CanStart)
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                You need at least @MinPlayers players to start.
+            </MudText>
+        }
+    }
+    else
+    {
+        <MudText Class="mud-text-secondary" Align="Align.Center">
+            Waiting for @Room.Administrator.Username to start the game.
+        </MudText>
+    }
+
+    <MudPaper Outlined Class="pa-4 rounded-lg" Style="width: 100%; max-width: 42rem;">
+        <MudStack Spacing="3">
+            <MudText Typo="Typo.subtitle1">Invite players</MudText>
+
+            <MudTextField Value="@Link" ReadOnly Label="Room link" Variant="Variant.Outlined"
+                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Rounded.ContentCopy"
+                          AdornmentAriaLabel="Copy link"
+                          OnAdornmentClick="@(() => OnCopyLink.InvokeAsync())"/>
+
+            <MudStack Row Spacing="2" Wrap="Wrap.Wrap">
+                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Rounded.ContentCopy"
+                           OnClick="@(() => OnCopyId.InvokeAsync())">
+                    Copy room ID
+                </MudButton>
+                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Rounded.QrCode2"
+                           OnClick="@(() => _qr = !_qr)">
+                    @(_qr ? "Hide QR code" : "Show QR code")
+                </MudButton>
+            </MudStack>
+
+            <MudCollapse Expanded="_qr">
+                <div style="width: 12rem; margin: 0 auto;">
+                    <QuickResponseCode Data="@Link"/>
+                </div>
+            </MudCollapse>
+        </MudStack>
+    </MudPaper>
+</MudStack>
+
+@code {
+    private const int MinPlayers = 2;
+    private const int MaxPlayers = 4;
+
+    private bool _qr;
+
+    [Parameter, EditorRequired] public RoomData Room { get; set; } = null!;
+    [Parameter, EditorRequired] public HandData Me { get; set; } = null!;
+    [Parameter, EditorRequired] public string Link { get; set; } = "";
+    [Parameter] public bool IsAdministrator { get; set; }
+    [Parameter] public bool CanInviteBot { get; set; }
+
+    [Parameter] public EventCallback OnStart { get; set; }
+    [Parameter] public EventCallback OnInviteBot { get; set; }
+    [Parameter] public EventCallback OnCopyId { get; set; }
+    [Parameter] public EventCallback OnCopyLink { get; set; }
+
+    private List<HandData> Active => [.. Room.Game.Hands.Where(hand => hand.Status is HandStatus.Active)];
+
+    private bool CanStart => Active.Count >= MinPlayers;
+}

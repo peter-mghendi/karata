@@ -74,8 +74,7 @@ public static class RoomHandler
         [FromServices] Client platform,
         [FromServices] CardsContext context,
         [FromServices] CurrentUserService<CardsContext, User> current,
-        [FromKeyedServices(nameof(Configuration.Web))]
-        HostConfiguration web,
+        [FromKeyedServices(nameof(Configuration.Web))] HostConfiguration web,
         [FromBody] RoomRequest request
     )
     {

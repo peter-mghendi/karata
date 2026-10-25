@@ -4,88 +4,158 @@
 @using Karata.Kit.Cards
 @using Karata.Kit.Cards.Models
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-@using SortDirection = Karata.Kit.Common.Models.SortDirection
 
 @attribute [Authorize]
 
 @inject Client Cards
 @inject NavigationManager Navigator
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full">
-    <MudText Typo="Typo.h5" Class="pa-4 my-4">Join or create a game room to play.</MudText>
+<PageTitle>Play cards</PageTitle>
 
-    <MudPaper Class="pa-4 mb-4" Elevation="0">
-        <MudTextField @bind-Value="_link" Label="Room code" Variant="Variant.Filled" Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Rounded.Abc" Class="mb-4"/>
-        <MudButton Disabled="@_loading" Href="@JoinLink" Variant="Variant.Outlined" Color="Color.Primary">
-            <MudText>Join game</MudText>
-        </MudButton>
-        <MudButton Disabled="@_loading" Href="@SpectateLink" Variant="Variant.Outlined" Color="Color.Secondary"
-                   Class="ml-2">
-            <MudText>Spectate</MudText>
-        </MudButton>
-    </MudPaper>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="py-6">
+    <MudText Typo="Typo.h4">Play cards</MudText>
+    <MudText Class="mud-text-secondary mb-6">
+        Join a friend's room, or start your own. New here? <MudLink Href="/cards/rules">Learn how to play</MudLink>.
+    </MudText>
 
-    <MudPaper Class="pa-4 mb-4" Elevation="0">
-        <MudToggleGroup CheckMark Outlined T="RoomVisibility" Delimiters="false" @bind-Value="_visibility" Class="mb-4"
-                        SelectedClass="toggle-group-selected-text-primary">
-            @foreach (var visibility in Enum.GetValues<RoomVisibility>())
-            {
-                <MudToggleItem Value="@visibility" Text="@visibility.Humanize()"
-                               SelectedIcon="@Icons.Material.Rounded.Check" UnselectedIcon="@visibility.Icon"/>
-            }
-        </MudToggleGroup>
-        <MudButton Disabled="@_loading" OnClick="@CreateRoom" Variant="Variant.Outlined" Color="Color.Secondary">
-            @if (_loading)
-            {
-                <MudProgressCircular Indeterminate Class="ms-n1" Size="Size.Small"/>
-                <MudText Class="ms-2">Creating game</MudText>
-            }
-            else
-            {
-                <MudText>Create game</MudText>
-            }
-        </MudButton>
-    </MudPaper>
+    <MudGrid Spacing="3">
+        <MudItem xs="12" md="6">
+            <MudPaper Outlined Class="pa-4 rounded-lg mud-height-full">
+                <MudStack Spacing="3">
+                    <MudText Typo="Typo.h6">Join a room</MudText>
 
-    <MudPaper Class="pa-4 mb-4" Elevation="0">
-        <MudList T="string">
-            <MudListSubheader>Available Games</MudListSubheader>
+                    <MudTextField @bind-Value="_code" Immediate Clearable
+                                  Label="Room code or link" Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Rounded.Link"
+                                  Error="@(!string.IsNullOrWhiteSpace(_code) && RoomId is null)"
+                                  ErrorText="That doesn't look like a room code or link."
+                                  OnKeyDown="@OnCodeKey"/>
 
-            @if (_rooms is [..])
+                    <MudStack Row Spacing="2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Rounded.PlayArrow"
+                                   Disabled="@(RoomId is null || _loading)" OnClick="@Play">
+                            Join
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   StartIcon="@Icons.Material.Rounded.Visibility"
+                                   Disabled="@(RoomId is null || _loading)" OnClick="@Spectate">
+                            Spectate
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            <MudPaper Outlined Class="pa-4 rounded-lg mud-height-full">
+                <MudStack Spacing="3">
+                    <MudText Typo="Typo.h6">Create a room</MudText>
+
+                    <MudToggleGroup CheckMark Outlined T="RoomVisibility" Delimiters="false"
+                                    @bind-Value="_visibility" SelectedClass="toggle-group-selected-text-primary">
+                        @foreach (var visibility in Enum.GetValues<RoomVisibility>())
+                        {
+                            <MudToggleItem Value="@visibility" Text="@visibility.Humanize()"
+                                           SelectedIcon="@Icons.Material.Rounded.Check"
+                                           UnselectedIcon="@visibility.Icon"/>
+                        }
+                    </MudToggleGroup>
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@_loading"
+                               StartIcon="@(_loading ? null : Icons.Material.Rounded.Add)" OnClick="@CreateRoom">
+                        @if (_loading)
+                        {
+                            <MudProgressCircular Indeterminate Size="Size.Small" Class="me-2"/>
+                            <span>Creating…</span>
+                        }
+                        else
+                        {
+                            <span>Create room</span>
+                        }
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-8 mb-2">
+        <MudText Typo="Typo.h6">Open rooms</MudText>
+        <MudTooltip Text="Refresh">
+            <MudIconButton Icon="@Icons.Material.Rounded.Refresh" Size="Size.Small"
+                           Disabled="@_refreshing" OnClick="@LoadRooms"/>
+        </MudTooltip>
+    </MudStack>
+
+    <MudStack Spacing="2">
+        @if (_rooms is null)
+        {
+            @for (var i = 0; i < 3; i++)
             {
-                @foreach (var room in _rooms)
-                {
-                    <MudListItem Text="@room.Id.ToString()"
-                                 SecondaryText="@($"Created at {room.CreatedAt.ToLocalTime()}")"
-                                 Href="@($"/cards/game/{room.Id}")"/>
-                }
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="4.25rem" Class="rounded-lg"/>
             }
-            else
+        }
+        else if (_rooms.Count == 0)
+        {
+            <MudPaper Outlined Class="pa-6 rounded-lg">
+                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Rounded.MeetingRoom" Class="mud-text-secondary"
+                             Style="font-size: 2.5rem;"/>
+                    <MudText Class="mud-text-secondary">No open rooms right now. Create one to get started.</MudText>
+                </MudStack>
+            </MudPaper>
+        }
+        else
+        {
+            @foreach (var room in _rooms)
             {
-                @foreach (var _ in Enumerable.Range(0, 5))
-                {
-                    <MudListItem>
-                        <MudSkeleton Animation="Animation.Wave" Width="40%"/>
-                        <MudSkeleton Animation="Animation.Wave" Width="30%"/>
-                    </MudListItem>
-                }
+                <MudPaper Outlined Class="pa-3 rounded-lg">
+                    <MudStack Row AlignItems="AlignItems.Center" Spacing="3">
+                        <MudAvatar Variant="Variant.Outlined" Color="Color.Primary">
+                            <MudIcon Icon="@Icons.Material.Rounded.Style"/>
+                        </MudAvatar>
+
+                        <MudStack Spacing="0" Class="flex-grow-1" Style="min-width: 0;">
+                            <MudText Style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                @($"{room.Administrator.Username}'s room")
+                            </MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                @room.CreatedAt.Humanize()
+                            </MudText>
+                        </MudStack>
+
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                 Icon="@Icons.Material.Rounded.Group">
+                            @room.Game.Hands.Count/@MaxPlayers
+                        </MudChip>
+
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                   Href="@($"/cards/game/{room.Id}/play")">
+                            Join
+                        </MudButton>
+                    </MudStack>
+                </MudPaper>
             }
-        </MudList>
-    </MudPaper>
+        }
+    </MudStack>
 </MudContainer>
 
 @code {
+    private const int MaxPlayers = 4;
+
     private bool _loading;
+    private bool _refreshing;
     private List<RoomData>? _rooms;
-    private string _link = string.Empty;
+    private string? _code;
     private RoomVisibility _visibility;
 
-    private string JoinLink => $"/cards/game/{_link}/play";
-    private string SpectateLink => $"/cards/game/{_link}/spectate";
+    private Guid? RoomId => RoomCode.Parse(_code);
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync() => LoadRooms();
+
+    private async Task LoadRooms()
     {
+        _refreshing = true;
         try
         {
             var query = new RoomQuery(
@@ -93,16 +163,20 @@
                 Filter: new RoomFilter(
                     GameStatuses: [GameStatus.Lobby],
                     Visibilities: [RoomVisibility.Public],
-                    MaxHandCount: 3
+                    MaxHandCount: MaxPlayers - 1
                 )
             );
 
             var page = await Cards.Rooms.QueryAsync(query);
             _rooms = page.Items;
         }
-        catch (AccessTokenNotAvailableException)
+        catch (AccessTokenNotAvailableException ex)
         {
-            Console.WriteLine("Redirecting you to login");
+            ex.Redirect();
+        }
+        finally
+        {
+            _refreshing = false;
         }
     }
 
@@ -112,7 +186,7 @@
         {
             _loading = true;
             var room = await Cards.Rooms.CreateAsync(new RoomRequest(_visibility));
-            Navigator.NavigateTo($"/cards/game/{room.Id.ToString()}/play");
+            Navigator.NavigateTo($"/cards/game/{room.Id}/play");
         }
         finally
         {
@@ -120,4 +194,18 @@
         }
     }
 
+    private void Play()
+    {
+        if (RoomId is { } id) Navigator.NavigateTo($"/cards/game/{id}/play");
+    }
+
+    private void Spectate()
+    {
+        if (RoomId is { } id) Navigator.NavigateTo($"/cards/game/{id}/spectate");
+    }
+
+    private void OnCodeKey(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter") Play();
+    }
 }

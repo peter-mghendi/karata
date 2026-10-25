@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,10 +15,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Karata.Kit\Karata.Kit.csproj" />
     <ProjectReference Include="..\Karata.Surface\Karata.Surface.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
   
 </Project>

@@ -3,40 +3,27 @@
 @implements Karata.Surface.Models.IPlayerInterface
 
 <div id="table" class="mud-width-full mud-height-full relative teal rounded mud-elevation-1">
-    @* Me *@
-    <div id="bottom" class="absolute">
+    <div id="bottom" class="absolute @(MyTurn ? "seat-active" : null)">
         <HandComponent FaceUp Cards="@CurrentHand" OnCardSelected="AddCardToTurn"/>
     </div>
 
-    @* Current Turn *@
     <div id="turn" class="absolute">
         <HandComponent FaceUp Cards="@Turn" OnCardSelected="RemoveCardFromTurn"/>
     </div>
 
-    @* Player 2 *@
-    <div id="top" class="absolute">
-        <HandComponent Cards="@OtherHands[0].Cards.ToImmutableList()"/>
-    </div>
-
-    @* Player 3 *@
-    @if (OtherHands.Count > 1)
+    @for (var i = 0; i < OtherHands.Count && i < Seats.Length; i++)
     {
-        <div id="left" class="absolute">
-            <HandComponent Cards="@OtherHands[1].Cards.ToImmutableList()"/>
+        var hand = OtherHands[i];
+        var active = Game.CurrentHand.Id == hand.Id;
+
+        <div id="@Seats[i]" class="@(i == 2 ? "hand-container" : "absolute") @(active ? "seat-active" : null)"
+             title="@($"{hand.Username}: {hand.Cards.Count} cards")">
+            <HandComponent Cards="@hand.Cards.ToImmutableList()"/>
         </div>
     }
 
-    @* Player 4 *@
-    @if (OtherHands.Count > 2)
-    {
-        <div id="right" class="hand-container">
-            <HandComponent Cards="@OtherHands[2].Cards.ToImmutableList()"/>
-        </div>
-    }
-
-    @* Deck and Pile *@
     <img id="deck" class="absolute" src="@Assets["img/cards/Back.svg"]" alt="Card back" title="@($"Cards to pick: {Game.Pick}")"/>
-    <img id="pile" class="absolute" src="@Assets[ImageUrl(Game.Pile.Peek())]" alt="@Game.Pile.Peek().Name" title="@RequestText"/>
+    <img id="pile" class="absolute" src="@Assets[Game.Pile.Peek().ImageSource(faceUp: true)]" alt="@Game.Pile.Peek().Name" title="@RequestText"/>
 </div>
 
 @code
@@ -53,9 +40,13 @@
 
     [Parameter] public EventCallback<Card> OnRemoveCardFromTurn { get; set; }
 
-    private ImmutableList<Card> CurrentHand => Hand.Cards.Where(c => !Turn.Contains(c)).ToImmutableList();
+    private static readonly string[] Seats = ["top", "left", "right"];
 
-    private List<HandData> OtherHands => Game.Hands.Where(h => h.Id != Hand.Id).ToList();
+    private bool MyTurn => Game.CurrentHand.Id == Hand.Id;
+
+    private ImmutableList<Card> CurrentHand => [.. Hand.Cards.Where(c => !Turn.Contains(c))];
+
+    private List<HandData> OtherHands => [.. Game.Hands.Where(h => h.Id != Hand.Id)];
 
     private string RequestText => Game.Request switch
     {
@@ -63,10 +54,6 @@
         { Face: not None } => Game.Request.Name,
         null => "No card has been requested",
     };
-
-    private static string ImageUrl(Card card) => card is { Face: Joker }
-        ? $"img/cards/{card.Suit.ToString()}.svg"
-        : $"img/cards/{card.Face.ToString()}{card.Suit.ToString()}.svg";
 
     private async Task AddCardToTurn(Card card) => await OnAddCardToTurn.InvokeAsync((card, Turn.Count));
 

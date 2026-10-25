@@ -36,19 +36,6 @@ public class PlayerHub(
 
         await Task.WhenAll(tasks: from room in disconnects select Disconnect(room.Id)); 
     }
-    
-    public async Task SendChat(Guid roomId, string text)
-    {
-        var user = await currentUser.RequireAsync();
-        if (await context.Rooms.FindAsync(roomId) is not { } room)
-            throw new Exception("Room not found.");
-
-        var chat = new Chat { Text = text, Sender = user, SentAt = DateTimeOffset.UtcNow };
-
-        room.Chats.Add(chat);
-        await Clients.Group(roomId.ToString()).Chat(roomId, chat);
-        await context.SaveChangesAsync();
-    }
 
     public async Task JoinRoom(Guid roomId)
     {

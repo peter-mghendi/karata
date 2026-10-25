@@ -1,24 +1,92 @@
 @page "/"
 
 @using Karata.Kit.Platform.Models
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 @attribute [AllowAnonymous]
 
-@inject Kit.Cards.Client Cards
+@inject AuthenticationStateProvider Authenticator
 @inject Kit.Platform.Client Platform
 @inject NavigationManager Navigator
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mud-height-full pt-4">
-    <AuthorizeView>
-        <Authorized>
-            <MudText Typo="Typo.h6" Class="mb-8">Welcome back, @context.User.Identity?.Name.</MudText>
-        </Authorized>
-        <NotAuthorized>
-            <MudText Typo="Typo.h6" Class="mb-8">Welcome back, friend.</MudText>
-        </NotAuthorized>
-    </AuthorizeView>
-    <QuickJoin Cards="@Cards" Navigator="@Navigator"/>
-    <ActivityFeed Feed="@_feed" />
+<PageTitle>Karata</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="py-6">
+    <MudStack Spacing="6">
+        <AuthorizeView>
+            <Authorized>
+                <div>
+                    <MudText Typo="Typo.h4">Welcome back, @context.User.Identity?.Name.</MudText>
+                    <MudText Class="mud-text-secondary">What are we playing today?</MudText>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <MudStack Spacing="3">
+                    <div>
+                        <MudText Typo="Typo.h4">Cards and trivia, live with friends</MudText>
+                        <MudText Class="mud-text-secondary">
+                            Karata is the Kenyan street card game, played in real time. Sign in to start a room,
+                            or challenge a friend to a trivia match.
+                        </MudText>
+                    </div>
+
+                    <MudStack Row Spacing="2" Wrap="Wrap.Wrap">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Rounded.Login" OnClick="SignIn">
+                            Sign in to play
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Rounded.MenuBook"
+                                   Href="/cards/rules">
+                            How to play
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            </NotAuthorized>
+            <Authorizing>
+                <MudSkeleton Width="50%" Height="3rem"/>
+            </Authorizing>
+        </AuthorizeView>
+
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="6" Class="d-flex">
+                <GameTile Title="Cards" Icon="@Icons.Material.Rounded.Style" Color="Color.Primary"
+                          Description="Karata, the Kenyan street card game. Play live with up to four players.">
+                    <AuthorizeView>
+                        <Authorized>
+                            <CardsQuickPlay/>
+                        </Authorized>
+                        <NotAuthorized>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth OnClick="SignIn">
+                                Sign in to play
+                            </MudButton>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </GameTile>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" Class="d-flex">
+                <GameTile Title="Trivia" Icon="@Icons.Material.Rounded.Lightbulb" Color="Color.Info"
+                          Description="Pick a topic, challenge a friend, and race through seven timed questions. The last one is worth double.">
+                    <AuthorizeView>
+                        <Authorized>
+                            <MudButton Variant="Variant.Filled" Color="Color.Info" FullWidth
+                                       StartIcon="@Icons.Material.Rounded.Quiz" Href="/trivia">
+                                Choose a topic
+                            </MudButton>
+                        </Authorized>
+                        <NotAuthorized>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" FullWidth OnClick="SignIn">
+                                Sign in to play
+                            </MudButton>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </GameTile>
+            </MudItem>
+        </MudGrid>
+
+        <ActivityFeed Feed="_feed" Failed="_failed" Refreshing="_refreshing" OnRefresh="LoadFeedAsync"/>
+    </MudStack>
+
     <MudScrollToTop TopOffset="100">
         <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Rounded.KeyboardArrowUp"/>
     </MudScrollToTop>
@@ -27,10 +95,32 @@
 @code
 {
     private List<ActivityData>? _feed;
+    private bool _failed;
+    private bool _refreshing;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() => await LoadFeedAsync();
+
+    private async Task LoadFeedAsync()
     {
-        await base.OnInitializedAsync();
-        _feed = await Platform.Activity.ListAsync();
+        _refreshing = true;
+        try
+        {
+            _feed = await Platform.Activity.ListAsync();
+            _failed = false;
+        }
+        catch (AccessTokenNotAvailableException ex)
+        {
+            ex.Redirect();
+        }
+        catch (Exception)
+        {
+            _failed = true;
+        }
+        finally
+        {
+            _refreshing = false;
+        }
     }
+
+    private void SignIn() => Navigator.NavigateToLogin("authentication/login");
 }

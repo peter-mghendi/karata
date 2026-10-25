@@ -1,0 +1,24 @@
+/* The 88vh from before, as one named setting.
+   --game-chrome is everything above the game: the site header plus page padding.
+   Set it in app.css if your header changes. */
+.game-column,
+.game-side {
+    height: calc(100dvh - var(--game-chrome, 6rem));
+    min-height: 38rem;
+}
+
+.game-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.game-area {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: auto;
+}
+
+.game-side {
+    overflow-y: auto;
+}

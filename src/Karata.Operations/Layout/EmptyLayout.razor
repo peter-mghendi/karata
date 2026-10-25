@@ -17,7 +17,7 @@
 
 @code {
     private bool _dark = true;
-    private readonly MudTheme? _theme = SurfaceTheme.Default;
+    private readonly MudTheme _theme = SurfaceTheme.Default;
     private MudThemeProvider _themer = null!;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

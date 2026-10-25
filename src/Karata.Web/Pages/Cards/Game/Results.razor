@@ -1,7 +1,9 @@
-@page "/cards/game/{id:guid}/over"
+@page "/cards/game/{id:guid}/results"
 
 @using Karata.Kit.Cards
 @using Karata.Kit.Cards.Models
+
+@attribute [Authorize]
 
 @inject Client Cards
 

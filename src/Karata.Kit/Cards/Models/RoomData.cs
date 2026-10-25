@@ -10,5 +10,4 @@ public record RoomData
     public required UserData Administrator { get; init; }
     public required UserData Creator { get; init; }
     public GameData Game { get; init; } = new ();
-    public List<ChatData> Chats { get; init; } = [];
 }

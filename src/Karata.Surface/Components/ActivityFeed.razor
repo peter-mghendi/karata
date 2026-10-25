@@ -1,21 +1,94 @@
 @using Karata.Kit.Platform.Models
 
-@if (Feed is null)
-{
-    for (var i = 0; i < 10; i++)
+<MudStack Spacing="2">
+    <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.h6">Activity</MudText>
+
+        <MudTooltip Text="Refresh">
+            <MudIconButton Icon="@Icons.Material.Rounded.Refresh" Size="Size.Small" Disabled="@Refreshing"
+                           OnClick="@(() => OnRefresh.InvokeAsync())"/>
+        </MudTooltip>
+    </MudStack>
+
+    @if (Failed)
     {
-        <ActivitySkeleton/>
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+            Couldn't load activity.
+            <MudLink OnClick="@(() => OnRefresh.InvokeAsync())">Try again</MudLink>
+        </MudAlert>
     }
-}
-else
-{
-    foreach (var activity in Feed)
+
+    @if (Feed is null)
     {
-        <ActivityCard Activity="activity"/>
+        @if (!Failed)
+        {
+            <MudPaper Outlined Class="rounded-lg">
+                @for (var i = 0; i < 5; i++)
+                {
+                    @if (i > 0)
+                    {
+                        <MudDivider/>
+                    }
+
+                    <ActivitySkeleton/>
+                }
+            </MudPaper>
+        }
     }
-}
+    else if (Feed.Count == 0)
+    {
+        <MudPaper Outlined Class="pa-6 rounded-lg">
+            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                <MudIcon Icon="@Icons.Material.Rounded.History" Class="mud-text-secondary" Style="font-size: 2.5rem;"/>
+                <MudText Class="mud-text-secondary" Align="Align.Center">@EmptyText</MudText>
+            </MudStack>
+        </MudPaper>
+    }
+    else
+    {
+        @foreach (var day in Days)
+        {
+            <MudText Typo="Typo.overline" Class="mud-text-secondary mt-2">@Heading(day.Key)</MudText>
+
+            <MudPaper Outlined Class="rounded-lg">
+                @foreach (var (activity, index) in day.Select((activity, index) => (activity, index)))
+                {
+                    @if (index > 0)
+                    {
+                        <MudDivider/>
+                    }
+
+                    <ActivityCard Activity="activity" ShowActor="ShowActor"/>
+                }
+            </MudPaper>
+        }
+    }
+</MudStack>
 
 @code
 {
-    [Parameter] public required List<ActivityData>? Feed { get; set; }
+    [Parameter] public List<ActivityData>? Feed { get; set; }
+
+    [Parameter] public bool Failed { get; set; }
+
+    [Parameter] public bool Refreshing { get; set; }
+
+    [Parameter] public EventCallback OnRefresh { get; set; }
+
+    [Parameter] public bool ShowActor { get; set; } = true;
+
+    [Parameter] public string EmptyText { get; set; } = "Nothing has happened yet. Start a game and it will show up here.";
+
+    private IEnumerable<IGrouping<DateOnly, ActivityData>> Days => Feed!
+        .OrderByDescending(activity => activity.OccurredAt)
+        .GroupBy(activity => DateOnly.FromDateTime(activity.OccurredAt.LocalDateTime));
+
+    private static string Heading(DateOnly day)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Now);
+
+        return day == today ? "Today"
+            : day == today.AddDays(-1) ? "Yesterday"
+            : day.ToString("dddd, d MMMM");
+    }
 }

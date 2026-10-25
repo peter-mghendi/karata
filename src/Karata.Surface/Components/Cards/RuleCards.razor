@@ -1,0 +1,32 @@
+@using Karata.Pips
+
+<div class="example">
+    <div class="cards">
+        @foreach (var card in Cards)
+        {
+            <img src="@Assets[card.ImageSource(faceUp: true)]" alt="@card.Name"/>
+        }
+    </div>
+
+    @if (Caption is not null || Valid is not null)
+    {
+        <div class="caption">
+            @if (Valid is { } valid)
+            {
+                <MudIcon Icon="@(valid ? Icons.Material.Rounded.CheckCircle : Icons.Material.Rounded.Cancel)"
+                         Color="@(valid ? Color.Success : Color.Error)" Size="Size.Small"/>
+            }
+
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@Caption</MudText>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<Card> Cards { get; set; } = [];
+
+    /// <summary>True shows a tick, false a cross, null shows neither.</summary>
+    [Parameter] public bool? Valid { get; set; }
+
+    [Parameter] public string? Caption { get; set; }
+}

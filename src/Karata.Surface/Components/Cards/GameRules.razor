@@ -1,40 +1,356 @@
-<MudPaper>
-    <MudText Typo="Typo.h4">Karata Card Game Rules</MudText>
-    <MudDivider />
+@using Karata.Pips
+@using static Karata.Pips.Card
+@using static Karata.Pips.Card.CardFace
+@using static Karata.Pips.Card.CardSuit
 
-    <MudText Typo="Typo.h5">Introduction</MudText>
-    <MudText>The game of Karata is a fast-paced, strategic card game designed for 2-4 players. The objective is to be the first player to get rid of all your cards. The game involves various special cards with unique effects that can dramatically change the course of the game, adding layers of strategy and excitement.
-    </MudText>
+<MudStack Spacing="4">
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.h4">How to play Karata</MudText>
+        <MudText Class="mud-text-secondary">
+            The rules of Karata, exactly as this game applies them, for two to four players.
+            The game checks every move for you, so this page is here for reference.
+        </MudText>
+    </MudStack>
 
-    <MudDivider />
+    <MudStack Row Wrap="Wrap.Wrap" Spacing="1">
+        @foreach (var (id, label) in Sections)
+        {
+            <MudChip T="string" Href="@Anchor(id)" Variant="Variant.Outlined" Size="Size.Small">@label</MudChip>
+        }
+    </MudStack>
 
-    <MudText Typo="Typo.h5">Setup</MudText>
-    <MudText>Each player starts with...</MudText>
+    <section id="overview">
+        <MudPaper Outlined Class="pa-5 rounded-lg">
+            <MudText Typo="Typo.h5" GutterBottom>The goal</MudText>
+            <MudText>
+                Be the first player to get rid of all your cards. Two things stand in the way: you have to call
+                <b>last card</b> before your final turn, and your final card must be an <b>ordinary card</b>:
+                a 4, 5, 6, 7, 9 or 10.
+            </MudText>
 
-    <MudDivider />
+            <MudText Typo="Typo.h6" Class="mt-4">Setup</MudText>
+            <ul class="rules">
+                <li>The game uses one standard deck plus the two jokers.</li>
+                <li>Everyone is dealt four cards.</li>
+                <li>
+                    One card is turned face up to start the pile. It is never a special card.
+                    The rest of the cards form the deck.
+                </li>
+            </ul>
 
-    <MudText Typo="Typo.h5">Game Flow</MudText>
-    <MudText>
-        <ul>
-            <li><strong>Turn Order:</strong> Describe the turn order.</li>
-            <li><strong>Playing Cards:</strong> Describe how to play cards.</li>
-            <li><strong>Drawing Cards:</strong> Describe when to draw cards.</li>
-            <li><strong>Special Cards:</strong> Describe the special cards and their effects.</li>
-        </ul>
-    </MudText>
+            <MudText Typo="Typo.h6" Class="mt-4" GutterBottom>Cheat sheet</MudText>
+            <MudSimpleTable Dense Hover Style="overflow-x: auto;">
+                <thead>
+                    <tr><th>Cards</th><th>Name</th><th>What they do</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>A</td>
+                        <td>Aces</td>
+                        <td>
+                            Play on anything. Request a suit (or a card, with two Aces), block a bomb, or cancel a
+                            request. The Ace of Spades counts as two.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2, 3, Joker</td>
+                        <td>Bombs</td>
+                        <td>The next player picks 2, 3 or 5 cards, unless they counter or block it.</td>
+                    </tr>
+                    <tr>
+                        <td>J</td>
+                        <td>Jumps</td>
+                        <td>Skips the next player. Each extra Jack skips one more.</td>
+                    </tr>
+                    <tr>
+                        <td>Q, 8</td>
+                        <td>Questions</td>
+                        <td>Need an answer in the same turn, or you pick a card.</td>
+                    </tr>
+                    <tr>
+                        <td>K</td>
+                        <td>Kickbacks</td>
+                        <td>Reverses the direction of play. An even number of Kings lets you play again.</td>
+                    </tr>
+                    <tr>
+                        <td>4, 5, 6, 7, 9, 10</td>
+                        <td>Ordinary</td>
+                        <td>Match the rank or the suit. You can only win with one of these.</td>
+                    </tr>
+                </tbody>
+            </MudSimpleTable>
+        </MudPaper>
+    </section>
 
-    <MudDivider />
+    <section id="turns">
+        <MudPaper Outlined Class="pa-5 rounded-lg">
+            <MudText Typo="Typo.h5" GutterBottom>Taking a turn</MudText>
+            <MudText>On your turn you either <b>play</b> cards or <b>pick</b> a card from the deck.</MudText>
 
-    <MudText Typo="Typo.h5">Winning the Game</MudText>
-    <MudText>The game is won by...</MudText>
+            <ul class="rules">
+                <li>
+                    <b>Playing:</b> your first card must match the top card of the pile by rank or suit.
+                    Aces can go on anything, and so can Jokers, unless a request is active. Anything can be played
+                    on top of an Ace or a Joker.
+                </li>
+                <li><b>Playing several cards:</b> you can play more than one card in a turn. See Combos.</li>
+                <li>
+                    <b>Picking:</b> you can always pick instead of playing, even if you have a card you could
+                    play. You pick one card, or more if a bomb is waiting for you.
+                </li>
+                <li>
+                    <b>Running low:</b> if the deck runs out, the pile (apart from the top card) is shuffled to
+                    make a new deck. If there still aren't enough cards to pick, the game ends with no winner.
+                </li>
+                <li>
+                    <b>Away players</b> are skipped automatically. A game needs at least two active players.
+                </li>
+                <li>
+                    <b>Illegal moves</b> are rejected with an explanation. Nothing happens and you can try
+                    again. There are no penalties.
+                </li>
+            </ul>
 
-    <MudDivider />
+            <RuleCards Cards="@([C(Ten, Spades)])" Valid="true"
+                       Caption="On the Nine of Spades: the Ten of Spades matches by suit."/>
+            <RuleCards Cards="@([C(Ten, Hearts)])" Valid="false"
+                       Caption="On the Nine of Spades: the Ten of Hearts matches neither rank nor suit."/>
 
-    <MudText Typo="Typo.h5">Detailed Rules</MudText>
-    <MudText>
-        <ul>
-            <li><strong>Turn Validation:</strong> Explain the turn validation rules.</li>
-            <li><strong>Generating Turn Delta:</strong> Explain the rules for generating turn delta.</li>
-        </ul>
-    </MudText>
-</MudPaper>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-3">
+                New to the game? Turn on <b>Learner mode</b> in the game sidebar, under Experimental Features.
+                It shows what your selected cards will do before you play them.
+            </MudAlert>
+        </MudPaper>
+    </section>
+
+    <section id="aces">
+        <MudPaper Outlined Class="pa-5 rounded-lg">
+            <MudText Typo="Typo.h5" GutterBottom>Aces</MudText>
+            <MudText>Aces are the most flexible cards in the game. The Ace of Spades counts as <b>two</b> Aces.</MudText>
+
+            <ul class="rules">
+                <li>An Ace can be played on <b>any</b> card, even when a bomb is waiting or a request is active.</li>
+                <li>
+                    <b>One Ace</b> lets you request a suit. <b>Two Aces</b> (or the Ace of Spades) let you request a
+                    specific card. Three or four Aces do nothing extra.
+                </li>
+                <li>
+                    An Ace <b>blocks a bomb</b>, so you pick nothing. Blocking costs one Ace, so anything left over
+                    still counts towards a request. The Ace of Spades blocks a bomb and still lets you request a suit.
+                </li>
+                <li>Aces can also <b>cancel a request</b>. See Requests.</li>
+                <li>Only more Aces can follow an Ace in the same turn.</li>
+            </ul>
+
+            <RuleCards Cards="@([C(Ace, Diamonds)])" Caption="One Ace: request a suit."/>
+            <RuleCards Cards="@([C(Ace, Diamonds), C(Ace, Clubs)])" Caption="Two Aces: request a specific card."/>
+            <RuleCards Cards="@([C(Ace, Spades)])" Caption="The Ace of Spades is worth two: request a specific card."/>
+        </MudPaper>
+    </section>
+
+    <section id="requests">
+        <MudPaper Outlined Class="pa-5 rounded-lg">
+            <MudText Typo="Typo.h5" GutterBottom>Requests</MudText>
+            <MudText>When your Aces earn you a request, the game asks which suit or card you want.</MudText>
+
+            <ul class="rules">
+                <li>
+                    The next player must start their turn with the requested card (or any card of the requested suit),
+                    or with an Ace. If they can't, they pick one card and the request stays.
+                </li>
+                <li>The request is cleared as soon as someone plays the requested card or suit.</li>
+                <li>
+                    An Ace that fulfils the request is still an Ace: its value isn't lost, so it can go on to make a
+                    new request.
+                </li>
+                <li>
+                    Aces <b>cancel requests</b>. A suit request takes one Ace to cancel and a card request takes two.
+                    A single Ace played on a card request downgrades it to a request for that card's suit.
+                </li>
+                <li>
+                    Any Ace value left over after cancelling becomes a new request. Three Aces on a card request
+                    cancel it and request a suit. Four cancel it and request a card.
+                </li>
+                <li>One Ace can't request a Joker. Two Aces can request a specific Joker.</li>
+            </ul>
+        </MudPaper>
+    </section>
+
+    <section id="bombs">
+        <MudPaper Outlined Class="pa-5 rounded-lg">
+            <MudText Typo="Typo.h5" GutterBottom>Bombs: 2s, 3s and Jokers</MudText>
+
+            <ul class="rules">
+                <li>A <b>Two</b> makes the next player pick 2 cards, a <b>Three</b> 3 cards, and a <b>Joker</b> 5.</li>
+                <li>Twos and Threes follow the usual rule: match the top card's rank or suit. A Joker can go on anything.</li>
+                <li>
+                    Anything can be played on top of a Joker, once its cards have been picked up or blocked.
+                </li>
+                <li>
+                    When a bomb is waiting for you, you can:
+                    <ul>
+                        <li><b>Pick</b> the cards. Your turn ends.</li>
+                        <li>
+                            <b>Counter</b> it with another bomb that matches the top card's rank or suit. A Joker
+                            always works. The new bomb's value passes to the next player. Picking is never
+                            cumulative: only the top card counts.
+                        </li>
+                        <li><b>Block</b> it with an Ace, so nobody picks anything.</li>
+                    </ul>
+                </li>
+                <li>A Joker can only be countered by another Joker, or blocked by an Ace.</li>
+                <li>
+                    While a bomb is waiting, you can't play anything else. A pick can't be jumped or kicked back.
+                </li>
+            </ul>
+
+            <RuleCards Cards="@([C(Two, Spades)])" Valid="true"
+                       Caption="On a waiting Three of Spades: counter with the Two of Spades. The next player picks 2, not 5."/>
+            <RuleCards Cards="@([C(Seven, Spades)])" Valid="false"
+                       Caption="On a waiting Three of Spades: an ordinary card isn't allowed."/>
+            <RuleCards Cards="@([C(Ace, Diamonds)])" Valid="true"
+                       Caption="On a waiting Joker: block it with an Ace."/>
+        </MudPaper>
+    </section>
+
+    <section id="jacks">
+        <MudPaper Outlined Class="pa-5 rounded-lg">
+            <MudText Typo="Typo.h5" GutterBottom>Jacks</MudText>
+            <MudText>Each Jack you play skips one player. Two Jacks skip two players, and so on.</MudText>
+
+            <ul class="rules">
+                <li>A Jack goes on a card of the same rank or suit, like any ordinary card.</li>
+                <li>Jumping can't be blocked or answered, not even by another Jack.</li>
+                <li>You can't play a Jack while a bomb is waiting for you.</li>
+                <li>In a two-player game a single Jack skips your opponent, so you play again.</li>
+            </ul>
+
+            <RuleCards Cards="@([C(Jack, Spades), C(Jack, Hearts)])" Caption="Two Jacks skip two players."/>
+        </MudPaper>
+    </section>
+
+    <section id="questions">
+        <MudPaper Outlined Class="pa-5 rounded-lg">
+            <MudText Typo="Typo.h5" GutterBottom>Questions: Queens and Eights</MudText>
+            <MudText>A question has to be answered in the same turn.</MudText>
+
+            <ul class="rules">
+                <li>
+                    An <b>answer</b> is a card of the same rank or suit as the question. Another question counts.
+                    Any Ace or Joker can answer any question.
+                </li>
+                <li>After an answer, any extra cards must have the same rank as the answer.</li>
+                <li>If your turn ends on a question with no answer, you pick one card.</li>
+                <li>A bomb can answer a question. It still acts as a bomb.</li>
+            </ul>
+
+            <RuleCards Cards="@([C(Queen, Spades), C(Four, Spades)])" Valid="true"
+                       Caption="The Four of Spades answers the Queen of Spades by suit."/>
+            <RuleCards Cards="@([C(Queen, Spades)])" Valid="true"
+                       Caption="A Queen on its own is legal, but you pick up one card afterwards."/>
+            <RuleCards Cards="@([C(Queen, Spades), C(Eight, Diamonds)])" Valid="false"
+                       Caption="The Eight of Diamonds matches the Queen of Spades by neither rank nor suit."/>
+        </MudPaper>
+    </section>
+
+    <section id="kings">
+        <MudPaper Outlined Class="pa-5 rounded-lg">
+            <MudText Typo="Typo.h5" GutterBottom>Kings</MudText>
+
+            <ul class="rules">
+                <li>Each King reverses the direction of play.</li>
+                <li>
+                    An even number of Kings cancels out, so the direction stays the same and you <b>play again</b>.
+                    Playing again counts as a brand new turn.
+                </li>
+                <li>In a two-player game a single King changes nothing.</li>
+                <li>A King goes on a card of the same rank or suit. You can't play one while a bomb is waiting.</li>
+            </ul>
+
+            <RuleCards Cards="@([C(King, Spades), C(King, Hearts)])"
+                       Caption="Two Kings: the direction is unchanged and you play again."/>
+        </MudPaper>
+    </section>
+
+    <section id="combos">
+        <MudPaper Outlined Class="pa-5 rounded-lg">
+            <MudText Typo="Typo.h5" GutterBottom>Playing several cards</MudText>
+            <MudText>You can play more than one card in a turn if they follow these rules, in order:</MudText>
+
+            <ol class="rules">
+                <li>The first card follows the usual rule for the top card.</li>
+                <li>Each card after that must have the <b>same rank</b> as the card before it. The suit doesn't matter.</li>
+                <li>
+                    After a <b>question</b>, the next card is its answer instead: same rank or suit, or any Ace or Joker.
+                </li>
+                <li>
+                    An Ace can only follow a question or another Ace. A Joker can only follow a question or another
+                    Joker. Nothing else can follow an Ace or a Joker.
+                </li>
+            </ol>
+
+            <MudText Class="mt-2">The <b>last card</b> decides how the turn ends:</MudText>
+            <ul class="rules">
+                <li>A question: you pick one card.</li>
+                <li>A bomb: the next player picks.</li>
+                <li>An Ace: you make a request, if you have any Ace value left over.</li>
+            </ul>
+
+            <RuleCards Cards="@([C(Nine, Hearts), C(Nine, Diamonds), C(Nine, Clubs)])" Valid="true"
+                       Caption="Three Nines in one turn."/>
+            <RuleCards Cards="@([C(Queen, Spades), C(Eight, Spades), C(Joker, BlackJoker), C(Joker, RedJoker)])" Valid="true"
+                       Caption="Two questions answered by Jokers: the next player picks 5."/>
+            <RuleCards Cards="@([C(Joker, BlackJoker), C(Seven, Spades)])" Valid="false"
+                       Caption="Only another Joker can follow a Joker."/>
+        </MudPaper>
+    </section>
+
+    <section id="winning">
+        <MudPaper Outlined Class="pa-5 rounded-lg">
+            <MudText Typo="Typo.h5" GutterBottom>Last card and winning</MudText>
+
+            <ul class="rules">
+                <li>
+                    After any turn where you still hold cards, the game asks whether you're on <b>last card</b>.
+                    Say yes only if you could play your whole hand in one turn and finish on an ordinary card.
+                    In practice that means no Aces, bombs, Jacks or Kings left in your hand.
+                </li>
+                <li>
+                    To <b>win</b>, you must have declared last card, then play out all your cards, finishing on an
+                    ordinary card: a 4, 5, 6, 7, 9 or 10.
+                </li>
+                <li>
+                    Finish on a special card, or without having declared, and you haven't won. You're <b>cardless</b>
+                    and the game carries on: you'll have to pick up on your next turn.
+                </li>
+                <li>Everyone is told when a player is on last card.</li>
+            </ul>
+
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mt-3">
+                Going out on an Ace, bomb, Jack, King or question doesn't win the game.
+            </MudAlert>
+        </MudPaper>
+    </section>
+</MudStack>
+
+@code {
+    private const string RulesPath = "/cards/rules";
+
+    private static readonly (string Id, string Label)[] Sections =
+    [
+        ("overview", "Overview"),
+        ("turns", "Taking a turn"),
+        ("aces", "Aces"),
+        ("requests", "Requests"),
+        ("bombs", "Bombs"),
+        ("jacks", "Jacks"),
+        ("questions", "Questions"),
+        ("kings", "Kings"),
+        ("combos", "Combos"),
+        ("winning", "Winning")
+    ];
+
+    private static string Anchor(string id) => $"{RulesPath}#{id}";
+
+    private static Card C(CardFace face, CardSuit suit) => new() { Face = face, Suit = suit };
+}

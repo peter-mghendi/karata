@@ -16,12 +16,13 @@
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="Karata" />
-    <link rel="manifest" href="/manifest.json" />
+
+    <script type="importmap"></script>
 </head>
 
 <body class="mud-height-full" style="background-color: var(--mud-palette-background-gray);">
     <div id="app" class="mud-height-full">
-        <div class="d-flex mud-height-full mud-width-full" style="background-color: rgba(39,39,47,1);">
+        <div class="d-flex mud-height-full mud-width-full" style="background-color: rgba(21, 21, 33, 1);">
             <div class="d-flex flex-column mx-auto my-auto">
                 <span class="loading mb-12 mx-auto"></span>
                 <span class="loading-text">Loading</span>
@@ -39,7 +40,6 @@
     <script src="_framework/blazor.webassembly.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.1.2/howler.core.min.js" integrity="sha256-q2vnVvwrx3RbYXPyAwx7c2npmULQg2VdCXBoJ5+iigs=" crossorigin="anonymous"></script>
     <script src="_content/Howler.Blazor/JsInteropHowl.js"></script>
-    <script>navigator.serviceWorker.register('service-worker.js', { updateViaCache: "none" });</script>
 </body>
 
 </html>

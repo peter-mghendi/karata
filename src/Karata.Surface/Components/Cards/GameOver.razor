@@ -1,14 +1,102 @@
+@using Humanizer
 @using Karata.Kit.Cards.Models
 
-<div class="d-flex mud-height-full">
-    <div class="d-flex flex-column flex-grow-1 justify-center align-self-center align-center ma-8">
-        <MudText Typo="Typo.h3" Class="mb-4">Game Over!</MudText>
-        <MudText Typo="Typo.h5">@(Room.Game.Result?.Reason)</MudText>
-        <MudSpacer></MudSpacer>
-        <MudText Typo="Typo.caption">Room ID: @(Room.Id)</MudText>
-    </div>
-</div>
+@inject AuthenticationStateProvider Authenticator
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="py-6">
+    @if (_resolved)
+    {
+        var headline = Headline;
+
+        <MudPaper Outlined Class="pa-6 rounded-lg">
+            <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                <MudAvatar Color="@headline.Color" Variant="Variant.Outlined" Size="Size.Large">
+                    <MudIcon Icon="@headline.Icon" Style="font-size: 2.25rem;"/>
+                </MudAvatar>
+
+                <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                    <MudText Typo="Typo.h3" Align="Align.Center">@headline.Title</MudText>
+
+                    @if (headline.Detail is not null)
+                    {
+                        <MudText Class="mud-text-secondary" Align="Align.Center">@headline.Detail</MudText>
+                    }
+
+                    @if (Room.Game.Result is { } result)
+                    {
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            Finished @result.CompletedAt.Humanize()
+                        </MudText>
+                    }
+                </MudStack>
+
+                <div class="mud-width-full">
+                    <GameStandings Room="Room"/>
+                </div>
+
+                <MudStack Row Spacing="2" Wrap="Wrap.Wrap" Justify="Justify.Center">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Rounded.PlayArrow" Href="/cards/game/join">
+                        Play again
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Rounded.Replay"
+                               Href="@($"/cards/game/{Room.Id}/replay")">
+                        Replay
+                    </MudButton>
+                </MudStack>
+
+                <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-family: monospace;">
+                    @Room.Id
+                </MudText>
+            </MudStack>
+        </MudPaper>
+    }
+</MudContainer>
 
 @code {
     [Parameter] public required RoomData Room { get; set; }
+
+    private string? _me;
+    private bool _resolved;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await Authenticator.GetAuthenticationStateAsync();
+        _me = auth.User.Identity?.Name;
+        _resolved = true;
+    }
+
+    private (string Icon, string Title, string? Detail, Color Color) Headline
+    {
+        get
+        {
+            if (Room.Game.Result is not { } result)
+            {
+                return (Icons.Material.Rounded.Flag, "Game over", null, Color.Default);
+            }
+
+            switch (result.ResultType)
+            {
+                case GameResultType.Win when result.Winner is { } winner:
+                    return winner.Username == _me
+                        ? (Icons.Material.Rounded.EmojiEvents, "You won!", null, Color.Success)
+                        : (Icons.Material.Rounded.SportsScore, $"{winner.Username} won", null, Color.Default);
+
+                case GameResultType.DeckExhaustion:
+                    return (Icons.Material.Rounded.Inventory2, "Out of cards", result.Reason, Color.Warning);
+
+                default:
+                    return (Icons.Material.Rounded.Flag, "Game over", result.Reason, ToColor(result.ReasonType));
+            }
+        }
+    }
+
+    private static Color ToColor(MessageType type) => type switch
+    {
+        MessageType.Success => Color.Success,
+        MessageType.Warning => Color.Warning,
+        MessageType.Error => Color.Error,
+        MessageType.Info => Color.Info,
+        _ => Color.Default
+    };
 }

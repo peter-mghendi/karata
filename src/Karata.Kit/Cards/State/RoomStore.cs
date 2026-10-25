@@ -70,11 +70,6 @@ public class RoomStore(RoomData data, ImmutableArray<Interceptor<RoomData>> inte
         }
     }
 
-    public record Chat(ChatData ChatData) : StateAction<RoomData>
-    {
-        public override RoomData Apply(RoomData state) => state with { Chats = [..state.Chats, ChatData] };
-    }
-
     public record ReclaimPile : StateAction<RoomData>
     {
         public override RoomData Apply(RoomData state)

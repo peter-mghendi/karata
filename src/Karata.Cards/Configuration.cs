@@ -6,7 +6,7 @@ public static class Configuration
 {
     public static readonly Dictionary<string, HostConfiguration> Web = new()
     {
-        ["Development"] = new(Host: "https://localhost:7240"),
+        ["Development"] = new(Host: "https://localhost:7241"),
         ["Production"] = new(Host: "https://web.karata.app")
     };
 }

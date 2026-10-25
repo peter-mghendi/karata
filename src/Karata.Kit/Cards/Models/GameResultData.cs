@@ -32,12 +32,4 @@ public record GameResultData
             CompletedAt = DateTimeOffset.UtcNow
         };
     }
-
-    public GameResultData ToData() => new()
-    {
-        Reason = Reason,
-        ReasonType = ReasonType,
-        ResultType = ResultType,
-        CompletedAt = DateTimeOffset.UtcNow
-    };
 }

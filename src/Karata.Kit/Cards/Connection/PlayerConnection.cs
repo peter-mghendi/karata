@@ -32,10 +32,6 @@ public sealed partial class PlayerConnection(Uri host) : IUserConnection<PlayerC
         {
             Route(roomId, session => session.Events.OnAddHandToRoom(handId, user, status));
         });
-        Hub.On<Guid, ChatData>(nameof(RoomEvents.Chat), (roomId, chat) =>
-        {
-            Route(roomId, session => session.Events.OnChat(chat));
-        });
         Hub.On<Guid, GameResultData>(nameof(RoomEvents.EndGame), (roomId, result) =>
         {
             Route(roomId, session => session.Events.OnEndGame(result));

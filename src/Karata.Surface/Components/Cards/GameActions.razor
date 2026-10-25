@@ -1,0 +1,68 @@
+@using System.Collections.Immutable
+@using Karata.Kit.Cards.Models
+
+@{
+    var myTurn = Game.CurrentHand.Id == Me.Id;
+    var staged = Turn.Count;
+}
+
+<MudPaper Outlined Class="pa-3 rounded-lg">
+    <MudStack Spacing="2">
+        <MudStack Row Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Class="mud-text-secondary flex-grow-1" Style="min-width: 12rem;" aria-live="polite">
+                @Hint(myTurn, staged)
+            </MudText>
+
+            @if (staged > 0)
+            {
+                <MudButton Variant="Variant.Text" Disabled="Busy" StartIcon="@Icons.Material.Rounded.Undo"
+                           OnClick="@(() => OnClear.InvokeAsync())">
+                    Clear
+                </MudButton>
+            }
+
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@(!myTurn || Busy)"
+                       StartIcon="@Icons.Material.Rounded.PostAdd" OnClick="@(() => OnPick.InvokeAsync())">
+                @(Game.Pick > 0 ? $"Pick {Game.Pick}" : "Pick")
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!myTurn || Busy || staged == 0)"
+                       StartIcon="@Icons.Material.Rounded.Send" OnClick="@(() => OnPlay.InvokeAsync())">
+                @(staged == 0 ? "Play" : $"Play {staged} {(staged == 1 ? "card" : "cards")}")
+            </MudButton>
+        </MudStack>
+
+        @if (Learner && myTurn && staged > 0)
+        {
+            <MudDivider/>
+            <TurnEffects Game="Game" Cards="@([.. Turn])"/>
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public GameData Game { get; set; } = null!;
+
+    [Parameter, EditorRequired] public HandData Me { get; set; } = null!;
+
+    [Parameter] public ImmutableList<Card> Turn { get; set; } = ImmutableList<Card>.Empty;
+
+    [Parameter] public bool Busy { get; set; }
+
+    [Parameter] public bool Learner { get; set; }
+
+    [Parameter] public EventCallback OnPlay { get; set; }
+
+    [Parameter] public EventCallback OnPick { get; set; }
+
+    [Parameter] public EventCallback OnClear { get; set; }
+
+    private string Hint(bool myTurn, int staged) => (myTurn, staged) switch
+    {
+        _ when Busy => "Sending your turn…",
+        (true, 0) => "Your move: select cards to play, or pick.",
+        (true, _) => "Cards play in the order shown.",
+        (false, 0) => $"Waiting for {Game.CurrentHand.Username}. You can line up your cards meanwhile.",
+        (false, _) => $"Waiting for {Game.CurrentHand.Username}. Your cards are lined up."
+    };
+}
