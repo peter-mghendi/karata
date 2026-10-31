@@ -72,8 +72,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Authenticator.AuthenticationStateChanged += OnAuthStateChanged;
+
         var auth = await Authenticator.GetAuthenticationStateAsync();
-        _username = auth.User.Identity!.Name!;
+        if (auth.User.Identity is { IsAuthenticated: true } identity)
+        {
+            _username = identity.Name;
+        }
 
         var connection = new ReplayerConnection(ClientOptions.Value.Host)
         {
@@ -177,8 +182,12 @@
         Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
     }
 
+    private void OnAuthStateChanged(Task<AuthenticationState> _) => InvokeAsync(StateHasChanged);
+
     public void Dispose()
     {
+        Authenticator.AuthenticationStateChanged -= OnAuthStateChanged;
+
         _subscriptions.Dispose();
         _room?.Dispose();
         _turn.Dispose();

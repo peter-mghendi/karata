@@ -5,7 +5,6 @@
 
 @attribute [AllowAnonymous]
 
-@inject AuthenticationStateProvider Authenticator
 @inject Kit.Platform.Client Platform
 @inject NavigationManager Navigator
 
@@ -107,10 +106,6 @@
         {
             _feed = await Platform.Activity.ListAsync();
             _failed = false;
-        }
-        catch (AccessTokenNotAvailableException ex)
-        {
-            ex.Redirect();
         }
         catch (Exception)
         {

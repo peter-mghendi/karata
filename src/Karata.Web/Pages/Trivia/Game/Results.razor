@@ -4,8 +4,11 @@
 @using Karata.Kit.Platform.Models
 @using Karata.Kit.Trivia
 @using Karata.Kit.Trivia.Models
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 @attribute [Authorize]
+
+@implements IDisposable
 
 @inject AuthenticationStateProvider Authenticator
 @inject Client QuizWars
@@ -237,33 +240,45 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var auth = await Authenticator.GetAuthenticationStateAsync();
-        _username = auth.User.Identity!.Name!;
-
-        var game = await QuizWars.Games.FetchAsync(Identifier);
-        var rounds = await QuizWars.Rounds.GetRounds(Identifier);
-
-        Rounds = [.. rounds.OrderBy(round => round.Index)];
-        Me = game.Players.SingleOrDefault(player => player.Username == _username);
-
-        var standings = game.Players.Select(Summarise).ToList();
-        Complete = Rounds.Count > 0 && standings.All(standing => standing.Answered >= Rounds.Count);
-
-        var top = standings.Select(standing => standing.Points).DefaultIfEmpty(0).Max();
-        Standings = [.. standings.Select(standing => standing with { IsLeader = Complete && standing.Points == top })];
-
-        Series = [.. game.Players.Select(PlayerSeries)];
-        Labels = [.. Enumerable.Range(0, Rounds.Count + 1).Select(i => i.ToString())];
-
-        var max = Series.SelectMany(series => series.Data).DefaultIfEmpty(0).Max();
-        ChartOptions = new LineChartOptions
+        try
         {
-            YAxisTicks = Math.Max(10, (int)(Math.Ceiling(max / 60d) * 10)),
-            MaxNumYAxisTicks = 8
-        };
+            Authenticator.AuthenticationStateChanged += OnAuthStateChanged;
 
-        _celebrate = Complete && MyStanding is { IsLeader: true } && Standings.Count(s => s.IsLeader) == 1;
-        Game = game;
+            var auth = await Authenticator.GetAuthenticationStateAsync();
+            if (auth.User.Identity is { IsAuthenticated: true } identity)
+            {
+                _username = identity.Name!;
+            }
+
+            var game = await QuizWars.Games.FetchAsync(Identifier);
+            var rounds = await QuizWars.Rounds.GetRounds(Identifier);
+
+            Rounds = [.. rounds.OrderBy(round => round.Index)];
+            Me = game.Players.SingleOrDefault(player => player.Username == _username);
+
+            var standings = game.Players.Select(Summarise).ToList();
+            Complete = Rounds.Count > 0 && standings.All(standing => standing.Answered >= Rounds.Count);
+
+            var top = standings.Select(standing => standing.Points).DefaultIfEmpty(0).Max();
+            Standings = [.. standings.Select(standing => standing with { IsLeader = Complete && standing.Points == top })];
+
+            Series = [.. game.Players.Select(PlayerSeries)];
+            Labels = [.. Enumerable.Range(0, Rounds.Count + 1).Select(i => i.ToString())];
+
+            var max = Series.SelectMany(series => series.Data).DefaultIfEmpty(0).Max();
+            ChartOptions = new LineChartOptions
+            {
+                YAxisTicks = Math.Max(10, (int)(Math.Ceiling(max / 60d) * 10)),
+                MaxNumYAxisTicks = 8
+            };
+
+            _celebrate = Complete && MyStanding is { IsLeader: true } && Standings.Count(s => s.IsLeader) == 1;
+            Game = game;
+        }
+        catch (AccessTokenNotAvailableException ex)
+        {
+            ex.Redirect();
+        }
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -321,4 +336,8 @@
             _ => (Icons.Material.Rounded.Cancel, Color.Error)
         };
     }
+
+    private void OnAuthStateChanged(Task<AuthenticationState> _) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Authenticator.AuthenticationStateChanged -= OnAuthStateChanged;
 }
