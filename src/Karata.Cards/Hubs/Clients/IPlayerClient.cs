@@ -48,7 +48,7 @@ public interface IPlayerClient
     Task TurnCommitted(Guid roomId, GameData game);
     
     // Communicate rejection
-    Task TurnRejected(Guid roomId, TurnValidationProblem problem);
+    Task TurnRejected(Guid roomId, TurnProblem problem);
     
     // Updates the room administrator
     Task UpdateAdministrator(Guid roomId, UserData administrator);

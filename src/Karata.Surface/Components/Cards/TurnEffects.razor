@@ -1,5 +1,4 @@
 @using Karata.Kit.Cards.Engine
-@using Karata.Kit.Cards.Engine.Exceptions
 @using Karata.Kit.Cards.Models
 
 @inject IKarataEngine Engine
@@ -30,13 +29,14 @@ else if (_delta is not null)
         _error = null;
         _delta = null;
 
-        try
+        switch (Engine.EvaluateTurn(Game, Cards))
         {
-            _delta = Engine.EvaluateTurn(Game, Cards);
-        }
-        catch (TurnValidationException ex)
-        {
-            _error = ex.Message;
+            case TurnDelta delta:
+                _delta = delta;
+                return;
+            case TurnProblem problem:
+                _error = problem.Message;
+                return;
         }
     }
 

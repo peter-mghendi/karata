@@ -4,5 +4,5 @@ namespace Karata.Cards.Models;
 
 public record TurnMetadata
 {
-    public TurnValidationProblem? Problem { get; set; }
+    public TurnProblem? Problem { get; set; }
 }

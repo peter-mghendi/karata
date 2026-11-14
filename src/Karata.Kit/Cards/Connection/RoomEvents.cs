@@ -23,7 +23,7 @@ public sealed class RoomEvents : IDisposable
     private readonly ISubject<long> _removeHandFromRoom = Subject.Synchronize(new Subject<long>());
     private readonly ISubject<Unit> _turnAcknowledged = Subject.Synchronize(new Subject<Unit>());
     private readonly ISubject<GameData> _turnCommitted = Subject.Synchronize(new Subject<GameData>());
-    private readonly ISubject<TurnValidationProblem> _turnRejected = Subject.Synchronize(new Subject<TurnValidationProblem>());
+    private readonly ISubject<TurnProblem> _turnRejected = Subject.Synchronize(new Subject<TurnProblem>());
     private readonly ISubject<SystemMessage> _systemMessage = Subject.Synchronize(new Subject<SystemMessage>());
     private readonly ISubject<UserData> _updateAdministrator = Subject.Synchronize(new Subject<UserData>());
     private readonly ISubject<GameData> _updateGameStatus = Subject.Synchronize(new Subject<GameData>());
@@ -41,7 +41,7 @@ public sealed class RoomEvents : IDisposable
     public IObservable<SystemMessage> SystemMessage => _systemMessage.AsObservable();
     public IObservable<Unit> TurnAcknowledged => _turnAcknowledged.AsObservable();
     public IObservable<GameData> TurnCommitted => _turnCommitted.AsObservable();
-    public IObservable<TurnValidationProblem> TurnRejected => _turnRejected.AsObservable();
+    public IObservable<TurnProblem> TurnRejected => _turnRejected.AsObservable();
     public IObservable<UserData> UpdateAdministrator => _updateAdministrator.AsObservable();
     public IObservable<GameData> UpdateGameStatus => _updateGameStatus.AsObservable();
     public IObservable<(long HandId, HandStatus Status)> UpdateHandStatus => _updateHandStatus.AsObservable();
@@ -71,7 +71,7 @@ public sealed class RoomEvents : IDisposable
 
     internal void OnTurnCommitted(GameData game) => _turnCommitted.OnNext(game);
 
-    internal void OnTurnRejected(TurnValidationProblem problem) => _turnRejected.OnNext(problem);
+    internal void OnTurnRejected(TurnProblem problem) => _turnRejected.OnNext(problem);
 
     internal void OnUpdateAdministrator(UserData user) => _updateAdministrator.OnNext(user);
 
