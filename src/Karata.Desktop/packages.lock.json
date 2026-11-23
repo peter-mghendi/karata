@@ -617,10 +617,10 @@
       },
       "Microsoft.Extensions.Localization": {
         "type": "Transitive",
-        "resolved": "10.0.1",
-        "contentHash": "yJBI3IRm9uTRu7cPc7i90/8+CuiiJJ5M4khj6iWQcYnq6VrG+H2U5GzpRLtkVCsgxc1LjtkNMEbSDatfBA+z5g==",
+        "resolved": "11.0.0",
+        "contentHash": "MX+smARJdqr/vYuVPLnZi7n9jD2liSqh8rf1nFzeCiqhZaOM3Z5K7zpUueY2Xdmu0bQ3I1M9z1hQuyUVq+ByTw==",
         "dependencies": {
-          "Microsoft.Extensions.Localization.Abstractions": "10.0.1"
+          "Microsoft.Extensions.Localization.Abstractions": "11.0.0"
         }
       },
       "Microsoft.Extensions.Localization.Abstractions": {
@@ -752,14 +752,14 @@
         "type": "Project",
         "dependencies": {
           "Blazored.LocalStorage": "[4.5.0, )",
-          "CodeBeam.MudBlazor.Extensions": "[9.3.1, )",
+          "CodeBeam.MudBlazor.Extensions": "[9.14.0, )",
           "Howler.Blazor": "[0.10.0, )",
           "Humanizer": "[3.0.10, )",
           "Karata.Kit": "[1.0.0, )",
           "Microsoft.AspNetCore.Components.Web": "[11.0.0, )",
           "Microsoft.AspNetCore.Components.WebAssembly.Authentication": "[11.0.0, )",
-          "MudBlazor": "[9.12.0, )",
-          "QRCoder": "[1.8.1, )",
+          "MudBlazor": "[9.14.0, )",
+          "QRCoder": "[1.9.0, )",
           "TextCopy": "[6.2.1, )"
         }
       },
@@ -774,11 +774,11 @@
       },
       "CodeBeam.MudBlazor.Extensions": {
         "type": "CentralTransitive",
-        "requested": "[9.3.1, )",
-        "resolved": "9.3.1",
-        "contentHash": "nOHhEHK1p4s/TpQThzPPlUk9fVksVsYWK3gyu1PKdYsawWl+C1lZ+05kknt/+nLPVfS8nxgysvxlzYJwiJnOyQ==",
+        "requested": "[9.14.0, )",
+        "resolved": "9.14.0",
+        "contentHash": "Xe95ljYZI6NQZejyUIoGn0nl7Fo9kSZRPjGWHPVTUS+pZ0/RBdUq3dmXXfO82VjQ3eCJLqIJwcBrnzCQxjAHUA==",
         "dependencies": {
-          "MudBlazor": "9.0.0"
+          "MudBlazor": "9.14.0"
         }
       },
       "Howler.Blazor": {
@@ -900,20 +900,20 @@
       },
       "MudBlazor": {
         "type": "CentralTransitive",
-        "requested": "[9.12.0, )",
-        "resolved": "9.12.0",
-        "contentHash": "T6PQUCJe60UTSy3u1F8R2nuC06Cox6WEhon5GA2/AZNVI1WstlPSJZdGPyp6pHFpWdjPpla65piLpyJsbW+1rA==",
+        "requested": "[9.14.0, )",
+        "resolved": "9.14.0",
+        "contentHash": "VmMM/u4upqpc0lJoXmo30Zj1d/Zq3BjdS11+q/eB/+p20pV1WXbLS0C17WbV4xqLM1i9Kpco6emt6M4s2R/BUA==",
         "dependencies": {
-          "Microsoft.AspNetCore.Components": "10.0.1",
-          "Microsoft.AspNetCore.Components.Web": "10.0.1",
-          "Microsoft.Extensions.Localization": "10.0.1"
+          "Microsoft.AspNetCore.Components": "11.0.0",
+          "Microsoft.AspNetCore.Components.Web": "11.0.0",
+          "Microsoft.Extensions.Localization": "11.0.0"
         }
       },
       "QRCoder": {
         "type": "CentralTransitive",
-        "requested": "[1.8.1, )",
-        "resolved": "1.8.1",
-        "contentHash": "aGfRFpU/IPexAtEOEXCNxC3fMCAqgn6kqALRvXt6LxVAW0VolSDGHiyrY+o2CJgTITOsMpsrsDi7svMJaJ9Vfg==",
+        "requested": "[1.9.0, )",
+        "resolved": "1.9.0",
+        "contentHash": "5hLj/PNkFnIcSk9VOJzhBgspByhSkBtF0tAJpWyLOXqZ0c2WE2H8YTWEEOArLkjwXZh5LHfpoqjDwomrJq0mGA==",
         "dependencies": {
           "System.Drawing.Common": "6.0.0"
         }
