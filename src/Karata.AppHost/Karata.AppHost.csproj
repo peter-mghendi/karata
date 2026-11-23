@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\Karata.Bot\Karata.Bot.csproj" />
@@ -12,6 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.Dotnet" />
     <PackageReference Include="Aspire.Hosting.Keycloak" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
   </ItemGroup>
@@ -20,6 +22,10 @@
     <AspireUseCliBundle>true</AspireUseCliBundle>
     <OutputType>Exe</OutputType>
     <UserSecretsId>2899b1a4-5385-45c4-bbc3-337ea265b692</UserSecretsId>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AssemblyName>karata-apphost</AssemblyName>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
   </PropertyGroup>
 
 </Project>
