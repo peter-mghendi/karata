@@ -76,6 +76,16 @@ public record TurnDelta
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Cards, Reverse, Advance, (int)RequestLevel, RemoveRequestLevels, Give, Pick);
+        var hash = new HashCode();
+        Cards.ForEach(hash.Add);
+
+        hash.Add(Reverse);
+        hash.Add(Advance);
+        hash.Add(RequestLevel);
+        hash.Add(RemoveRequestLevels);
+        hash.Add(Give);
+        hash.Add(Pick);
+
+        return hash.ToHashCode();
     }
 }
