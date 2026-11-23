@@ -13,11 +13,11 @@ public class Turn
     public bool ReclaimedPile { get; set; }
     public bool DeckExhausted { get; set; }
     public TurnDelta? Delta { get; set; }
+    public TurnProblem? Problem { get; set; }
     public GameResult? GameResult { get; set; }
     public required TurnType Type { get; set; }
     public required DateTimeOffset CreatedAt { get; init; }
     public GameData? GameSnapshot { get; set; }
-    public TurnMetadata Metadata { get; init; } = new();
     public required Hand Hand { get; init; }
     public int HandId { get; init; }
     

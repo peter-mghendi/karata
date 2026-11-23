@@ -117,7 +117,7 @@ var element = builder.AddContainer("element", "vectorim/element-web")
         return [new ContainerFile { Name = "config.json", Contents = json }];
     });
 
-var platform = builder.AddProject<Projects.Karata_Platform>("platform")
+var platform = builder.AddDotnetProject("platform", "../Karata.Platform/Karata.Platform.csproj")
     .WaitFor(id)
     .WaitFor(platformDatabase)
     .WithReference(id)
@@ -132,7 +132,7 @@ var platform = builder.AddProject<Projects.Karata_Platform>("platform")
     .WithEnvironment("Keycloak__confidential-port", 0.ToString())
     .WithHttpHealthCheck("/health", StatusCodes.Status200OK);
 
-var go = builder.AddProject<Projects.Karata_Go>("go")
+var go = builder.AddDotnetProject("go", "../Karata.Go/Karata.Go.csproj")
     .WaitFor(id)
     .WaitFor(goDatabase)
     .WithReference(id)
@@ -147,7 +147,7 @@ var go = builder.AddProject<Projects.Karata_Go>("go")
     .WithEnvironment("Keycloak__confidential-port", 0.ToString())
     .WithHttpHealthCheck("/health", StatusCodes.Status200OK);
 
-var cards = builder.AddProject<Projects.Karata_Cards>("cards")
+var cards = builder.AddDotnetProject("cards", "../Karata.Cards/Karata.Cards.csproj")
     .WaitFor(id)
     .WaitFor(cardsDatabase)
     .WithReference(id)
@@ -167,7 +167,7 @@ var cards = builder.AddProject<Projects.Karata_Cards>("cards")
     .WithEnvironment("Keycloak__confidential-port", 0.ToString())
     .WithHttpHealthCheck("/health", StatusCodes.Status200OK);
 
-var trivia = builder.AddProject<Projects.Karata_Trivia>("trivia")
+var trivia = builder.AddDotnetProject("trivia", "../Karata.Trivia/Karata.Trivia.csproj")
     .WaitFor(id)
     .WaitFor(triviaDatabase)
     .WithReference(id)
@@ -187,7 +187,7 @@ var trivia = builder.AddProject<Projects.Karata_Trivia>("trivia")
     .WithEnvironment("Keycloak__confidential-port", 0.ToString())
     .WithHttpHealthCheck("/health", StatusCodes.Status200OK);
 
-var bot = builder.AddProject<Projects.Karata_Bot>("bot")
+var bot = builder.AddDotnetProject("bot", "../Karata.Bot/Karata.Bot.csproj")
     .WaitFor(id)
     .WithReference(id)
     .WithReference(cards)
@@ -199,7 +199,7 @@ var bot = builder.AddProject<Projects.Karata_Bot>("bot")
     .WithEnvironment("KARATA_ID_SCOPE", "openid profile email karata-cards karata-platform")
     .WithHttpHealthCheck("/health", StatusCodes.Status200OK);
 
-var web = builder.AddProject<Projects.Karata_Web>("web")
+var web = builder.AddDotnetProject("web", "../Karata.Web/Karata.Web.csproj")
     .WaitFor(id)
     .WithReference(id)
     .WithReference(platform)
@@ -209,7 +209,7 @@ var web = builder.AddProject<Projects.Karata_Web>("web")
     .WithReference(bot)
     .WithHttpHealthCheck("/", StatusCodes.Status200OK);
 
-var operations = builder.AddProject<Projects.Karata_Operations>("operations")
+var operations = builder.AddDotnetProject("operations", "../Karata.Operations/Karata.Operations.csproj")
     .WaitFor(id)
     .WithReference(id)
     .WithReference(platform)
@@ -218,7 +218,7 @@ var operations = builder.AddProject<Projects.Karata_Operations>("operations")
     .WithReference(go)
     .WithHttpHealthCheck("/", StatusCodes.Status200OK);
 
-var desktop = builder.AddProject<Projects.Karata_Desktop>("desktop")
+var desktop = builder.AddDotnetProject("desktop", "../Karata.Desktop/Karata.Desktop.csproj")
     .WaitFor(id)
     .WithReference(id)
     .WithReference(cards)

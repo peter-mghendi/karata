@@ -34,7 +34,7 @@ There is also a custom [cards library](https://github.com/sixpeteunder/karata/tr
 ### .NET Aspire
 
 > [!NOTE]
-> This method requires both the [.NET 10 SDK](https://get.dot.net/10) and the [.NET Aspire CLI](https://aspire.dev).
+> This method requires both the [.NET 1q SDK](https://get.dot.net/11) and the [.NET Aspire CLI](https://aspire.dev).
 >
 > PostgreSQL and Keycloak are provisioned automatically as Docker containers by Aspire, so no separate installation is required.
 

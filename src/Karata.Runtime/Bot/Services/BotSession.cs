@@ -4,7 +4,6 @@ using System.Reactive.Linq;
 using Karata.Kit.Bot.Strategy;
 using Karata.Kit.Cards.Connection;
 using Karata.Kit.Cards.Engine;
-using Karata.Kit.Cards.Engine.Exceptions;
 using Karata.Kit.Cards.Models;
 using Karata.Kit.Cards.State;
 using Karata.Kit.Platform.Models;
@@ -75,15 +74,18 @@ public sealed class BotSession(
         try
         {
             _plan = await strategy.PlanAsync(_room!.State, ct);
-            _ = engine.EvaluateTurn(_room!.State.Game, _plan.Move);
-            await session.PerformTurn(_plan.Move, ct);
-
-            _log.LogDebug("Played {Move}.", string.Join(", ", _plan.Move.Select(card => card.Name)));
-        }
-        catch (KarataEngineException ex)
-        {
-            await session.PerformTurn([], ct);
-            _log.LogError(ex, "Turn invalid. Played empty turn.");
+            switch (engine.EvaluateTurn(_room.State.Game, _plan.Move))
+            {
+                case TurnDelta delta:
+                    await session.PerformTurn(_plan.Move, ct);
+                    _log.LogDebug("Turn valid. Played {Move}.", string.Join(", ", _plan.Move.Select(card => card.Name)));
+                    break;
+                case TurnProblem problem:
+                    await session.PerformTurn([], ct);
+                    _log.LogWarning("Turn invalid: {Problem}. Played empty turn.", problem.Message);
+                    break;
+            }
+            
         }
         catch (Exception ex)
         {

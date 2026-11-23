@@ -2,6 +2,7 @@
 
 @using Karata.Kit.Cards
 @using Karata.Kit.Cards.Models
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 @attribute [Authorize]
 
@@ -20,6 +21,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _room = await Cards.Rooms.GetAsync(Id);
+        try
+        {
+            _room = await Cards.Rooms.GetAsync(Id);
+        }
+        catch (AccessTokenNotAvailableException ex)
+        {
+            ex.Redirect();
+        }
     }
 }

@@ -113,6 +113,11 @@ public class CardsContext(DbContextOptions<CardsContext> options) : KarataContex
             builder.ToJson();
             builder.OwnsMany(d => d.Cards);
         });
+        modelBuilder.Entity<Turn>().OwnsOne(t => t.Problem, builder =>
+        {
+            builder.ToJson();
+            builder.OwnsMany(p => p.Cards);
+        });
         modelBuilder.Entity<Turn>()
             .Property(t => t.GameResult)
             .HasConversion(
@@ -124,12 +129,6 @@ public class CardsContext(DbContextOptions<CardsContext> options) : KarataContex
             .HasConversion(
                 metadata => JsonSerializer.Serialize(metadata, options),
                 json => JsonSerializer.Deserialize<GameData>(json, options) ?? new GameData()
-            );
-        modelBuilder.Entity<Turn>()
-            .Property(t => t.Metadata)
-            .HasConversion(
-                metadata => JsonSerializer.Serialize(metadata, options),
-                json => JsonSerializer.Deserialize<TurnMetadata>(json, options) ?? new TurnMetadata()
             );
     }
 }

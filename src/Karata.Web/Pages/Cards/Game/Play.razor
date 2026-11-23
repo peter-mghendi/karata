@@ -24,12 +24,12 @@
 @inject Karata.Kit.Cards.Client Cards
 @inject Karata.Kit.Platform.Client Platform
 @inject IDialogService DialogService
-@inject IJSRuntime JavaScript
 @inject ILoggerFactory LoggerFactory
 @inject IOptions<Karata.Kit.Cards.Client.Options> ClientOptions
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigator
 
+<PageTitle>@(IsMyTurn ? "Your turn" : "Play cards")</PageTitle>
 
 <SessionGuard Session="_session">
     <MudLoading Loading="@(_room is null)" Text="Please wait..." Class="mud-height-full pa-0">
@@ -226,8 +226,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Authenticator.AuthenticationStateChanged += OnAuthStateChanged;
+
         var auth = await Authenticator.GetAuthenticationStateAsync();
-        _username = auth.User.Identity!.Name!;
+        if (auth.User.Identity is { IsAuthenticated: true } identity)
+        {
+            _username = identity.Name;
+        }
 
         var connection = new PlayerConnection(ClientOptions.Value.Host)
         {
@@ -328,12 +333,14 @@
         }).DisposeWith(_subscriptions);
         
         _session.Events.TurnRejected
-            .Subscribe(problem => Snackbar.Add(problem.Message, Severity.Error, c =>
-            {
-                c.SnackbarVariant = Variant.Text;
-                c.Action = "Rules";
-                c.OnClick = _ => JavaScript.InvokeVoidAsync("open", "/cards/rules", "_blank").AsTask();
-            }))
+            .Subscribe(problem => Snackbar.Add(
+                @<span>
+                    @problem.Message
+                    <MudLink Href="/cards/rules" Target="_blank" Class="ml-2">Rules</MudLink>
+                </span>,
+                Severity.Error,
+                c => c.SnackbarVariant = Variant.Text
+            ))
             .DisposeWith(_subscriptions);
 
         _session.Events.UpdateGameStatus
@@ -407,7 +414,7 @@
         await Clipboard.SetTextAsync(Navigator.Uri);
         Snackbar.Add("Copied to clipboard.", Severity.Info, c => c.SnackbarVariant = Variant.Text);
     }
-    
+
     private void ShowMessage(SystemMessage message)
     {
         var severity = message.Type switch
@@ -421,8 +428,12 @@
         Snackbar.Add(message.Text, severity, c => c.SnackbarVariant = Variant.Text);
     }
 
+    private void OnAuthStateChanged(Task<AuthenticationState> _) => InvokeAsync(StateHasChanged);
+
     public void Dispose()
     {
+        Authenticator.AuthenticationStateChanged -= OnAuthStateChanged;
+
         _subscriptions.Dispose();
         _room?.Dispose();
         _turn.Dispose();

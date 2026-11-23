@@ -7,17 +7,21 @@ using Microsoft.Extensions.Options;
 
 namespace Karata.Runtime.Infrastructure;
 
+public abstract class CurrentUserServiceBase
+{
+    protected static readonly ConcurrentDictionary<string, SemaphoreSlim> Locks = new();
+}
+
 public sealed class CurrentUserService<TContext, TUser>(
     IHttpContextAccessor http,
     TContext context,
     IOptions<UserProvisioningOptions<TUser>> options
-)
+) : CurrentUserServiceBase
     where TContext : KarataContext<TUser>
     where TUser : KarataUser
 {
     private const string UserNotFound = "Authenticated user not found and auto-provisioning is disabled or failed.";
-    
-    private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
+
     private readonly UserProvisioningOptions<TUser> _options = options.Value;
 
     public async Task<TUser> RequireAsync(ClaimsPrincipal? principal = null, CancellationToken ct = default)
@@ -28,7 +32,7 @@ public sealed class CurrentUserService<TContext, TUser>(
         if ((principal ??= http.HttpContext?.User) is null or { Identity.IsAuthenticated: false }) return null;
         if (principal!.FindFirstValue(ClaimTypes.NameIdentifier) is not [_, ..] userId) return null;
 
-        var gate = _locks.GetOrAdd(userId, static _ => new SemaphoreSlim(1, 1));
+        var gate = Locks.GetOrAdd(userId, static _ => new SemaphoreSlim(1, 1));
         await gate.WaitAsync(ct);
         try
         {
@@ -43,7 +47,7 @@ public sealed class CurrentUserService<TContext, TUser>(
         finally
         {
             gate.Release();
-            if (gate.CurrentCount == 1) _locks.TryRemove(new KeyValuePair<string, SemaphoreSlim>(userId, gate));
+            if (gate.CurrentCount == 1) Locks.TryRemove(new KeyValuePair<string, SemaphoreSlim>(userId, gate));
         }
     }
 }

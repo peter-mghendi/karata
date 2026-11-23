@@ -3,18 +3,11 @@
   "isRoot": true,
   "tools": {
     "dotnet-ef": {
-      "version": "10.0.1",
+      "version": "11.0.0",
       "commands": [
         "dotnet-ef"
       ],
       "rollForward": false
-    },
-    "dotnet-aspnet-codegenerator": {
-      "version": "9.0.0",
-      "commands": [
-        "dotnet-aspnet-codegenerator"
-      ],
-      "rollForward": true
     }
   }
 }

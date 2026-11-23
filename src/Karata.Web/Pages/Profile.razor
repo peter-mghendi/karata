@@ -5,8 +5,10 @@
 @using Karata.Surface.Security
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
-@inject AuthenticationHelper Authenticator
-@inject AuthenticationStateProvider AuthState
+@implements IDisposable
+
+@inject AuthenticationHelper Auth
+@inject AuthenticationStateProvider Authenticator
 @inject Client Platform
 
 <PageTitle>@(_user?.Username ?? Username)</PageTitle>
@@ -70,7 +72,7 @@
                     @if (IsMe)
                     {
                         <MudButton Variant="Variant.Outlined" Size="Size.Small"
-                                   StartIcon="@Icons.Material.Rounded.Edit" Href="@Authenticator.Profile()">
+                                   StartIcon="@Icons.Material.Rounded.Edit" Href="@Auth.Profile()">
                             Edit profile
                         </MudButton>
                     }
@@ -125,8 +127,13 @@
 
         try
         {
-            var auth = await AuthState.GetAuthenticationStateAsync();
-            _me = auth.User.Identity?.Name;
+            Authenticator.AuthenticationStateChanged += OnAuthStateChanged;
+
+            var auth = await Authenticator.GetAuthenticationStateAsync();
+            if (auth.User.Identity is { IsAuthenticated: true } identity)
+            {
+                _me = identity.Name;
+            }
 
             _user = await Platform.Profiles.GetAsync(Username);
         }
@@ -173,4 +180,8 @@
             _refreshing = false;
         }
     }
+
+    private void OnAuthStateChanged(Task<AuthenticationState> _) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Authenticator.AuthenticationStateChanged -= OnAuthStateChanged;
 }

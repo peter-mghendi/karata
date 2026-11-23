@@ -72,7 +72,7 @@ public sealed partial class PlayerConnection(Uri host) : IUserConnection<PlayerC
         {
             Route(roomId, session => session.Events.OnTurnCommitted(game));
         });
-        Hub.On<Guid, TurnValidationProblem>(nameof(RoomEvents.TurnRejected), (roomId, problem) =>
+        Hub.On<Guid, TurnProblem>(nameof(RoomEvents.TurnRejected), (roomId, problem) =>
         {
             Route(roomId, session => session.Events.OnTurnRejected(problem));
         });

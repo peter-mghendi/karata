@@ -2,16 +2,57 @@
 
 @using Karata.Kit.Platform.Models
 
-@inject Kit.Cards.Client Cards
 @inject Kit.Platform.Client Platform
 @inject NavigationManager Navigator
 
-@layout MainLayout
+<PageTitle>Karata</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="pt-4">
-    <MudText Typo="Typo.h6" Class="mb-8">Welcome back, friend.</MudText>
-    <QuickJoin Cards="@Cards" Navigator="@Navigator"/>
-    <ActivityFeed Feed="@_feed" />
+<MudContainer MaxWidth="MaxWidth.Medium" Class="py-6">
+    <MudStack Spacing="6">
+        <MudStack Spacing="3">
+            <div>
+                <MudText Typo="Typo.h4">Cards and trivia, live with friends</MudText>
+                <MudText Class="mud-text-secondary">
+                    Karata is the Kenyan street card game, played in real time. Sign in to start a room,
+                    or challenge a friend to a trivia match.
+                </MudText>
+            </div>
+
+            <MudStack Row Spacing="2" Wrap="Wrap.Wrap">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Rounded.Login">
+                    Sign in to play
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Rounded.MenuBook"
+                           Href="/cards/rules">
+                    How to play
+                </MudButton>
+            </MudStack>
+        </MudStack>
+
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="6" Class="d-flex">
+                <GameTile Title="Cards" Icon="@Icons.Material.Rounded.Style" Color="Color.Primary"
+                          Description="Karata, the Kenyan street card game. Play live with up to four players.">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth>
+                        Sign in to play
+                    </MudButton>
+                </GameTile>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" Class="d-flex">
+                <GameTile Title="Trivia" Icon="@Icons.Material.Rounded.Lightbulb" Color="Color.Info"
+                          Description="Pick a topic, challenge a friend, and race through seven timed questions. The last one is worth double.">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" FullWidth>
+                        Sign in to play
+                    </MudButton>
+                </GameTile>
+            </MudItem>
+        </MudGrid>
+
+        <ActivityFeed Feed="_feed" Failed="_failed" Refreshing="_refreshing" OnRefresh="LoadFeedAsync"/>
+    </MudStack>
+
     <MudScrollToTop TopOffset="100">
         <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Rounded.KeyboardArrowUp"/>
     </MudScrollToTop>
@@ -20,15 +61,26 @@
 @code
 {
     private List<ActivityData>? _feed;
+    private bool _failed;
+    private bool _refreshing;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync() => await LoadFeedAsync();
+
+    private async Task LoadFeedAsync()
     {
-        await base.OnAfterRenderAsync(firstRender);
-
-        if (firstRender)
+        _refreshing = true;
+        try
         {
             _feed = await Platform.Activity.ListAsync();
-            StateHasChanged();
+            _failed = false;
+        }
+        catch (Exception)
+        {
+            _failed = true;
+        }
+        finally
+        {
+            _refreshing = false;
         }
     }
 }

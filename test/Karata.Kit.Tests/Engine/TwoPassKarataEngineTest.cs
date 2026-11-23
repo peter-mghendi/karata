@@ -1,5 +1,4 @@
 using Karata.Kit.Cards.Engine;
-using Karata.Kit.Cards.Engine.Exceptions;
 using Karata.Kit.Cards.Models;
 using Karata.Pips;
 using Karata.Pips.Extensions;
@@ -11,8 +10,7 @@ using TestCase = (
     int Identifier,
     Karata.Kit.Cards.Models.GameData Game,
     System.Collections.Generic.List<Karata.Pips.Card> Cards,
-    bool ExpectedValid,
-    Karata.Kit.Cards.Models.TurnDelta ExpectedDelta
+    Karata.Kit.Cards.Models.TurnEvaluation Expected
 );
 
 namespace Karata.Kit.Tests.Engine;
@@ -23,35 +21,35 @@ public class TwoPassKarataEngineTest
 
     [Theory]
     [MemberData(nameof(TestCases))]
-    public void ValidateTurnCardsTest(
-        string identifier,
-        GameData game,
-        List<Card> cards,
-        bool expectedValidity,
-        TurnDelta expectedDelta
-    )
+    public void ValidateTurnCardsTest(string identifier, GameData game, List<Card> cards, TurnEvaluation expected)
     {
-        var engine = new TwoPassKarataEngine();
+        var actual = new TwoPassKarataEngine().EvaluateTurn(game, [..cards]);
 
-        if (expectedValidity)
+        switch (expected.Value, actual.Value)
         {
-            var actualDelta = engine.EvaluateTurn(game, [..cards]);
+            case (TurnDelta expectedDelta, TurnDelta actualDelta):
+                Assert.Equal(expectedDelta, actualDelta);
+                break;
 
-            Assert.Equal(expectedDelta, actualDelta);
-        }
-        else
-        {
-            Assert.ThrowsAny<TurnValidationException>(() => engine.EvaluateTurn(game, [..cards]));
+            case (TurnProblem expectedProblem, TurnProblem actualProblem):
+                Assert.Equal(expectedProblem.Kind, actualProblem.Kind);
+                Assert.Equal(expectedProblem.Index, actualProblem.Index);
+                Assert.Equal<Card>(expectedProblem.Cards, actualProblem.Cards);
+                break;
+
+            default:
+                Assert.Fail($"Expected {expected.Value}, but the engine returned {actual.Value}.");
+                break;
         }
     }
 
 #pragma warning restore xUnit1026, xUnit1045
 
-    public static TheoryData<string, GameData, List<Card>, bool, TurnDelta> TestCases => GetTestCases()
-        .Aggregate(new TheoryData<string, GameData, List<Card>, bool, TurnDelta>(), (aggregate, @case) =>
+    public static TheoryData<string, GameData, List<Card>, TurnEvaluation> TestCases => GetTestCases()
+        .Aggregate(new TheoryData<string, GameData, List<Card>, TurnEvaluation>(), (aggregate, @case) =>
         {
-            var (identifier, game, cards, expectedValid, expectedDelta) = @case;
-            aggregate.Add(identifier.ToString().PadLeft(2, '0'), game, cards, expectedValid, expectedDelta);
+            var (identifier, game, cards, expected) = @case;
+            aggregate.Add(identifier.ToString().PadLeft(2, '0'), game, cards, expected);
             return aggregate;
         });
 
@@ -62,10 +60,9 @@ public class TwoPassKarataEngineTest
      *     - Identifier: A unique identifier for the test case
      *     - Game: The game state before the turn
      *     - Cards: The cards played by the player
-     *     - ExpectedValid: The expected validity of the turn
-     *     - ExpectedDelta: The expected delta of the turn
-     *     A Note on ExpectedValidity:
-     *     - ExpectedValidity is used to filter out tests cases that are also used for the generation test cases.
+     *     - Expected: What the engine should return, either:
+     *       - a <see cref="TurnDelta"/>, the expected effect of a valid turn, or
+     *       - a <see cref="TurnProblem"/>, the rule an invalid turn breaks, and where it breaks it.
      *     A Note on Aces:
      *     - The word "Ace" as used in these tests is misleading - it is used to refer to a single AceValue
      *     <see cref="CardExtensions.get_AceValue" />, rather than any specific Ace card, i.e: [Ace of Spades, Ace of Hearts]
@@ -85,8 +82,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 1,
                 Game: ProvideGame(),
                 Cards: [],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Pick = 1 }
+                Expected: new TurnDelta { Pick = 1 }
             ),
 
             // When a single card of the same suit as the top card is played, the turn is valid
@@ -94,8 +90,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 2,
                 Game: ProvideGame(),
                 Cards: [Ten.Of(Spades)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Cards = [Ten.Of(Spades)] }
+                Expected: new TurnDelta { Cards = [Ten.Of(Spades)] }
             ),
 
             // When a single card of a different suit than the top card is played, the turn is invalid
@@ -103,8 +98,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 3,
                 Game: ProvideGame(),
                 Cards: [Ten.Of(Hearts)],
-                ExpectedValid: false,
-                ExpectedDelta: new TurnDelta()
+                Expected: TurnProblem.InvalidFirstCard(0, [Ten.Of(Hearts)])
             ),
 
             // When multiple cards of the same face as the top card are played, the turn is valid
@@ -112,8 +106,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 4,
                 Game: ProvideGame(),
                 Cards: [Nine.Of(Hearts), Nine.Of(Diamonds), Nine.Of(Clubs)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Cards = [Nine.Of(Hearts), Nine.Of(Diamonds), Nine.Of(Clubs)] }
+                Expected: new TurnDelta { Cards = [Nine.Of(Hearts), Nine.Of(Diamonds), Nine.Of(Clubs)] }
             ),
 
             /*
@@ -125,8 +118,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 5,
                 Game: ProvideGame(),
                 Cards: [Jack.Of(Spades)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Skip = 2, Cards = [Jack.Of(Spades)] }
+                Expected: new TurnDelta { Advance = 2, Cards = [Jack.Of(Spades)] }
             ),
 
             // When n Jacks are played, n + 1 turns are skipped
@@ -134,10 +126,9 @@ public class TwoPassKarataEngineTest
                 Identifier: 6,
                 Game: ProvideGame(),
                 Cards: [Jack.Of(Spades), Jack.Of(Hearts), Jack.Of(Diamonds), Jack.Of(Clubs)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta
+                Expected: new TurnDelta
                 {
-                    Skip = 5,
+                    Advance = 5,
                     Cards = [Jack.Of(Spades), Jack.Of(Hearts), Jack.Of(Diamonds), Jack.Of(Clubs)]
                 }
             ),
@@ -151,8 +142,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 7,
                 Game: ProvideGame(),
                 Cards: [King.Of(Spades)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Reverse = true, Cards = [King.Of(Spades)] }
+                Expected: new TurnDelta { Reverse = true, Cards = [King.Of(Spades)] }
             ),
 
             // When an even number of Kings are played, the player plays again
@@ -160,8 +150,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 8,
                 Game: ProvideGame(),
                 Cards: [King.Of(Spades), King.Of(Hearts)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Skip = 0, Cards = [King.Of(Spades), King.Of(Hearts)] }
+                Expected: new TurnDelta { Advance = 0, Cards = [King.Of(Spades), King.Of(Hearts)] }
             ),
 
             /*
@@ -173,8 +162,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 9,
                 Game: ProvideGame(),
                 Cards: [Queen.Of(Spades)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Pick = 1, Cards = [Queen.Of(Spades)] }
+                Expected: new TurnDelta { Pick = 1, Cards = [Queen.Of(Spades)] }
             ),
 
             // When a single Question Card is played with an answer, the play continues
@@ -182,8 +170,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 10,
                 Game: ProvideGame(),
                 Cards: [Queen.Of(Spades), Four.Of(Spades)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Cards = [Queen.Of(Spades), Four.Of(Spades)] }
+                Expected: new TurnDelta { Cards = [Queen.Of(Spades), Four.Of(Spades)] }
             ),
 
             // When multiple Question Cards are played in valid order without an answer, the player picks up a card
@@ -191,8 +178,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 11,
                 Game: ProvideGame(),
                 Cards: [Queen.Of(Spades), Eight.Of(Spades), Eight.Of(Diamonds), Queen.Of(Diamonds)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta
+                Expected: new TurnDelta
                 {
                     Pick = 1,
                     Cards = [Queen.Of(Spades), Eight.Of(Spades), Eight.Of(Diamonds), Queen.Of(Diamonds)],
@@ -204,8 +190,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 12,
                 Game: ProvideGame(),
                 Cards: [Queen.Of(Spades), Eight.Of(Diamonds)],
-                ExpectedValid: false,
-                ExpectedDelta: new TurnDelta()
+                Expected: TurnProblem.InvalidAnswer(1, [Queen.Of(Spades), Eight.Of(Diamonds)])
             ),
 
             /*
@@ -217,8 +202,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 13,
                 Game: ProvideGame(),
                 Cards: [Black.Joker],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Give = 5, Cards = [Black.Joker] }
+                Expected: new TurnDelta { Give = 5, Cards = [Black.Joker] }
             ),
 
             // When a Joker is played as an answer, the next player picks up 5 cards
@@ -226,8 +210,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 14,
                 Game: ProvideGame(),
                 Cards: [Queen.Of(Spades), Eight.Of(Spades), Black.Joker, Red.Joker],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta
+                Expected: new TurnDelta
                 {
                     Give = 5,
                     Cards = [Queen.Of(Spades), Eight.Of(Spades), Black.Joker, Red.Joker],
@@ -239,8 +222,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 15,
                 Game: ProvideGame(),
                 Cards: [Black.Joker, Seven.Of(Spades)],
-                ExpectedValid: false,
-                ExpectedDelta: new TurnDelta()
+                Expected: TurnProblem.InvalidSequence(1, [Black.Joker, Seven.Of(Spades)])
             ),
 
             // If the previous player played a Joker, the next player picks up 5 cards
@@ -248,8 +230,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 16,
                 Game: ProvideGame(top: Black.Joker, pick: 5),
                 Cards: [],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Pick = 5 }
+                Expected: new TurnDelta { Pick = 5 }
             ),
 
             // A player can "forward" a Joker to the next player using another Joker
@@ -257,8 +238,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 17,
                 Game: ProvideGame(top: Black.Joker, pick: 5),
                 Cards: [Black.Joker],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Give = 5, Cards = [Black.Joker] }
+                Expected: new TurnDelta { Give = 5, Cards = [Black.Joker] }
             ),
 
             // A player can "block" a Joker using an Ace
@@ -266,8 +246,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 18,
                 Game: ProvideGame(top: Black.Joker, pick: 5),
                 Cards: [Ace.Of(Diamonds)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Cards = [Ace.Of(Diamonds)] }
+                Expected: new TurnDelta { Cards = [Ace.Of(Diamonds)] }
             ),
 
             // A player cannot "block" a Joker using any other card
@@ -275,8 +254,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 19,
                 Game: ProvideGame(top: Black.Joker, pick: 5),
                 Cards: [Seven.Of(Spades)],
-                ExpectedValid: false,
-                ExpectedDelta: new TurnDelta()
+                Expected: TurnProblem.DrawCards(0, [Seven.Of(Spades)])
             ),
 
             /*
@@ -289,8 +267,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 20,
                 Game: ProvideGame(top: Three.Of(Spades), pick: 3),
                 Cards: [],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Pick = 3 }
+                Expected: new TurnDelta { Pick = 3 }
             ),
 
             // If the previous player played a "bomb", the player has to pick up the cards or play a "bomb" of the same face
@@ -299,8 +276,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 21,
                 Game: ProvideGame(Three.Of(Spades), 3),
                 Cards: [Seven.Of(Spades)],
-                ExpectedValid: false,
-                ExpectedDelta: new TurnDelta()
+                Expected: TurnProblem.DrawCards(0, [Seven.Of(Spades)])
             ),
 
             // If the previous player played a "bomb", the player has to pick up the cards or play a "bomb" of the same face
@@ -309,8 +285,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 22,
                 Game: ProvideGame(top: Three.Of(Spades), pick: 3),
                 Cards: [Two.Of(Spades)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Give = 2, Cards = [Two.Of(Spades)] }
+                Expected: new TurnDelta { Give = 2, Cards = [Two.Of(Spades)] }
             ),
 
             // If the previous player played a "bomb", the player has to pick up the cards or play a "bomb" of the same face
@@ -319,8 +294,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 23,
                 Game: ProvideGame(top: Three.Of(Spades), pick: 3),
                 Cards: [Three.Of(Diamonds)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Give = 3, Cards = [Three.Of(Diamonds)] }
+                Expected: new TurnDelta { Give = 3, Cards = [Three.Of(Diamonds)] }
             ),
 
             // If the previous player played a "bomb", the player has to pick up the cards or play a "bomb" of the same face
@@ -329,8 +303,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 24,
                 Game: ProvideGame(top: Three.Of(Spades), pick: 3),
                 Cards: [Black.Joker],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Give = 5, Cards = [Black.Joker] }
+                Expected: new TurnDelta { Give = 5, Cards = [Black.Joker] }
             ),
 
             // If the previous player played a "bomb", the player has to pick up the cards or play a "bomb" of the same face
@@ -339,8 +312,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 25,
                 Game: ProvideGame(top: Three.Of(Spades), pick: 3),
                 Cards: [Ace.Of(Spades)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { RequestLevel = SuitRequest, Cards = [Ace.Of(Spades)] }
+                Expected: new TurnDelta { RequestLevel = SuitRequest, Cards = [Ace.Of(Spades)] }
             ),
 
             /*
@@ -352,8 +324,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 26,
                 Game: ProvideGame(),
                 Cards: [Ace.Of(Diamonds)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { RequestLevel = SuitRequest, Cards = [Ace.Of(Diamonds)] }
+                Expected: new TurnDelta { RequestLevel = SuitRequest, Cards = [Ace.Of(Diamonds)] }
             ),
 
             // Two aces can be played on top of any card, and the player can then request a specific card
@@ -361,8 +332,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 27,
                 Game: ProvideGame(),
                 Cards: [Ace.Of(Diamonds), Ace.Of(Clubs)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { RequestLevel = CardRequest, Cards = [Ace.Of(Diamonds), Ace.Of(Clubs)] }
+                Expected: new TurnDelta { RequestLevel = CardRequest, Cards = [Ace.Of(Diamonds), Ace.Of(Clubs)] }
             ),
 
             // An ace of spades can be played on top of any card, and the player can then request a specific card
@@ -370,8 +340,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 28,
                 Game: ProvideGame(),
                 Cards: [Ace.Of(Spades)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { RequestLevel = CardRequest, Cards = [Ace.Of(Spades)] }
+                Expected: new TurnDelta { RequestLevel = CardRequest, Cards = [Ace.Of(Spades)] }
             ),
 
             // When the requested card is played, the turn is valid and the request is removed
@@ -379,8 +348,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 29,
                 Game: ProvideGame(top: Ace.Of(Spades), request: None.Of(Spades)),
                 Cards: [Six.Of(Spades)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { RemoveRequestLevels = 1, Cards = [Six.Of(Spades)] }
+                Expected: new TurnDelta { RemoveRequestLevels = 1, Cards = [Six.Of(Spades)] }
             ),
 
             // When the requested card is played, the turn is valid and the request is removed
@@ -388,8 +356,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 30,
                 Game: ProvideGame(top: Ace.Of(Spades), request: Nine.Of(Spades)),
                 Cards: [Nine.Of(Spades)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { RemoveRequestLevels = 2, Cards = [Nine.Of(Spades)] }
+                Expected: new TurnDelta { RemoveRequestLevels = 2, Cards = [Nine.Of(Spades)] }
             ),
 
             // When a card of a different suit from a specifically requested card is played, the turn is invalid
@@ -397,8 +364,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 31,
                 Game: ProvideGame(top: Ace.Of(Spades), request: Nine.Of(Spades)),
                 Cards: [Nine.Of(Diamonds)],
-                ExpectedValid: false,
-                ExpectedDelta: new TurnDelta()
+                Expected: TurnProblem.CardRequested(0, [Nine.Of(Diamonds)])
             ),
 
             // When a card of a different face from a specifically requested card is played, the turn is invalid
@@ -406,8 +372,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 32,
                 Game: ProvideGame(top: Ace.Of(Spades), request: Nine.Of(Spades)),
                 Cards: [Four.Of(Spades)],
-                ExpectedValid: false,
-                ExpectedDelta: new TurnDelta()
+                Expected: TurnProblem.CardRequested(0, [Four.Of(Spades)])
             ),
 
             // When a card of a different suit from the requested suit is played, the turn is invalid
@@ -415,8 +380,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 33,
                 Game: ProvideGame(top: Ace.Of(Diamonds), request: None.Of(Spades)),
                 Cards: [Nine.Of(Diamonds)],
-                ExpectedValid: false,
-                ExpectedDelta: new TurnDelta()
+                Expected: TurnProblem.CardRequested(0, [Nine.Of(Diamonds)])
             ),
 
             // When a single Ace is played on a suit request, the request is removed
@@ -424,8 +388,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 34,
                 Game: ProvideGame(top: Ace.Of(Diamonds), request: None.Of(Spades)),
                 Cards: [Ace.Of(Clubs)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { RemoveRequestLevels = 1, Cards = [Ace.Of(Clubs)] }
+                Expected: new TurnDelta { RemoveRequestLevels = 1, Cards = [Ace.Of(Clubs)] }
             ),
 
             // When a card is requested and none is played, the player picks up a card
@@ -433,8 +396,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 35,
                 Game: ProvideGame(top: Ace.Of(Diamonds), request: None.Of(Spades)),
                 Cards: [],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Pick = 1 }
+                Expected: new TurnDelta { Pick = 1 }
             ),
 
             // When a specific card is requested and a single Ace is played, the request is reduced to a suit request
@@ -442,8 +404,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 36,
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Diamonds)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { RemoveRequestLevels = 1, Cards = [Ace.Of(Diamonds)] }
+                Expected: new TurnDelta { RemoveRequestLevels = 1, Cards = [Ace.Of(Diamonds)] }
             ),
 
             // When a specific card is requested and two Aces are played, the request is removed
@@ -451,8 +412,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 37,
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Diamonds), Ace.Of(Clubs)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { RemoveRequestLevels = 2, Cards = [Ace.Of(Diamonds), Ace.Of(Clubs)] }
+                Expected: new TurnDelta { RemoveRequestLevels = 2, Cards = [Ace.Of(Diamonds), Ace.Of(Clubs)] }
             ),
 
             // When a specific card is requested and an Ace of Spades is played, the request is removed
@@ -460,8 +420,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 38,
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Spades)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { RemoveRequestLevels = 2, Cards = [Ace.Of(Spades)] }
+                Expected: new TurnDelta { RemoveRequestLevels = 2, Cards = [Ace.Of(Spades)] }
             ),
 
             // When a specific card is requested and three Aces are played, the request is removed and the player can
@@ -470,8 +429,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 39,
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Diamonds), Ace.Of(Spades)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta
+                Expected: new TurnDelta
                 {
                     RemoveRequestLevels = 2,
                     RequestLevel = SuitRequest,
@@ -485,8 +443,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 40,
                 Game: ProvideGame(top: Ace.Of(Hearts), request: Nine.Of(Spades)),
                 Cards: [Ace.Of(Diamonds), Ace.Of(Spades), Ace.Of(Clubs)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta
+                Expected: new TurnDelta
                 {
                     RemoveRequestLevels = 2,
                     RequestLevel = CardRequest,
@@ -499,8 +456,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 41,
                 Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: None.Of(Hearts)),
                 Cards: [Ace.Of(Hearts)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta
+                Expected: new TurnDelta
                 {
                     RemoveRequestLevels = 1,
                     RequestLevel = SuitRequest,
@@ -513,8 +469,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 42,
                 Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: Ace.Of(Hearts)),
                 Cards: [Ace.Of(Hearts)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta
+                Expected: new TurnDelta
                 {
                     RemoveRequestLevels = 2,
                     RequestLevel = SuitRequest,
@@ -528,8 +483,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 43,
                 Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: Ace.Of(Hearts)),
                 Cards: [Ace.Of(Hearts), Ace.Of(Clubs)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta
+                Expected: new TurnDelta
                 {
                     RemoveRequestLevels = 2,
                     RequestLevel = CardRequest,
@@ -543,8 +497,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 44,
                 Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: Queen.Of(Hearts)),
                 Cards: [Queen.Of(Hearts), Ace.Of(Hearts), Ace.Of(Clubs)],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta
+                Expected: new TurnDelta
                 {
                     RemoveRequestLevels = 2,
                     RequestLevel = CardRequest,
@@ -557,8 +510,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 45,
                 Game: ProvideGame(top: Ace.Of(Spades), pick: 0, request: Ace.Of(Hearts)),
                 Cards: [],
-                ExpectedValid: true,
-                ExpectedDelta: new TurnDelta { Pick = 1 }
+                Expected: new TurnDelta { Pick = 1 }
             ),
         ];
 

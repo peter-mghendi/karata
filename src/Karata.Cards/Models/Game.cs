@@ -21,7 +21,6 @@ public class Game
         { Face: not None } => CardRequest
     };
 
-    public uint Give { get; set; }
     public uint Pick { get; set; }
     public int CurrentTurn { get; set; }
 
@@ -45,7 +44,6 @@ public class Game
         IsReversed = IsReversed,
         Status = Status,
         Request = Request,
-        Give = Give,
         Pick = Pick,
         CurrentTurn = CurrentTurn,
         Deck = new Deck(Enumerable.Repeat(new Card(), Deck.Count)),

@@ -19,7 +19,7 @@ public static class GameTurns
     /// </remarks>
     public static void Advance(Game game)
     {
-        var skip = game.CurrentHand.Turns.LastOrDefault()?.Delta?.Skip ?? 1;
+        var skip = game.CurrentHand.Turns.LastOrDefault()?.Delta?.Advance ?? 1;
 
         // process skip turns, counting only connected hands.
         while (skip > 0)
@@ -28,14 +28,16 @@ public static class GameTurns
             switch (game.CurrentHand.Status)
             {
                 case Active:
-                    game.CurrentHand.Turns.Add(new Turn
+                    if (--skip > 0)
                     {
-                        Type = TurnType.Skip,
-                        Hand = game.CurrentHand,
-                        CreatedAt = DateTimeOffset.UtcNow
-                    });
+                        game.CurrentHand.Turns.Add(new Turn
+                        {
+                            Type = TurnType.Skip,
+                            Hand = game.CurrentHand,
+                            CreatedAt = DateTimeOffset.UtcNow
+                        });
+                    }
 
-                    --skip;
                     break;
                 case Inactive:
                     game.CurrentHand.Turns.Add(new Turn

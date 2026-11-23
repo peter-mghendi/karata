@@ -358,8 +358,8 @@
         {
             if (delta.Reverse) notes.Add("Reversed direction");
 
-            if (delta.Skip == 0) notes.Add("Plays again");
-            else if (delta.Skip > 1) notes.Add($"Skips {delta.Skip - 1} {(delta.Skip == 2 ? "player" : "players")}");
+            if (delta.Advance == 0) notes.Add("Plays again");
+            else if (delta.Advance > 1) notes.Add($"Skips {delta.Advance - 1} {(delta.Advance == 2 ? "player" : "players")}");
 
             if (delta.RemoveRequestLevels > 0) notes.Add("Countered the request");
 

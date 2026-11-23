@@ -4,6 +4,7 @@
 @using Howler.Blazor.Components
 @using Karata.Kit.Trivia
 @using Karata.Kit.Trivia.Models
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 @attribute [Authorize]
 
@@ -196,8 +197,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Authenticator.AuthenticationStateChanged += OnAuthStateChanged;
+
         var auth = await Authenticator.GetAuthenticationStateAsync();
-        _username = auth.User.Identity!.Name!;
+        if (auth.User.Identity is { IsAuthenticated: true } identity)
+        {
+            _username = identity.Name!;
+        }
 
         Game = await QuizWars.Games.FetchAsync(Identifier);
     }
@@ -211,11 +217,14 @@
         {
             for (_startsIn = StartDelaySeconds; _startsIn > 0; _startsIn--)
             {
-                StateHasChanged();
                 await Task.Delay(TimeSpan.FromSeconds(1), _cts.Token);
             }
 
             await PlayAsync(_cts.Token);
+        }
+        catch (AccessTokenNotAvailableException ex)
+        {
+            ex.Redirect();
         }
         catch (OperationCanceledException)
         {
@@ -348,8 +357,11 @@
         return $"flex: 1; height: 0.35rem; border-radius: 999px; background: {background}; opacity: {opacity};";
     }
 
+    private void OnAuthStateChanged(Task<AuthenticationState> _) => InvokeAsync(StateHasChanged);
+
     public async ValueTask DisposeAsync()
     {
+        Authenticator.AuthenticationStateChanged -= OnAuthStateChanged;
         await _cts.CancelAsync();
 
         try

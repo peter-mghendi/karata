@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using System.Diagnostics.Contracts;
-using Karata.Kit.Cards.Engine.Exceptions;
 using Karata.Kit.Cards.Models;
 using Karata.Pips;
 using Karata.Pips.Extensions;
@@ -15,25 +14,25 @@ namespace Karata.Kit.Cards.Engine;
 public class TwoPassKarataEngine : IKarataEngine
 {
     public string Name => nameof(TwoPassKarataEngine);
-    
+
     /// <inheritdoc />
     [Pure]
-    public TurnDelta EvaluateTurn(GameData game, ImmutableArray<Card> cards)
+    public TurnEvaluation EvaluateTurn(GameData game, ImmutableArray<Card> cards) => ValidateTurn(game, cards) switch
     {
-        EnsureTurnIsValid(game, cards);
-        return GenerateTurnDelta(game, cards);
-    }
+        { } problem => problem,
+        null => GenerateTurnDelta(game, cards),
+    };
 
     /// <summary>
-    /// <see cref="EnsureTurnIsValid"/> checks that the turn played is valid.
+    /// Checks that the turn played is valid.
     /// </summary>
-    /// 
-    /// <exception cref="TurnValidationException">
-    /// Thrown when the turn is not valid.
-    /// </exception>
-    private static void EnsureTurnIsValid(GameData game, ImmutableArray<Card> cards)
+    /// <returns>
+    /// A <see cref="TurnProblem"/> if the turn is not valid, or null if it is valid.
+    /// </returns>
+    private static TurnProblem? ValidateTurn(GameData game, ImmutableArray<Card> cards)
     {
-        if (cards.Length is 0) return; //An empty turn is always valid.
+        // An empty turn is always valid.
+        if (cards.Length is 0) return null;
 
         var top = game.Pile.Peek();
         var first = cards.First();
@@ -41,7 +40,7 @@ public class TwoPassKarataEngine : IKarataEngine
         // If a card has been requested, that card - or an Ace - must start the turn.
         if (!IKarataEngine.RequestMatches(game.Request, first) && first.Face is not Ace)
         {
-            throw new CardRequestedException(0, [first]);
+            return TurnProblem.CardRequested(0, [first]);
         }
 
         // If the top card is a "bomb", the next card should counter or block it.
@@ -50,11 +49,11 @@ public class TwoPassKarataEngine : IKarataEngine
             // Joker can only be countered by a joker while 2 and 3 can be countered by 2, 3 and Joker.
             if (top.Face is Joker)
             {
-                if (first.Face is not Joker) throw new DrawCardsException(0, [first]);
+                if (first.Face is not Joker)  return TurnProblem.DrawCards(0, [first]);
             }
             else
             {
-                if (!first.IsBomb) throw new DrawCardsException(0, [first]);
+                if (!first.IsBomb) return TurnProblem.DrawCards(0, [first]);
             }
         }
 
@@ -76,7 +75,7 @@ public class TwoPassKarataEngine : IKarataEngine
                 // Otherwise, face or suit must match previous card.
                 if (!current.FaceEquals(previous) && !current.SuitEquals(previous))
                 {
-                    throw new InvalidFirstCardException(i - 1, [first]);
+                    return TurnProblem.InvalidFirstCard(i - 1, [first]);
                 }
             }
             // Subsequent cards
@@ -89,7 +88,7 @@ public class TwoPassKarataEngine : IKarataEngine
                         // Ace, when not the first card, can only go on top of a question or another ace.
                         if (previous is { IsQuestion: false, Face: not Ace })
                         {
-                            throw new SubsequentAceOrJokerException(i - 1, [previous, current]);
+                            return TurnProblem.SubsequentAceOrJoker(i - 1, [previous, current]);
                         }
 
                         break;
@@ -99,7 +98,7 @@ public class TwoPassKarataEngine : IKarataEngine
                         // Joker, when not the first card, can only go on top of a question or another joker.
                         if (previous is { IsQuestion: false, Face: not Joker })
                         {
-                            throw new SubsequentAceOrJokerException(i - 1,[previous, current]);
+                            return TurnProblem.SubsequentAceOrJoker(i - 1,[previous, current]);
                         }
 
                         break;
@@ -111,13 +110,13 @@ public class TwoPassKarataEngine : IKarataEngine
                         {
                             if (!current.FaceEquals(previous) && !current.SuitEquals(previous))
                             {
-                                throw new InvalidAnswerException(i - 1,[previous, current]);
+                                return TurnProblem.InvalidAnswer(i - 1,[previous, current]);
                             }
                         }
                         else
                         {
                             // If the previous card is not a question, the current card must be of the same face.
-                            if (!current.FaceEquals(previous)) throw new InvalidCardSequenceException(i - 1,[previous, current]);
+                            if (!current.FaceEquals(previous)) return TurnProblem.InvalidSequence(i - 1,[previous, current]);
                         }
 
                         break;
@@ -125,6 +124,8 @@ public class TwoPassKarataEngine : IKarataEngine
                 }
             }
         }
+
+        return null;
     }
 
     /// <summary>
@@ -151,7 +152,7 @@ public class TwoPassKarataEngine : IKarataEngine
         // Handle "jumps" and "kickbacks".
         delta = Enumerable.Aggregate(cards, delta, (current, card) => card.Face switch
         {
-            Jack => current with { Skip = current.Skip + 1 },
+            Jack => current with { Advance = current.Advance + 1 },
             King => current with { Reverse = !current.Reverse },
             _ => current
         });
@@ -189,7 +190,7 @@ public class TwoPassKarataEngine : IKarataEngine
 
         // For an even number of "kickbacks", the current player plays again.
         var kings = cards.Count(card => card.Face is King);
-        if (kings > 0 && kings % 2 == 0) delta = delta with { Skip = 0 };
+        if (kings > 0 && kings % 2 == 0) delta = delta with { Advance = 0 };
 
         return delta;
     }

@@ -1,5 +1,4 @@
 @using Karata.Kit.Cards.Engine
-@using Karata.Kit.Cards.Engine.Exceptions
 @using Karata.Kit.Cards.Models
 
 @inject IKarataEngine Engine
@@ -30,13 +29,14 @@ else if (_delta is not null)
         _error = null;
         _delta = null;
 
-        try
+        switch (Engine.EvaluateTurn(Game, Cards))
         {
-            _delta = Engine.EvaluateTurn(Game, Cards);
-        }
-        catch (TurnValidationException ex)
-        {
-            _error = ex.Message;
+            case TurnDelta delta:
+                _delta = delta;
+                return;
+            case TurnProblem problem:
+                _error = problem.Message;
+                return;
         }
     }
 
@@ -44,7 +44,7 @@ else if (_delta is not null)
     {
         if (delta.Reverse) yield return "will reverse the direction of the game";
 
-        if (delta.Skip > 0) yield return $"will skip {delta.Skip} {(delta.Skip == 1 ? "player" : "players")}";
+        if (delta.Advance > 0) yield return $"will advance the game {delta.Advance} {(delta.Advance == 1 ? "turn" : "turns")}";
 
         if (delta.RequestLevel is CardRequestLevel.SuitRequest) yield return "can request a suit";
 

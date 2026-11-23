@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using Karata.Kit.Cards.Engine.Exceptions;
 using Karata.Kit.Cards.Models;
 using Karata.Pips;
 using Karata.Pips.Extensions;
@@ -13,26 +12,20 @@ public interface IKarataEngine
     string Name { get; }
     
     /// <summary>
-    /// Evaluates a turn, returning a <see cref="TurnDelta"/> if the turn is valid, and throwing a
-    /// <see cref="TurnValidationException"/> if it is not.
+    /// Evaluates a turn, returning a <see cref="TurnEvaluation"/> that indicates whether the turn is valid and what effect it has on the game state.
     /// </summary>
-    /// <param name="game">THe current game state.</param>
+    /// <param name="game">The current game state.</param>
     /// <param name="cards">The proposed cards.</param>
-    /// <returns>A <see cref="TurnDelta"/> representing the turn's effect on the game.</returns>
-    TurnDelta EvaluateTurn(GameData game, ImmutableArray<Card> cards);
+    /// <returns>
+    /// A <see cref="TurnEvaluation"/> representing the turn's validity and effect on the game.
+    /// </returns>
+    TurnEvaluation EvaluateTurn(GameData game, ImmutableArray<Card> cards);
 
-    public bool TestTurn(GameData game, ImmutableArray<Card> cards)
+    public bool TestTurn(GameData game, ImmutableArray<Card> cards) => EvaluateTurn(game, cards) switch
     {
-        try
-        {
-            EvaluateTurn(game, cards);
-            return true;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-    }
+        TurnDelta delta => true,
+        TurnProblem problem => false,
+    };
 
     /// <summary>
     /// Helper method to determine whether a card matches the request.

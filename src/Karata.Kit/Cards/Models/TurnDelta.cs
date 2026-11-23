@@ -16,9 +16,9 @@ public record TurnDelta
     public bool Reverse { get; init; }
 
     /**
-     * <summary>How many turn should be skipped.</summary>
+     * <summary>How many turns the game should advance by.</summary>
      */
-    public uint Skip { get; init; } = 1;
+    public uint Advance { get; init; } = 1;
 
     /**
      * <summary>Whether the cards imply a request for a card, and what kind of request it is.</summary>
@@ -52,7 +52,7 @@ public record TurnDelta
                GameDelta {
                  Cards                = [{{string.Join(", ", Cards.Select(c => c.ToString()))}}]
                  Reverse              = {{Reverse}}
-                 Skip                 = {{Skip}}
+                 Skip                 = {{Advance}}
                  RequestLevel         = {{RequestLevel}}
                  RemoveRequestLevels  = {{RemoveRequestLevels}}
                  Give                 = {{Give}}
@@ -67,7 +67,7 @@ public record TurnDelta
         if (ReferenceEquals(this, other)) return true;
         return Cards.SequenceEqual(other.Cards) &&
                Reverse == other.Reverse &&
-               Skip == other.Skip &&
+               Advance == other.Advance &&
                RequestLevel == other.RequestLevel &&
                RemoveRequestLevels == other.RemoveRequestLevels &&
                Give == other.Give &&
@@ -76,6 +76,16 @@ public record TurnDelta
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Cards, Reverse, Skip, (int)RequestLevel, RemoveRequestLevels, Give, Pick);
+        var hash = new HashCode();
+        Cards.ForEach(hash.Add);
+
+        hash.Add(Reverse);
+        hash.Add(Advance);
+        hash.Add(RequestLevel);
+        hash.Add(RemoveRequestLevels);
+        hash.Add(Give);
+        hash.Add(Pick);
+
+        return hash.ToHashCode();
     }
 }
