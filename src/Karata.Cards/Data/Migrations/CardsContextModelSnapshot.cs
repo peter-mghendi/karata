@@ -16,7 +16,7 @@ partial class CardsContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261123215116_RenameSkipToAdvance";
+    public override string LastMigrationId => "20261123220312_RemoveGiveFromGame";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -41,9 +41,6 @@ partial class CardsContextModelSnapshot : ModelSnapshot
                 b.Property<string>("Deck")
                     .IsRequired()
                     .HasColumnType("text");
-
-                b.Property<long>("Give")
-                    .HasColumnType("bigint");
 
                 b.Property<bool>("IsReversed")
                     .HasColumnType("boolean");
