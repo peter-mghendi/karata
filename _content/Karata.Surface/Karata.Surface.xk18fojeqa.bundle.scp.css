@@ -1,0 +1,121 @@
+/* _content/Karata.Surface/Components/Cards/CardComponent.razor.rz.scp.css */
+.card[b-4ko4ho6ngz] {
+    width: 70px;
+    float: left;
+    border: solid gray 1px;
+}
+
+.card:not(:first-child)[b-4ko4ho6ngz] {
+    margin-left: -55px;
+}
+    
+/* _content/Karata.Surface/Components/Cards/CardTableGameInterface.razor.rz.scp.css */
+#table[b-hnjm68iis9] {
+    --center-offset: 43.5%;
+    --edge-offset-vertical: 16px;
+    --edge-offset-horizontal: 8px;
+}
+
+/*noinspection CssInvalidPseudoSelector*/
+[b-hnjm68iis9] #bottom .card{
+    position: relative;
+    transition-duration: 250ms;
+}
+
+/*noinspection CssInvalidPseudoSelector*/
+[b-hnjm68iis9] #bottom .card:hover {
+    z-index: 10;
+    box-shadow:  2px 2px 3px gray;
+    margin-top: -10px;
+}
+
+#top[b-hnjm68iis9] {
+    left: var(--center-offset);
+    top: var(--edge-offset-vertical);
+    transform: rotate(180deg);
+}
+
+#bottom[b-hnjm68iis9] {
+    right: var(--center-offset);
+    bottom: var(--edge-offset-vertical);
+    transform: rotate(0);
+}
+
+#left[b-hnjm68iis9] {
+    bottom: var(--center-offset);
+    left: var(--edge-offset-horizontal);
+    transform: rotate(90deg);
+}
+
+#right[b-hnjm68iis9] {
+    top: var(--center-offset);
+    right: var(--edge-offset-horizontal);
+    transform: rotate(270deg);
+}
+
+#deck[b-hnjm68iis9] {
+    top: 30%;
+    left: 40%;
+    width: 70px;
+}
+
+#pile[b-hnjm68iis9] {
+    top: 30%;
+    right: 40%;
+    width: 70px;
+}
+
+#turn[b-hnjm68iis9] {
+    bottom: 27.5%;
+    right: 43.5%;
+}
+
+.seat-active[b-hnjm68iis9] {
+    filter: drop-shadow(0 0 0.6rem rgba(255, 213, 79, 0.95));
+}
+/* _content/Karata.Surface/Components/Cards/GameRules.razor.rz.scp.css */
+section[b-il6bvngyvf] {
+    scroll-margin-top: 5rem;
+}
+
+.rules[b-il6bvngyvf] {
+    margin: 0.5rem 0;
+    padding-inline-start: 1.25rem;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.rules li + li[b-il6bvngyvf] {
+    margin-top: 0.4rem;
+}
+
+.rules ul[b-il6bvngyvf] {
+    margin-top: 0.4rem;
+}
+/* _content/Karata.Surface/Components/Cards/RuleCards.razor.rz.scp.css */
+.example[b-p8ow2v518e] {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0.75rem 0;
+}
+
+.cards[b-p8ow2v518e] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.cards img[b-p8ow2v518e] {
+    width: 3.5rem;
+    height: auto;
+    border-radius: 0.25rem;
+    border: 1px solid var(--mud-palette-lines-inputs);
+    background: white;
+}
+
+.caption[b-p8ow2v518e] {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}

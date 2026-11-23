@@ -1,0 +1,27 @@
+@import '_content/Karata.Surface/Karata.Surface.xk18fojeqa.bundle.scp.css';
+
+/* /Pages/Cards/Game/Play.razor.rz.scp.css */
+/* The 88vh from before, as one named setting.
+   --game-chrome is everything above the game: the site header plus page padding.
+   Set it in app.css if your header changes. */
+.game-column[b-2ewb9caos0],
+.game-side[b-2ewb9caos0] {
+    height: calc(100dvh - var(--game-chrome, 6rem));
+    min-height: 38rem;
+}
+
+.game-column[b-2ewb9caos0] {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.game-area[b-2ewb9caos0] {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: auto;
+}
+
+.game-side[b-2ewb9caos0] {
+    overflow-y: auto;
+}
