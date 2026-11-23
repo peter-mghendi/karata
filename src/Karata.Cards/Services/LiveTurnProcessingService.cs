@@ -72,9 +72,9 @@ public sealed class LiveTurnProcessingService(
         {
             Type = Fail,
             CardsPlayed = [..cards],
+            Problem = problem,
             Hand = room.Game.CurrentHand,
-            CreatedAt = DateTimeOffset.UtcNow,
-            Metadata = new TurnMetadata { Problem = problem }
+            CreatedAt = DateTimeOffset.UtcNow
         });
 
         await context.SaveChangesAsync();

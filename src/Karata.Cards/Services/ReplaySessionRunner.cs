@@ -26,7 +26,7 @@ public sealed class ReplaySessionRunner(
                     await replayer.MoveCardsFromDeckToHand(request.RoomId, turn.Hand.Id, turn.CardsPicked);
                     break;
                 case TurnType.Fail:
-                    await replayer.SystemMessage(request.RoomId, new SystemMessage { Text = turn.Metadata.Problem!.Message, Type = Error });
+                    await replayer.SystemMessage(request.RoomId, new SystemMessage { Text = turn.Problem!.Message, Type = Error });
                     break;
                 case TurnType.Play:
                     await replayer.MoveCardsFromHandToPile(request.RoomId, turn.Hand.Id, turn.Delta!.Cards, false);
