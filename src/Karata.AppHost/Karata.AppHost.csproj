@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.4.6">
+<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
 
   <ItemGroup>
     <ProjectReference Include="..\Karata.Bot\Karata.Bot.csproj" />
@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <PropertyGroup>
+    <AspireUseCliBundle>true</AspireUseCliBundle>
     <OutputType>Exe</OutputType>
     <UserSecretsId>2899b1a4-5385-45c4-bbc3-337ea265b692</UserSecretsId>
   </PropertyGroup>

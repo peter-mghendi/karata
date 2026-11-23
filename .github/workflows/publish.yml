@@ -32,9 +32,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
           cache: true
           cache-dependency-path: '**/packages.lock.json'
+          global-json-file: global.json
 
       - name: Install WebAssembly workload
         run: dotnet workload install wasm-tools
@@ -78,9 +78,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
           cache: true
           cache-dependency-path: '**/packages.lock.json'
+          global-json-file: global.json
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -128,9 +128,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
           cache: true
           cache-dependency-path: '**/packages.lock.json'
+          global-json-file: global.json
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -182,9 +182,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
           cache: true
           cache-dependency-path: '**/packages.lock.json'
+          global-json-file: global.json
 
       - name: Publish binaries
         run: |
@@ -213,9 +213,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
           cache: true
           cache-dependency-path: '**/packages.lock.json'
+          global-json-file: global.json
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -263,9 +263,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
           cache: true
           cache-dependency-path: '**/packages.lock.json'
+          global-json-file: global.json
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -313,9 +313,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
           cache: true
           cache-dependency-path: '**/packages.lock.json'
+          global-json-file: global.json
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -362,9 +362,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
           cache: true
           cache-dependency-path: '**/packages.lock.json'
+          global-json-file: global.json
 
       - name: Install Webassembly workload
         run: dotnet workload install wasm-tools
@@ -407,9 +407,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
           cache: true
           cache-dependency-path: '**/packages.lock.json'
+          global-json-file: global.json
 
       - name: Install Webassembly workload
         run: dotnet workload install wasm-tools
