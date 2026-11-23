@@ -152,7 +152,7 @@ public class TwoPassKarataEngine : IKarataEngine
         // Handle "jumps" and "kickbacks".
         delta = Enumerable.Aggregate(cards, delta, (current, card) => card.Face switch
         {
-            Jack => current with { Skip = current.Skip + 1 },
+            Jack => current with { Advance = current.Advance + 1 },
             King => current with { Reverse = !current.Reverse },
             _ => current
         });
@@ -190,7 +190,7 @@ public class TwoPassKarataEngine : IKarataEngine
 
         // For an even number of "kickbacks", the current player plays again.
         var kings = cards.Count(card => card.Face is King);
-        if (kings > 0 && kings % 2 == 0) delta = delta with { Skip = 0 };
+        if (kings > 0 && kings % 2 == 0) delta = delta with { Advance = 0 };
 
         return delta;
     }

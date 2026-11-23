@@ -19,7 +19,7 @@ public static class GameTurns
     /// </remarks>
     public static void Advance(Game game)
     {
-        var skip = game.CurrentHand.Turns.LastOrDefault()?.Delta?.Skip ?? 1;
+        var skip = game.CurrentHand.Turns.LastOrDefault()?.Delta?.Advance ?? 1;
 
         // process skip turns, counting only connected hands.
         while (skip > 0)

@@ -118,7 +118,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 5,
                 Game: ProvideGame(),
                 Cards: [Jack.Of(Spades)],
-                Expected: new TurnDelta { Skip = 2, Cards = [Jack.Of(Spades)] }
+                Expected: new TurnDelta { Advance = 2, Cards = [Jack.Of(Spades)] }
             ),
 
             // When n Jacks are played, n + 1 turns are skipped
@@ -128,7 +128,7 @@ public class TwoPassKarataEngineTest
                 Cards: [Jack.Of(Spades), Jack.Of(Hearts), Jack.Of(Diamonds), Jack.Of(Clubs)],
                 Expected: new TurnDelta
                 {
-                    Skip = 5,
+                    Advance = 5,
                     Cards = [Jack.Of(Spades), Jack.Of(Hearts), Jack.Of(Diamonds), Jack.Of(Clubs)]
                 }
             ),
@@ -150,7 +150,7 @@ public class TwoPassKarataEngineTest
                 Identifier: 8,
                 Game: ProvideGame(),
                 Cards: [King.Of(Spades), King.Of(Hearts)],
-                Expected: new TurnDelta { Skip = 0, Cards = [King.Of(Spades), King.Of(Hearts)] }
+                Expected: new TurnDelta { Advance = 0, Cards = [King.Of(Spades), King.Of(Hearts)] }
             ),
 
             /*

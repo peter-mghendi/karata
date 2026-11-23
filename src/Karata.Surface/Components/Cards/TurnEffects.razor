@@ -44,7 +44,7 @@ else if (_delta is not null)
     {
         if (delta.Reverse) yield return "will reverse the direction of the game";
 
-        if (delta.Skip > 0) yield return $"will skip {delta.Skip} {(delta.Skip == 1 ? "player" : "players")}";
+        if (delta.Advance > 0) yield return $"will advance the game {delta.Advance} {(delta.Advance == 1 ? "turn" : "turns")}";
 
         if (delta.RequestLevel is CardRequestLevel.SuitRequest) yield return "can request a suit";
 

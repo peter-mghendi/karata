@@ -16,7 +16,7 @@ partial class CardsContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261123214805_MoveTurnProblemToTurn";
+    public override string LastMigrationId => "20261123215116_RenameSkipToAdvance";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -409,6 +409,8 @@ partial class CardsContextModelSnapshot : ModelSnapshot
                     {
                         b1.Property<int>("TurnId");
 
+                        b1.Property<long>("Advance");
+
                         b1.Property<long>("Give");
 
                         b1.Property<long>("Pick");
@@ -418,8 +420,6 @@ partial class CardsContextModelSnapshot : ModelSnapshot
                         b1.Property<int>("RequestLevel");
 
                         b1.Property<bool>("Reverse");
-
-                        b1.Property<long>("Skip");
 
                         b1.HasKey("TurnId");
 
