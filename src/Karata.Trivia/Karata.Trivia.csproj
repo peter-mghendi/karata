@@ -7,10 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="MailKit" />
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\Karata.Runtime\Karata.Runtime.csproj" />
         <ProjectReference Include="..\Karata.ServiceDefaults\Karata.ServiceDefaults.csproj" />
     </ItemGroup>
