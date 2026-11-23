@@ -1,5 +1,8 @@
+using System.Text.Json.Serialization;
+
 namespace Karata.Pips;
 
+[JsonConverter(typeof(CardStackJsonConverter<Pile>))] 
 public class Pile : Stack<Card>
 {
     public Pile()
