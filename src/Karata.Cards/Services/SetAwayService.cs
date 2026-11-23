@@ -32,8 +32,9 @@ public class SetAwayService(
         
         await context.SaveChangesAsync();
         
-        foreach (var data in from each in room.Game.Hands select (Hand: hand, Game: Enrich.ForHand(room.Game, hand)))
+        foreach (var data in from each in room.Game.Hands select (Hand: each, Game: Enrich.ForHand(room.Game, each)))
             await Hand(data.Hand).TurnCommitted(RoomId, data.Game);
+
         await RoomSpectators.TurnCommitted(RoomId, room.Game);
         await RoomPlayers.UpdateAdministrator(RoomId, room.Administrator);
         await RoomSpectators.UpdateAdministrator(RoomId, room.Administrator);
