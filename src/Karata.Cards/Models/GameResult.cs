@@ -19,6 +19,6 @@ public class GameResult
         Reason = Reason,
         ReasonType = ReasonType,
         ResultType = ResultType,
-        CompletedAt = DateTimeOffset.UtcNow
+        CompletedAt = CompletedAt
     };
 }
