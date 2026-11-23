@@ -28,14 +28,16 @@ public static class GameTurns
             switch (game.CurrentHand.Status)
             {
                 case Active:
-                    game.CurrentHand.Turns.Add(new Turn
+                    if (--skip > 0)
                     {
-                        Type = TurnType.Skip,
-                        Hand = game.CurrentHand,
-                        CreatedAt = DateTimeOffset.UtcNow
-                    });
+                        game.CurrentHand.Turns.Add(new Turn
+                        {
+                            Type = TurnType.Skip,
+                            Hand = game.CurrentHand,
+                            CreatedAt = DateTimeOffset.UtcNow
+                        });
+                    }
 
-                    --skip;
                     break;
                 case Inactive:
                     game.CurrentHand.Turns.Add(new Turn
