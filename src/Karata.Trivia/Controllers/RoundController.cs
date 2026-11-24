@@ -23,7 +23,7 @@ public class RoundController(CurrentUserService<TriviaContext, User> current, Tr
         if (game is null) return BadRequest();
 
         return game.Rounds
-            .Select(round => CreateObfuscatedResponse(round, user))
+            .Select(round => CreateRedactedResponse(round, user))
             .OrderBy(r => r.Index)
             .ToList();
     }
@@ -39,7 +39,7 @@ public class RoundController(CurrentUserService<TriviaContext, User> current, Tr
         var round = game.Rounds.SingleOrDefault(r => r.Index == index);
         if (round is null) return BadRequest();
 
-        return CreateObfuscatedResponse(round, user);
+        return CreateRedactedResponse(round, user);
     }
 
     private async Task<Game?> GetGameAsync(Guid id) => await context.Games
@@ -56,22 +56,18 @@ public class RoundController(CurrentUserService<TriviaContext, User> current, Tr
         .ThenInclude(r => r.User)
         .SingleOrDefaultAsync(g => g.Id == id);
 
-    // Obfuscate correct answer if we do not have a response for this user yet.
-    // I will regret this code tomorrow
-    // UPDATE: Yep.
-    private static RoundData CreateObfuscatedResponse(Round round, User user) =>
-        round.ToData() is {} response && round.Responses.All(r => r.User.Id != user.Id)
-            ? response with
+    private static RoundData CreateRedactedResponse(Round round, User user)
+    {
+        var data = round.ToData();
+        if (round.Responses.Any(response => response.User.Id == user.Id)) return data;
+
+        return data with
+        {
+            Question = data.Question with
             {
-                Responses = response.Responses.Select(r => r.Choice is not null
-                        ? r with { Choice = r.Choice with { IsCorrect = false } }
-                        : r
-                    )
-                    .ToList(),
-                Question = response.Question with
-                {
-                    Choices = response.Question.Choices.Select(c => c with { IsCorrect = false }).ToList()
-                }
-            }
-            : round.ToData();
+                Choices = [..data.Question.Choices.Select(choice => choice with { IsCorrect = false })]
+            },
+            Responses = [..data.Responses.Select(response => response with { Choice = null, Points = 0 })]
+        };
+    }
 }
