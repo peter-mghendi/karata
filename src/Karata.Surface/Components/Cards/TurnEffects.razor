@@ -1,3 +1,4 @@
+@using Humanizer
 @using Karata.Kit.Cards.Engine
 @using Karata.Kit.Cards.Models
 
@@ -44,16 +45,18 @@ else if (_delta is not null)
     {
         if (delta.Reverse) yield return "will reverse the direction of the game";
 
-        if (delta.Advance > 0) yield return $"will advance the game {delta.Advance} {(delta.Advance == 1 ? "turn" : "turns")}";
+        if (delta.Advance is 0) yield return "will play again";
+
+        if (delta.Advance > 1) yield return $"will skip {"player".ToQuantity(delta.Advance - 1)}";
 
         if (delta.RequestLevel is CardRequestLevel.SuitRequest) yield return "can request a suit";
 
         if (delta.RequestLevel is CardRequestLevel.CardRequest) yield return "can request a card";
 
-        if (delta.RemoveRequestLevels > 0) yield return $"will cancel {delta.RemoveRequestLevels} request levels";
+        if (delta.RemoveRequestLevels > 0) yield return $"will cancel {"request level".ToQuantity(delta.RemoveRequestLevels)}";
 
-        if (delta.Give > 0) yield return $"will give the next player {delta.Give} card(s)";
+        if (delta.Give > 0) yield return $"will give the next player {"card".ToQuantity(delta.Give)}";
 
-        if (delta.Pick > 0) yield return $"will pick {delta.Pick} card(s)";
+        if (delta.Pick > 0) yield return $"will pick {"card".ToQuantity(delta.Pick)}";
     }
 }

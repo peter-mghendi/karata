@@ -12,7 +12,7 @@
             @foreach (var face in Enum.GetValues<CardFace>())
             {
                 @if (face is Joker) continue;
-                <MudSelectItem Value="@face">@face</MudSelectItem>
+                <MudSelectItem Value="@face">@(face is None ? "Any" : face.ToString())</MudSelectItem>
             }
         </MudSelect>
     }
@@ -25,29 +25,29 @@
         }
     </MudSelect>
 
-    <MudButton OnClick="@SubmitForm">Request this card</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth OnClick="@SubmitForm">Request this card</MudButton>
 
     @if (Specific)
     {
-        <MudStack Row>
-            <MudDivider DividerType="DividerType.Middle" Class="th-4"/>
+        <MudStack Row AlignItems="AlignItems.Center" Class="my-3">
+            <MudDivider Style="flex: 1 1 0; min-width: 0;"/>
             <MudText Typo="Typo.body2">OR</MudText>
-            <MudDivider DividerType="DividerType.Middle" Class="th-4"/>
+            <MudDivider Style="flex: 1 1 0; min-width: 0;"/>
         </MudStack>
 
         <MudGrid Class="mb-4" Spacing="4">
             <MudItem xs="6">
-                <MudButton Variant="Variant.Outlined" Color="Color.Dark" OnClick="@(() => RequestJoker(Black))">
+                <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth OnClick="@(() => RequestJoker(Black))">
                     Black Joker
                 </MudButton>
             </MudItem>
             <MudItem xs="6">
-                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => RequestJoker(Red))">
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" FullWidth OnClick="@(() => RequestJoker(Red))">
                     Red Joker
                 </MudButton>
             </MudItem>
         </MudGrid>
-    }
+    }   
 </div>
 
 @code

@@ -15,6 +15,7 @@ public sealed class SurfaceTheme(ILocalStorageService storage)
             DrawerBackground = "#ffffff",
             GrayLight = "#e8e8e8",
             GrayLighter = "#f9f9f9",
+            WarningContrastText = "rgba(0,0,0,0.87)",
         },
         PaletteDark = new PaletteDark
         {
@@ -38,22 +39,23 @@ public sealed class SurfaceTheme(ILocalStorageService storage)
             Info = "#4a86ff",
             Success = "#3dcb6c",
             Warning = "#ffb545",
+            WarningContrastText = "#1a1a27",
             Error = "#ff3f5f",
             LinesDefault = "#33323e",
             TableLines = "#33323e",
             Divider = "#292838",
             OverlayLight = "#1e1e2d80",
         },
-        LayoutProperties = new LayoutProperties()
+        LayoutProperties = new()
     };
-    
+
     public async Task<bool> GetDark(MudThemeProvider themer)
     {
         return await storage.GetItemAsync<bool?>("karata:settings:dark") ?? await themer.GetSystemDarkModeAsync();
     }
-    
+
     public async Task SetDark(bool value) => await storage.SetItemAsync("karata:settings:dark", value);
-    
+
     public static string ToggleIcon(bool dark) => dark switch
     {
         true => Icons.Material.Rounded.LightMode,

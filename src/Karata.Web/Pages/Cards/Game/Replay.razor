@@ -107,7 +107,6 @@
 
             _room.Changes
                 .Merge<object>(_turn.Changes)
-                .Throttle(TimeSpan.FromMilliseconds(500))
                 .Subscribe(OnStoreChanged)
                 .DisposeWith(_subscriptions);
 

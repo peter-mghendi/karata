@@ -1,20 +1,20 @@
 @using Karata.Kit.Cards.Models
 @implements Karata.Surface.Models.IPlayerInterface
 
-<MudDropContainer T="DropItem" Items="_items"
-                  ItemsSelector="@((DropItem item, string dropzone) => item.Identifier == dropzone)"
+<MudDropContainer @ref="_container" T="DropItem" Items="_items"
+                  ItemsSelector="@((item, dropzone) => item.Identifier == dropzone)"
                   ItemDropped="ItemUpdated" Class="d-flex flex-column flex-grow-1">
     <ChildContent>
         <MudGrid Spacing="3">
             <MudItem xs="12" md="6">
                 <MudText Typo="Typo.subtitle2" Class="mb-1">My cards</MudText>
-                <MudDropZone T="DropItem" Identifier="Hand" AllowReorder Class="rounded-lg pa-2"
+                <MudDropZone AllowReorder T="DropItem" Identifier="Hand" Class="rounded-lg pa-2"
                              Style="min-height: 12rem; border: 1px solid var(--mud-palette-lines-default);"/>
             </MudItem>
 
             <MudItem xs="12" md="6">
                 <MudText Typo="Typo.subtitle2" Class="mb-1">Current turn</MudText>
-                <MudDropZone T="DropItem" Identifier="Turn" AllowReorder Class="rounded-lg pa-2"
+                <MudDropZone AllowReorder T="DropItem" Identifier="Turn" Class="rounded-lg pa-2"
                              Style="min-height: 12rem; border: 2px dashed var(--mud-palette-lines-inputs);">
                     @if (Turn.Count == 0)
                     {
@@ -60,6 +60,8 @@
 
     private List<Card> CurrentHand => [.. Hand.Cards.Where(c => !Turn.Contains(c))];
 
+    private MudDropContainer<DropItem>? _container;
+
     private async Task AddCardToTurn(Card card, int index) => await OnAddCardToTurn.InvokeAsync((card, index));
 
     private async Task ReorderCardInTurn(Card card, int index) => await OnReorderCardInTurn.InvokeAsync((card, Math.Clamp(index, 0, Turn.Count - 1)));
@@ -73,6 +75,8 @@
         _items.Clear();
         _items.AddRange(CurrentHand.Select(card => new DropItem {Identifier = "Hand", Card = card}));
         _items.AddRange(Turn.Select(card => new DropItem {Identifier = "Turn", Card = card}));
+        
+        _container?.Refresh();
     }
 
     private async Task ItemUpdated(MudItemDropInfo<DropItem> dropItem)
