@@ -2,6 +2,7 @@ using Karata.Kit.Trivia.Models;
 using Karata.Trivia.Data;
 using Karata.Trivia.Extensions;
 using Karata.Trivia.Models;
+using Karata.Trivia.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,7 @@ public class TopicController(TriviaContext context) : ControllerBase
     }
 
     [HttpPut("{id:long}")]
+    [Authorize(Policy = nameof(TopicPolicy.ManageTopics))]
     public async Task<IActionResult> PutTopic(long id, Topic topic)
     {
         if (id != topic.Id) return BadRequest();
@@ -48,6 +50,7 @@ public class TopicController(TriviaContext context) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = nameof(TopicPolicy.ManageTopics))]
     public async Task<ActionResult<TopicData>> PostTopic(Topic topic)
     {
         context.Topics.Add(topic);
@@ -57,6 +60,7 @@ public class TopicController(TriviaContext context) : ControllerBase
     }
 
     [HttpDelete("{id:long}")]
+    [Authorize(Policy = nameof(TopicPolicy.ManageTopics))]
     public async Task<IActionResult> DeleteTopic(long id)
     {
         var topic = await context.Topics.FindAsync(id);

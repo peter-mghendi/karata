@@ -5,5 +5,5 @@ namespace Karata.Trivia.Security;
 
 public static class GamePolicy
 {
-    public static void QueryGames(AuthorizationPolicyBuilder policy) => policy.RequireRealmRoles("trivia:admin");
+    public static void QueryGames(AuthorizationPolicyBuilder policy) => policy.RequireRealmRoles(RealmRoles.Admin);
 }

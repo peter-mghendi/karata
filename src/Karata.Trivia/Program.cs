@@ -35,7 +35,8 @@ builder.Services
     )
     .AddKeycloakAuthorization()
     .AddAuthorizationBuilder()
-    .AddPolicy(nameof(GamePolicy.QueryGames), GamePolicy.QueryGames);
+    .AddPolicy(nameof(GamePolicy.QueryGames), GamePolicy.QueryGames)
+    .AddPolicy(nameof(TopicPolicy.ManageTopics), TopicPolicy.ManageTopics);
 
 builder.Services.AddKarataPlatform((options, services) =>
 {
