@@ -66,23 +66,24 @@ public sealed class LinkHandler
 
     public static async Task<Results<ForbidHttpResult, NoContent>> DeleteLink
     (
-        [FromServices] ClaimsPrincipal principal,
+        ClaimsPrincipal principal,
         [FromServices] GoContext db,
         [FromRoute] string slug
     )
     {
         var subject = principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var now = DateTimeOffset.UtcNow;
+
         var link = await db.Links
-            .AsNoTracking()
             .Include(link => link.Creator)
-            .SingleOrDefaultAsync(l => l.Slug == slug && l.ExpiredAt != null);
+            .SingleOrDefaultAsync(l => l.Slug == slug && (l.ExpiredAt == null || l.ExpiredAt > now));
 
         if (link is null) return NoContent();
-        if (link.Creator.Id != subject) Forbid();
+        if (link.Creator.Id != subject) return Forbid();
 
-        link.ExpiredAt = DateTimeOffset.UtcNow;
-
+        link.ExpiredAt = now;
         await db.SaveChangesAsync();
+
         return NoContent();
     }
 }
