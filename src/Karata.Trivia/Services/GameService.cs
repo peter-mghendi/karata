@@ -14,11 +14,16 @@ public class GameService(Client platform,  TriviaContext context)
     // TODO: [Notifications] Send notification
     public async Task<Game> CreateGame(User creator, GameRequest request)
     {
+        if (request.OpponentId == creator.Id) throw new BadHttpRequestException("You can't challenge yourself.");
+
         var topic = await context.Topics
             .Include(t => t.Questions)
             .SingleOrDefaultAsync(t => t.Id == request.TopicId);
 
         if (topic is null) throw new BadHttpRequestException("Topic not found.");
+        
+        if (topic.Questions.Count < GameRounds)
+            throw new BadHttpRequestException($"A topic needs at least {GameRounds} questions to play.");
 
         var opponent = await FetchUserFromDatabase(request.OpponentId) ?? await FetchUserFromPlatform(request.OpponentId);
         if (opponent is null) throw new BadHttpRequestException("Opponent not found.");
