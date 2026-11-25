@@ -12,41 +12,31 @@ public partial class RoomMembershipService
 
         ValidateMembership(room, player);
         ValidateJoiningGameState(room, player);
-        presence.AddPresence(player.Id, room.Id.ToString());
-        
-        switch (room.Game.Status)
-        {
-            case GameStatus.Lobby when room.Game.Hands.SingleOrDefault(h => h.Player.Id == player.Id) is { } joined:
-                joined.Status = HandStatus.Active;
 
-                await AddToRoom(connection);
-                await Caller.AddToRoom(RoomId, Enrich.ForHand(room, joined));
-                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, joined.Id, joined.Status);
-                await RoomSpectators.UpdateHandStatus(RoomId, joined.Id, joined.Status);
-                break;
-            case GameStatus.Lobby:
-                var hand = new Hand { Player = player, Status = HandStatus.Active };
-                room.Game.Hands.Add(hand);
+        // Joining the lobby for the first time takes a seat; anyone else already has a hand to come back to.
+        var existing = room.Game.Hands.SingleOrDefault(h => h.Player.Id == player.Id);
+        var hand = existing ?? new Hand { Player = player, Status = HandStatus.Active };
+        if (existing is null) room.Game.Hands.Add(hand);
+        hand.Status = HandStatus.Active;
 
-                await AddToRoom(connection);
-                await Caller.AddToRoom(RoomId, Enrich.ForHand(room, hand));
-                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
-                await RoomSpectators.AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
-                break;
-            case GameStatus.Ongoing:
-                var rejoined = room.Game.Hands.Single(h => h.Player.Id == player.Id);
-                rejoined.Status = HandStatus.Active;
-
-                await AddToRoom(connection);
-                await Caller.AddToRoom(RoomId, Enrich.ForHand(room, rejoined));
-                await Hands(room.Game.HandsExceptPlayerId(CallerPlayerId)).UpdateHandStatus(RoomId, rejoined.Id, rejoined.Status);
-                await RoomSpectators.UpdateHandStatus(RoomId, rejoined.Id, rejoined.Status);
-                break;
-            case GameStatus.Over:
-                break;
-        }
-
+        // Save before telling anyone. A new hand only gets its ID here.
         await context.SaveChangesAsync();
+
+        presence.AddPresence(player.Id, room.Id.ToString());
+        await AddToRoom(connection);
+        await Caller.AddToRoom(RoomId, Enrich.ForHand(room, hand));
+
+        var others = Hands(room.Game.HandsExceptPlayerId(CallerPlayerId));
+        if (existing is null)
+        {
+            await others.AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
+            await RoomSpectators.AddHandToRoom(RoomId, hand.Id, hand.Player.ToData(), hand.Status);
+        }
+        else
+        {
+            await others.UpdateHandStatus(RoomId, hand.Id, hand.Status);
+            await RoomSpectators.UpdateHandStatus(RoomId, hand.Id, hand.Status);
+        }
     }
 
     private static void ValidateMembership(Room room, User player)
@@ -62,11 +52,13 @@ public partial class RoomMembershipService
 
     private static void ValidateJoiningGameState(Room room, User player)
     {
+        var seated = room.Game.Hands.Any(h => h.Player.Id == player.Id);
+
         switch (room.Game.Status)
         {
-            case GameStatus.Lobby when room.Game.Hands.Count >= 4:
+            case GameStatus.Lobby when !seated && room.Game.Hands.Count >= 4:
                 throw new GameFullException();
-            case GameStatus.Ongoing when room.Game.Hands.All(h => h.Player != player):
+            case GameStatus.Ongoing when !seated:
                 throw new GameOngoingException();
             case GameStatus.Over:
                 throw new GameOverException();

@@ -116,7 +116,7 @@ public class PlayerHub(
         {
             var user = await currentUser.RequireAsync();
             logger.LogDebug("User {User} is leaving room {Room}.", user.Id, roomId);
-            await membership.Create(roomId, Context.UserIdentifier!).LeaveAsync(user.Id);
+            await membership.Create(roomId, user.Id).LeaveAsync(Context.ConnectionId);
         }
         catch (KarataException exception)
         {
