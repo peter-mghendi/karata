@@ -35,8 +35,8 @@ public class ResponseController(CurrentUserService<TriviaContext, User> current,
 
         if (round.Responses.Any(r => r.User.Id == user.Id)) return Conflict();
 
-        var choice = round.Question.Choices.SingleOrDefault(c => c.Id == request.ChoiceId);
-        if (choice is null && request.ChoiceId is not 0) return BadRequest();
+        var choice = request.ChoiceId is { } id ? round.Question.Choices.SingleOrDefault(c => c.Id == id) : null;
+        if (request.ChoiceId is not null && choice is null) return BadRequest();
 
         var response = new Response
         {

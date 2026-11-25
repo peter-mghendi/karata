@@ -1,3 +1,3 @@
 namespace Karata.Kit.Trivia.Models;
 
-public record ResponseRequest(long ChoiceId, int TimeLeft);
+public record ResponseRequest(long? ChoiceId, int TimeLeft);

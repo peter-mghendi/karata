@@ -10,7 +10,7 @@ public class Response
     
     public required DateTimeOffset SubmittedAt { get; init; }
 
-    public long ChoiceId { get; set; }
+    public long? ChoiceId { get; set; }
 
     public long QuestionId { get; set; }
     

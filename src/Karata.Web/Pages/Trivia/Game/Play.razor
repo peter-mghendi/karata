@@ -304,7 +304,7 @@
     private async Task<ResponseData> SendResponseAsync(int index, double timeLeft)
     {
         var time = Math.Clamp((int)Math.Round(timeLeft, MidpointRounding.AwayFromZero), 0, AnswerSeconds);
-        var request = new ResponseRequest(SelectedChoice!.Id, time);
+        var request = new ResponseRequest(SelectedChoice?.Id, time);
 
         var responses = await QuizWars.Responses.CreateResponse(Identifier, index, request);
         return responses.Single(r => r.User.Username == _username);
