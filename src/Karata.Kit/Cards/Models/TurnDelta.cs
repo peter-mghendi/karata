@@ -49,16 +49,16 @@ public record TurnDelta
     public override string ToString()
     {
         return $$"""
-               GameDelta {
-                 Cards                = [{{string.Join(", ", Cards.Select(c => c.ToString()))}}]
-                 Reverse              = {{Reverse}}
-                 Skip                 = {{Advance}}
-                 RequestLevel         = {{RequestLevel}}
-                 RemoveRequestLevels  = {{RemoveRequestLevels}}
-                 Give                 = {{Give}}
-                 Pick                 = {{Pick}}
-               }
-               """;
+                 TurnDelta {
+                   Cards                = [{{string.Join(", ", Cards.Select(c => c.ToString()))}}]
+                   Reverse              = {{Reverse}}
+                   Advance              = {{Advance}}
+                   RequestLevel         = {{RequestLevel}}
+                   RemoveRequestLevels  = {{RemoveRequestLevels}}
+                   Give                 = {{Give}}
+                   Pick                 = {{Pick}}
+                 }
+                 """;
     }
 
     public virtual bool Equals(TurnDelta? other)
